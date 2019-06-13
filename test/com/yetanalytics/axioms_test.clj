@@ -12,9 +12,8 @@
     (is (s/valid? ::ax/json-path "$.store"))
     (is (s/valid? ::ax/json-path "$.store.book"))
     (is (s/valid? ::ax/json-path "$['store']['book'][0]"))
-    (is (s/valid? ::ax/json-path "$.store.book | $.foo.bar"))
-    (is (s/valid? ::ax/json-path "$.store\\|$io"))
-    (is (not (s/valid? ::ax/json-path "$['store|$io'] | $.foo")))
+    (is (s/valid? ::ax/json-path "$.store['book'][ * ]"))
+    (is (s/valid? ::ax/json-path "$['store\\|$io'] | $.foo.bar"))
     (is (not (s/valid? ::ax/json-path "what the pineapple")))))
 
 ;; Test in bulk
@@ -59,6 +58,7 @@
                      "$..['author']"
                      "$[*]"
                      "$[*][*]"
+                     "$[    *    ]"
                      "$['*']"               ; Is a string, not a wildcard in Jayway
                      "$['store'][*]"
                      "$['store']['book']['*']"
@@ -117,6 +117,7 @@
                      "$['store']['book'] | $['results']['extensions']"
                      "$['store']['book'][0] | $.results.extensions['https://foo.org']"
                      "$['store\\|$.io']"  ; Need to allow the user to escape
+                     "$['store   \\|$.io']"
                      :bad
                      "$.store.book $.results.extension"
                      "$.store.book | what the pineapple"
