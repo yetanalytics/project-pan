@@ -6,7 +6,8 @@ specification: https://github.com/adlnet/xapi-profiles
 ## TODO
 - Write axiom specs
     - IRIs/IRLs/URIs/URLs
-    - JSON Schema
+    - JSON Schema :heavy_check_mark:
+        - Currently only draft-07 supported
     - JSONPath :heavy_check_mark:
     - Language Maps :heavy_check_mark:
     - Keywords
