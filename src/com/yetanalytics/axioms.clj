@@ -1,17 +1,10 @@
 (ns com.yetanalytics.axioms
-  (:require [com.yetanalytics.meta-schema :as ms]
-            [com.yetanalytics.meta-schema-2 :as ms2]
-            [clojure.string :as string]
+  (:require [clojure.string :as string]
             [clojure.spec.alpha :as s]
             [clojure.spec.gen.alpha :as sgen]
             [xapi-schema.spec :as xs]
-            [json-schema.core :as js]
-            [cheshire.core :as cheshire])
-  (:import [org.json JSONObject]
-           [org.everit.json.schema Schema]
-           [org.everit.json.schema.loader SchemaLoader]
-           [org.everit.json.schema SchemaException]
-           [org.everit.json.schema ValidationException]))
+            [json-schema.core :as js])
+)
 
 ;; Booleans
 ;; (Useless wrapper, but exists for consistency)
@@ -47,7 +40,7 @@
 
 (def JSONPathSplitRegEx #"\s*(?<!\\)\|\s*(?=\$)")
 
-;; TODO: Current generator is very shitty; will need to improve in order to
+;; TODO: Current generator is very bad; will need to improve in order to
 ;; improve test coverage
 ; (s/def ::json-path-old
 ;   (s/with-gen
@@ -85,15 +78,21 @@
          (partial schema-validate meta-schema)))
 
 ;; IRIs/IRLs/URIs/URLs
+;; TODO We are currently using the xapi-schema specs as substitutes for the
+;; real thing (currently they do not correctly differentiate between IRIs,
+;; which accept non-ASCII chars, and URIs, which do not).
+(s/def ::iri ::xs/iri)
+(s/def ::irl ::xs/irl)
+(s/def ::uri ::xs/iri)
+(s/def ::url ::xs/irl)
 
-(s/valid? ::xs/iri "http://adlnet.gov/expapi/verbs/voided")
-(s/valid? ::xs/iri "what the pineapple?")
-(s/valid? ::xs/iri "whatThePineapple?")
-(s/valid? ::xs/iri "mailto:kelvin@yetanalytics.com")
-(s/valid? ::xs/iri "https://en.wikitionary.org/wiki/Ῥόδος")
+; (s/valid? ::xs/iri "http://adlnet.gov/expapi/verbs/voided")
+; (s/valid? ::xs/iri "what the pineapple?")
+; (s/valid? ::xs/iri "whatThePineapple?")
+; (s/valid? ::xs/iri "mailto:kelvin@yetanalytics.com")
+; (s/valid? ::xs/iri "https://en.wikitionary.org/wiki/Ῥόδος")
 
 ;; xAPI Profile Type Keywords
-
 
 (s/def ::typekey-profile #{"Profile"})
 (s/def ::typekey-concept #{"Verb" "ActivityType" "AttachmentUsageType"})
