@@ -124,5 +124,76 @@
                      "$['store|$.io']"
                      "$['store|$['io']]")))
 
+;; JSON Schema tests
+
+(def schema-1 "{\"$schema\" : \"https://foo.org/\",
+                \"$comment\" : \"stan loona\"}")
+
+; Example from luposlip/json-schema README 
+(def schema-2 "{\"$schema\" : \"http://json-schema.org/draft-07/schema#\",
+                \"id\" : \"https://luposlip.com/some-schema.json\",
+                \"type\" : \"object\",
+                \"properties\" : {
+                    \"id\" :{
+                        \"type\" : \"number\",
+                        \"exclusiveMinimum\": 0} 
+                },
+                \"required\" : [\"id\"]}")
+
+; Examples from xAPI Profile Spec README
+(def schema-3 "{ \"type\": \"object\", \"properties\":{
+              \"rank\": {\"type\": \"number\", \"required\": true},
+              \"medal\": {\"type\": \"string\"}}}")
+
+(def schema-4 "{ \"type\": \"object\", \"properties\": { \\
+                 \"cut\": {\"enum\": [\"straight\", \"fitted\"], \"required\": true}, \\
+                 \"size\": {\"enum\": [\"x-small\", \"small\", \"medium\", \"large\", \\
+                 \"x-large\", \"2x-large\", \"3x-large\"], \"required\": true}}}")
+
+; Examples from cmi5 profile
+(def schema-5 "{ \"type\": \"number\", \"maximum\": 100, \"minimum\": 0, \"multipleOf\": 1.0 }")
+
+(def schema-6 "{ \"enum\": [\"Passed\", \"Completed\", \"CompletedAndPassed\", \"CompletedOrPassed\", \"NotApplicable\"] }")
+
+; Example from SCORM profile
+(def schema-7 "{
+    \"id\": \"https://w3id.org/xapi/scorm/activity-state/scorm.profile.activity.state.schema\",
+    \"description\": \"State ID: https://w3id.org/xapi/scorm/activity-state. See: https://github.com/adlnet/xAPI-SCORM-Profile/blob/master/xapi-scorm-profile.md#scorm-activity-state\",
+    \"type\": \"object\",
+    \"additionalProperties\": false,
+    \"required\": [\"attempts\"],
+    \"properties\": {
+        \"attempts\": {
+            \"type\": \"array\",
+            \"items\": {
+                \"type\": \"string\",
+                \"format\": \"uri\"
+            }
+        }
+    }
+}")
+
+(deftest test-json-schema
+  (testing "JSON Schema strings"
+    (is (s/valid? ::ax/json-schema "{}"))
+    (is (s/valid? ::ax/json-schema "{\"foo\" : \"bar\"}"))
+    (is (s/valid? ::ax/json-schema schema-1))
+    (is (s/valid? ::ax/json-schema schema-2))
+    (is (s/valid? ::ax/json-schema schema-5))
+    (is (s/valid? ::ax/json-schema schema-6))
+    (is (s/valid? ::ax/json-schema schema-7))
+    (is (not (s/valid? ::ax/json-schema 74)))
+    (is (not (s/valid? ::ax/json-schema "")))
+    (is (not (s/valid? ::ax/json-schema "what the pineapple")))
+    (is (not (s/valid? ::ax/json-schema "{\"$schema\" : \" not a uri \"}")))
+    (is (not (s/valid? ::ax/json-schema "{\"$schema\" : \"alsoNotURI\"}")))
+    (is (not (s/valid? ::ax/json-schema "{\"$comment\" : 74}")))
+    (is (not (s/valid? ::ax/json-schema schema-3))) ; valid only in draft-03
+    (is (not (s/valid? ::ax/json-schema schema-4))) ; valid only in draft-03
+))
+
+
 ;; Test runner
+
+
 (run-tests)

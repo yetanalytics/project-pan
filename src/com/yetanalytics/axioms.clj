@@ -1,11 +1,22 @@
 (ns com.yetanalytics.axioms
-  (:require [clojure.string :as string]
+  (:require [com.yetanalytics.meta-schema :as ms]
+            [com.yetanalytics.meta-schema-2 :as ms2]
+            [clojure.string :as string]
             [clojure.spec.alpha :as s]
             [clojure.spec.gen.alpha :as sgen]
-            [xapi-schema.spec :as xs]))
+            [xapi-schema.spec :as xs]
+            [json-schema.core :as js]
+            [cheshire.core :as cheshire])
+  (:import [org.json JSONObject]
+           [org.everit.json.schema Schema]
+           [org.everit.json.schema.loader SchemaLoader]
+           [org.everit.json.schema SchemaException]
+           [org.everit.json.schema ValidationException]))
 
 ;; Booleans
 ;; (Useless wrapper, but exists for consistency)
+
+
 (s/def ::boolean boolean?)
 
 ;; Arbitrary strings
@@ -61,7 +72,36 @@
                      "$.*"])))
 
 ;; JSON Schema
+;; Currently only draft-07 supported
+
+(defn schema-validate [schema json]
+  (try (do (js/validate schema json) true)
+       (catch Exception e false)))
+
+(def meta-schema (slurp "resources/json/schema-07.json"))
+
+(s/def ::json-schema
+  (s/and string?
+         (partial schema-validate meta-schema)))
 
 ;; IRIs/IRLs/URIs/URLs
 
-;; xAPI Profile Keywords
+(s/valid? ::xs/iri "http://adlnet.gov/expapi/verbs/voided")
+(s/valid? ::xs/iri "what the pineapple?")
+(s/valid? ::xs/iri "whatThePineapple?")
+(s/valid? ::xs/iri "mailto:kelvin@yetanalytics.com")
+(s/valid? ::xs/iri "https://en.wikitionary.org/wiki/Ῥόδος")
+
+;; xAPI Profile Type Keywords
+
+
+(s/def ::typekey-profile #{"Profile"})
+(s/def ::typekey-concept #{"Verb" "ActivityType" "AttachmentUsageType"})
+(s/def ::typekey-extension #{"ContextExtension" "ResultExtension" "ActivityExtension"})
+(s/def ::typekey-activity-ext #{"ActivityExtension"})
+(s/def ::typekey-other-ext #{"ContextExtension" "ResultExtension"})
+(s/def ::typekey-resource #{"StateResource" "AgentProfileResource" "ActivityProfileResource"})
+(s/def ::typekey-activity #{"Activity"})
+(s/def ::typekey-template #{"StatementTemplate"})
+(s/def ::typekey-pattern #{"Pattern"})
+(s/def ::typekey-presence #{"included" "excluded" "recommended"})
