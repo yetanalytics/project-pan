@@ -1,19 +1,24 @@
 (ns com.yetanalytics.concepts.verbs
   (:require [clojure.spec.alpha :as s]
-            [com.yetanalytics.axioms :as ax]))
+            [com.yetanalytics.axioms :as ax]
+            [com.yetanalytics.object :as object]
+            [com.yetanalytics.concept :as concept]))
 
 ;; Basic properties
 
-(s/def ::id ::ax/iri)
-(s/def ::type #{"Verb" "ActivityType" "AttachmentUsageType"})
-(s/def ::in-scheme ::ax/iri)
-(s/def ::pref-label ::ax/language-map)
-(s/def ::definition ::ax/language-map)
-(s/def ::deprecated ::ax/boolean)
+
+; (s/def ::id ::ax/iri)
+; (s/def ::type #{"Verb" "ActivityType" "AttachmentUsageType"})
+; (s/def ::in-scheme ::ax/iri)
+; (s/def ::pref-label ::ax/language-map)
+; (s/def ::definition ::ax/language-map)
+; (s/def ::deprecated ::ax/boolean)
 
 ;; Properties that relate to other Concepts
 ;; TODO: Validate that external Concepts have same type (and whether Concepts
 ;; should be from the same or different Profiles)
+
+
 (s/def ::broader (s/coll-of ::ax/iri :type vector?))
 (s/def ::broader-match (s/coll-of ::ax/iri :type vector?))
 (s/def ::narrower (s/coll-of ::ax/iri :type vector?))
@@ -22,16 +27,30 @@
 (s/def ::related-match (s/coll-of ::ax/iri :type vector?))
 (s/def ::exact-match (s/coll-of ::ax/iri :type vector?))
 
-(s/def ::verb (s/keys :req [::id
-                            ::type
-                            ::in-scheme
-                            ::pref-label
-                            ::definition]
-                      :opt [::deprecated
-                            ::broader
-                            ::broader-match
-                            ::narrower
-                            ::narrower-match
-                            ::related
-                            ::related-match
-                            ::exact-match]))
+; (s/def ::verb (s/keys :req [::id
+;                             ::type
+;                             ::in-scheme
+;                             ::pref-label
+;                             ::definition]
+;                       :opt [::deprecated
+;                             ::broader
+;                             ::broader-match
+;                             ::narrower
+;                             ::narrower-match
+;                             ::related
+;                             ::related-match
+;                             ::exact-match]))
+
+(s/def ::verb-or-type
+  (s/merge ::concept/common
+           (s/keys opt-un [::broader
+                           ::broad-match
+                           ::narrower
+                           ::narrow-match
+                           ::related
+                           ::related-match
+                           ::exact-match])))
+
+(defmethod concept/concept? "Verb" [_] :concept/verb-or-type)
+(defmethod concept/concept? "ActivityType" [_] :concept/verb-or-type)
+(defmethod concept/concept? "AttachmentUsageType" [_] :concept/verb-or-type)

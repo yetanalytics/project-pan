@@ -3,8 +3,7 @@
             [clojure.spec.alpha :as s]
             [clojure.spec.gen.alpha :as sgen]
             [xapi-schema.spec :as xs]
-            [json-schema.core :as js])
-)
+            [json-schema.core :as js]))
 
 ;; Booleans
 ;; (Useless wrapper, but exists for consistency)
@@ -85,22 +84,3 @@
 (s/def ::irl ::xs/irl)
 (s/def ::uri ::xs/iri)
 (s/def ::url ::xs/irl)
-
-; (s/valid? ::xs/iri "http://adlnet.gov/expapi/verbs/voided")
-; (s/valid? ::xs/iri "what the pineapple?")
-; (s/valid? ::xs/iri "whatThePineapple?")
-; (s/valid? ::xs/iri "mailto:kelvin@yetanalytics.com")
-; (s/valid? ::xs/iri "https://en.wikitionary.org/wiki/Ῥόδος")
-
-;; xAPI Profile Type Keywords
-
-(s/def ::typekey-profile #{"Profile"})
-(s/def ::typekey-concept #{"Verb" "ActivityType" "AttachmentUsageType"})
-(s/def ::typekey-extension #{"ContextExtension" "ResultExtension" "ActivityExtension"})
-(s/def ::typekey-activity-ext #{"ActivityExtension"})
-(s/def ::typekey-other-ext #{"ContextExtension" "ResultExtension"})
-(s/def ::typekey-resource #{"StateResource" "AgentProfileResource" "ActivityProfileResource"})
-(s/def ::typekey-activity #{"Activity"})
-(s/def ::typekey-template #{"StatementTemplate"})
-(s/def ::typekey-pattern #{"Pattern"})
-(s/def ::typekey-presence #{"included" "excluded" "recommended"})
