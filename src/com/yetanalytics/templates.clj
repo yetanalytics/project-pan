@@ -77,4 +77,6 @@
                             ::context-statement-ref-template
                             ::rules])))
 
+(s/def ::templates (s/coll-of ::template :kind vector?))
+
 (defmethod object/object? "StatementTemplate" [_] ::template)

@@ -5,39 +5,39 @@
 ;; Basic properties
 
 ;; ID and type properties are required by ALL objects, no exceptions
-(s/def :object/id ::ax/iri)
-(s/def :object/type #{"Profile"
-                      ; Author types
-                      "Organization"
-                      "Person"
-                      ; Extensions
-                      "ContextExtension"
-                      "ResultExtension"
-                      "ActivityExtension"
-                      ; Document Resources
-                      "StateResource"
-                      "AgentProfileResource"
-                      "ActivityProfileResource"
-                      ; Other concepts
-                      "Verb"
-                      "ActivityType"
-                      "AttachmentUsageType"
-                      "Activity"
-                      ; Other object types
-                      "StatementTemplate"
-                      "Pattern"})
+(s/def ::id ::ax/iri) ; Technically Templates and Patterns require URIs
+(s/def ::type #{"Profile"
+                ; Author types
+                "Organization"
+                "Person"
+                ; Extensions
+                "ContextExtension"
+                "ResultExtension"
+                "ActivityExtension"
+                ; Document Resources
+                "StateResource"
+                "AgentProfileResource"
+                "ActivityProfileResource"
+                ; Other concepts
+                "Verb"
+                "ActivityType"
+                "AttachmentUsageType"
+                "Activity"
+                ; Other object types
+                "StatementTemplate"
+                "Pattern"})
 
-(s/def :object/common (s/keys :req-un [:object/id :object/type]))
+(s/def ::common (s/keys :req-un [::id ::type]))
 
 ;; Properties common across all objects; however some objects may not have
 ;; them (or only have them under certain circumstances).
-(s/def :object/in-scheme ::ax/iri)
-(s/def :object/pref-label ::ax/language-map)
-(s/def :object/definition ::ax/language-map)
-(s/def :object/deprecated ::ax/boolean)
+(s/def ::in-scheme ::ax/iri)
+(s/def ::pref-label ::ax/language-map)
+(s/def ::definition ::ax/language-map)
+(s/def ::deprecated ::ax/boolean)
 
-(defmulti object? :object/type)
-
+(defmulti object? ::type)
+(defmethod object? "Profile" [_] #(map? %))
 ;; Profile Top-Level Properties
 
 ; (s/def :profile/profile
@@ -180,6 +180,16 @@
 
 ; ; (defmethod object? :default [_] :concept/concept)
 
-(s/def ::object (s/multi-spec object? :object/type))
+; (defmethod object? "Person" [_] (true))
+
+(s/def ::object (s/multi-spec object? ::type))
 
 (s/explain ::object {:type "Profile"})
+; (s/explain ::object {:url "https://www.yetanalytics.io"
+;                      :type "Organization"
+;                      :name "Yet Analytics"})
+
+; (defmulti foobar? ::type)
+
+(defn dispatch-fn [x] x)
+(defmulti foo dispatch-fn)

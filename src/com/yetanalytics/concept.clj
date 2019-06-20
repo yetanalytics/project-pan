@@ -22,5 +22,6 @@
 (defmulti concept? :object/type)
 
 (s/def ::concept (s/multi-spec concept? :object/type))
+(s/def ::concepts (s/coll-of ::concept :kind vector?))
 
 (defmethod object/object? :default [_] ::concept)

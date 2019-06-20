@@ -75,4 +75,6 @@
 (s/def ::pattern (s/and (s/multi-spec pattern? ::primary)
                         pattern-xor?))
 
+(s/def ::patterns (s/coll-of ::pattern :kind vector?))
+
 (defmethod object/object? "Pattern" [_] ::pattern)

@@ -11,8 +11,11 @@
 ))
 
 ; (s/def ::id ::ax/iri)
+(def context-url "https://w3id.org/xapi/profiles/context")
 (s/def ::context (s/or :context ::ax/uri
-                       :context-array (s/coll-of ::ax/uri :type vector?)))
+                       :context-array (s/and
+                                       (s/coll-of ::ax/uri :type vector?)
+                                       (partial some #(= context-url %)))))
 ; (s/def ::type ::ax/typekey-profile)
 (s/def ::conforms-to ::ax/uri)
 ; (s/def ::pref-label ::ax/language-map)
@@ -20,22 +23,23 @@
 (s/def ::see-also ::ax/url)
 
 ; (s/def :version/id ::ax/iri)
-(s/def :version/was-revision-of (s/coll-of ::ax/iri :type vector?))
+(s/def :version/was-revision-of (s/coll-of ::ax/iri
+                                           :type vector? :min-count 1))
 (s/def :version/gen-at-time ::ax/timestamp)
-(s/def ::versions (s/coll-of (s/keys :req [::object/id
-                                           :version/gen-at-time]
-                                     :opt [:version/was-revision-of])
-                             :type vector?))
+(s/def ::versions (s/coll-of (s/keys :req-un [::object/id
+                                              :version/gen-at-time]
+                                     :opt-un [:version/was-revision-of])
+                             :type vector? :min-count 1))
 
 ; (s/def :author/type #{"Organization" "Person"})
 (s/def :author/name ::ax/string)
 (s/def :author/url ::ax/url)
-(s/def ::author (s/keys :req [::object/type
-                              :author/name]
-                        :opt [:author/url]))
+(s/def ::author (s/keys :req-un [::object/type
+                                 :author/name]
+                        :opt-un [:author/url]))
 
-(defmethod object? "Organization" [_] :author/author)
-(defmethod object? "Person" [_] :author/author)
+(defmethod object/object? "Organization" [_] ::author)
+(defmethod object/object? "Person" [_] ::author)
 
 ; (s/def ::concepts (s/coll-of (s/or :verbs ::cv/verb
 ;                                    :extensions ::ce/extensions
@@ -72,4 +76,7 @@
                             ::templates
                             ::patterns])))
 
-(defmethod object? "Profile" [_] ::profile)
+(defmethod object/object? "Profile" [_] ::profile)
+
+(defmethod object/foo "hello" [s] s)
+(defmethod object/foo "goodbye" [s] "TATA")

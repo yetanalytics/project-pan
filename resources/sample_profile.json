@@ -6,7 +6,7 @@
   ],
   "@context": "https://w3id.org/xapi/profiles/context",
   "author": {
-    "id": "https:///www.yetanalyitcs.io",
+    "id": "https://www.yetanalyitcs.io",
     "type": "Organization",
     "name": "Yet Analytics"
   },
