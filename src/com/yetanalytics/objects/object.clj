@@ -1,4 +1,4 @@
-(ns com.yetanalytics.object.object
+(ns com.yetanalytics.objects.object
   (:require [clojure.spec.alpha :as s]
             [com.yetanalytics.axioms :as ax]))
 

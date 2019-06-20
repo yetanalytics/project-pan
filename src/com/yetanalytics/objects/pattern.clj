@@ -1,7 +1,7 @@
-(ns com.yetanalytics.object.pattern
+(ns com.yetanalytics.objects.pattern
   (:require [clojure.spec.alpha :as s]
             [com.yetanalytics.axioms :as ax]
-            [com.yetanalytics.object.object :as object]))
+            [com.yetanalytics.objects.object :as object]))
 
 ;; Basic properties
 

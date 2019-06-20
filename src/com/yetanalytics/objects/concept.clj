@@ -1,11 +1,11 @@
-(ns com.yetanalytics.concept
+(ns com.yetanalytics.objects.concept
   (:require [clojure.spec.alpha :as s]
             [com.yetanalytics.axioms :as ax]
-            [com.yetanalytics.object.object :as object]))
+            [com.yetanalytics.objects.object :as object]))
 
 (s/def ::type #{"Verb"
                 "ActivityType"
-                "AttachmentUsageType" 
+                "AttachmentUsageType"
                 ; Extensions
                 "ContextExtension"
                 "ResultExtension"
@@ -93,7 +93,7 @@
 ;;; CONCEPT SPEC
 
 (defmulti concept? ::object/type)
- 
+
 ;; Concepts that can be "related" to other concepts
 (defmethod concept? "Verb" [_]
   (s/merge ::common
@@ -107,54 +107,54 @@
            ::verb-or-type-unique))
 
 ;; Extensions 
-(defmethod concept? "ContextExtension" [_] 
+(defmethod concept? "ContextExtension" [_]
   (s/and
-    (s/merge ::common
-             ::json-schema-common
-             (s/keys :opt-un [:extension/recommended-verbs
-                              :extension/context]))
-    json-schema-xor?))
+   (s/merge ::common
+            ::json-schema-common
+            (s/keys :opt-un [:extension/recommended-verbs
+                             :extension/context]))
+   json-schema-xor?))
 
 (defmethod concept? "ResultExtension" [_]
   (s/and
-    (s/merge ::common
-             ::json-schema-common
-             (s/keys :opt-un [:extension.recommended-verbs
-                              :extension/context]))
-    json-schema-xor?))
+   (s/merge ::common
+            ::json-schema-common
+            (s/keys :opt-un [:extension.recommended-verbs
+                             :extension/context]))
+   json-schema-xor?))
 
 (defmethod concept? "ActivityExtension" [_]
   (s/and
-    (s/merge ::common
-             ::json-schema-common
-             (s/keys :opt-un [:extension/recommended-activity-types
-                              :extension/context]))
-    json-schema-xor?))
+   (s/merge ::common
+            ::json-schema-common
+            (s/keys :opt-un [:extension/recommended-activity-types
+                             :extension/context]))
+   json-schema-xor?))
 
 ;; Document Resources
 (defmethod concept? "StateResource" [_]
   (s/and
-    (s/merge ::common
-             ::json-schema-common
-             (s/keys :req-un [:resource/content-type]
-                     :opt-un [:resource/context]))
-    json-schema-xor?))
+   (s/merge ::common
+            ::json-schema-common
+            (s/keys :req-un [:resource/content-type]
+                    :opt-un [:resource/context]))
+   json-schema-xor?))
 
 (defmethod concept? "AgentProfileResource" [_]
   (s/and
-    (s/merge ::common
-             ::json-schema-common
-             (s/keys :req-un [:resource/content-type]
-                     :opt-un [:resource/context]))
-    json-schema-xor?))
+   (s/merge ::common
+            ::json-schema-common
+            (s/keys :req-un [:resource/content-type]
+                    :opt-un [:resource/context]))
+   json-schema-xor?))
 
 (defmethod concept? "ActivityProfileResource" [_]
   (s/and
-    (s/merge ::common
-             ::json-schema-common
-             (s/keys :req-un [:resource/content-type]
-                     :opt-un [:resource/context]))
-    json-schema-xor?))
+   (s/merge ::common
+            ::json-schema-common
+            (s/keys :req-un [:resource/content-type]
+                    :opt-un [:resource/context]))
+   json-schema-xor?))
 
 ;; Activities
 (defmethod concept? "Activity" [_]

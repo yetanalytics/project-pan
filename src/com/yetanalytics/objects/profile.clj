@@ -1,10 +1,10 @@
-(ns com.yetanalytics.object.profile
+(ns com.yetanalytics.objects.profile
   (:require [clojure.spec.alpha :as s]
             [com.yetanalytics.axioms :as ax]
-            [com.yetanalytics.object.object :as object]
-            [com.yetanalytics.object.concept :as concept]
-            [com.yetanalytics.object.template :as template]
-            [com.yetanalytics.object.pattern :as pattern]))
+            [com.yetanalytics.objects.object :as object]
+            [com.yetanalytics.objects.concept :as concept]
+            [com.yetanalytics.objects.template :as template]
+            [com.yetanalytics.objects.pattern :as pattern]))
 
 (s/def ::type #{"Profile"})
 
@@ -35,7 +35,7 @@
                                  :author/name]
                         :opt-un [:author/url]))
 
-(s/def :profile/profile
+(s/def ::profile
   (s/merge ::object/description
            (s/keys :req-un [::object/id
                             ::type

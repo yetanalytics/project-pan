@@ -1,9 +1,7 @@
-(ns com.yetanalytics.object.template
+(ns com.yetanalytics.objects.template
   (:require [clojure.spec.alpha :as s]
             [com.yetanalytics.axioms :as ax]
-            [com.yetanalytics.object.object :as object]))
-
-;; TODO Add more requirements
+            [com.yetanalytics.objects.object :as object]))
 
 ;; Basic properties
 
@@ -19,13 +17,13 @@
   (s/coll-of ::ax/iri :type vector? :min-count 1))
 (s/def ::context-other-activity-type
   (s/coll-of ::ax/iri :type vector? :min-count 1))
-(s/def ::context-category-activity-type 
+(s/def ::context-category-activity-type
   (s/coll-of ::ax/iri :type vector? :min-count 1))
-(s/def ::attachment-usage-type 
+(s/def ::attachment-usage-type
   (s/coll-of ::ax/iri :type vector? :min-count 1))
-(s/def ::object-statement-ref-temp 
+(s/def ::object-statement-ref-temp
   (s/coll-of ::ax/iri :type vector? :min-count 1))
-(s/def ::context-statement-ref-temp 
+(s/def ::context-statement-ref-temp
   (s/coll-of ::ax/iri :type vector? :min-count 1))
 
 ;; Rules
