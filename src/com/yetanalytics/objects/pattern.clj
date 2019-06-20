@@ -1,40 +1,21 @@
-(ns com.yetanalytics.patterns
+(ns com.yetanalytics.object.pattern
   (:require [clojure.spec.alpha :as s]
             [com.yetanalytics.axioms :as ax]
-            [com.yetanalytics.object :as object]))
+            [com.yetanalytics.object.object :as object]))
 
 ;; Basic properties
 
-; (s/def ::id ::ax/uri)
-; (s/def ::type #{"Pattern"})
-; (s/def ::primary ::ax/boolean)
-; (s/def ::in-scheme ::ax/iri)
-; (s/def ::pref-label ::ax/language-map)
-; (s/def ::definition ::ax/language-map)
-; (s/def ::deprecated ::ax/boolean)
-
+(s/def ::id ::ax/uri)
+(s/def ::type #{"Pattern"})
 (s/def ::primary ::ax/boolean)
 
-;; TODO Ensure that one of the following must be present
+;; Regex properties
 
 (s/def ::alternates (s/coll-of ::ax/iri :type vector?))
 (s/def ::optional ::ax/iri)
 (s/def ::one-or-more ::ax/iri)
 (s/def ::sequence (s/coll-of ::ax/iri :type vector?))
 (s/def ::zero-or-more ::ax/iri)
-
-; (s/def ::pattern (s/keys :req [::id
-;                                ::type
-;                                (or ::alternates
-;                                    ::optional
-;                                    ::one-or-more
-;                                    ::sequence
-;                                    ::zero-or-more)]
-;                          :opt [::primary
-;                                ::in-schem
-;                                ::pref-label
-;                                ::definition
-;                                ::deprecated]))
 
 (s/def ::common
   (s/merge ::object/common
@@ -47,17 +28,21 @@
                             ::object/in-scheme
                             ::object/deprecated])))
 
+;; Descriptions (prefLabel and definition) are mandatory for primary patterns;
+;; they are optional for non-primary patterns.
+
 (defmulti pattern? ::primary)
 
 (defmethod pattern? true [_]
-  (s/merge ::common
-           (s/keys :req-un [:object/pref-label
-                            :object/definition])))
+  (s/merge ::common ::object/description))
 
 (defmethod pattern? :default [_]
   (s/merge ::common
            (s/keys :opt-un [:object/pref-label
                             :object/definition])))
+
+;; Ensure that only one of the five regex properties are included in pattern.
+;; Including two or more properties should fail the spec.
 
 (defn pattern-xor? [p]
   (let [alt? (contains? p :alternates)
@@ -76,5 +61,3 @@
                         pattern-xor?))
 
 (s/def ::patterns (s/coll-of ::pattern :kind vector?))
-
-(defmethod object/object? "Pattern" [_] ::pattern)
