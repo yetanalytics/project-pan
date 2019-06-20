@@ -207,4 +207,15 @@
                         :object-statement-ref-template
                         ["https://w3id.org/xapi/catch/templates#communicated-with-families"]})))))
 
+(deftest templates-test
+  (testing "array of templates"
+    (is (s/valid? ::template/templates
+                  [{:id "https://w3id/xapi/minimal/template"
+                    :type "StatementTemplate"
+                    :in-scheme "https://w3id.org/xapi/catch/v1"
+                    :pref-label {"en" "minimal template"}
+                    :definition {"en" "A test of only the required properties
+                                     for a template"}}]))
+    (is (not (s/valid? ::template/templates [])))))
+
 (run-tests)

@@ -1,5 +1,6 @@
 (ns com.yetanalytics.objects.pattern
   (:require [clojure.spec.alpha :as s]
+            [xapi-schema.spec :as xs]
             [com.yetanalytics.axioms :as ax]
             [com.yetanalytics.objects.object :as object]))
 
@@ -10,26 +11,31 @@
 (s/def ::primary ::ax/boolean)
 
 ;; Regex properties
+(s/def :regex/id ::ax/iri)
 
-(s/def ::alternates (s/coll-of ::ax/iri :type vector?))
-(s/def ::optional ::ax/iri)
-(s/def ::one-or-more ::ax/iri)
-(s/def ::sequence (s/coll-of ::ax/iri :type vector?))
-(s/def ::zero-or-more ::ax/iri)
+(s/def ::alternates
+  (s/coll-of ::ax/iri :type vector? :min-count 2))
+(s/def ::sequence
+  (s/coll-of ::ax/iri :type vector? :min-count 1))
+(s/def ::optional
+  (s/and (s/keys :req-un [:regex/id]) (xs/restrict-keys :id)))
+(s/def ::one-or-more
+  (s/and (s/keys :req-un [:regex/id]) (xs/restrict-keys :id)))
+(s/def ::zero-or-more
+  (s/and (s/keys :req-un [:regex/id]) (xs/restrict-keys :id)))
 
 (s/def ::common
-  (s/merge ::object/common
-           (s/keys :req-un [(or ::alternates
-                                ::optional
-                                ::one-or-more
-                                ::sequence
-                                ::zero-or-more)]
-                   :opt-un [::primary
-                            ::object/in-scheme
-                            ::object/deprecated])))
+  (s/keys :req-un [(or ::alternates
+                       ::optional
+                       ::one-or-more
+                       ::sequence
+                       ::zero-or-more)]
+          :opt-un [::primary
+                   ::object/in-scheme
+                   ::object/deprecated]))
 
-;; Descriptions (prefLabel and definition) are mandatory for primary patterns;
-;; they are optional for non-primary patterns.
+;; Descriptions (prefLabel and definition) are mandatory for primary patterns
+;; and are optional for non-primary patterns.
 
 (defmulti pattern? ::primary)
 
@@ -51,13 +57,13 @@
         sqn? (contains? p :sequence)
         zom? (contains? p :zero-or-more)]
     (cond
-      (alt?) (not (or opt? oom? sqn? zom?))
-      (opt?) (not (or alt? oom? sqn? zom?))
-      (oom?) (not (or alt? opt? sqn? zom?))
-      (sqn?) (not (or alt? opt? oom? zom?))
-      (zom?) (not (or alt? opt? oom? sqn?)))))
+      alt? (not (or opt? oom? sqn? zom?))
+      opt? (not (or alt? oom? sqn? zom?))
+      oom? (not (or alt? opt? sqn? zom?))
+      sqn? (not (or alt? opt? oom? zom?))
+      zom? (not (or alt? opt? oom? sqn?)))))
 
 (s/def ::pattern (s/and (s/multi-spec pattern? ::primary)
                         pattern-xor?))
 
-(s/def ::patterns (s/coll-of ::pattern :kind vector?))
+(s/def ::patterns (s/coll-of ::pattern :kind vector? :min-count 1))
