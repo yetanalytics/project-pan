@@ -2,7 +2,6 @@
   (:require [clojure.test :refer :all]
             [clojure.spec.alpha :as s]
             [com.yetanalytics.utils :refer :all]
-            [com.yetanalytics.objects.object :as object]
             [com.yetanalytics.objects.profile :as profile]))
 
 (deftest context-test
