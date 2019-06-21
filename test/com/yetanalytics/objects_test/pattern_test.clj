@@ -95,6 +95,14 @@
                    :definition {"en" "System responses to progress within an activity"}
                    :sequence ["https://w3id.org/xapi/catch/templates#system-notification-submission"
                               "https://w3id.org/xapi/catch/templates#system-notification-progression"]}))
+    ; Primary pattern must include prefLabel and definition properties
+    (is (not (s/valid? ::pattern/pattern
+                       {:id "https://w3id.org/xapi/catch/patterns#system-progress-response"
+                        :type "Pattern"
+                        :primary true
+                        :in-scheme "https://w3id.org/xapi/catch/v1"
+                        :sequence ["https://w3id.org/xapi/catch/templates#system-notification-submission"
+                                   "https://w3id.org/xapi/catch/templates#system-notification-progression"]})))
     ; Patterns require one regex rule
     (is (not (s/valid? ::pattern/pattern
                        {:id "https://w3id.org/xapi/catch/patterns#pattern"
