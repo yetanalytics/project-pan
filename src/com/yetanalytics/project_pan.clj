@@ -23,4 +23,5 @@
 (defn convert-type [json-map]
   (update-in json-map [:type] keyword))
 
-(convert-type {:type "Profile" :foo {:type "Bar"}})
+(comment
+  (convert-type {:type "Profile" :foo {:type "Bar"}}))
