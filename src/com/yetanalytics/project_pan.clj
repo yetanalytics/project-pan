@@ -8,7 +8,7 @@
   (println x "Hello, World!"))
 
 (defn to-kebab-case
-  "Convert strings (particularly camelCase strings) to kebab-case."
+  "Convert strings (particularly camelCase strings) to kebab-case."  
   [s]
   (string/lower-case (string/replace s #"([a-z])([A-Z])" "$1-$2")))
 
@@ -17,8 +17,8 @@
   (string/replace s #"@|\s" ""))
 
 (defn convert-json [json]
-  (cheshire/parse-string json
-                         (fn [k] (keyword (to-kebab-case (remove-chars k))))))
+  (cheshire/parse-string json (fn [k] (-> k remove-chars to-kebab-case keyword))))
+;; ^ example usage of ->
 
 (defn convert-type [json-map]
   (update-in json-map [:type] keyword))
