@@ -34,10 +34,6 @@
 ;; in-profile validation+ helpers
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(s/def ::in-scheme-strict-scalar
-  (fn [{:keys [in-scheme profile]}]
-    (u/in-scheme? in-scheme profile)))
-
 (s/def ::deprecated-strict-scalar
   (fn [{:keys [iri profile]}]
     (cu/iri-in-profile-concepts?
@@ -53,29 +49,26 @@
       :target-type-str "Verb"
       :profile profile})))
 
-(s/def ::valid-boolean-coll
-  (fn [coll] u/valid-boolean-cool? coll))
-
 (s/def ::verb-in-profile-strict
   (fn [{:keys [verb profile]}]
     (let [{:keys [in-scheme broader narrower related]} verb]
       (s/and (s/valid? ::verb verb)
-             (s/valid? ::in-scheme-strict-scalar {:in-scheme in-scheme
-                                                  :profile profile})
+             (s/valid? ::u/in-scheme-strict-scalar {:in-scheme in-scheme
+                                                    :profile profile})
              (if (not-empty broader)
-               (s/valid? ::valid-boolean-coll
+               (s/valid? ::u/valid-boolean-coll
                          (mapv (fn [iri]
                                  (s/valid? ::in-profile-strict-scalar
                                            {:iri iri :profile profile})) broader))
                true)
              (if (not-empty narrower)
-               (s/valid? ::valid-boolean-coll
+               (s/valid? ::u/valid-boolean-coll
                          (mapv (fn [iri]
                                  (s/valid? ::in-profile-strict-scalar
                                            {:iri iri :profile profile})) narrower))
                true)
              (if (not-empty related)
-               (s/valid? ::valid-boolean-coll
+               (s/valid? ::u/valid-boolean-coll
                          (mapv (fn [iri]
                                  (s/valid? ::deprecated-strict-scalar
                                            {:iri iri :profile profile})) related))
