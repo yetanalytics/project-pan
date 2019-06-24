@@ -17,7 +17,7 @@
     false ;; we have false values in a boolean-coll
     (if-let [valids? (not-empty? (any-truthy? coll))]
       true ;; we have no falses and some true
-      false))) ;; we may have nils
+      true))) ;; we may have nils - case of iri living in current profile OR external profile
 
 (s/def ::valid-boolean-coll
   (fn [coll] valid-boolean-cool? coll))
