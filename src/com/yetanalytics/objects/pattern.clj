@@ -12,6 +12,8 @@
 (s/def ::definition ::ax/language-map)
 (s/def ::deprecated ::ax/boolean)
 
+;; TODO: ensure that our IRIs are either templates or patterns w/in the profile
+;; - Later item: pieces in external profiles
 (s/def ::alternates (s/coll-of ::ax/iri :type vector? :min-count 2))
 (s/def ::optional (s/keys :req-un [::id]))
 (s/def ::one-or-more (s/keys :req-un [::id]))
@@ -54,3 +56,4 @@
 
 ;; TODO: MUST + MUST NOTS from Profile Authors: section
 ;; https://github.com/adlnet/xapi-profiles/blob/master/xapi-profiles-structure.md#90-patterns
+
