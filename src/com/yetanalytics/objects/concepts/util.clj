@@ -1,5 +1,10 @@
 (ns com.yetanalytics.objects.concepts.util
-  (:require [com.yetanalytics.util :as u]))
+  (:require [com.yetanalytics.util :as u]
+            [clojure.spec.alpha :as s]))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; fns
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn filter-concepts
   [{:keys [target-type-str concepts ?deprecated]}]
@@ -26,5 +31,14 @@
                                               :?deprecated ?deprecated})]
     (u/containsv? concepts iri)))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; specs
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-
+(s/def ::inline-or-iri
+  (fn json-schema-xor? [ext]
+    (let [schema? (contains? ext :schema)
+          inline-schema? (contains? ext :inline-schema)]
+      (or (and schema? (not inline-schema?))
+          (and inline-schema? (not inline-schema?))
+          (and (not schema?) (not inline-schema?))))))
