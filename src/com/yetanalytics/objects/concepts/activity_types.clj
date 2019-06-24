@@ -55,18 +55,24 @@
                                                     :profile profile})
              (if (not-empty broader)
                (s/valid? ::u/valid-boolean-coll
+                         ;; TODO: refactor mapv to be more effecient
+                         ;; - will calc all possible iris from concepts for each iri in broader array
                          (mapv (fn [iri]
                                  (s/valid? ::in-profile-strict-scalar
                                            {:iri iri :profile profile})) broader))
                true)
              (if (not-empty narrower)
                (s/valid? ::u/valid-boolean-coll
+                         ;; TODO: refactor mapv to be more effecient
+                         ;; - will calc all possible iris from concepts for each iri in broader array
                          (mapv (fn [iri]
                                  (s/valid? ::in-profile-strict-scalar
                                            {:iri iri :profile profile})) narrower))
                true)
              (if (not-empty related)
                (s/valid? ::u/valid-boolean-coll
+                         ;; TODO: refactor mapv to be more effecient
+                         ;; - will calc all possible iris from concepts for each iri in broader array
                          (mapv (fn [iri]
                                  (s/valid? ::deprecated-strict-scalar
                                            {:iri iri :profile profile})) related))
