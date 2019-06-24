@@ -1,13 +1,14 @@
 (ns com.yetanalytics.objects-test.object-test
   (:require [clojure.test :refer :all]
             [clojure.spec.alpha :as s]
-            [com.yetanalytics.utils :refer :all]
-            [com.yetanalytics.objects.object :as object]))
+            [com.yetanalytics.util :as u]
+            [com.yetanalytics.axioms :as ax]
+            [com.yetanalytics.utils :refer :all]))
 
 (deftest id-test
   (testing "object IDs"
     (should-satisfy+
-     ::object/id
+     ::ax/iri
      "https://w3id.org/xapi/catch"    ; Profile ID
      "https://www.yetanalyitcs.io"    ; Author ID
      ; Activity ID
@@ -59,45 +60,33 @@
 
 (deftest in-scheme-test
   (testing "inScheme property"
-    (should-satisfy ::object/in-scheme
-                    "https://w3id.org/xapi/catch/v1")
-    (should-not-satisfy ::object/in-scheme "what the pineapple")))
+    (should-satisfy ::u/in-scheme-strict-scalar
+                    {:in-scheme "https://w3id.org/xapi/catch/v1"
+                     :profile {:versions [{:id "https://foo.bar"}
+                                          {:id "https://w3id.org/xapi/catch/v1"}]}})
+    (should-not-satisfy ::u/in-scheme-strict-scalar
+                        {:in-scheme "https://w3id.org/xapi/catch/v1"
+                         :profile {:versions [{:id "https://foo.bar"}
+                                              {:id "https://foo.baz"}]}})))
 
 (deftest pref-label-test
   (testing "prefLabel property"
-    (is (s/valid? ::object/pref-label {"en" "Catch"}))
-    (is (not (s/valid? ::object/pref-label {"en" ""})))
-    (is (not (s/valid? ::object/pref-label {:en "Catch"})))))
+    (is (s/valid? ::ax/language-map {"en" "Catch"}))
+    (is (s/valid? ::ax/language-map {"en" ""}))
+    (is (s/valid? ::ax/language-map {:en "Catch"}))))
 
 (deftest definition-test
   (testing "definition property"
-    (is (s/valid? ::object/definition
+    (is (s/valid? ::ax/language-map
                   {"en" "A learning path within the EPISD Dual Language
                         Competency Framework"}))
-    (is (s/valid? ::object/definition
-                  {"zh-guoyu" "双语能力框架学习计划"}))
-    (is (not (s/valid? ::object/definition {"en" ""})))))
+    (is (s/valid? ::ax/language-map
+                  {"zh-guoyu" "双语能力框架学习计划"}))))
 
 (deftest deprecated-test
   (testing "deprecated property"
-    (should-satisfy ::object/deprecated true)
-    (should-satisfy ::object/deprecated false)
-    (should-not-satisfy ::object/deprecated 74)))
-
-(deftest description-test
-  (testing "prefLabel and definition properties at once"
-    (is (s/valid? ::object/description
-                  {:pref-label {"en" "Catch"}
-                   :definition {"en" "The profile for the trinity education
-                                     application CATCH"}}))))
-
-(deftest common-test
-  (testing "descriptions plus inScheme and deprecated properties"
-    (is (s/valid? ::object/common
-                  {:in-scheme "https://w3id.org/xapi/catch/v1"
-                   :pref-label {"en" "Domain"}
-                   :definition {"en" "A learning path within the EPISD Dual
-                                     Language Competency Framework"}
-                   :deprecated false}))))
+    (should-satisfy ::ax/boolean true)
+    (should-satisfy ::ax/boolean false)
+    (should-not-satisfy ::ax/boolean 74)))
 
 (run-tests)
