@@ -25,7 +25,9 @@
 ;; Language Maps
 ;; Differs from xs/language-map in that empty strings are banned.
 (s/def ::language-map
-  (s/map-of (s/or :string ::xs/language-tag :keyword keyword?)
+  (s/map-of (s/or :string ::xs/language-tag
+                  :keyword keyword? ;; TODO: remove dev, ensure stringify of all keys w/in json object
+                  )
             (s/or :not-empty ::xs/string-not-empty
                   :maybe-empty string?)
             :min-count 1))
