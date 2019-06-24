@@ -45,6 +45,7 @@
              (s/valid? ::u/in-scheme-strict-scalar {:in-scheme in-scheme
                                                     :profile profile})
              (if (not-empty recommended-verbs)
+               ;; TODO: mapv is ineffecient, make set of possibilities for every rec type
                (s/valid? ::u/valid-boolean-coll
                          (mapv (fn [iri]
                                  (s/valid? ::in-profile-strict-scalar

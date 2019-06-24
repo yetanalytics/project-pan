@@ -46,6 +46,7 @@
                                                     :profile profile})
              (if (not-empty recommended-activity-types)
                (s/valid? ::u/valid-boolean-coll
+                         ;; TODO: mapv is ineffecient, make set of possibilities for every rec type
                          (mapv (fn [iri]
                                  (s/valid? ::in-profile-strict-scalar
                                            {:iri iri :profile profile})) recommended-activity-types))
