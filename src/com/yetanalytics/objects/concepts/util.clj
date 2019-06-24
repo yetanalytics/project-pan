@@ -36,8 +36,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (s/def ::inline-or-iri
-  (fn json-schema-xor? [ext]
+  (fn [ext]
     (let [schema? (contains? ext :schema)
           inline-schema? (contains? ext :inline-schema)]
       (not (and schema? inline-schema?)))))
-
