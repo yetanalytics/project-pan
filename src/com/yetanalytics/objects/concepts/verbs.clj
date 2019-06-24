@@ -32,6 +32,13 @@
 ;; in-profile validation+ helpers
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+
+;; Validation + helpers are for demo
+;; - writen before top level profile validation was desinged
+;; - will be refactored based on "control loop" methedology
+;; -- see com.yetanalytics.objects.concepts.util/validate-profile
+;; --- example that isn't fully filled out but should give you a good idea of the processes
+
 (s/def ::deprecated-strict-scalar
   (fn [{:keys [iri profile]}]
     (cu/iri-in-profile-concepts?
@@ -55,18 +62,24 @@
                                                     :profile profile})
              (if (not-empty broader)
                (s/valid? ::u/valid-boolean-coll
+                         ;; TODO: refactor mapv to be more effecient
+                         ;; - will calc all possible iris from concepts for each iri in broader array
                          (mapv (fn [iri]
                                  (s/valid? ::in-profile-strict-scalar
                                            {:iri iri :profile profile})) broader))
                true)
              (if (not-empty narrower)
                (s/valid? ::u/valid-boolean-coll
+                         ;; TODO: refactor mapv to be more effecient
+                         ;; - will calc all possible iris from concepts for each iri in broader array
                          (mapv (fn [iri]
                                  (s/valid? ::in-profile-strict-scalar
                                            {:iri iri :profile profile})) narrower))
                true)
              (if (not-empty related)
                (s/valid? ::u/valid-boolean-coll
+                         ;; TODO: refactor mapv to be more effecient
+                         ;; - will calc all possible iris from concepts for each iri in broader array
                          (mapv (fn [iri]
                                  (s/valid? ::deprecated-strict-scalar
                                            {:iri iri :profile profile})) related))
