@@ -39,6 +39,5 @@
   (fn json-schema-xor? [ext]
     (let [schema? (contains? ext :schema)
           inline-schema? (contains? ext :inline-schema)]
-      (or (and schema? (not inline-schema?))
-          (and inline-schema? (not inline-schema?))
-          (and (not schema?) (not inline-schema?))))))
+      (not (and schema? inline-schema?)))))
+
