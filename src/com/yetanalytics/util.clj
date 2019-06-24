@@ -11,7 +11,7 @@
 
 (defn any-truthy? [coll] (filterv true? coll))
 
-(defn valid-boolean-cool?
+(defn valid-boolean-coll?
   [coll]
   (if-let [invalids? (not-empty? (any-falsy? coll))]
     false ;; we have false values in a boolean-coll
@@ -20,7 +20,7 @@
       true))) ;; we may have nils - case of iri living in current profile OR external profile
 
 (s/def ::valid-boolean-coll
-  (fn [coll] valid-boolean-cool? coll))
+  (fn [coll] valid-boolean-coll? coll))
 
 (defn only-ids [filtered-coll] (mapv (fn [{:keys [id]}] id) filtered-coll))
 
