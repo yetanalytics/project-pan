@@ -6,10 +6,12 @@ specification: https://github.com/adlnet/xapi-profiles
 ## TODO
 - Write axiom specs
     - IRIs/IRLs/URIs/URLs
-    - JSON Schema
-    - JSONPath
-    - Language Maps
-    - Misc. (Booleans, Arbitrary strings, Timestamps)
+    - JSON Schema :heavy_check_mark:
+        - Currently only draft-07 supported
+    - JSONPath :heavy_check_mark:
+    - Language Maps :heavy_check_mark:
+    - Keywords
+    - Misc. (Booleans, Arbitrary strings, Timestamps) :heavy_check_mark:
     - Arrays of axioms
 - Write composite specs for 
     - Profiles (top-level)

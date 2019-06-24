@@ -1,5 +1,11 @@
 {:paths ["resources" "src"]
- :deps {org.clojure/clojure {:mvn/version "RELEASE"}}
+ :deps {org.clojure/clojure {:mvn/version "RELEASE"}
+        org.clojure/test.check {:mvn/version "0.10.0-alpha2"}
+        com.yetanalytics/xapi-schema {:git/url "https://github.com/yetanalytics/xapi-schema"
+                                      :sha "e2c517e7adcedc7f3012b90bce274e2c33cdbcc1"}
+        cheshire {:mvn/version "5.8.1"}
+        com.github.everit-org.json-schema/org.everit.json.schema {:mvn/version "1.11.1"}
+        luposlip/json-schema {:mvn/version "0.1.6"}}
  :aliases
  {:test {:extra-paths ["test"]
          :extra-deps {org.clojure/test.check {:mvn/version "RELEASE"}}}
@@ -8,4 +14,6 @@
                 {:git/url "https://github.com/cognitect-labs/test-runner"
                  :sha "76568540e7f40268ad2b646110f237a60295fa3c"}}
    :main-opts ["-m" "cognitect.test-runner"
-               "-d" "test"]}}}
+               "-d" "test"]}}
+  :mvn/repos {"jitpack" {:url "https://jitpack.io"}}
+ }
