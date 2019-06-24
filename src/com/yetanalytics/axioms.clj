@@ -13,6 +13,7 @@
 
 ;; Arbitrary strings
 ;; By the xAPI-Profile specification, they cannot be empty
+
 (s/def ::string ::xs/string-not-empty)
 ; (s/valid? ::string "")
 ; (s/valid? ::string "Hello World")
@@ -24,8 +25,9 @@
 ;; Language Maps
 ;; Differs from xs/language-map in that empty strings are banned.
 (s/def ::language-map
-  (s/map-of ::xs/language-tag
-            ::xs/string-not-empty
+  (s/map-of (s/or :string ::xs/language-tag :keyword keyword?)
+            (s/or :not-empty ::xs/string-not-empty
+                  :maybe-empty string?)
             :min-count 1))
 
 ;; JSONPath strings
@@ -84,3 +86,6 @@
 (s/def ::irl ::xs/irl)
 (s/def ::uri ::xs/iri)
 (s/def ::url ::xs/irl)
+
+;; Array of iris
+(s/def ::array-of-iri (s/coll-of ::iri :type vector? :min-count 1))
