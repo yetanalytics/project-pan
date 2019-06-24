@@ -1,8 +1,7 @@
 (ns com.yetanalytics.objects.template
   (:require [clojure.spec.alpha :as s]
             [com.yetanalytics.axioms :as ax]
-            [com.yetanalytics.objects.templates.rules :as rules]
-            [com.yetanalytics.objects.object :as object]))
+            [com.yetanalytics.objects.templates.rules :as rules]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Statement Template
