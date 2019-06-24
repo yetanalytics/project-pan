@@ -29,3 +29,5 @@
                    ::concept/concepts
                    ::template/templates
                    ::pattern/patterns]))
+
+;; TODO: stricter validation levels
