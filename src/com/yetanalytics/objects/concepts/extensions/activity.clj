@@ -20,22 +20,12 @@
 (s/def ::schema ::ax/iri)
 (s/def ::inline-schema ::ax/json-schema)
 
-(s/def ::inline-or-iri
-  (fn [m]
-    (cond (contains? m :schema)
-          (false? (contains? m :inline-schema))
-          (contains? m :inline-schema)
-          (false? (contains? m :schema))
-          :else true)))
-
-(s/def ::activity-extension
+(s/def ::extension
   (s/and (s/keys
           :req-un [::id ::type ::in-scheme ::pref-label ::definition]
           :opt-un [::deprecated ::recommended-activity-types ::recommended-verbs
                    ::context ::schema ::inline-schema])
-         ::inline-or-iri))
-
-(s/def ::activity-extensions (s/coll-of ::activity-extension :type vector?))
+         ::cu/inline-or-iri))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; in-profile validation+ helpers
@@ -48,10 +38,10 @@
       :target-type-str "ActivityType"
       :profile profile})))
 
-(s/def ::activity-extension-in-profile-strict
+(s/def ::extension-in-profile-strict
   (fn [{:keys [extension profile]}]
     (let [{:keys [in-scheme recommended-activity-types]} extension]
-      (s/and (s/valid? ::activity-extension extension)
+      (s/and (s/valid? ::extension extension)
              (s/valid? ::u/in-scheme-strict-scalar {:in-scheme in-scheme
                                                     :profile profile})
              (if (not-empty recommended-activity-types)
@@ -65,9 +55,9 @@
 ;; validation which requires external calls
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(s/def ::activity-extension-complete-validation
+(s/def ::extension-complete-validation
   (fn [{:keys [extension profile]}]
-    (s/valid? ::activity-extension-in-profile-strict
+    (s/valid? ::extension-in-profile-strict
               {:extension extension :profile profile})
     ;; TODO: json-ld context validation
     ;; context - valid json-ld context

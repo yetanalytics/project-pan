@@ -13,6 +13,7 @@
 (s/def ::in-scheme ::ax/iri)
 (s/def ::pref-label ::ax/language-map)
 (s/def ::definition ::ax/language-map)
+(s/def ::deprecated ::ax/boolean)
 (s/def ::broader ::ax/array-of-iri)
 (s/def ::broad-match ::ax/array-of-iri)
 (s/def ::narrower ::ax/array-of-iri)
@@ -26,8 +27,6 @@
    :req-un [::id ::type ::in-scheme ::pref-label ::definition]
    :opt-un [::deprecated ::broader ::broad-match ::narrower
             ::narrow-match ::related ::related-match ::exact-match]))
-
-(s/def ::attachment-usage-types (s/coll-of ::attachment-usage-type :type vector?))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; in-profile validation+ helpers
