@@ -4,42 +4,6 @@
             [com.yetanalytics.utils :refer :all]
             [com.yetanalytics.objects.concepts.verbs :as verbs]))
 
-; (deftest schema-test
-;   (testing "(JSON) schema property"
-;     ; Example taken from the SCORM profile
-;     (should-satisfy ::concept/schema
-;                     "https://w3id.org/xapi/scorm/activity-state/scorm.profile.activity.state.schema")
-;     (should-not-satisfy ::concept/schema "what the pineapple")))
-
-; (deftest inline-schema-test
-;   (testing "inline (JSON) schema property"
-;     (should-satisfy ::concept/inline-schema
-;                     "{\"type\":\"array\",
-;                       \"items\":{\"type\":\"string\"},
-;                       \"uniqueItems\":true}")
-;     (should-satisfy ::concept/inline-schema
-;                     "{\"type\":\"object\",
-;                       \"properties\":{
-;                         \"application\":{\"type\":\"string\"},
-;                         \"background\":{\"type\":\"string\"},
-;                         \"adaptation\":{\"type\":\"string\"},
-;                         \"assessment\":{\"type\":\"string\"},
-;                         \"scaffolding\":{\"type\":\"string\"},
-;                         \"review\":{\"type\":\"string\"},
-;                         \"group-options\":{\"type\":\"string\"},
-;                         \"vocabulary\":{
-;                           \"type\":\"array\",
-;                           \"items\":{
-;                             \"type\":\"string\",
-;                             \"uniqueItems\":true}},
-;                           \"language-skills\":{
-;                             \"type\":\"array\",
-;                             \"items\":{
-;                              \"type\":\"string\",
-;                              \"uniqueItems\":true}},
-;                           \"linguistic-cognitive-scaffolds\":{\"type\":\"string\"}}}")
-;     (should-not-satisfy ::concept/inline-schema "what the pineapple")))
-
 (deftest type-test
   (testing "type property"
     (should-satisfy+ ::verbs/type
