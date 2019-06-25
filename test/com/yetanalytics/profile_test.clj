@@ -1,8 +1,8 @@
-(ns com.yetanalytics.objects-test.profile-test
+(ns com.yetanalytics.profile-test
   (:require [clojure.test :refer :all]
             [clojure.spec.alpha :as s]
             [com.yetanalytics.utils :refer :all]
-            [com.yetanalytics.objects.profile :as profile]))
+            [com.yetanalytics.profile :as profile]))
 
 (deftest context-test
   (testing "context property"
