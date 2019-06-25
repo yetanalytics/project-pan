@@ -84,6 +84,26 @@
                         ["https://w3id.org/xapi/catch/patterns#system-updates-status-incomplete"])
     (should-not-satisfy ::pattern/zero-or-more "")))
 
+(deftest pattern-clause-test
+  (testing "ensure that only one of the five regex properties are included"
+    (should-satisfy+ ::pattern/pattern-clause
+                     {:alternates "foo"}
+                     {:optional "foo"}
+                     {:one-or-more "foo"}
+                     {:sequence "foo"}
+                     {:zero-or-more "foo"}
+                     :bad
+                     ;; 32 possible combos in total - impractical to test all
+                     {}
+                     {:alternates "foo" :optional "bar"}
+                     {:optional "foo" :one-or-more "bar"}
+                     {:one-or-more "foo" :sequence "bar"}
+                     {:sequence "foo" :zero-or-more "bar"}
+                     {:alternates "foo" :optional "baz" :one-or-more "bar"}
+                     {:optional "foo" :one-or-more "baz" :zero-or-more "bar"}
+                     {:alternates "foo" :optional "baz" :one-or-more "goop"
+                      :sequence "durr" :zero-or-more "bar"})))
+
 (deftest primary-pattern-test
   (testing "primary pattern"
     (is (s/valid? ::pattern/pattern
