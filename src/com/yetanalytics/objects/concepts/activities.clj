@@ -19,9 +19,11 @@
                                        (s/coll-of ::ax/uri :type vector?)
                                        (partial some #(= context-url %)))))
 
+;; Need to use this function instead of s/merge because of restrict-keys in
+;; xapi-schema function.
 (s/def ::activity-definition
-  (s/merge :activity/definition ;; from xapi-schema
-           (s/keys :req-un [::context])))
+  (s/and (s/keys :req-un [::context])
+         (fn [adef] (s/valid? :activity/definition (dissoc adef :context)))))
 
 (s/def ::activity
   (s/keys :req-un [::id ::type ::in-scheme ::activity-definition]
@@ -48,4 +50,3 @@
 ;;        expand to absolute IRIs during JSON-LD processing
 ;; - see Profile Authors: bellow table at:
 ;; https://github.com/adlnet/xapi-profiles/blob/master/xapi-profiles-structure.md#74-activities
-
