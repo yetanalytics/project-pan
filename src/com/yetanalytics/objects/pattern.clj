@@ -1,5 +1,6 @@
 (ns com.yetanalytics.objects.pattern
   (:require [clojure.spec.alpha :as s]
+            [com.yetanalytics.util :as util]
             [com.yetanalytics.axioms :as ax]))
 
 ;; Basic properties
@@ -48,9 +49,26 @@
                           ::sequence ::zero-or-more])
          ::pattern-clause))
 
+;; TODO Put in Semi-strict validation
+(s/def ::pattern+
+  (fn [pattern]
+    (s/valid? ::pattern pattern)))
+
 (s/def ::patterns
   (s/coll-of (s/or :pattern ::pattern
                    :primary ::primary-pattern) :kind vector? :min-count 1))
+
+(s/def ::explain-patterns
+  (fn [patterns]
+    (util/explain-spec-map patterns)))
+
+(s/def ::patterns+
+  (fn [{patterns :patterns :as args}]
+    (util/spec-map+ ::pattern+ :pattern patterns args)))
+
+(s/def ::explain-patterns+
+  (fn [{patterns :patterns :as args}]
+    (util/explain-spec-map+ ::pattern+ :pattern patterns args)))
 
 ;; TODO: MUST + MUST NOTS from Profile Authors: section
 ;; https://github.com/adlnet/xapi-profiles/blob/master/xapi-profiles-structure.md#90-patterns
