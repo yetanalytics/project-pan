@@ -104,9 +104,9 @@
   [profile]
   (concat
    (filterv some? [(s/explain-data ::profile-top-level profile)])
-   (util/error-map ::concept/concept (profile :concepts))
-   (util/error-map ::template/template (profile :templates))
-   (util/error-map ::pattern/pattern (profile :pattern))))
+   (concept/explain-concepts (profile :concepts))
+   (template/explain-templates (profile :templates))
+   (pattern/explain-patterns (profile :templates))))
 
 (defn validate-profile-noshort+
   "Semi-strict validation without short-circuiting"
@@ -119,15 +119,16 @@
         concepts-map (id-object-map profile :concepts)
         templates-map (id-object-map profile :templates)
         patterns-map (id-object-map pattern :patterns)]
-    (s/and (s/valid? ::profile-top-level profile)
-           (s/valid? ::concepts+ {:concepts concepts
-                                  :vid-set vid-set
-                                  :concepts-map concepts-map})
-           (s/valid? ::templates+ {:templates templates
+    (concat
+     (filterv some? [(s/explain-data ::profile-top-level profile)])
+     (concept/explain-concepts+ {:concepts concepts
+                                 :vid-set vid-set
+                                 :concepts-map concepts-map})
+     (template/explain-templates+ {:templates templates
                                    :vid-set vid-set
                                    :concepts-map concepts-map
                                    :templates-map templates-map})
-           (s/valid? ::patterns+ {:patterns patterns
-                                  :vid-set vid-set
-                                  :templates-map templates-map
-                                  :patterns-map patterns-map}))))
+     (pattern/explain-patterns+ {:patterns patterns
+                                 :vid-set vid-set
+                                 :templates-map templates-map
+                                 :patterns-map patterns-map}))))

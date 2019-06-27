@@ -58,7 +58,7 @@
   (s/coll-of (s/or :pattern ::pattern
                    :primary ::primary-pattern) :kind vector? :min-count 1))
 
-(s/def ::explain-patterns
+(defn explain-patterns
   (fn [patterns]
     (util/explain-spec-map patterns)))
 
@@ -66,7 +66,7 @@
   (fn [{patterns :patterns :as args}]
     (util/spec-map+ ::pattern+ :pattern patterns args)))
 
-(s/def ::explain-patterns+
+(defn explain-patterns+
   (fn [{patterns :patterns :as args}]
     (util/explain-spec-map+ ::pattern+ :pattern patterns args)))
 

@@ -54,19 +54,19 @@
 
 (s/def ::template+
   (fn [{:keys [template vid-set concepts-map templates-map]}])
-  (s/and (s/valid? ::template template)
-         (comment "Some other thing")))
+  (and (s/valid? ::template template)
+       (comment "Some other thing")))
 
 (s/def ::templates (s/coll-of ::template :kind vector? :min-count 1))
 
-(s/def ::explain-templates
-  (fn [templates]
-    (util/explain-spec-map templates)))
+(defn explain-templates
+  [templates]
+  (util/explain-spec-map templates))
 
 (s/def ::templates+
   (fn [{templates :templates :as args}]
     (util/spec-map+ ::template+ :template templates args)))
 
-(s/def ::explain-templates+
-  (fn [{templates :templates :as args}]
-    (util/explain-spec-map+ ::template+ :template templates args)))
+(defn explain-templates+
+  [{templates :templates :as args}]
+  (util/explain-spec-map+ ::template+ :template templates args))

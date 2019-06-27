@@ -7,13 +7,13 @@
             [com.yetanalytics.objects.concepts.extensions.result :as re]
             [com.yetanalytics.objects.concepts.extensions.context :as ce]
             [com.yetanalytics.objects.concepts.extensions.activity :as ae]
-            [com.yetanalytics.objects.concepts.attachment-usage-types 
+            [com.yetanalytics.objects.concepts.attachment-usage-types
              :as a-ut]
-            [com.yetanalytics.objects.concepts.document-resources.state 
+            [com.yetanalytics.objects.concepts.document-resources.state
              :as state]
-            [com.yetanalytics.objects.concepts.document-resources.agent-profile 
+            [com.yetanalytics.objects.concepts.document-resources.agent-profile
              :as agent-p]
-            [com.yetanalytics.objects.concepts.document-resources.activity-profile 
+            [com.yetanalytics.objects.concepts.document-resources.activity-profile
              :as activity-p]))
 
 (s/def ::concept
@@ -42,7 +42,7 @@
 
 (s/def ::concepts (s/coll-of ::concept :kind vector?))
 
-(s/def ::explain-concepts
+(defn ::explain-concepts
   (fn [concepts]
     (util/explain-spec-map concepts)))
 
@@ -50,6 +50,6 @@
   (fn [{concepts :concepts :as args}]
     (util/spec-map+ ::concept+ :concept concepts args)))
 
-(s/def ::explain-concepts+
+(defn ::explain-concepts+
   (fn [{concepts :concepts :as args}]
     (util/explain-spec-map+ ::concept+ :concept concepts args)))
