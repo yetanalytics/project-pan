@@ -32,45 +32,83 @@
 ;; in-profile validation+ helpers
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(s/def ::deprecated-strict-scalar
-  (fn [{:keys [iri profile]}]
-    (cu/iri-in-profile-concepts?
-     {:iri iri
-      :target-type-str "ActivityType"
-      :profile profile
-      :?deprecated true})))
 
-(s/def ::in-profile-strict-scalar
-  (fn [{:keys [iri profile]}]
-    (cu/iri-in-profile-concepts?
-     {:iri iri
-      :target-type-str "ActivityType"
-      :profile profile})))
+(s/def ::activity-type-basic
+  (fn [{:keys [object]}] (s/valid? ::activity-type object)))
 
-(s/def ::activity-type-in-profile-strict
-  (fn [{:keys [activity-type profile]}]
-    (let [{:keys [in-scheme broader narrower related]} activity-type]
-      (s/and (s/valid? ::activity-type activity-type)
-             (s/valid? ::u/in-scheme-strict-scalar {:in-scheme in-scheme
-                                                    :profile profile})
-             (if (not-empty broader)
-               (s/valid? ::u/valid-boolean-coll
-                         (mapv (fn [iri]
-                                 (s/valid? ::in-profile-strict-scalar
-                                           {:iri iri :profile profile})) broader))
-               true)
-             (if (not-empty narrower)
-               (s/valid? ::u/valid-boolean-coll
-                         (mapv (fn [iri]
-                                 (s/valid? ::in-profile-strict-scalar
-                                           {:iri iri :profile profile})) narrower))
-               true)
-             (if (not-empty related)
-               (s/valid? ::u/valid-boolean-coll
-                         (mapv (fn [iri]
-                                 (s/valid? ::deprecated-strict-scalar
-                                           {:iri iri :profile profile})) related))
-               true)))))
+(s/def ::broader-concept-iris
+  (fn [{:keys [object concepts-table]}]
+    (let [version (:in-scheme object) iri-vec (:broader object)]
+      (if (some? iri-vec)
+        (every?
+         (map (partial cu/relate-concept "ActivityType" version concepts-table)
+              iri-vec))
+        true))))
+
+(s/def ::narrower-concept-iris
+  (fn [{:keys [object concepts-table]}]
+    (let [version (:in-scheme object) iri-vec (:narrower object)]
+      (if (some? iri-vec)
+        (every?
+         (map (partial cu/relate-concept "ActivityType" version concepts-table)
+              iri-vec))
+        true))))
+
+(s/def ::related-concept-iris
+  (fn [{:keys [object concepts-table]}]
+    (let [version (:in-scheme object) iri-vec (:related object)]
+      (if (some? iri-vec)
+        (every?
+         (map (partial cu/relate-concept "ActivityType" version concepts-table)
+              iri-vec))
+        true))))
+
+(s/def ::activity-type+
+  (s/and ::activity-type-basic
+         ::u/in-scheme-valid?
+         ::broader-concept-iris
+         ::narrower-concept-iris
+         ::related-concept-iris))
+
+; (s/def ::deprecated-strict-scalar
+;   (fn [{:keys [iri profile]}]
+;     (cu/iri-in-profile-concepts?
+;      {:iri iri
+;       :target-type-str "ActivityType"
+;       :profile profile
+;       :?deprecated true})))
+
+; (s/def ::in-profile-strict-scalar
+;   (fn [{:keys [iri profile]}]
+;     (cu/iri-in-profile-concepts?
+;      {:iri iri
+;       :target-type-str "ActivityType"
+;       :profile profile})))
+
+; (s/def ::activity-type-in-profile-strict
+;   (fn [{:keys [activity-type profile]}]
+;     (let [{:keys [in-scheme broader narrower related]} activity-type]
+;       (s/and (s/valid? ::activity-type activity-type)
+;              (s/valid? ::u/in-scheme-strict-scalar {:in-scheme in-scheme
+;                                                     :profile profile})
+;              (if (not-empty broader)
+;                (s/valid? ::u/valid-boolean-coll
+;                          (mapv (fn [iri]
+;                                  (s/valid? ::in-profile-strict-scalar
+;                                            {:iri iri :profile profile})) broader))
+;                true)
+;              (if (not-empty narrower)
+;                (s/valid? ::u/valid-boolean-coll
+;                          (mapv (fn [iri]
+;                                  (s/valid? ::in-profile-strict-scalar
+;                                            {:iri iri :profile profile})) narrower))
+;                true)
+;              (if (not-empty related)
+;                (s/valid? ::u/valid-boolean-coll
+;                          (mapv (fn [iri]
+;                                  (s/valid? ::deprecated-strict-scalar
+;                                            {:iri iri :profile profile})) related))
+;                true)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; validation which requires external profile

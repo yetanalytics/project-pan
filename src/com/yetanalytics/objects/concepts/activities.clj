@@ -33,12 +33,19 @@
 ;; in-profile validation+ helpers
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(s/def ::activity-in-profile-strict
-  (fn [{:keys [activity profile]}]
-    (let [{:keys [in-scheme]} activity]
-      (s/and (s/valid? ::activity activity)
-             (s/valid? ::u/in-scheme-strict-scalar {:in-scheme in-scheme
-                                                    :profile profile})))))
+(s/def ::activity-basic
+  (fn [{:keys [object]}] (s/valid? ::activity object)))
+
+(s/def ::activity+
+  (s/and ::activity-basic
+         ::u/in-scheme-valid?))
+
+; (s/def ::activity-in-profile-strict
+;   (fn [{:keys [activity profile]}]
+;     (let [{:keys [in-scheme]} activity]
+;       (s/and (s/valid? ::activity activity)
+;              (s/valid? ::u/in-scheme-strict-scalar {:in-scheme in-scheme
+;                                                     :profile profile})))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; advanced processing for spec MUSTS

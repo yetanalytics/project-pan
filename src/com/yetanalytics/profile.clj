@@ -74,7 +74,7 @@
   (s/explain-data ::profile profile))
 
 (defn validate-profile+
-  "Semi-strict validation; validate local IRIs"
+  "Semi-strict validation; validate inScheme property and local IRIs"
   [profile]
   (let [concepts (:concepts profile)
         templates (:templates template)
@@ -83,19 +83,48 @@
         vid-set (version-set profile)
         concepts-map (id-object-map profile :concepts)
         templates-map (id-object-map profile :templates)
-        patterns-map (id-object-map pattern :patterns)]
-    (s/and (s/valid? ::profile-top-level profile)
-           (s/valid? ::concepts+ {:concepts concepts
-                                  :vid-set vid-set
-                                  :concepts-map concepts-map})
-           (s/valid? ::templates+ {:templates templates
-                                   :vid-set vid-set
+        patterns-map (id-object-map pattern :patterns)
+        ;; Combine objects and arguments
+        concepts-args (util/combine-args
+                       concepts {:vid-set vidset
+                                 :concepts-map concepts-map})
+        templates-args (util/combine-args
+                        templates {:vid-set vidset
                                    :concepts-map concepts-map
                                    :templates-map templates-map})
-           (s/valid? ::patterns+ {:patterns patterns
-                                  :vid-set vid-set
-                                  :templates-map templates-map
-                                  :patterns-map patterns-map}))))
+        patterns-map (util/combine-args
+                      patterns {:vid-set vidset
+                                :templates-map templates-map
+                                :patterns-map patterns-map})]
+    ;; TODO Combine the explain-data into a single array
+    (and (s/valid? ::profile-top-level profile)
+         (s/valid? ::concepts+ concepts-args)
+         (s/valid? ::templates+ templates-args)
+         (s/valid? ::patterns+ patterns-args))))
+
+; (defn validate-profile+
+;   "Semi-strict validation; validate local IRIs"
+;   [profile]
+;   (let [concepts (:concepts profile)
+;         templates (:templates template)
+;         patterns (:templates patterns)
+;         ;; Spec arguments
+;         vid-set (version-set profile)
+;         concepts-map (id-object-map profile :concepts)
+;         templates-map (id-object-map profile :templates)
+;         patterns-map (id-object-map pattern :patterns)]
+;     (s/and (s/valid? ::profile-top-level profile)
+;            (s/valid? ::concepts+ {:concepts concepts
+;                                   :vid-set vid-set
+;                                   :concepts-map concepts-map})
+;            (s/valid? ::templates+ {:templates templates
+;                                    :vid-set vid-set
+;                                    :concepts-map concepts-map
+;                                    :templates-map templates-map})
+;            (s/valid? ::patterns+ {:patterns patterns
+;                                   :vid-set vid-set
+;                                   :templates-map templates-map
+;                                   :patterns-map patterns-map}))))
 
 ;; Non short-circuit validation
 

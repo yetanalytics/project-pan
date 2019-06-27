@@ -15,7 +15,7 @@
 (s/def ::definition ::ax/language-map)
 (s/def ::deprecated ::ax/boolean)
 (s/def ::recommended-activity-types (fn [coll] (-> coll not-empty nil?))) ;; if present, it should be nil
-(s/def ::recommended-verbs ::ax/array-of-iri) 
+(s/def ::recommended-verbs ::ax/array-of-iri)
 (s/def ::context ::ax/iri)
 (s/def ::schema ::ax/iri)
 (s/def ::inline-schema ::ax/json-schema)
@@ -31,43 +31,71 @@
 ;; in-profile validation+ helpers
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(s/def ::in-profile-strict-scalar
-  (fn [{:keys [iri profile]}]
-    (cu/iri-in-profile-concepts?
-     {:iri iri
-      :target-type-str "Verb"
-      :profile profile})))
+(s/def ::extension-basic
+  (fn [{:keys [object]}] (s/valid? ::extension object)))
 
-(s/def ::extension-in-profile-strict
-  (fn [{:keys [extension profile]}]
-    (let [{:keys [in-scheme recommended-verbs]} extension]
-      (s/and (s/valid? ::extension extension)
-             (s/valid? ::u/in-scheme-strict-scalar {:in-scheme in-scheme
-                                                    :profile profile})
-             (if (not-empty recommended-verbs)
-               (s/valid? ::u/valid-boolean-coll
-                         (mapv (fn [iri]
-                                 (s/valid? ::in-profile-strict-scalar
-                                           {:iri iri :profile profile})) recommended-verbs))
-               true)))))
+(s/def ::recommended-verbs-uris
+  (fn [{:keys [object concepts-table]}]
+    (let [uri-vec (:recommended-verbs object)]
+      (if (some? uri-vec)
+        (every? (map (cu/recommended-concept "Verb" concepts-table) uri-vec))
+        true))))
+
+(s/def ::extension+
+  (s/and ::extension-basic
+         ::u/in-scheme-valid?
+         ::recommended-verbs-uris))
+
+
+
+; (s/def ::in-profile-strict-scalar
+;   (fn [{:keys [iri profile]}]
+;     (cu/iri-in-profile-concepts?
+;      {:iri iri
+;       :target-type-str "Verb"
+;       :profile profile})))
+
+; (s/def ::extension-in-profile-strict
+;   (fn [{:keys [extension profile]}]
+;     (let [{:keys [in-scheme recommended-verbs]} extension]
+;       (s/and (s/valid? ::extension extension)
+;              (s/valid? ::u/in-scheme-strict-scalar {:in-scheme in-scheme
+;                                                     :profile profile})
+;              (if (not-empty recommended-verbs)
+;                (s/valid? ::u/valid-boolean-coll
+;                          (mapv (fn [iri]
+;                                  (s/valid? ::in-profile-strict-scalar
+;                                            {:iri iri :profile profile})) recommended-verbs))
+;                true)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; validation which requires external calls
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+
 (s/def ::extension-complete-validation
   (fn [{:keys [extension profile]}]
     (s/valid? ::extension-in-profile-strict
-              {:extension extension :profile profile})
-    ;; TODO: json-ld context validation
-    ;; context - valid json-ld context
+              {:extension extension :profile
 
-    ;; TODO: get string from iri
-    ;; schema - json-schema string at other end of iri
+
+
+               profile})
+
+
+;; TODO: json-ld context validation
+
+
+
+
+;; context - valid json-ld context
+
+
+
+;; TODO: get string from iri
+
+
+
+
+;; schema - json-schema string at other end of iri
     ))
-
-
-
-
-
-

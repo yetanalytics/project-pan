@@ -81,5 +81,5 @@
     (in-scheme? in-scheme profile)))
 
 (s/def ::in-scheme-valid?
-  (fn [{:keys [object version-id-set]}]
-    (contains? version-id-set (object :in-scheme))))
+  (fn [{:keys [object vid-set]}]
+    (contains? vid-set (object :in-scheme))))
