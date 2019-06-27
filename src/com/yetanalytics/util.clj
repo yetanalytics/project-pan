@@ -69,6 +69,12 @@
     (filterv some?
              (mapv #(s/explain-data spec (conj args [obj-kword %])) ivec))))
 
+(defn combine-args
+  "Return a vector of maps that each include an object and additional
+  arguments."
+  [obj-vec args]
+  (mapv #(conj args [:object %]) obj-vec))
+
 ;; Determine whether a in-scheme IRI is valid within a profile.
 (s/def ::in-scheme-strict-scalar
   (fn [{:keys [in-scheme profile]}]
@@ -76,6 +82,4 @@
 
 (s/def ::in-scheme-valid?
   (fn [{:keys [object version-id-set]}]
-    (if (nil? version-id-set)
-      false
-      (contains? version-id-set (object :in-scheme)))))
+    (contains? version-id-set (object :in-scheme))))
