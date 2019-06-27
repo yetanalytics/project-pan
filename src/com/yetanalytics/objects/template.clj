@@ -59,14 +59,16 @@
 
 (s/def ::templates (s/coll-of ::template :kind vector? :min-count 1))
 
-(defn explain-templates
-  [templates]
-  (util/explain-spec-map templates))
+(s/def ::templates+ (s/coll-of ::template+ :kind vector? :min-count 1))
 
-(s/def ::templates+
-  (fn [{templates :templates :as args}]
-    (util/spec-map+ ::template+ :template templates args)))
+; (defn explain-templates
+;   [templates]
+;   (util/explain-spec-map templates))
 
-(defn explain-templates+
-  [{templates :templates :as args}]
-  (util/explain-spec-map+ ::template+ :template templates args))
+; (s/def ::templates+
+;   (fn [{templates :templates :as args}]
+;     (util/spec-map+ ::template+ :template templates args)))
+
+; (defn explain-templates+
+;   [{templates :templates :as args}]
+;   (util/explain-spec-map+ ::template+ :template templates args))

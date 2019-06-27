@@ -50,14 +50,16 @@
          ::pattern-clause))
 
 ;; TODO Put in Semi-strict validation
-(s/def ::pattern+
-  (fn [pattern]
-    (s/valid? ::pattern pattern)))
+(s/def ::primary-pattern+ nil)
+(s/def ::pattern+ nil)
 
 (s/def ::patterns
-  (s/coll-of (s/or :pattern ::pattern
+  (s/coll-of (s/or :no-primary ::pattern
                    :primary ::primary-pattern) :kind vector? :min-count 1))
 
+(s/def ::patterns+
+  (s/coll-of (s/or :no-primary ::pattern+
+                   :primary ::primary-pattern+) :kind vector? :min-count 1))
 (defn explain-patterns
   (fn [patterns]
     (util/explain-spec-map patterns)))
