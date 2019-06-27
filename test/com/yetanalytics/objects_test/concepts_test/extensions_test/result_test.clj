@@ -74,7 +74,7 @@
 
 (deftest context-extension
   (testing "ResultExtension extension"
-    (is (s/valid? ::context-extension/extension
+    (is (s/valid? ::result-extension/extension
                   {:id "https://w3id.org/xapi/catch/result-extensions/some-extension"
                    :type "ResultExtension"
                    :in-scheme "https://w3id.org/xapi/catch/v1"

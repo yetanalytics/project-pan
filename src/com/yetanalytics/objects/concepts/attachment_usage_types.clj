@@ -40,27 +40,27 @@
   (fn [{:keys [object concepts-table]}]
     (let [version (:in-scheme object) iri-vec (:broader object)]
       (if (some? iri-vec)
-        (every? (map (partial cu/relate-concept "AttachmentUsageType" version
-                              concepts-table)
-                     iri-vec))
+        (every? true? (map (partial cu/relate-concept "AttachmentUsageType" version
+                                    concepts-table)
+                           iri-vec))
         true))))
 
 (s/def ::narrower-concept-iris
   (fn [{:keys [object concepts-table]}]
     (let [version (:in-scheme object) iri-vec (:narrower object)]
       (if (some? iri-vec)
-        (every? (map (partial cu/relate-concept "AttachmentUsageType" version
-                              concepts-table)
-                     iri-vec))
+        (every? true? (map (partial cu/relate-concept "AttachmentUsageType" version
+                                    concepts-table)
+                           iri-vec))
         true))))
 
 (s/def ::related-concept-iris
   (fn [{:keys [object concepts-table]}]
     (let [version (:in-scheme object) iri-vec (:related object)]
       (if (some? iri-vec)
-        (every? (map (partial cu/relate-concept "AttachmentUsageType" version
-                              concepts-table)
-                     iri-vec))
+        (every? true? (map (partial cu/relate-concept "AttachmentUsageType" version
+                                    concepts-table)
+                           iri-vec))
         true))))
 
 (s/def ::attachment-usage-type+

@@ -40,7 +40,7 @@
     (let [uri-vec (:recommended-activity-types object)]
       (if (some? uri-vec)
         (every?
-         (map (cu/recommended-concept "ActivityType" concepts-table) uri-vec))
+         (map (cu/recommend-concept "ActivityType" concepts-table) uri-vec))
         true))))
 
 (s/def ::extension+

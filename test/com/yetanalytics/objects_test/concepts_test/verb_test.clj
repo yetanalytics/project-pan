@@ -80,44 +80,211 @@
                    :type "Verb"
                    :in-scheme "https://w3id.org/xapi/catch/v1"
                    :pref-label {"en" "presented"}
-                   :definition {"en"
+                   :definition {"en" "leading a discussion at an advocacy event"}}))))
 
-                                "leading a discussion at an advocacy
-                                     event"}}))))
+;; Testing in-profile conceptual relationships
 
-(run-tests)
+(def concept-map
+  {"https://w3id.org/xapi/catch/verbs/provided"
+   {:id "https://w3id.org/xapi/catch/verbs/provided"
+    :type "Verb"
+    :in-scheme "https://w3id.org/xapi/catch/v1"
+    :pref-label {"en" "provided"}
+    :definition {"en" "supplying a link to an online resource"}}
+   "https://w3id.org/xapi/catch/verbs/submitted"
+   {:id "https://w3id.org/xapi/catch/verbs/submitted"
+    :type "Verb"
+    :in-scheme "https://w3id.org/xapi/catch/v1"
+    :pref-label {"en" "submitted"}
+    :definition {"en" "The actor has clicked the submit or save button within the CATCH application"}}
+   "https://w3id.org/xapi/catch/verbs/uploaded"
+   {:id "https://w3id.org/xapi/catch/verbs/uploaded"
+    :type "Verb"
+    :in-scheme "https://w3id.org/xapi/catch/v1"
+    :pref-label {"en" "uploaded"}
+    :definition {"en" "Uploading a resource from a local file system"}
+    :broader ["https://w3id.org/xapi/catch/verbs/submitted"
+              "https://w3id.org/xapi/catch/verbs/provided"]}
+   "https://w3id.org/xapi/catch/verbs/uploaded-future"
+   {:id "https://w3id.org/xapi/catch/verbs/uploaded-future"
+    :type "Verb"
+    :in-scheme "https://w3id.org/xapi/catch/v2"
+    :pref-label {"en" "uploaded"}
+    :definition {"en" "Uploading a resource from a futuristic file system"}}
+   "https://w3id.org/xapi/catch/activitytypes/check-in"
+   {:id "https://w3id.org/xapi/catch/activitytypes/check-in"
+    :type "ActivityType"
+    :in-scheme "https://w3id.org/xapi/catch/v1"
+    :pref-label {"en" "Check in"}
+    :definition {"en" "An activity in which the learner reports progression."}}
+   "https://w3id.org/xapi/catch/attachment-usage-types/evidence/parent-survey"
+   {:id "https://w3id.org/xapi/catch/attachment-usage-types/evidence/parent-survey"
+    :type "AttachmentUsageType"
+    :in-scheme "https://w3id.org/xapi/catch/v1"
+    :pref-label {"en" "Parent Survey"}
+    :definition {"en" "A survey provided to the parent(s) of a DL student"}}})
 
-; (deftest verb-and-type-test
-;   (testing "Verb, ActivityType and AttachmentUsageType Concepts"
-;     (is (s/explain ::concept/concept
-;                    {:id "https://w3id.org/xapi/catch/verbs/presented"
-;                     :type "Verb"
-;                     :in-scheme "https://w3id.org/xapi/catch/v1"
-;                     :pref-label {"en" "presented"}
-;                     :definition {"en" "leading a discussion at an advocacy
-;                                      event"}}))
-;     (is (s/valid? ::concept/concept
-;                   {:id "https://w3id.org/xapi/catch/activitytypes/check-in"
-;                    :type "ActivityType"
-;                    :in-scheme "https://w3id.org/xapi/catch/v1"
-;                    :pref-label {"en" "Check in"}
-;                    :definition {"en" "An activity in which the learner reports
-;                                      progression."}}))
-;     (is (s/valid? ::concept/concept
-;                   {:id "https://w3id.org/xapi/catch/attachment-usage-types/supporting-documents"
-;                    :type "AttachmentUsageType"
-;                    :in-scheme "https://w3id.org/xapi/catch/v1"
-;                    :pref-label {"en" "Supporting documents"}
-;                    :definition {"en" "Documents which provide aditional 
-;                                      information about the lesson plan. Can be
-;                                      instructions for lesson plan execution
-;                                      demonstrating implementation or any other 
-;                                      documents related to the lesson plan"}}))
-;     (is (not (s/valid? ::concept/concept
-;                        {:id "https://w3id.org/xapi/catch/verbs/uploaded"
-;                         :type "Verb"
-;                         :in-scheme "https://w3id.org/xapi/catch/v1"
-;                         :pref-label {"en" "provided"}
-;                         :definition {"en" "Uploading a resource from a local file system"}
-;                         :related ["https://w3id.org/xapi/catch/verbs/submitted"
-;                                   "https://w3id.org/xapi/catch/verbs/provided"]})))))
+(deftest broader-concept-iris-test
+  (testing "Test that the verb correctly relates to broader concepts"
+    (is (s/valid? ::verbs/broader-concept-iris
+                  {:object {:id "https://w3id.org/xapi/catch/verbs/uploaded"
+                            :type "Verb"
+                            :in-scheme "https://w3id.org/xapi/catch/v1"
+                            :pref-label {"en" "uploaded"}
+                            :definition {"en" "Uploading a resource from a local file system"}
+                            :broader ["https://w3id.org/xapi/catch/verbs/submitted"
+                                      "https://w3id.org/xapi/catch/verbs/provided"]}
+                   :concepts-table concept-map}))
+    ;; Concepts that don't have a broader property should not be penalized
+    (is (s/valid? ::verbs/broader-concept-iris
+                  {:object {:id "https://w3id.org/xapi/catch/verbs/uploaded"
+                            :type "Verb"
+                            :in-scheme "https://w3id.org/xapi/catch/v1"
+                            :pref-label {"en" "uploaded"}
+                            :definition {"en" "Uploading a resource from a local file system"}}
+                   :concepts-table concept-map}))
+    ;; Concepts that include a broader concept that's not in the profile
+    (is (not (s/valid? ::verbs/broader-concept-iris
+                       {:object {:id "https://w3id.org/xapi/catch/verbs/uploaded"
+                                 :type "Verb"
+                                 :in-scheme "https://w3id.org/xapi/catch/v1"
+                                 :pref-label {"en" "uploaded"}
+                                 :definition {"en" "Uploading a resource from a local file system"}
+                                 :broader ["https://w3id.org/xapi/catch/verbs/bubbled"]}
+                        :concepts-table concept-map})))
+    ;; If a concept is of the wrong type
+    (is (not (s/valid? ::verbs/broader-concept-iris
+                       {:object {:id "https://w3id.org/xapi/catch/verbs/uploaded"
+                                 :type "Verb"
+                                 :in-scheme "https://w3id.org/xapi/catch/v1"
+                                 :pref-label {"en" "uploaded"}
+                                 :definition {"en" "Uploading a resource from a local file system"}
+                                 :broader ["https://w3id.org/xapi/catch/activitytypes/check-in"]}
+                        :concepts-table concept-map})))
+    (is (not (s/valid? ::verbs/broader-concept-iris
+                       {:object {:id "https://w3id.org/xapi/catch/verbs/uploaded"
+                                 :type "Verb"
+                                 :in-scheme "https://w3id.org/xapi/catch/v1"
+                                 :pref-label {"en" "uploaded"}
+                                 :definition {"en" "Uploading a resource from a local file system"}
+                                 :broader ["https://w3id.org/xapi/catch/attachment-usage-types/evidence/parent-survey"]}
+                        :concepts-table concept-map})))
+    ;; If a concept is of the wrong version
+    (is (not (s/valid? ::verbs/broader-concept-iris
+                       {:object {:id "https://w3id.org/xapi/catch/verbs/uploaded"
+                                 :type "Verb"
+                                 :in-scheme "https://w3id.org/xapi/catch/v1"
+                                 :pref-label {"en" "uploaded"}
+                                 :definition {"en" "Uploading a resource from a local file system"}
+                                 :broader ["https://w3id.org/xapi/catch/verbs/uploaded-future"]}
+                        :concepts-table concept-map})))))
+
+(deftest narrower-concept-iris-test
+  (testing "Test that the verb correctly relates to narrower concepts"
+    (is (s/valid? ::verbs/narrower-concept-iris
+                  {:object {:id "https://w3id.org/xapi/catch/verbs/uploaded"
+                            :type "Verb"
+                            :in-scheme "https://w3id.org/xapi/catch/v1"
+                            :pref-label {"en" "uploaded"}
+                            :definition {"en" "Uploading a resource from a local file system"}
+                            :narrower ["https://w3id.org/xapi/catch/verbs/submitted"
+                                       "https://w3id.org/xapi/catch/verbs/provided"]}
+                   :concepts-table concept-map}))
+    ;; Concepts that don't have a narrower property should not be penalized
+    (is (s/valid? ::verbs/narrower-concept-iris
+                  {:object {:id "https://w3id.org/xapi/catch/verbs/uploaded"
+                            :type "Verb"
+                            :in-scheme "https://w3id.org/xapi/catch/v1"
+                            :pref-label {"en" "uploaded"}
+                            :definition {"en" "Uploading a resource from a local file system"}}
+                   :concepts-table concept-map}))
+    ;; Concepts that include a narrower concept that's not in the profile
+    (is (not (s/valid? ::verbs/narrower-concept-iris
+                       {:object {:id "https://w3id.org/xapi/catch/verbs/uploaded"
+                                 :type "Verb"
+                                 :in-scheme "https://w3id.org/xapi/catch/v1"
+                                 :pref-label {"en" "uploaded"}
+                                 :definition {"en" "Uploading a resource from a local file system"}
+                                 :narrower ["https://w3id.org/xapi/catch/verbs/bubbled"]}
+                        :concepts-table concept-map})))
+    ;; If a concept is of the wrong type
+    (is (not (s/valid? ::verbs/narrower-concept-iris
+                       {:object {:id "https://w3id.org/xapi/catch/verbs/uploaded"
+                                 :type "Verb"
+                                 :in-scheme "https://w3id.org/xapi/catch/v1"
+                                 :pref-label {"en" "uploaded"}
+                                 :definition {"en" "Uploading a resource from a local file system"}
+                                 :narrower ["https://w3id.org/xapi/catch/activitytypes/check-in"]}
+                        :concepts-table concept-map})))
+    (is (not (s/valid? ::verbs/narrower-concept-iris
+                       {:object {:id "https://w3id.org/xapi/catch/verbs/uploaded"
+                                 :type "Verb"
+                                 :in-scheme "https://w3id.org/xapi/catch/v1"
+                                 :pref-label {"en" "uploaded"}
+                                 :definition {"en" "Uploading a resource from a local file system"}
+                                 :narrower ["https://w3id.org/xapi/catch/attachment-usage-types/evidence/parent-survey"]}
+                        :concepts-table concept-map})))
+    ;; If a concept is of the wrong version
+    (is (not (s/valid? ::verbs/narrower-concept-iris
+                       {:object {:id "https://w3id.org/xapi/catch/verbs/uploaded"
+                                 :type "Verb"
+                                 :in-scheme "https://w3id.org/xapi/catch/v1"
+                                 :pref-label {"en" "uploaded"}
+                                 :definition {"en" "Uploading a resource from a local file system"}
+                                 :narrower ["https://w3id.org/xapi/catch/verbs/uploaded-future"]}
+                        :concepts-table concept-map})))))
+
+(deftest related-concept-iris-test
+  (testing "Test that the verb correctly relates to related concepts"
+    (is (s/valid? ::verbs/related-concept-iris
+                  {:object {:id "https://w3id.org/xapi/catch/verbs/uploaded"
+                            :type "Verb"
+                            :in-scheme "https://w3id.org/xapi/catch/v1"
+                            :pref-label {"en" "uploaded"}
+                            :definition {"en" "Uploading a resource from a local file system"}
+                            :related ["https://w3id.org/xapi/catch/verbs/submitted"
+                                      "https://w3id.org/xapi/catch/verbs/provided"]}
+                   :concepts-table concept-map}))
+    ;; Concepts that don't have a related property should not be penalized
+    (is (s/valid? ::verbs/related-concept-iris
+                  {:object {:id "https://w3id.org/xapi/catch/verbs/uploaded"
+                            :type "Verb"
+                            :in-scheme "https://w3id.org/xapi/catch/v1"
+                            :pref-label {"en" "uploaded"}
+                            :definition {"en" "Uploading a resource from a local file system"}}
+                   :concepts-table concept-map}))
+    ;; Concepts that include a related concept that's not in the profile
+    (is (not (s/valid? ::verbs/related-concept-iris
+                       {:object {:id "https://w3id.org/xapi/catch/verbs/uploaded"
+                                 :type "Verb"
+                                 :in-scheme "https://w3id.org/xapi/catch/v1"
+                                 :pref-label {"en" "uploaded"}
+                                 :definition {"en" "Uploading a resource from a local file system"}
+                                 :related ["https://w3id.org/xapi/catch/verbs/bubbled"]}
+                        :concepts-table concept-map})))
+    ;; If a concept is of the wrong type
+    (is (not (s/valid? ::verbs/related-concept-iris
+                       {:object {:id "https://w3id.org/xapi/catch/verbs/uploaded"
+                                 :type "Verb"
+                                 :in-scheme "https://w3id.org/xapi/catch/v1"
+                                 :pref-label {"en" "uploaded"}
+                                 :definition {"en" "Uploading a resource from a local file system"}
+                                 :related ["https://w3id.org/xapi/catch/activitytypes/check-in"]}
+                        :concepts-table concept-map})))
+    (is (not (s/valid? ::verbs/related-concept-iris
+                       {:object {:id "https://w3id.org/xapi/catch/verbs/uploaded"
+                                 :type "Verb"
+                                 :in-scheme "https://w3id.org/xapi/catch/v1"
+                                 :pref-label {"en" "uploaded"}
+                                 :definition {"en" "Uploading a resource from a local file system"}
+                                 :related ["https://w3id.org/xapi/catch/attachment-usage-types/evidence/parent-survey"]}
+                        :concepts-table concept-map})))
+    ;; If a concept is of the wrong version
+    (is (not (s/valid? ::verbs/related-concept-iris
+                       {:object {:id "https://w3id.org/xapi/catch/verbs/uploaded"
+                                 :type "Verb"
+                                 :in-scheme "https://w3id.org/xapi/catch/v1"
+                                 :pref-label {"en" "uploaded"}
+                                 :definition {"en" "Uploading a resource from a local file system"}
+                                 :related ["https://w3id.org/xapi/catch/verbs/uploaded-future"]}
+                        :concepts-table concept-map})))))

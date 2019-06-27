@@ -60,17 +60,18 @@
 (s/def ::patterns+
   (s/coll-of (s/or :no-primary ::pattern+
                    :primary ::primary-pattern+) :kind vector? :min-count 1))
-(defn explain-patterns
-  (fn [patterns]
-    (util/explain-spec-map patterns)))
 
-(s/def ::patterns+
-  (fn [{patterns :patterns :as args}]
-    (util/spec-map+ ::pattern+ :pattern patterns args)))
+; (defn explain-patterns
+;   (fn [patterns]
+;     (util/explain-spec-map patterns)))
 
-(defn explain-patterns+
-  (fn [{patterns :patterns :as args}]
-    (util/explain-spec-map+ ::pattern+ :pattern patterns args)))
+; (s/def ::patterns+
+;   (fn [{patterns :patterns :as args}]
+;     (util/spec-map+ ::pattern+ :pattern patterns args)))
+
+; (defn explain-patterns+
+;   (fn [{patterns :patterns :as args}]
+;     (util/explain-spec-map+ ::pattern+ :pattern patterns args)))
 
 ;; TODO: MUST + MUST NOTS from Profile Authors: section
 ;; https://github.com/adlnet/xapi-profiles/blob/master/xapi-profiles-structure.md#90-patterns

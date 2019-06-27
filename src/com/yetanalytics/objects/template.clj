@@ -52,10 +52,13 @@
                     ::context-statement-ref-template])
    ::type-or-reference))
 
-(s/def ::template+
-  (fn [{:keys [template vid-set concepts-map templates-map]}])
-  (and (s/valid? ::template template)
-       (comment "Some other thing")))
+(s/def ::template+ nil)
+
+; (s/def ::template+
+;   (fn [{:keys [template vid-set concepts-map templates-map]}])
+;   (and (s/valid? ::template template)
+;        (comment "Some other thing")))
+
 
 (s/def ::templates (s/coll-of ::template :kind vector? :min-count 1))
 

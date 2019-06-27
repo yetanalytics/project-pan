@@ -19,13 +19,13 @@
 
 (deftest pref-label-test
   (testing "prefLabel property"
-    (is (s/valid? ::profile/pref-label {"en" "score rubric"}))
-    (is (s/valid? ::profile/pref-label {"en" ""}))
-    (is (s/valid? ::profile/pref-label {:en "score rubric"}))))
+    (is (s/valid? ::template/pref-label {"en" "score rubric"}))
+    (is (s/valid? ::template/pref-label {"en" ""}))
+    (is (s/valid? ::template/pref-label {:en "score rubric"}))))
 
 (deftest definition-test
   (testing "definition property"
-    (is (s/valid? ::profile/definition
+    (is (s/valid? ::template/definition
                   {"en" "This template is for statements that are the result of
                         a mentor reviewing and scoring somthing within the
                         catch application."}))))

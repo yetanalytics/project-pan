@@ -12,13 +12,7 @@
 
 ;; TODO: rule-must:context
 
-(s/def ::rule-must
-  (s/or :presence ::presence
-        :any      ::any
-        :all      ::all
-        :none     ::none))
-
 (s/def ::rule
-  (s/and (s/keys :req-un [::location]
-                 :opt-un [::selector ::presence ::any ::all ::none ::scope-note])
-         ::rule-must))
+  (s/and (s/keys :req-un [::location
+                          (or ::presence ::any ::all ::none)]
+                 :opt-un [::selector ::scope-note])))
