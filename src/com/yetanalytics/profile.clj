@@ -18,14 +18,19 @@
 (s/def ::conforms-to ::ax/uri)
 (s/def ::pref-label ::ax/language-map)
 (s/def ::definition ::ax/language-map)
-
-;; prefLabel + definition
 (s/def ::see-also ::ax/url)
 
+;; Check that the overall profile ID is not any of the version IDs
+(s/def ::id-distinct
+  (fn [{:keys [id versions]}]
+    (let [version-ids (util/only-ids versions)]
+      (nil? (some #(= id %) version-ids)))))
+
 (s/def ::profile-top-level
-  (s/keys :req-un [::id ::context ::type ::conforms-to ::pref-label
-                   ::definition ::author/author ::versions/versions]
-          :opt-un [::see-also]))
+  (s/and (s/keys :req-un [::id ::context ::type ::conforms-to ::pref-label
+                          ::definition ::author/author ::versions/versions]
+                 :opt-un [::see-also])
+         ::id-distinct))
 
 (s/def ::profile
   (s/merge ::profile-top-level
@@ -50,17 +55,13 @@
                    ::pattern/patterns]))
 
 ;; TODO: stricter validation levels
-(defn version-set [{:keys [id versions]}]
-  (let [vid-vec (util/only-ids versions)]
-    (let [vid-set (set vid-vec)]
-      (if (and (= (count vid-set) (count vid-vec)) (contains? vid-set id))
-        vid-set
-        nil))))
+(defn version-set [{:keys [versions]}]
+  (-> versions util/only-ids set))
 
 (defn id-object-map [profile kword]
-  (let [obj-vec (profile kword)]
-    (let [id-vec (util/only-ids obj-vec)]
-      (zipmap id-vec obj-vec))))
+  (let [obj-vec (profile kword)
+        id-vec (util/only-ids obj-vec)]
+    (zipmap id-vec obj-vec)))
 
 ; (defn spec-with-args [spec obj-kword obj args-map])
 ; (s/valid? spec (conj args-map [obj-kword obj]))

@@ -50,40 +50,29 @@
   (testing "seeAlso property"
     (is (s/valid? ::profile/see-also "https://see.also.org/"))))
 
-; (deftest versions-test
-;   (testing "versions property"
-;     (is (s/valid? ::profile/versions/versions
-;                   [{:id "https://w3id.org/xapi/catch/v1"
-;                     :gen-at-time "2017-12-22T22:30:00-07:00"}]))
-;     (is (s/valid? ::profile/versions
-;                   [{:id "https://w3id.org/xapi/catch/v2"
-;                     :was-revision-of ["https://w3id.org/xapi/catch/v1"]
-;                     :gen-at-time "2017-12-22T22:30:00-07:00"}]))
-;     (is (not (s/valid? ::profile/versions [])))
-;     (is (not (s/valid? ::profile/versions
-;                        [{:id "https://w3id.org/xapi/catch/v2"
-;                          :was-revision-of []
-;                          :gen-at-time "2017-12-22T22:30:00-07:00"}])))))
-
-; (deftest author-test
-;   (testing "author property"
-;     (is (s/valid? :author/type "Organization"))
-;     (is (s/valid? :author/type "Person"))
-;     (is (not (s/valid? :author/type "Foo Bar")))
-;     (is (not (s/valid? :author/type "Profile")))
-;     (is (s/valid? :author/name "Yet Analytics"))
-;     (is (s/valid? :author/url "https://www.yetanalytics.io"))
-;     (is (not (s/valid? :author/url "https:///www.yetanalytics.io")))
-;     (is (s/valid? ::profile/author {:url "https://www.yetanalytics.io"
-;                                     :type "Organization"
-;                                     :name "Yet Analytics"}))))
+(deftest id-distinct-test
+  (testing "profile ID MUST be distinct from version IDs"
+    (is (s/valid? ::profile/id-distinct
+                  {:id "https://w3id.org/xapi/catch"
+                   :versions
+                   [{:id "https://w3id.org/xapi/catch/v2"
+                     :generated-at-time "2017-12-22T22:30:00-07:00"}
+                    {:id "https://w3id.org/xapi/catch/v1"
+                     :gen-at-time "2017-12-22T22:30:00-07:00"}]}))
+    (is (not (s/valid? ::profile/id-distinct
+                       {:id "https://w3id.org/xapi/catch"
+                        :versions
+                        [{:id "https://w3id.org/xapi/catch"
+                          :generated-at-time "2017-12-22T22:30:00-07:00"}
+                         {:id "https://w3id.org/xapi/catch/v1"
+                          :gen-at-time "2017-12-22T22:30:00-07:00"}]})))))
 
 (deftest profile-test
   (testing "top-level profile properties"
-    (is (s/valid? ::profile/profile
+    (is (s/valid? ::profile/profile-top-level
                   {:versions
                    [{:id "https://w3id.org/xapi/catch/v1"
-                     :gen-at-time "2017-12-22T22:30:00-07:00"}]
+                     :generated-at-time "2017-12-22T22:30:00-07:00"}]
                    :context "https://w3id.org/xapi/profiles/context"
                    :author {:url "https://www.yetanalytics.io"
                             :type "Organization"
