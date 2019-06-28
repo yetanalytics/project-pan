@@ -38,7 +38,7 @@
   (fn [{:keys [object concepts-table]}]
     (let [uri-vec (:recommended-verbs object)]
       (if (some? uri-vec)
-        (every? (map (cu/recommend-concept "Verb" concepts-table) uri-vec))
+        (every? true? (map (partial cu/recommend-concept "Verb" concepts-table) uri-vec))
         true))))
 
 (s/def ::extension+

@@ -88,4 +88,85 @@
                    :inline-schema
                    "{\"type\":\"array\",\"items\":{\"type\":\"string\"},\"uniqueItems\":true}"}))))
 
+(def concept-map
+  {"https://w3id.org/xapi/catch/verbs/provided"
+   {:id "https://w3id.org/xapi/catch/verbs/provided"
+    :type "Verb"
+    :in-scheme "https://w3id.org/xapi/catch/v1"
+    :pref-label {"en" "provided"}
+    :definition {"en" "supplying a link to an online resource"}}
+   "https://w3id.org/xapi/catch/verbs/submitted"
+   {:id "https://w3id.org/xapi/catch/verbs/submitted"
+    :type "Verb"
+    :in-scheme "https://w3id.org/xapi/catch/v1"
+    :pref-label {"en" "submitted"}
+    :definition {"en" "The actor has clicked the submit or save button within the CATCH application"}}
+   "https://w3id.org/xapi/catch/activitytypes/reflection"
+   {:id "https://w3id.org/xapi/catch/activitytypes/reflection"
+    :type "ActivityType"
+    :in-scheme "https://w3id.org/xapi/catch/v1"
+    :pref-label {"en" "Reflection"}
+    :definition {"en" "An activity where a learner reads an article and optionally provides a reflection on that article."}}
+   "https://w3id.org/xapi/catch/activitytypes/check-in"
+   {:id "https://w3id.org/xapi/catch/activitytypes/check-in"
+    :type "ActivityType"
+    :in-scheme "https://w3id.org/xapi/catch/v1"
+    :pref-label {"en" "Check in"}
+    :definition {"en" "An activity in which the learner reports progression."}}})
+
+(deftest recommended-verbs-uri-test
+  (testing "Recommended verbs URI array"
+    (is (s/valid? ::result-extension/recommended-verbs-uris
+                  {:object
+                   {:id "https://w3id.org/xapi/catch/result-extensions/some-extension"
+                    :type "ResultExtension"
+                    :in-scheme "https://w3id.org/xapi/catch/v1"
+                    :pref-label {"en" "Label"}
+                    :definition {"en" "Some description"}
+                    :recommended-verbs
+                    ["https://w3id.org/xapi/catch/verbs/provided"
+                     "https://w3id.org/xapi/catch/verbs/submitted"]
+                    :inline-schema
+                    "{\"type\":\"array\",\"items\":{\"type\":\"string\"},\"uniqueItems\":true}"}
+                   :concepts-table concept-map}))
+    (is (s/valid? ::result-extension/recommended-verbs-uris
+                  {:object
+                   {:id "https://w3id.org/xapi/catch/result-extensions/some-extension"
+                    :type "ResultExtension"
+                    :in-scheme "https://w3id.org/xapi/catch/v1"
+                    :pref-label {"en" "Label"}
+                    :definition {"en" "Some description"}
+                    :inline-schema
+                    "{\"type\":\"array\",\"items\":{\"type\":\"string\"},\"uniqueItems\":true}"}
+                   :concepts-table concept-map}))
+    (is (not (s/valid? ::result-extension/recommended-verbs-uris
+                       {:object
+                        {:id "https://w3id.org/xapi/catch/result-extensions/some-extension"
+                         :type "ResultExtension"
+                         :in-scheme "https://w3id.org/xapi/catch/v1"
+                         :pref-label {"en" "Label"}
+                         :definition {"en" "Some description"}
+                         :recommended-verbs
+                         ["https://w3id.org/xapi/catch/verbs/provided"
+                          "https://w3id.org/xapi/catch/verbs/submitted"
+                          "https://w3id.org/xapi/catch/activitytypes/check-in"]
+                         :inline-schema
+                         "{\"type\":\"array\",\"items\":{\"type\":\"string\"},\"uniqueItems\":true}"}
+                        :concepts-table concept-map})))
+    (is (not (s/valid? ::result-extension/recommended-verbs-uris
+                       {:object
+                        {:id "https://w3id.org/xapi/catch/result-extensions/some-extension"
+                         :type "ResultExtension"
+                         :in-scheme "https://w3id.org/xapi/catch/v1"
+                         :pref-label {"en" "Label"}
+                         :definition {"en" "Some description"}
+                         :recommended-verbs
+                         ["https://w3id.org/xapi/catch/verbs/sent"
+                          "https://w3id.org/xapi/catch/verbs/provided"
+                          "https://w3id.org/xapi/catch/verbs/uploaded"
+                          "https://w3id.org/xapi/catch/verbs/submitted"]
+                         :inline-schema
+                         "{\"type\":\"array\",\"items\":{\"type\":\"string\"},\"uniqueItems\":true}"}
+                        :concepts-table concept-map})))))
+
 (run-tests)

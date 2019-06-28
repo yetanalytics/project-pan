@@ -35,18 +35,18 @@
 (s/def ::extension-basic
   (fn [{:keys [object]}] (s/valid? ::extension object)))
 
-(s/def ::rec-activity-type-uris
+(s/def ::recommended-activity-types-uris
   (fn [{:keys [object concepts-table]}]
     (let [uri-vec (:recommended-activity-types object)]
       (if (some? uri-vec)
-        (every?
-         (map (cu/recommend-concept "ActivityType" concepts-table) uri-vec))
+        (every? true?
+                (map (partial cu/recommend-concept "ActivityType" concepts-table) uri-vec))
         true))))
 
 (s/def ::extension+
   (s/and ::extension-basic
          ::u/in-scheme-valid?
-         ::rec-activity-type-uris))
+         ::recommended-activity-type-uris))
 
 ; (s/def ::in-profile-strict-scalar
 ;   (fn [{:keys [iri profile]}]
