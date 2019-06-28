@@ -1,5 +1,7 @@
 (ns com.yetanalytics.objects.pattern
   (:require [clojure.spec.alpha :as s]
+            [ubergraph.core :as uber]
+            [ubergraph.alg :as algo]
             [com.yetanalytics.util :as util]
             [com.yetanalytics.axioms :as ax]))
 
@@ -19,9 +21,15 @@
 (s/def ::sequence (s/coll-of ::ax/iri :type vector? :min-count 1))
 (s/def ::zero-or-more (s/keys :req-un [::id]))
 
-;; Ensure that only one of the five regex properties are included in pattern.
-;; Including two or more properties should fail the spec.
+;; Check if primary is true or false 
+(s/def ::is-primary-true
+  (fn [p] (true? (:primary p))))
 
+(s/def ::is-primary-false
+  (fn [p] (false? (:primary p))))
+
+;; Ensure that only one of the five regex properties are included in pattern.
+;; Including two or more properties should fail the spec. 
 (s/def ::pattern-clause
   (fn [p]
     (let [alt? (contains? p :alternates)
@@ -36,42 +44,93 @@
         sqn? (not (or alt? opt? oom? zom?))
         zom? (not (or alt? opt? oom? sqn?))))))
 
+(defn pattern-graph [patterns-table]
+  "Create a graph from a table between pattern IDs and patterns."
+  (let [adjacency-map
+        (reduce-kv (fn [m id pattern]
+                     (assoc m id (get-iris pattern)))
+                   {} patterns-table)]
+    (uber/digraph adjacency-map)))
+
+;; Get the IRIs of a Pattern, depending on its property
+(defmulti get-iris (fn [p] (keys (dissoc p :id :type :pref-label :definition
+                                         :primary :in-scheme :deprecated))))
+
+(defmethod get-iris '(:alternates) [p] (:alternates p))
+(defmethod get-iris '(:sequence) [p] (:sequence p))
+(defmethod get-iris '(:optional) [p] [(:id (:optional p))])
+(defmethod get-iris '(:one-or-more) [p] [(:id (:one-or-more p))])
+(defmethod get-iris '(:zero-or-more) [p] [(:id (:zero-or-more p))])
+(defmethod get-iris :default [_] nil)
+
+;; MUST be valid IRIs that point to Templates and Patterns
+(s/def ::valid-iris
+  (fn [{:keys [object templates-table patterns-table]}]
+    (every? (or (partial contains? templates-table)
+                (partial contains? patterns-table))
+            (get-iris object))))
+
+;; MUST NOT put optinal or zeroOrMore directly inside alternates
+(s/def ::no-zero-nests
+  (fn [{:keys [object templates-table]}]
+    (if (contains? object :alternates)
+      (every? (not (or #(contains? % :optional)
+                       #(contains? % :zero-or-more)))
+              (patterns-table (get-iris object)))
+      true)))
+
+;; MUST include at least two members of sequence, unless
+;; 1. The member of sequence is a single Statement Template
+;; 2. The Pattern is a primary pattern
+;; 3. The Pattern is not used elsewhere 
+(s/def ::min-sequence-count
+  (fn [{:keys [object templates-table patterns-table patterns-graph]}]
+    (if (contains? object :sequence)
+      (let [seq-list (:sequence object)]
+        (or (<= 2 (count seq-list))
+            (and (contains? templates-table (first seq-list))
+                 (true? (:primary object))
+                 (= 0 (uber/in-degree patterns-graph (:id pattern))))))
+      true)))
+
+;; MUST NOT include any Pattern within itself or any Pattern in it.
+;; In other words, no cycles.
+(s/def ::no-cycles
+  (fn [args-map]
+    (let [pgraph (:patterns-graph (first args-map))]
+      (algo/dag? pgraph))))
+
 (s/def ::primary-pattern
   (s/and (s/keys :req-un [::id ::type ::pref-label ::definition ::primary]
                  :opt-un [::in-scheme ::deprecated ::alternates ::optional
                           ::one-or-more ::sequence ::zero-or-more])
-         ::pattern-clause))
+         ::pattern-clause
+         ::is-primary))
 
-(s/def ::pattern
+(s/def ::reg-pattern
   (s/and (s/keys :req-un [::id ::type]
                  :opt-un [::primary ::in-scheme ::pref-label ::definition
                           ::deprecated ::alternates ::optional ::one-or-more
                           ::sequence ::zero-or-more])
          ::pattern-clause))
 
-;; TODO Put in Semi-strict validation
-(s/def ::primary-pattern+ nil)
-(s/def ::pattern+ nil)
+(s/def ::pattern
+  (s/or :no-primary ::reg-pattern
+        :primary ::primary-pattern))
+
+(s/def ::pattern-basic
+  (fn [{:keys [object]}] (s/valid? ::pattern object)))
+
+(s/def ::pattern+
+  (s/and ::pattern-basic
+         ::valid-iris
+         ::no-zero-nests
+         ::min-sequence-count))
 
 (s/def ::patterns
-  (s/coll-of (s/or :no-primary ::pattern
-                   :primary ::primary-pattern) :kind vector? :min-count 1))
+  (s/coll-of ::pattern :kind vector? :min-count 1))
 
 (s/def ::patterns+
-  (s/coll-of (s/or :no-primary ::pattern+
-                   :primary ::primary-pattern+) :kind vector? :min-count 1))
-
-; (defn explain-patterns
-;   (fn [patterns]
-;     (util/explain-spec-map patterns)))
-
-; (s/def ::patterns+
-;   (fn [{patterns :patterns :as args}]
-;     (util/spec-map+ ::pattern+ :pattern patterns args)))
-
-; (defn explain-patterns+
-;   (fn [{patterns :patterns :as args}]
-;     (util/explain-spec-map+ ::pattern+ :pattern patterns args)))
-
-;; TODO: MUST + MUST NOTS from Profile Authors: section
-;; https://github.com/adlnet/xapi-profiles/blob/master/xapi-profiles-structure.md#90-patterns
+  (s/and
+   (s/coll-of ::pattern+ :kind vector? :min-count 1)
+   ::no-cycles))

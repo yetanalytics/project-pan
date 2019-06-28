@@ -38,21 +38,13 @@
                             ::template/templates
                             ::pattern/patterns])))
 
-; (defn vids [versions prof-id]
-;   (let [vid-vec (only-ids versions)]
-;     (let [vid-set (set vid-vec)]
-;       (if (and (not= (count vid-vec) (count vid-set))
-;                (not (contains? vid-set prof-id)))
-;         vid-set
-;         nil))))
-
-(s/def ::profile
-  (s/keys :req-un [::id ::context ::type ::conforms-to ::pref-label
-                   ::definition ::author/author ::versions/versions]
-          :opt-un [::see-also
-                   ::concept/concepts
-                   ::template/templates
-                   ::pattern/patterns]))
+; (s/def ::profile
+;   (s/keys :req-un [::id ::context ::type ::conforms-to ::pref-label
+;                    ::definition ::author/author ::versions/versions]
+;           :opt-un [::see-also
+;                    ::concept/concepts
+;                    ::template/templates
+;                    ::pattern/patterns]))
 
 ;; TODO: stricter validation levels
 (defn version-set [{:keys [versions]}]
@@ -85,6 +77,7 @@
         concepts-map (id-object-map profile :concepts)
         templates-map (id-object-map profile :templates)
         patterns-map (id-object-map profile :patterns)
+        patterns-graph (patterns/pattern-graph patterns-map)
         ;; Combine objects and arguments
         concepts-args (util/combine-args
                        concepts {:vid-set vid-set
@@ -96,7 +89,8 @@
         patterns-args (util/combine-args
                        patterns {:vid-set vid-set
                                  :templates-table templates-map
-                                 :patterns-table patterns-map})]
+                                 :patterns-table patterns-map
+                                 :patterns-graph patterns-graph})]
     ;; TODO Combine the explain-data into a single array
     (and (s/valid? ::profile-top-level profile)
          (s/valid? ::concepts+ concepts-args)
