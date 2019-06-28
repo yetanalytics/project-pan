@@ -47,29 +47,17 @@
 (s/def ::broader-concept-iris
   (fn [{:keys [object concepts-table]}]
     (let [version (:in-scheme object) iri-vec (:broader object)]
-      (if (some? iri-vec)
-        (every? true?
-                (map (partial cu/relate-concept "Verb" version concepts-table)
-                     iri-vec))
-        true))))
+      (cu/relate-concepts "Verb" version concepts-table iri-vec))))
 
 (s/def ::narrower-concept-iris
   (fn [{:keys [object concepts-table]}]
     (let [version (:in-scheme object) iri-vec (:narrower object)]
-      (if (some? iri-vec)
-        (every? true?
-                (map (partial cu/relate-concept "Verb" version concepts-table)
-                     iri-vec))
-        true))))
+      (cu/relate-concepts "Verb" version concepts-table iri-vec))))
 
 (s/def ::related-concept-iris
   (fn [{:keys [object concepts-table]}]
     (let [version (:in-scheme object) iri-vec (:related object)]
-      (if (some? iri-vec)
-        (every? true?
-                (map (partial cu/relate-concept "Verb" version concepts-table)
-                     iri-vec))
-        true))))
+      (cu/relate-concepts "Verb" version concepts-table iri-vec))))
 
 (s/def ::verb+
   (s/and ::verb-basic

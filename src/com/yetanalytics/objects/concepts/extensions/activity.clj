@@ -42,10 +42,7 @@
 (s/def ::recommended-activity-types-uris
   (fn [{:keys [object concepts-table]}]
     (let [uri-vec (:recommended-activity-types object)]
-      (if (some? uri-vec)
-        (every? true?
-                (map (partial cu/recommend-concept "ActivityType" concepts-table) uri-vec))
-        true))))
+      (cu/recommend-concepts "ActivityType" concepts-table uri-vec))))
 
 (s/def ::extension+
   (s/and ::extension-basic
