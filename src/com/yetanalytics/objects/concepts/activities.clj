@@ -1,13 +1,15 @@
 (ns com.yetanalytics.objects.concepts.activities
   (:require [clojure.spec.alpha :as s]
+            [clojure.set :refer [rename-keys]]
+            [camel-snake-kebab.core :as csk]
             [xapi-schema.spec]
             [com.yetanalytics.axioms :as ax]
             [com.yetanalytics.util :as u]
             [com.yetanalytics.objects.concepts.util :as cu]))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Activity
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Activity - Basic Validation
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (s/def ::id ::ax/iri)
 (s/def ::type #{"Activity"})
@@ -19,19 +21,27 @@
                                        (s/coll-of ::ax/uri :type vector?)
                                        (partial some #(= context-url %)))))
 
+;; Rename keys (as xapi-scheme uses camelCase instead of kebab-case
+(defn camel-case-keys
+  [kmap]
+  (let [keys-kebab (keys kmap)
+        keys-camel (map csk/->camelCase keys-kebab)]
+    (rename-keys kmap (zipmap keys-kebab keys-camel))))
+
 ;; Need to use this function instead of s/merge because of restrict-keys in
 ;; xapi-schema function.
 (s/def ::activity-definition
   (s/and (s/keys :req-un [::context])
-         (fn [adef] (s/valid? :activity/definition (dissoc adef :context)))))
+         (fn [adef] (s/valid? :activity/definition
+                              (camel-case-keys (dissoc adef :context))))))
 
 (s/def ::activity
   (s/keys :req-un [::id ::type ::in-scheme ::activity-definition]
           :opt-un [::deprecated]))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; in-profile validation+ helpers
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Activity - Semi-Strict Validation 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (s/def ::activity-basic
   (fn [{:keys [object]}] (s/valid? ::activity object)))
@@ -39,13 +49,6 @@
 (s/def ::activity+
   (s/and ::activity-basic
          ::u/in-scheme-valid?))
-
-; (s/def ::activity-in-profile-strict
-;   (fn [{:keys [activity profile]}]
-;     (let [{:keys [in-scheme]} activity]
-;       (s/and (s/valid? ::activity activity)
-;              (s/valid? ::u/in-scheme-strict-scalar {:in-scheme in-scheme
-;                                                     :profile profile})))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; advanced processing for spec MUSTS

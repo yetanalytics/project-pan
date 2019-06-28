@@ -23,15 +23,19 @@
     (should-not-satisfy ::activities/context ["https://some-other-context"])
     (should-not-satisfy ::activities/context "foo bar")))
 
+(deftest camel-case-keys-test
+  (testing "turning kebab-case keys into camelCase keys"
+    (is (= (activities/camel-case-keys
+            {:key "Zero" :key-one "One" :key-two "Two"})
+           {:key "Zero" :keyOne "One" :keyTwo "Two"}))))
+
 (deftest activity-definition
   (testing "activityDefinition property"
     (is (s/valid? ::activities/activity-definition
                   {:context "https://w3id.org/xapi/profiles/activity-context"
                    :name {"en" "Cross Linguistic Connections"}
                    :description {"en" "The cross linguistic connections competency as described by the EPISD Dual Language Competency Framework"}
-                   :type
-
-                   "https://w3id.org/xapi/catch/activitytypes/competency"}))))
+                   :type "https://w3id.org/xapi/catch/activitytypes/competency"}))))
 
 (deftest activity-test
   (testing "Activity concept"
@@ -41,8 +45,6 @@
                    :in-scheme "https://w3id.org/xapi/catch/v1"
                    :activity-definition
                    {:context "https://w3id.org/xapi/profiles/activity-context"
-                    :name {"en" "Cross Linguistic Connections"}
+                    :name {:en "Cross Linguistic Connections"}
                     :description {"en" "The cross linguistic connections competency as described by the EPISD Dual Language Competency Framework"}
-                    :type
-
-                    "https://w3id.org/xapi/catch/activitytypes/competency"}}))))
+                    :type "https://w3id.org/xapi/catch/activitytypes/competency"}}))))
