@@ -52,5 +52,3 @@
                          :generated-at-time "2017-12-22T22:30:00-07:00"}
                         {:id "https://w3id.org/xapi/catch/"
                          :generated-at-time "2020-02-20T20:20:20Z"}])))))
-
-(run-tests)

@@ -103,5 +103,3 @@
                         :scope-note {"en" "This rule is invalid because it
                                           does not include presence, any, all
                                           nor none."}})))))
-
-(run-tests)

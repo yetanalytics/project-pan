@@ -62,11 +62,11 @@
     (let [id-vec (util/only-ids obj-vec)]
       (zipmap id-vec obj-vec))))
 
-(defn spec-with-args [spec obj-kword obj args-map])
-(s/valid? spec (conj args-map [obj-kword obj]))
+; (defn spec-with-args [spec obj-kword obj args-map])
+; (s/valid? spec (conj args-map [obj-kword obj]))
 
-(defn spec-arr [spec obj-kword obj-arr args-map]
-  (mapv (spec-with-args)))
+; (defn spec-arr [spec obj-kword obj-arr args-map]
+;   (mapv (spec-with-args)))
 
 (defn validate-profile
   "Weak validation; only check property types and basic syntax"
@@ -77,25 +77,25 @@
   "Semi-strict validation; validate inScheme property and local IRIs"
   [profile]
   (let [concepts (:concepts profile)
-        templates (:templates template)
-        patterns (:templates patterns)
+        templates (:templates profile)
+        patterns (:templates profile)
         ;; Spec arguments
         vid-set (version-set profile)
         concepts-map (id-object-map profile :concepts)
         templates-map (id-object-map profile :templates)
-        patterns-map (id-object-map pattern :patterns)
+        patterns-map (id-object-map profile :patterns)
         ;; Combine objects and arguments
         concepts-args (util/combine-args
-                       concepts {:vid-set vidset
+                       concepts {:vid-set vid-set
                                  :concepts-map concepts-map})
         templates-args (util/combine-args
-                        templates {:vid-set vidset
+                        templates {:vid-set vid-set
                                    :concepts-map concepts-map
                                    :templates-map templates-map})
-        patterns-map (util/combine-args
-                      patterns {:vid-set vidset
-                                :templates-map templates-map
-                                :patterns-map patterns-map})]
+        patterns-args (util/combine-args
+                       patterns {:vid-set vid-set
+                                 :templates-map templates-map
+                                 :patterns-map patterns-map})]
     ;; TODO Combine the explain-data into a single array
     (and (s/valid? ::profile-top-level profile)
          (s/valid? ::concepts+ concepts-args)
@@ -128,36 +128,36 @@
 
 ;; Non short-circuit validation
 
-(defn validate-profile-noshort
-  "Weak validation without short-circuiting"
-  [profile]
-  (concat
-   (filterv some? [(s/explain-data ::profile-top-level profile)])
-   (concept/explain-concepts (profile :concepts))
-   (template/explain-templates (profile :templates))
-   (pattern/explain-patterns (profile :templates))))
+; (defn validate-profile-noshort
+;   "Weak validation without short-circuiting"
+;   [profile]
+;   (concat
+;    (filterv some? [(s/explain-data ::profile-top-level profile)])
+;    (concept/explain-concepts (profile :concepts))
+;    (template/explain-templates (profile :templates))
+;    (pattern/explain-patterns (profile :templates))))
 
-(defn validate-profile-noshort+
-  "Semi-strict validation without short-circuiting"
-  [profile]
-  (let [concepts (:concepts profile)
-        templates (:templates template)
-        patterns (:templates patterns)
-        ;; Spec arguments
-        vid-set (version-set profile)
-        concepts-map (id-object-map profile :concepts)
-        templates-map (id-object-map profile :templates)
-        patterns-map (id-object-map pattern :patterns)]
-    (concat
-     (filterv some? [(s/explain-data ::profile-top-level profile)])
-     (concept/explain-concepts+ {:concepts concepts
-                                 :vid-set vid-set
-                                 :concepts-map concepts-map})
-     (template/explain-templates+ {:templates templates
-                                   :vid-set vid-set
-                                   :concepts-map concepts-map
-                                   :templates-map templates-map})
-     (pattern/explain-patterns+ {:patterns patterns
-                                 :vid-set vid-set
-                                 :templates-map templates-map
-                                 :patterns-map patterns-map}))))
+; (defn validate-profile-noshort+
+;   "Semi-strict validation without short-circuiting"
+;   [profile]
+;   (let [concepts (:concepts profile)
+;         templates (:templates template)
+;         patterns (:templates patterns)
+;         ;; Spec arguments
+;         vid-set (version-set profile)
+;         concepts-map (id-object-map profile :concepts)
+;         templates-map (id-object-map profile :templates)
+;         patterns-map (id-object-map pattern :patterns)]
+;     (concat
+;      (filterv some? [(s/explain-data ::profile-top-level profile)])
+;      (concept/explain-concepts+ {:concepts concepts
+;                                  :vid-set vid-set
+;                                  :concepts-map concepts-map})
+;      (template/explain-templates+ {:templates templates
+;                                    :vid-set vid-set
+;                                    :concepts-map concepts-map
+;                                    :templates-map templates-map})
+;      (pattern/explain-patterns+ {:patterns patterns
+;                                  :vid-set vid-set
+;                                  :templates-map templates-map
+;                                  :patterns-map patterns-map}))))

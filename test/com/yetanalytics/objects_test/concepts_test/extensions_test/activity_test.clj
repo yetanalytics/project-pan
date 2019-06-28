@@ -178,5 +178,3 @@
                           "https://w3id.org/xapi/catch/activitytypes/non-existent"]
                          :inline-schema "{\"foo\":\"bar\"}"}
                         :concepts-table concept-map})))))
-
-(run-tests)

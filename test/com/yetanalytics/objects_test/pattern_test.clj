@@ -170,5 +170,3 @@
                         :in-scheme "https://w3id.org/xapi/catch/v1"
                         :optional {:id "https://w3id.org/xapi/catch/templates#one"}
                         :zero-or-more {:id "https://w3id.org/xapi/catch/templates#two"}})))))
-
-(run-tests)

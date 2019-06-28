@@ -94,5 +94,3 @@
                                               education application CATCH"}
                    :conforms-to "https://w3id.org/xapi/profiles#1.0"
                    :pref-label {"en" "Catch"}}))))
-
-(run-tests)

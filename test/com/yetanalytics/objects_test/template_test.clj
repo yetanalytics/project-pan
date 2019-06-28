@@ -162,5 +162,3 @@
                     :definition {"en" "A test of only the required properties
                                      for a template"}}]))
     (is (not (s/valid? ::template/templates [])))))
-
-(run-tests)

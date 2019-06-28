@@ -27,5 +27,3 @@
     (is (s/valid? ::author/author {:url "https://www.yetanalytics.io"
                                    :type "Organization"
                                    :name "Yet Analytics"}))))
-
-(run-tests)

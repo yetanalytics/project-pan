@@ -88,5 +88,3 @@
     (should-satisfy ::ax/boolean true)
     (should-satisfy ::ax/boolean false)
     (should-not-satisfy ::ax/boolean 74)))
-
-(run-tests)

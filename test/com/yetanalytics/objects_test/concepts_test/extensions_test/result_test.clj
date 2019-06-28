@@ -168,5 +168,3 @@
                          :inline-schema
                          "{\"type\":\"array\",\"items\":{\"type\":\"string\"},\"uniqueItems\":true}"}
                         :concepts-table concept-map})))))
-
-(run-tests)
