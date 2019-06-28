@@ -22,15 +22,24 @@
 (s/def ::related-match ::ax/array-of-iri)
 (s/def ::exact-match ::ax/array-of-iri)
 
+(s/def ::related-only-deprecated
+  (fn [atype]
+    (if (contains? atype :related)
+      (true? (:deprecated atype))
+      true)))
+
 (s/def ::verb
-  (s/keys
-   :req-un [::id ::type ::in-scheme ::pref-label ::definition]
-   :opt-un [::deprecated ::broader ::broad-match ::narrower
-            ::narrow-match ::related ::related-match ::exact-match]))
+  (s/and
+   (s/keys
+    :req-un [::id ::type ::in-scheme ::pref-label ::definition]
+    :opt-un [::deprecated ::broader ::broad-match ::narrower
+             ::narrow-match ::related ::related-match ::exact-match])
+   ::related-only-deprecated))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; in-profile validation+ helpers
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 
 (s/def ::verb-basic
   (fn [{:keys [object]}] (s/valid? ::verb object)))

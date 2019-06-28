@@ -20,6 +20,9 @@
 (s/def ::schema ::ax/iri)
 (s/def ::inline-schema ::ax/json-schema)
 
+(s/def ::no-recommended-activity-types
+  (fn [ext] (not (contains? ext :recommended-activity-types))))
+
 (s/def ::extension
   (s/and (s/keys
           :req-un [::id ::type ::in-scheme ::pref-label ::definition]
@@ -30,6 +33,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; in-profile validation+ helpers
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 
 (s/def ::extension-basic
   (fn [{:keys [object]}] (s/valid? ::extension object)))
