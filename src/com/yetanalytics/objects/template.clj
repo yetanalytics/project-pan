@@ -52,7 +52,84 @@
                     ::context-statement-ref-template])
    ::type-or-reference))
 
-(s/def ::template+ nil)
+;; Semi-strict validation
+
+(defn match-concept
+  [c-type c-table iri]
+  (if (some? iri)
+    (= c-type (:type (c-table iri)))
+    true))
+
+(defn match-concepts
+  [c-type c-table iri-vec]
+  (if (some? iri-vec)
+    (every? true? (map #(= c-type (:type (c-table %))) iri-vec))
+    true))
+
+(defn match-templates
+  [t-version t-table iri-vec]
+  (if (some? iri-vec)
+    (every? true? (map #(= t-version (:in-scheme (t-table %))) iri-vec))
+    true))
+
+(s/def ::template-basic
+  (fn [{:keys [object]}] (s/valid? ::template object)))
+
+(s/def ::verb-iri
+  (fn [{:keys [object concepts-table]}]
+    (match-concept "Verb" concepts-table (:verb object))))
+
+(s/def ::object-activity-type-iri
+  (fn [{:keys [object concepts-table]}]
+    (match-concept "ActivityType" concepts-table
+                   (:object-activity-type object))))
+
+(s/def ::context-grouping-activity-type-iris
+  (fn [{:keys [object concepts-table]}]
+    (match-concepts "ActivityType" concepts-table
+                    (:context-grouping-activity-type object))))
+
+(s/def ::context-parent-activity-type-iris
+  (fn [{:keys [object concepts-table]}]
+    (match-concepts "ActivityType" concepts-table
+                    (:context-parent-activity-type object))))
+
+(s/def ::context-other-activity-type-iris
+  (fn [{:keys [object concepts-table]}]
+    (match-concepts "ActivityType" concepts-table
+                    (:context-other-activity-type object))))
+
+(s/def ::context-category-activity-type-iris
+  (fn [{:keys [object concepts-table]}]
+    (match-concepts "ActivityType" concepts-table
+                    (:context-category-activity-type object))))
+
+(s/def ::attachment-usage-type-iris
+  (fn [{:keys [object concepts-table]}]
+    (match-concepts "AttachmentUsageType" concepts-table
+                    (:attachment-usage-type object))))
+
+(s/def ::object-statement-ref-template-iris
+  (fn [{:keys [object templates-table]}]
+    (match-templates (:in-scheme object) templates-table
+                     (:object-statement-ref-template object))))
+
+(s/def ::context-statement-ref-template-iris
+  (fn [{:keys [object templates-table]}]
+    (match-templates (:in-scheme object) templates-table
+                     (:context-statement-ref-template object))))
+
+(s/def ::template+
+  (s/and ::template-basic
+         ::verb-iri
+         ::object-activity-type-iri
+         ::context-grouping-activity-type-iris
+         ::context-parent-activity-type-iris
+         ::context-other-activity-type-iris
+         ::context-category-activity-type-iris
+         ::attachment-usage-type-iris
+         ::object-statement-ref-template-iris
+         ::context-statement-ref-template-iris))
 
 ; (s/def ::template+
 ;   (fn [{:keys [template vid-set concepts-map templates-map]}])

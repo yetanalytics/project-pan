@@ -88,15 +88,15 @@
         ;; Combine objects and arguments
         concepts-args (util/combine-args
                        concepts {:vid-set vid-set
-                                 :concepts-map concepts-map})
+                                 :concepts-table concepts-map})
         templates-args (util/combine-args
                         templates {:vid-set vid-set
-                                   :concepts-map concepts-map
-                                   :templates-map templates-map})
+                                   :concepts-table concepts-map
+                                   :templates-table templates-map})
         patterns-args (util/combine-args
                        patterns {:vid-set vid-set
-                                 :templates-map templates-map
-                                 :patterns-map patterns-map})]
+                                 :templates-table templates-map
+                                 :patterns-table patterns-map})]
     ;; TODO Combine the explain-data into a single array
     (and (s/valid? ::profile-top-level profile)
          (s/valid? ::concepts+ concepts-args)
