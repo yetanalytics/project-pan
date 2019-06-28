@@ -4,9 +4,9 @@
             [com.yetanalytics.axioms :as ax]
             [com.yetanalytics.objects.templates.rules :as rules]))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Statement Template
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (s/def ::id ::ax/uri)
 (s/def ::type #{"StatementTemplate"})
@@ -45,14 +45,23 @@
 (s/def ::template
   (s/and
    (s/keys :req-un [::id ::type ::in-scheme ::pref-label ::definition]
-           :opt-un [::deprecated ::verb ::object-activity-type ::rules
-                    ::context-grouping-activity-type ::context-parent-activity-type
-                    ::context-other-activity-type ::context-category-activity-type
-                    ::attachment-usage-type ::object-statement-ref-template
+           :opt-un [::deprecated ::rules
+                    ::verb
+                    ::object-activity-type
+                    ::context-grouping-activity-type
+                    ::context-parent-activity-type
+                    ::context-other-activity-type
+                    ::context-category-activity-type
+                    ::attachment-usage-type
+                    ::object-statement-ref-template
                     ::context-statement-ref-template])
    ::type-or-reference))
 
-;; Semi-strict validation
+(s/def ::templates (s/coll-of ::template :kind vector? :min-count 1))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; in-profile validation+ helpers
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn match-concept
   [c-type c-table iri]
@@ -131,24 +140,10 @@
          ::object-statement-ref-template-iris
          ::context-statement-ref-template-iris))
 
-; (s/def ::template+
-;   (fn [{:keys [template vid-set concepts-map templates-map]}])
-;   (and (s/valid? ::template template)
-;        (comment "Some other thing")))
-
-
-(s/def ::templates (s/coll-of ::template :kind vector? :min-count 1))
-
 (s/def ::templates+ (s/coll-of ::template+ :kind vector? :min-count 1))
 
-; (defn explain-templates
-;   [templates]
-;   (util/explain-spec-map templates))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; validation which requires external calls
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; (s/def ::templates+
-;   (fn [{templates :templates :as args}]
-;     (util/spec-map+ ::template+ :template templates args)))
-
-; (defn explain-templates+
-;   [{templates :templates :as args}]
-;   (util/explain-spec-map+ ::template+ :template templates args))
+;; TODO Fix stuff in the rules

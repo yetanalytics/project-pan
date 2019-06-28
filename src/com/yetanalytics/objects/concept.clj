@@ -43,15 +43,3 @@
 (s/def ::concepts (s/coll-of ::concept :kind vector? :min-count 1))
 
 (s/def ::concepts+ (s/coll-of ::concept+ :kind vector? :min-count 1))
-
-; (defn ::explain-concepts
-;   (fn [concepts]
-;     (util/explain-spec-map concepts)))
-
-; (s/def ::concepts+
-;   (fn [{concepts :concepts :as args}]
-;     (util/spec-map+ ::concept+ :concept concepts args)))
-
-; (defn ::explain-concepts+
-;   (fn [{concepts :concepts :as args}]
-;     (util/explain-spec-map+ ::concept+ :concept concepts args)))

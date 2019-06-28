@@ -3,6 +3,10 @@
             [com.yetanalytics.axioms :as ax]
             [com.yetanalytics.util :as u]))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Versions 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (s/def ::id ::ax/iri)
 (s/def ::was-revision-of (s/coll-of ::ax/iri :type vector? :min-count 1))
 (s/def ::generated-at-time ::ax/timestamp)

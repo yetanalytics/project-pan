@@ -134,7 +134,14 @@
                         :sequence ["https://w3id.org/xapi/catch/templates#one"
                                    "https://w3id.org/xapi/catch/templates#two"]
                         :alternates ["https://w3id.org/xapi/catch/templates#three"
-                                     "https://w3id.org/xapi/catch/templates#four"]})))))
+                                     "https://w3id.org/xapi/catch/templates#four"]})))
+    ; Primary patterns require prefLabel and definition
+    (is (not (s/valid? ::pattern/pattern
+                       {:id "https://w3id.org/xapi/minimal/pattern"
+                        :type "Pattern"
+                        :primary true
+                        :in-scheme "https://w3id.org/xapi/catch/v1"
+                        :optional {:id "https://w3id.org/xapi/catch/templates#view-rubric"}})))))
 
 (deftest non-primary-pattern-test
   (testing "non-primary pattern"

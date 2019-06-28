@@ -26,14 +26,35 @@
 (deftest camel-case-keys-test
   (testing "turning kebab-case keys into camelCase keys"
     (is (= (activities/camel-case-keys
-            {:key "Zero" :key-one "One" :key-two "Two"})
-           {:key "Zero" :keyOne "One" :keyTwo "Two"}))))
+            {:key "Zero" :key-one "One" :key-two-Two "Two"})
+           {:key "Zero" :keyOne "One" :keyTwoTwo "Two"}))
+    (is (= (activities/camel-case-keys
+            {:context "https://w3id.org/xapi/profiles/activity-context"
+             :name {:en "Blah"}
+             :description {"en" "Blah Blah Blah"}
+             :type "https://w3id.org/xapi/catch/activitytypes/blah"})
+           {:context "https://w3id.org/xapi/profiles/activity-context"
+            :name {:en "Blah"}
+            :description {"en" "Blah Blah Blah"}
+            :type "https://w3id.org/xapi/catch/activitytypes/blah"}))))
+
+(deftest stringify-lang-keys-test
+  (testing "turning keys in the name and description language maps into strings"
+    (is (= (activities/stringify-lang-keys
+            {:context "https://w3id.org/xapi/profiles/activity-context"
+             :name {:en "Blah"}
+             :description {:en "Blah Blah Blah"}
+             :type "https://w3id.org/xapi/catch/activitytypes/blah"})
+           {:context "https://w3id.org/xapi/profiles/activity-context"
+            :name {"en" "Blah"}
+            :description {"en" "Blah Blah Blah"}
+            :type "https://w3id.org/xapi/catch/activitytypes/blah"}))))
 
 (deftest activity-definition
   (testing "activityDefinition property"
     (is (s/valid? ::activities/activity-definition
                   {:context "https://w3id.org/xapi/profiles/activity-context"
-                   :name {"en" "Cross Linguistic Connections"}
+                   :name {:en "Cross Linguistic Connections"}
                    :description {"en" "The cross linguistic connections competency as described by the EPISD Dual Language Competency Framework"}
                    :type "https://w3id.org/xapi/catch/activitytypes/competency"}))))
 

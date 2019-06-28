@@ -4,9 +4,9 @@
             [com.yetanalytics.util :as u]
             [com.yetanalytics.objects.concepts.util :as cu]))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Context Extensions
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (s/def ::id ::ax/iri)
 (s/def ::type #{"ContextExtension"})
@@ -30,9 +30,9 @@
                    ::context ::schema ::inline-schema])
          ::cu/inline-or-iri))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; in-profile validation+ helpers
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
 (s/def ::extension-basic
@@ -48,54 +48,11 @@
          ::u/in-scheme-valid?
          ::recommended-verbs-uris))
 
-; (s/def ::in-profile-strict-scalar
-;   (fn [{:keys [iri profile]}]
-;     (cu/iri-in-profile-concepts?
-;      {:iri iri
-;       :target-type-str "Verb"
-;       :profile profile})))
-
-; (s/def ::extension-in-profile-strict
-;   (fn [{:keys [extension profile]}]
-;     (let [{:keys [in-scheme recommended-verbs]} extension]
-;       (s/and (s/valid? ::extension extension)
-;              (s/valid? ::u/in-scheme-strict-scalar {:in-scheme in-scheme
-;                                                     :profile profile})
-;              (if (not-empty recommended-verbs)
-;                (s/valid? ::u/valid-boolean-coll
-;                          (mapv (fn [iri]
-;                                  (s/valid? ::in-profile-strict-scalar
-;                                            {:iri iri :profile profile})) recommended-verbs))
-;                true)))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; validation which requires external calls
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-
-(s/def ::extension-complete-validation
-  (fn [{:keys [extension profile]}]
-    (s/valid? ::extension-in-profile-strict
-              {:extension extension :profile
-
-
-
-               profile})
-
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; TODO: json-ld context validation
-
-
-
-
 ;; context - valid json-ld context
-
-
-
 ;; TODO: get string from iri
-
-
-
-
 ;; schema - json-schema string at other end of iri
-    ))
