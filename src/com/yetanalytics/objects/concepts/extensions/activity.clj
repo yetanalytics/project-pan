@@ -16,7 +16,7 @@
 (s/def ::deprecated ::ax/boolean)
 (s/def ::recommended-activity-types ::ax/array-of-iri)
 ;; TODO Clarify on what it means to "not be used"
-(s/def ::recommended-verbs (fn [coll] (-> coll not-empty nil?))) ;; if present, it should be nil
+;;(s/def ::recommended-verbs (fn [coll] (-> coll not-empty nil?))) ;; if present, it should be nil
 (s/def ::context ::ax/iri)
 (s/def ::schema ::ax/iri)
 (s/def ::inline-schema ::ax/json-schema)
@@ -29,11 +29,13 @@
           :req-un [::id ::type ::in-scheme ::pref-label ::definition]
           :opt-un [::deprecated ::recommended-activity-types ::context
                    ::schema ::inline-schema])
-         ::cu/inline-or-iri))
+         ::cu/inline-or-iri
+         ::no-recommended-verbs))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; in-profile validation+ helpers
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 
 (s/def ::extension-basic
   (fn [{:keys [object]}] (s/valid? ::extension object)))

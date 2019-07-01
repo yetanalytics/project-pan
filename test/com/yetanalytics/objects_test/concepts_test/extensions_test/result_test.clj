@@ -23,13 +23,13 @@
                      nil)))
 
 ;; TODO Review spec to see what it means that this "cannot be used"
-(deftest recommended-activity-types-test
-  (testing "recommendedActivityTypes property"
-    (should-satisfy+ ::result-extension/recommended-activity-types
-                     []
-                     :bad
-                     ["https://w3id.org/xapi/catch/activitytypes/lesson-plan"]
-                     "stan loona")))
+; (deftest recommended-activity-types-test
+;   (testing "recommendedActivityTypes property"
+;     (should-satisfy+ ::result-extension/recommended-activity-types
+;                      []
+;                      :bad
+;                      ["https://w3id.org/xapi/catch/activitytypes/lesson-plan"]
+;                      "stan loona")))
 
 (deftest context-test
   (testing "context property"
@@ -72,7 +72,7 @@
                           \"linguistic-cognitive-scaffolds\":{\"type\":\"string\"}}}")
     (should-not-satisfy ::result-extension/inline-schema "what the pineapple")))
 
-(deftest context-extension
+(deftest result-extension
   (testing "ResultExtension extension"
     (is (s/valid? ::result-extension/extension
                   {:id "https://w3id.org/xapi/catch/result-extensions/some-extension"
@@ -86,7 +86,25 @@
                     "https://w3id.org/xapi/catch/verbs/uploaded"
                     "https://w3id.org/xapi/catch/verbs/submitted"]
                    :inline-schema
-                   "{\"type\":\"array\",\"items\":{\"type\":\"string\"},\"uniqueItems\":true}"}))))
+                   "{\"type\":\"array\",\"items\":{\"type\":\"string\"},\"uniqueItems\":true}"}))
+    ;; Cannot both have schema and inlineSchema
+    (is (not (s/valid? ::result-extension/extension
+                       {:id "https://foo.org/bar"
+                        :type "ResultExtension"
+                        :in-scheme "https://foo.org/"
+                        :pref-label {"en" "Bar"}
+                        :definition {"en" "Supercalifragilisticexpialidocious"}
+                        :schema "https://some.schema"
+                        :inline-schema "{\"some\" : \"schema\"}"})))
+    ;; Cannot have recommended activity types
+    (is (not (s/valid? ::result-extension/extension
+                       {:id "https://foo.org/bar"
+                        :type "ResultExtension"
+                        :in-scheme "https://foo.org/"
+                        :pref-label {"en" "Bar"}
+                        :definition {"en" "Supercalifragilisticexpialidocious"}
+                        :schema "https://some.schema"
+                        :recommended-activity-types ["https://this.org/is-bad"]})))))
 
 (def concept-map
   {"https://w3id.org/xapi/catch/verbs/provided"

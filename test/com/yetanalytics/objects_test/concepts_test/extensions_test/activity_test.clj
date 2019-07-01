@@ -23,13 +23,13 @@
                      nil)))
 
 ;; TODO Review spec to see what it means that this "cannot be used"
-(deftest recommended-verbs-test
-  (testing "recommendedVerbs property"
-    (should-satisfy+ ::activity-extension/recommended-verbs
-                     []
-                     :bad
-                     ["https://w3id.org/xapi/catch/activitytypes/lesson-plan"]
-                     "stan loona")))
+; (deftest recommended-verbs-test
+;   (testing "recommendedVerbs property"
+;     (should-satisfy+ ::activity-extension/recommended-verbs
+;                      []
+;                      :bad
+;                      ["https://w3id.org/xapi/catch/activitytypes/lesson-plan"]
+;                      "stan loona")))
 
 (deftest context-test
   (testing "context property"
@@ -103,7 +103,25 @@
                             \"items\":{
                              \"type\":\"string\",
                              \"uniqueItems\":true}},
-                          \"linguistic-cognitive-scaffolds\":{\"type\":\"string\"}}}"}))))
+                          \"linguistic-cognitive-scaffolds\":{\"type\":\"string\"}}}"}))
+    ;; Cannot both have schema and inlineSchema
+    (is (not (s/valid? ::activity-extension/extension
+                       {:id "https://foo.org/bar"
+                        :type "ActivityExtension"
+                        :in-scheme "https://foo.org/"
+                        :pref-label {"en" "Bar"}
+                        :definition {"en" "Supercalifragilisticexpialidocious"}
+                        :schema "https://some.schema"
+                        :inline-schema "{\"some\" : \"schema\"}"})))
+    ;; Cannot have recommended verbs
+    (is (not (s/valid? ::activity-extension/extension
+                       {:id "https://foo.org/bar"
+                        :type "ActivityExtension"
+                        :in-scheme "https://foo.org/"
+                        :pref-label {"en" "Bar"}
+                        :definition {"en" "Supercalifragilisticexpialidocious"}
+                        :schema "https://some.schema"
+                        :recommended-verbs ["https://this.org/is-bad"]})))))
 
 (def concept-map
   {"https://w3id.org/xapi/catch/verbs/provided"
