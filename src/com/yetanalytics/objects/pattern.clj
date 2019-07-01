@@ -100,17 +100,16 @@
 ;; MUST be valid IRIs that point to Templates and Patterns
 (s/def ::valid-iris
   (fn [{:keys [object templates-table patterns-table]}]
-    (every? (or (partial contains? templates-table)
-                (partial contains? patterns-table))
-            (get-iris object))))
+    (every? #(or (contains? templates-table %)
+                 (contains? patterns-table %)) (get-iris object))))
 
 ;; MUST NOT put optinal or zeroOrMore directly inside alternates
 (s/def ::no-zero-nests
   (fn [{:keys [object patterns-table]}]
     (if (contains? object :alternates)
-      (every? (not (or #(contains? % :optional)
-                       #(contains? % :zero-or-more)))
-              (patterns-table (get-iris object)))
+      (every? #(not (or (contains? (patterns-table %) :optional)
+                        (contains? (patterns-table %) :zero-or-more)))
+              (get-iris object))
       true)))
 
 ;; MUST include at least two members of sequence, unless
