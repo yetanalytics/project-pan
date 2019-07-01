@@ -74,6 +74,23 @@
                         "http://activitystrea.ms/schema/1.0/article")
     (should-not-satisfy ::attachment-usage-types/exact-match [])))
 
+(deftest related-only-deprecated-test
+  (testing "related MUST only be used on deprecated concepts"
+    (is (s/valid? ::attachment-usage-types/related-only-deprecated
+                  {:id "https://foo.org/attachment-usage-type"
+                   :type "AttachmentUsageType"
+                   :deprecated true
+                   :related ["https://foo.org/other-attachment-usage-type"]}))
+    (is (not (s/valid? ::attachment-usage-types/related-only-deprecated
+                       {:id "https://foo.org/attachment-usage-type"
+                        :type "AttachmentUsageType"
+                        :deprecated false
+                        :related ["https://foo.org/other-attachment-usage-type"]})))
+    (is (not (s/valid? ::attachment-usage-types/related-only-deprecated
+                       {:id "https://foo.org/attachment-usage-type"
+                        :type "AttachmentUsageType"
+                        :related ["https://foo.org/other-attachment-usage-type"]})))))
+
 (deftest attachment-usage-types-test
   (testing "attachmentUsageType concept"
     (is (s/valid? ::attachment-usage-types/attachment-usage-type

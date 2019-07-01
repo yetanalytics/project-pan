@@ -73,6 +73,23 @@
                         "http://activitystrea.ms/schema/1.0/article")
     (should-not-satisfy ::verbs/exact-match [])))
 
+(deftest related-only-deprecated-test
+  (testing "related MUST only be used on deprecated concepts"
+    (is (s/valid? ::verbs/related-only-deprecated
+                  {:id "https://foo.org/verb"
+                   :type "Verb"
+                   :deprecated true
+                   :related ["https://foo.org/other-verb"]}))
+    (is (not (s/valid? ::verbs/related-only-deprecated
+                       {:id "https://foo.org/verb"
+                        :type "Verb"
+                        :deprecated false
+                        :related ["https://foo.org/other-verb"]})))
+    (is (not (s/valid? ::verbs/related-only-deprecated
+                       {:id "https://foo.org/verb"
+                        :type "Verb"
+                        :related ["https://foo.org/other-verb"]})))))
+
 (deftest verb-test
   (testing "Verb concept"
     (is (s/valid? ::verbs/verb

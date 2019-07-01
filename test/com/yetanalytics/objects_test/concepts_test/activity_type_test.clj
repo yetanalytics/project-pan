@@ -81,9 +81,24 @@
                    :type "ActivityType"
                    :in-scheme "https://w3id.org/xapi/catch/v1"
                    :pref-label {"en" "Check in"}
-                   :definition {"en"
-                                "An activity in which the learner reports
-                                     progression."}}))))
+                   :definition {"en" "An activity in which the learner reports progression."}}))))
+
+(deftest related-only-deprecated-test
+  (testing "related MUST only be used on deprecated concepts"
+    (is (s/valid? ::activity-types/related-only-deprecated
+                  {:id "https://foo.org/activity-type"
+                   :type "ActivityType"
+                   :deprecated true
+                   :related ["https://foo.org/other-activity-type"]}))
+    (is (not (s/valid? ::activity-types/related-only-deprecated
+                       {:id "https://foo.org/activity-type"
+                        :type "ActivityType"
+                        :deprecated false
+                        :related ["https://foo.org/other-activity-type"]})))
+    (is (not (s/valid? ::activity-types/related-only-deprecated
+                       {:id "https://foo.org/activity-type"
+                        :type "ActivityType"
+                        :related ["https://foo.org/other-activity-type"]})))))
 
 (def concept-map
   {"https://w3id.org/xapi/catch/activitytypes/check-in"
