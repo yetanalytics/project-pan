@@ -130,6 +130,7 @@
 
 (s/def ::template+
   (s/and ::template-basic
+         ::util/in-scheme-valid?
          ::verb-iri
          ::object-activity-type-iri
          ::context-grouping-activity-type-iris

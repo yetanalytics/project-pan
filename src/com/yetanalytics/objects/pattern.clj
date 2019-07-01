@@ -78,6 +78,13 @@
 (s/def ::pattern-basic
   (fn [{:keys [object]}] (s/valid? ::pattern object)))
 
+(s/def ::in-scheme-valid?
+  (fn [{:keys [object vid-set]}]
+    (let [version (:in-scheme object)]
+      (if (some? version)
+        (contains? vid-set version)
+        true))))
+
 ;; Get the IRIs of a Pattern, depending on its property
 (defmulti get-iris (fn [p] (keys (dissoc p :id :type :pref-label :definition
                                          :primary :in-scheme :deprecated))))

@@ -517,5 +517,3 @@
                          ["https://w3id.org/xapi/catch/templates#non-existent"]}
                         :templates-table
                         template-map})))))
-
-(run-tests)

@@ -178,6 +178,24 @@
                         :optional {:id "https://w3id.org/xapi/catch/templates#one"}
                         :zero-or-more {:id "https://w3id.org/xapi/catch/templates#two"}})))))
 
+;; Test semi-strict validation spects
+
+(deftest in-scheme-valid-test
+  (testing "inScheme, if present, MUST be a version ID"
+    (is (s/valid? ::pattern/in-scheme-valid?
+                  {:object {:in-scheme
+                            "https://foo.org/version1"}
+                   :vid-set {"https://foo.org/version1"
+                             "https://foo.org/version2"}}))
+    (is (not (s/valid? ::pattern/in-scheme-valid?
+                       {:object {:in-scheme "https://foo.org/version0"}
+                        :vid-set {"https://foo.org/version1"
+                                  "https://foo.org/version2"}})))
+    (is (s/valid? ::pattern/in-scheme-valid?
+                  {:object {:primary false}
+                   :vid-set {"https://foo.org/version1"
+                             "https://foo.org/version2"}}))))
+
 (def templates-map {"https://foo.org/statement-one"
                     {:id "https://foo.org/statement-one"
                      :type "StatementTemplate"}
