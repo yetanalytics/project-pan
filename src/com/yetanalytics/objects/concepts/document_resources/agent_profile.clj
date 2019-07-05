@@ -1,7 +1,7 @@
 (ns com.yetanalytics.objects.concepts.document-resources.agent-profile
   (:require [clojure.spec.alpha :as s]
             [com.yetanalytics.axioms :as ax]
-            [com.yetanalytics.util :as u]
+            [com.yetanalytics.util :as util]
             [com.yetanalytics.objects.concepts.util :as cu]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -50,8 +50,10 @@
 
     ;; TODO: get string from iri
     ;; schema - json-schema string at other end of iri
-    ))
+))
 
 ;; TODO: LRS clients sending Document resources checks required by the spec
 ;; - id
 ;; - content-type
+
+(defmethod util/edges-with-attrs "AgentProfileResource" [_] nil)

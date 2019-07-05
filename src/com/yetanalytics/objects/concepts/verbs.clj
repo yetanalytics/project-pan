@@ -1,7 +1,7 @@
 (ns com.yetanalytics.objects.concepts.verbs
   (:require [clojure.spec.alpha :as s]
             [com.yetanalytics.axioms :as ax]
-            [com.yetanalytics.util :as u]
+            [com.yetanalytics.util :as util]
             [com.yetanalytics.objects.concepts.util :as cu]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -87,9 +87,23 @@
       ;; - exact-match
       ;; TODO: related-match should
       ;; TODO: exact-match should
-      )))
+)))
 
-
-
-
-
+(defmethod util/edges-with-attrs "Verb"
+  [{:keys [id
+           broader
+           broad-match
+           narrower
+           narrow-match
+           related
+           related-match
+           exact-match]}]
+  (into [] (filter #(some? (second %))
+                   (concat
+                    (map #(vector id % {:type :broader}) broader)
+                    (map #(vector id % {:type :broad-match}) broad-match)
+                    (map #(vector id % {:type :narrower}) narrower)
+                    (map #(vector id % {:type :narrow-match}) narrow-match)
+                    (map #(vector id % {:type :related}) related)
+                    (map #(vector id % {:type :related-match}) related-match)
+                    (map #(vector id % {:type :exact-match} exact-match))))))

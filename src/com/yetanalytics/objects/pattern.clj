@@ -1,8 +1,10 @@
 (ns com.yetanalytics.objects.pattern
   (:require [clojure.spec.alpha :as s]
-            [com.yetanalytics.axioms :as ax]))
+            [com.yetanalytics.axioms :as ax]
+            [com.yetanalytics.util :as util]))
 
 ;; Basic properties
+
 
 (s/def ::id ::ax/uri)
 (s/def ::type #{"Pattern"})
@@ -54,3 +56,30 @@
 
 ;; TODO: MUST + MUST NOTS from Profile Authors: section
 ;; https://github.com/adlnet/xapi-profiles/blob/master/xapi-profiles-structure.md#90-patterns
+
+;; Get the IRIs of a Pattern, depending on its property
+(defn dispatch-on-pattern [pattern]
+  (keys (dissoc pattern :id :type :pref-label :definition
+                :primary :in-scheme :deprecated)))
+
+(defmulti get-edges dispatch-on-pattern)
+
+(defmethod get-edges '(:alternates) [{:keys [id alternates]}]
+  (mapv #(vector id % {:type :alternates}) alternates))
+
+(defmethod get-edges '(:sequence) [pattern]
+  (mapv #(vector (:id pattern) % {:type :sequence}) (:sequence pattern)))
+
+(defmethod get-edges '(:optional) [{:keys [id optional]}]
+  (vector (vector id (:id optional) {:type :optional})))
+
+(defmethod get-edges '(:one-or-more) [{:keys [id one-or-more]}]
+  (vector (vector id (:id one-or-more) {:type :one-or-more})))
+
+(defmethod get-edges '(:zero-or-more) [{:keys [id zero-or-more]}]
+  (vector (vector id (:id zero-or-more) {:type :zero-or-more})))
+
+(defmethod get-edges :default [_] nil)
+
+(defmethod util/edges-with-attrs "Pattern" [pattern]
+  (get-edges pattern))

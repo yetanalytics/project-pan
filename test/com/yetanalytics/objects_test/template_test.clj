@@ -1,6 +1,7 @@
 (ns com.yetanalytics.objects-test.template-test
   (:require [clojure.test :refer :all]
             [clojure.spec.alpha :as s]
+            [com.yetanalytics.util :as util]
             [com.yetanalytics.utils :refer :all]
             [com.yetanalytics.objects.template :as template]))
 
@@ -218,4 +219,43 @@
                                      for a template"}}]))
     (is (not (s/valid? ::template/templates [])))))
 
-(run-tests)
+(def template-ex
+  {:id "https://foo.org/template"
+   :type "StatementTemplate"
+   :in-scheme "https://foo.org/v1"
+   :pref-label {"en" "Example template"}
+   :definition {"en" "An example template for test purposes"}
+   :verb "https://foo.org/verb"
+   :object-activity-type "https://foo.org/oat"
+   :context-grouping-activity-type ["https://foo.org/cgat1"
+                                    "https://foo.org/cgat2"]
+   :context-parent-activity-type ["https://foo.org/cpat1"
+                                  "https://foo.org/cpat2"]
+   :context-other-activity-type ["https://foo.org/coat1"
+                                 "https://foo.org/coat2"]
+   :context-category-activity-type ["https://foo.org/ccat1"
+                                    "https://foo.org/ccat2"]
+   :attachment-usage-type ["https://foo.org/aut1"
+                           "https://foo.org/aut2"]
+   :context-statement-ref-template ["https://foo.org/csrt1"
+                                    "https://foo.org/csrt2"]})
+
+(deftest edge-with-attrs-test
+  (testing "Creating list of edges"
+    (is (= (util/edges-with-attrs template-ex)
+           [["https://foo.org/template" "https://foo.org/verb" {:type :verb}]
+            ["https://foo.org/template" "https://foo.org/oat" {:type :object-activity-type}]
+            ["https://foo.org/template" "https://foo.org/cgat1" {:type :context-grouping-activity-type}]
+            ["https://foo.org/template" "https://foo.org/cgat2" {:type :context-grouping-activity-type}]
+            ["https://foo.org/template" "https://foo.org/cpat1" {:type :context-parent-activity-type}]
+            ["https://foo.org/template" "https://foo.org/cpat2" {:type :context-parent-activity-type}]
+            ["https://foo.org/template" "https://foo.org/coat1" {:type :context-other-activity-type}]
+            ["https://foo.org/template" "https://foo.org/coat2" {:type :context-other-activity-type}]
+            ["https://foo.org/template" "https://foo.org/ccat1" {:type :context-category-activity-type}]
+            ["https://foo.org/template" "https://foo.org/ccat2" {:type :context-category-activity-type}]
+            ["https://foo.org/template" "https://foo.org/aut1" {:type :attachment-usage-type}]
+            ["https://foo.org/template" "https://foo.org/aut2" {:type :attachment-usage-type}]
+            ["https://foo.org/template" "https://foo.org/csrt1" {:type :context-statement-ref-template}]
+            ["https://foo.org/template" "https://foo.org/csrt2" {:type :context-statement-ref-template}]]))))
+
+(util/edges-with-attrs template-ex)

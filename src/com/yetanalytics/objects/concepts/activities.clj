@@ -2,7 +2,7 @@
   (:require [clojure.spec.alpha :as s]
             [xapi-schema.spec]
             [com.yetanalytics.axioms :as ax]
-            [com.yetanalytics.util :as u]
+            [com.yetanalytics.util :as util]
             [com.yetanalytics.objects.concepts.util :as cu]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -49,3 +49,5 @@
 ;; - see Profile Authors: bellow table at:
 ;; https://github.com/adlnet/xapi-profiles/blob/master/xapi-profiles-structure.md#74-activities
 
+;; Currently does nothing
+(defemthod util/edges-with-attrs "Activity" [_] [])

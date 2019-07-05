@@ -1,6 +1,7 @@
 (ns com.yetanalytics.objects.template
   (:require [clojure.spec.alpha :as s]
             [com.yetanalytics.axioms :as ax]
+            [com.yetanalytics.util :as util]
             [com.yetanalytics.objects.templates.rules :as rules]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -52,3 +53,34 @@
    ::type-or-reference))
 
 (s/def ::templates (s/coll-of ::template :kind vector? :min-count 1))
+
+(defmethod util/edges-with-attrs "StatementTemplate"
+  [{:keys [id
+           verb
+           object-activity-type
+           context-grouping-activity-type
+           context-parent-activity-type
+           context-other-activity-type
+           context-category-activity-type
+           attachment-usage-type
+           object-statement-ref-template
+           context-statement-ref-template]}]
+  (into [] (filter #(some? (second %))
+                   (concat
+                    (vector (vector id verb {:type :verb}))
+                    (vector (vector id object-activity-type
+                                    {:type :object-activity-type}))
+                    (map #(vector id % {:type :context-grouping-activity-type})
+                         context-grouping-activity-type)
+                    (map #(vector id % {:type :context-parent-activity-type})
+                         context-parent-activity-type)
+                    (map #(vector id % {:type :context-other-activity-type})
+                         context-other-activity-type)
+                    (map #(vector id % {:type :context-category-activity-type})
+                         context-category-activity-type)
+                    (map #(vector id % {:type :attachment-usage-type})
+                         attachment-usage-type)
+                    (map #(vector id % {:type :object-statement-ref-template})
+                         object-statement-ref-template)
+                    (map #(vector id % {:type :context-statement-ref-template})
+                         context-statement-ref-template)))))

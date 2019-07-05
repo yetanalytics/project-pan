@@ -1,11 +1,14 @@
 (ns com.yetanalytics.util
-  (:require [clojure.spec.alpha :as s]))
+  (:require [clojure.spec.alpha :as s]
+            [ubergraph.core :as uber]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; fns + specs
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; True if collection is not empty, false otherwise.
+
+
 (defn not-empty? [coll] (coll? (not-empty coll)))
 
 ;; Filter s.t. only false values remain.
@@ -46,3 +49,23 @@
 (s/def ::in-scheme-strict-scalar
   (fn [{:keys [in-scheme profile]}]
     (in-scheme? in-scheme profile)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Graph functions
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; Return a node and its attributes
+(defn node-with-attrs [node]
+  (let [node-name (:id node)
+        node-attrs {:type (:type node)
+                    :in-scheme (:in-scheme node)}]
+    [node-name node-attrs]))
+
+;; Return a vector of all outgoing edges
+(defmulti edges-with-attrs #(:type %))
+
+(defmethod edges-with-attrs "Profile" [{:keys [id concepts templates patterns]}]
+  (into [] (concat
+            (map #([id (:id %) {:type :concepts}]) concepts)
+            (map #([id (:id %) {:type :templates}]) templates)
+            (map #([id (:id %) {:type :patterns}]) patterns))))

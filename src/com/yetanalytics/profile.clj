@@ -1,6 +1,7 @@
 (ns com.yetanalytics.profile
   (:require [clojure.spec.alpha :as s]
             [com.yetanalytics.axioms :as ax]
+            [ubergraph.core :as uber]
             [com.yetanalytics.profiles.versions :as versions]
             [com.yetanalytics.profiles.author :as author]
             [com.yetanalytics.objects.concept :as concept]
@@ -21,7 +22,6 @@
 ;; prefLabel + definition
 (s/def ::see-also ::ax/url)
 
-
 (s/def ::profile
   (s/keys :req-un [::id ::context ::type ::conforms-to ::pref-label
                    ::definition ::author/author ::versions/versions]
@@ -31,3 +31,7 @@
                    ::pattern/patterns]))
 
 ;; TODO: stricter validation levels
+
+(s/def ::profile+
+  (s/and ::profile
+         ::profile-graph))

@@ -1,6 +1,7 @@
 (ns com.yetanalytics.objects-test.pattern-test
   (:require [clojure.test :refer :all]
             [clojure.spec.alpha :as s]
+            [com.yetanalytics.util :as u]
             [com.yetanalytics.utils :refer :all]
             [com.yetanalytics.objects.pattern :as pattern]))
 
@@ -150,5 +151,32 @@
                         :in-scheme "https://w3id.org/xapi/catch/v1"
                         :optional {:id "https://w3id.org/xapi/catch/templates#one"}
                         :zero-or-more {:id "https://w3id.org/xapi/catch/templates#two"}})))))
+
+(deftest edge-with-attrs-test
+  (testing "Creating vector of edges"
+    (is (= (u/edges-with-attrs {:id "https://foo.org/pattern1"
+                                :type "Pattern"
+                                :alternates ["https://foo.org/p1"
+                                             "https://foo.org/p2"]})
+           [["https://foo.org/pattern1" "https://foo.org/p1" {:type :alternates}]
+            ["https://foo.org/pattern1" "https://foo.org/p2" {:type :alternates}]]))
+    (is (= (u/edges-with-attrs {:id "https://foo.org/pattern2"
+                                :type "Pattern"
+                                :sequence ["https://foo.org/p1"
+                                           "https://foo.org/p2"]})
+           [["https://foo.org/pattern2" "https://foo.org/p1" {:type :sequence}]
+            ["https://foo.org/pattern2" "https://foo.org/p2" {:type :sequence}]]))
+    (is (= (u/edges-with-attrs {:id "https://foo.org/pattern3"
+                                :type "Pattern"
+                                :optional {:id "https://foo.org/p0"}})
+           [["https://foo.org/pattern3" "https://foo.org/p0" {:type :optional}]]))
+    (is (= (u/edges-with-attrs {:id "https://foo.org/pattern4"
+                                :type "Pattern"
+                                :one-or-more {:id "https://foo.org/p0"}})
+           [["https://foo.org/pattern4" "https://foo.org/p0" {:type :one-or-more}]]))
+    (is (= (u/edges-with-attrs {:id "https://foo.org/pattern5"
+                                :type "Pattern"
+                                :zero-or-more {:id "https://foo.org/p0"}})
+           [["https://foo.org/pattern5" "https://foo.org/p0" {:type :zero-or-more}]]))))
 
 (run-tests)

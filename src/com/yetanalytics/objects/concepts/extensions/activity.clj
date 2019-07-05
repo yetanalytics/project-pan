@@ -1,7 +1,7 @@
 (ns com.yetanalytics.objects.concepts.extensions.activity
   (:require [clojure.spec.alpha :as s]
             [com.yetanalytics.axioms :as ax]
-            [com.yetanalytics.util :as u]
+            [com.yetanalytics.util :as util]
             [com.yetanalytics.objects.concepts.util :as cu]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -64,8 +64,11 @@
 
     ;; TODO: get string from iri
     ;; schema - json-schema string at other end of iri
-    ))
+))
 
-
-
-
+(defmethod util/edges-with-attrs "ActivityExtension"
+  [{:keys [id recommended-activity-types]}]
+  (if (some? recommended-activity-types)
+    (mapv #(vector id % {:type :recommended-activity-types})
+          recommended-activity-types)
+    []))
