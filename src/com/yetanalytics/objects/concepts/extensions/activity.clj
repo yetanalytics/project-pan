@@ -48,7 +48,7 @@
 (s/def ::extension+
   (s/and ::extension-basic
          ::u/in-scheme-valid?
-         ::recommended-activity-type-uris))
+         ::recommended-activity-types-uris))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; validation which requires external calls

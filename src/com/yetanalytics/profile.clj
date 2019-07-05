@@ -58,7 +58,7 @@
 (defn validate-profile
   "Weak validation; only check property types and basic syntax"
   [profile]
-  (s/explain-data ::profile profile))
+  (s/explain ::profile profile))
 
 (defn validate-profile+
   "Semi-strict validation; validate inScheme property and local IRIs"

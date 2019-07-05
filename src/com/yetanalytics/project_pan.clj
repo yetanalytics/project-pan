@@ -2,7 +2,8 @@
   (:require [clojure.string :as string]
             [camel-snake-kebab.core :as kebab]
             [cheshire.core :as cheshire]
-            [com.yetanalytics.util :as util]))
+            [com.yetanalytics.util :as util]
+            [com.yetanalytics.profile :as profile]))
 
 (defn remove-chars [s]
   "Remove chars that are illegal in keywords, ie. spaces and the @ symbol."
@@ -33,8 +34,12 @@
   EXTRA SETTING: No short-circuit errors
       - Allow the validator to collect all errors, instead of terminating on 
       the first error encountered."
-  [profile & {:keys [id concept activity statement pattern
-                     external no-short]}] nil)
+  [profile & {:keys [validation-level no-short?]}]
+  (let [edn-profile (convert-json profile)]
+    (cond
+      ;; TODO Add strict validation and no-short-circuit
+      (= validation-level 1) (profile/validate-profile+ edn-profile)
+      :else (profile/validate-profile edn-profile))))
 
 ;; ID VALIDATION
 ;; 1. Check that top-level properties pass basic validation
