@@ -1,5 +1,7 @@
 (ns com.yetanalytics.objects.pattern
   (:require [clojure.spec.alpha :as s]
+            [ubergraph.core :as uber]
+            [ubergraph.alg :as uber]
             [com.yetanalytics.axioms :as ax]
             [com.yetanalytics.util :as util]))
 
@@ -83,3 +85,86 @@
 
 (defmethod util/edges-with-attrs "Pattern" [pattern]
   (get-edges pattern))
+
+(defmethod util/node-with-attrs [pattern]
+  (let [id (:id pattern)
+        attrs {:type "Pattern"
+               :primary (:primary pattern)
+               :property (dispatch-on-pattern pattern)}]
+    (vector id attrs)))
+
+(defn get-edges
+  [pgraph node-map]
+  (let [edges (uber/edges tgraph)]
+    (mapv (fn [edge]
+            (let [src (uber/src edge) dest (uber/dest edge)]
+              {:src src
+               :src-type (uber/attr pgraph src :type)
+               :src-primary (uber/attr pgraph src :primary)
+               :src-indegree (uber/in-degree pgraph src)
+               :src-outdegree (uber/out-degree pgraph src)
+               :dest dest
+               :dest-type (uber/attr pgraph dest :type)
+               :dest-property (uber/attr pgraph dest :property)
+               :type (uber/attr pgraph edge :type)}))
+          edges)))
+
+(defmulti valid-edge? #(:type %))
+
+;; MUST NOT include optional or zero-or-more directly inside alternates
+(defmethod valid-edge? :alternates
+  [{:keys src-type dest-type dest-property}]
+  (and (#{"Pattern"} src-type)
+       (or (and (#{"Pattern"} dest-type)
+                (not (#{:optional :zero-or-more} dest-property)))
+           (#{"StatementTemplate"} dest-type))))
+
+;; MUST include at least two members in sequence, unless:
+;; 1. sequence is a primary pattern not used elsewhere
+;; 2. sequence member is a single StatementTemplate
+(defmethod valid-edge? :sequence
+  [{:keys src-type dest-type src-indegree src-outdegree}]
+  (and (#{"Pattern"} src-type)
+       (#{"Pattern" "StatementTemplate"} dest-type)
+       (or (<= 2 src-outdegree)
+           (and (#{"StatementTemplate"} dest-type)
+                (true? src-primary)
+                (= 0 src-indegree)))))
+
+(defmethod valid-edge? :optional
+  [{:keys src-type dest-type}]
+  (and (#{"Pattern"} src-type)
+       (#{"Pattern" "StatementTemplate"} dest-type)))
+
+(defmethod valid-edge? :one-or-more
+  [{:keys src-type dest-type}]
+  (and (#{"Pattern"} src-type)
+       (#{"Pattern" "StatementTemplate"} dest-type)))
+
+(defmethod valid-edge? :zero-or-more
+  [{:keys src-type dest-type}]
+  (and (#{"Pattern"} src-type)
+       (#{"Pattern" "StatementTemplate"} dest-type)))
+
+(defmethod valid-edge? :default [_] false)
+
+(s/def ::pattern-edge valid-edge?)
+
+;; MUST NOT include any Pattern within itself, at any depth
+(s/def ::acyclic-graph alg/dag?)
+
+(defn pattern-graph
+  (fn [pgraph]
+    (let [edges (get-edges pgraph)]
+      (s/valid? (s/coll-of ::valid-edge edges)))))
+
+(s/def ::pattern-edges
+  (s/coll-of ::pattern-edge))
+
+(s/def ::pattern-graph
+  (fn [pgraph] (and (s/valid? ::pattern-edges (pattern/get-edges pgraph))
+                    (s/valid? ::acyclic-graph pgraph))))
+
+(defn explain-pattern-graph [pgraph]
+  (concat (s/explain-data ::pattern-edges (pattern/get-edges pgraph))
+          (s/explain-data ::acyclic-graph pgraph)))

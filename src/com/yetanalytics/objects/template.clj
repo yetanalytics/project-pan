@@ -1,5 +1,6 @@
 (ns com.yetanalytics.objects.template
   (:require [clojure.spec.alpha :as s]
+            [ubergraph.core :as uber]
             [com.yetanalytics.axioms :as ax]
             [com.yetanalytics.util :as util]
             [com.yetanalytics.objects.templates.rules :as rules]))
@@ -84,3 +85,69 @@
                          object-statement-ref-template)
                     (map #(vector id % {:type :context-statement-ref-template})
                          context-statement-ref-template)))))
+
+(defn get-edges
+  [tgraph]
+  (let [edges (uber/edges tgraph)]
+    (mapv #({:src-id (uber/src %)
+             :src-type (uber/attr tgraph (uber/src %) :type)
+             :src-version (uber/attr tgraph (uber/src %) :in-scheme)
+             :dest-id (uber/dest %)
+             :dest-type (uber/attr tgraph (uber/dest %) :type)
+             :dest-version (uber/attr tgraph (uber/src % :in-scheme))
+             :type (:type (uber/attr tgraph %))})
+          edges)))
+
+(defmulti valid-edge? #(:type %))
+
+(defmethod valid-edge? :verb [{:keys src-type dest-type}]
+  (and (#{"StatementTemplate"} src-type)
+       (#{"Verb"} dest-type)))
+
+(defmethod valid-edge? :object-activity-type [{:keys src-type dest-type}]
+  (and (#{"StatementTemplate"} src-type)
+       (#{"ActivityType"} dest-type)))
+
+(defmethod valid-edge? :context-grouping-activity-type
+  [{:keys src-type dest-type}]
+  (and (#{"StatementTemplate"} src-type)
+       (#{"ActivityType"} dest-type)))
+
+(defmethod valid-edge? :context-parent-activity-type
+  [{:keys src-type dest-type}]
+  (and (#{"StatementTemplate"} src-type)
+       (#{"ActivityType"} dest-type)))
+
+(defmethod valid-edge? :context-other-activity-type
+  [{:keys src-type dest-type}]
+  (and (#{"StatementTemplate"} src-type)
+       (#{"ActivityType"} dest-type)))
+
+(defmethod valid-edge? :attachment-usage-type
+  [{:keys src-type dest-type}]
+  (and (#{"StatementTemplate"} src-type)
+       (#{"AttachmentUsageType"} dest-type)))
+
+(defmethod valid-edge? :object-statement-ref-template
+  [{:keys src-type dest-type src-version dest-version}]
+  (and (#{"StatementTemplate"} src-type)
+       (#{"StatementTemplate"} dest-type)
+       (= src-version dest-version)))
+
+(defmethod valid-edge? :context-statement-ref-template
+  [{:keys src-type dest-type src-version dest-version}]
+  (and (#{"StatementTemplate"} src-type)
+       (#{"StatementTemplate"} dest-type)
+       (= src-version dest-version)))
+
+(defmethod valid-edge? :default [_] false)
+
+(s/def ::valid-edge valid-edge?)
+
+(s/def ::valid-edges (s/coll-of ::valid-edge))
+
+(s/def ::template-graph
+  (fn [tgraph] (s/valid? ::valid-edges (get-edges tgraph))))
+
+(defn explain-template-graph [tgraph]
+  (s/explain-data ::valid-edges (get-edges tgraph)))

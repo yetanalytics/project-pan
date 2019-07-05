@@ -55,17 +55,15 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Return a node and its attributes
-(defn node-with-attrs [node]
+(defmulti node-with-attrs #(:type %))
+
+(defmethod node-with-attrs :default [node]
   (let [node-name (:id node)
         node-attrs {:type (:type node)
                     :in-scheme (:in-scheme node)}]
-    [node-name node-attrs]))
+    (vector node-name node-attrs)))
 
 ;; Return a vector of all outgoing edges
 (defmulti edges-with-attrs #(:type %))
 
-(defmethod edges-with-attrs "Profile" [{:keys [id concepts templates patterns]}]
-  (into [] (concat
-            (map #([id (:id %) {:type :concepts}]) concepts)
-            (map #([id (:id %) {:type :templates}]) templates)
-            (map #([id (:id %) {:type :patterns}]) patterns))))
+(defmethod edges-with-attrs :default [_] [])

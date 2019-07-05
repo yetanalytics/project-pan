@@ -25,3 +25,68 @@
 
 (s/def ::concepts (s/coll-of ::concept :kind vector?))
 
+(defn get-edges
+  [cgraph]
+  (let [edges (uber/edges cgraph)]
+    (mapv (fn [edge]
+            (let [src (uber/src edge) dest (uber/dest edge)]
+              {:src src
+               :src-type (uber/attr cgraph src :type)
+               :dest dest
+               :dest-type (uber/attr cgraph dest :type)
+               :type (uber/attr pgraph edge :type)}))
+          edges)))
+
+(defmulti valid-edge? #(:type %))
+
+;; Verbs, ActivityTypes, and AttachmentUsageTypes
+;; TODO broadMatch, narrowMatch, relatedMatch and exactMatch
+
+(defmethod valid-edge? :broader
+  [{:keys src-type dest-type src-version dest-version}]
+  (and (#{"ActivityType" "AttachmentUsageType" "Verb"} src-type)
+       (#{"ActivityType" "AttachmentUsageType" "Verb"} dest-type)
+       (= src-type dest-type)
+       (= src-version dest-version)))
+
+(defmethod valid-edge? :narrower
+  [{:keys src-type dest-type src-version dest-version}]
+  (and (#{"ActivityType" "AttachmentUsageType" "Verb"} src-type)
+       (#{"ActivityType" "AttachmentUsageType" "Verb"} dest-type)
+       (= src-type dest-type)
+       (= src-version dest-version)))
+
+(defmethod valid-edge? :related
+  [{:keys src-type dest-type src-version dest-version}]
+  (and (#{"ActivityType" "AttachmentUsageType" "Verb"} src-type)
+       (#{"ActivityType" "AttachmentUsageType" "Verb"} dest-type)
+       (= src-type dest-type)
+       (= src-version dest-version)))
+
+;; Extensions
+(defmethod valid-edge? :recommended-activity-types
+  [{:keys src-type dest-type}]
+  (and (#{"ActvityExtension"} src-type)
+       (#{"ActivityType"} dest-type)))
+
+(defmethod valid-edge? :recommended-verbs
+  [{:keys src-type dest-type}]
+  (and (#{"ContextExtension" "ResultExtension"} src-type)
+       (#{"Verb"} dest-type)))
+
+(defmethod valid-edge? :default [_] false)
+
+(s/def ::valid-edge valid-edge?)
+
+(s/def ::valid-edges (s/coll-of ::valid-edge))
+
+(s/def ::concept-graph
+  (fn [cgraph]
+    (let [edges (get-edges cgraph)]
+      (s/valid? (s/coll-of ::valid-edge edges)))))
+
+(s/def ::concept-graph
+  (fn [cgraph] (s/valid? ::valid-edges (get-edges cgraph))))
+
+(defn explain-concept-graph [cgraph]
+  (s/explain-data ::valid-edges (get-edges cgraph)))
