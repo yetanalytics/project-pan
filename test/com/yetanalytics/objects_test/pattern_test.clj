@@ -1,6 +1,8 @@
 (ns com.yetanalytics.objects-test.pattern-test
   (:require [clojure.test :refer :all]
             [clojure.spec.alpha :as s]
+            [clojure.pprint :as pprint]
+            [ubergraph.core :as uber]
             [com.yetanalytics.util :as u]
             [com.yetanalytics.utils :refer :all]
             [com.yetanalytics.objects.pattern :as pattern]))
@@ -152,6 +154,26 @@
                         :optional {:id "https://w3id.org/xapi/catch/templates#one"}
                         :zero-or-more {:id "https://w3id.org/xapi/catch/templates#two"}})))))
 
+;; Graph tests
+
+(deftest node-with-attrs
+  (testing "Creating node with attributes"
+    (is (= (u/node-with-attrs {:id "https://foo.org/pattern1"
+                               :type "Pattern"
+                               :primary true
+                               :alternates ["https://foo.org/p1"
+                                            "https://foo.org/p2"]})
+           ["https://foo.org/pattern1" {:type "Pattern"
+                                        :primary true
+                                        :property :alternates}]))
+    (is (= (u/node-with-attrs {:id "https://foo.org/pattern1"
+                               :type "Pattern"
+                               :primary false
+                               :optional {:id "https://foo.org/p3"}})
+           ["https://foo.org/pattern1" {:type "Pattern"
+                                        :primary false
+                                        :property :optional}]))))
+
 (deftest edge-with-attrs-test
   (testing "Creating vector of edges"
     (is (= (u/edges-with-attrs {:id "https://foo.org/pattern1"
@@ -179,4 +201,112 @@
                                 :zero-or-more {:id "https://foo.org/p0"}})
            [["https://foo.org/pattern5" "https://foo.org/p0" {:type :zero-or-more}]]))))
 
-(run-tests)
+(deftest alternates-test
+  (testing "Alternates pattern MUST NOT include optional or zeroOrMore directly."
+    (should-satisfy+
+     ::pattern/valid-edge
+     {:src-type "Pattern" :dest-type "Pattern"
+      :type :alternates :dest-property :alternates}
+     {:src-type "Pattern" :dest-type "Pattern"
+      :type :alternates :dest-property :sequence}
+     {:src-type "Pattern" :dest-type "Pattern"
+      :type :alternates :dest-property :one-or-more}
+     {:src-type "Pattern" :dest-type "StatementTemplate"
+      :type :alternates :dest-property nil}
+     :bad
+     {:src-type "Pattern" :dest-type "Pattern"
+      :type :alternates :dest-property :optional}
+     {:src-type "Pattern" :dest-type "Pattern"
+      :type :alternates :dest-property :zero-or-more}
+     {:src-type "Pattern" :dest-type "Verb"
+      :type :alternates :dest-property nil})))
+
+(deftest sequence-test
+  (testing "Sequence pattern MUST include at least two members, unless pattern is a primary pattern not used elsewhere that contains one StatementTemplate."
+    (should-satisfy+
+     ::pattern/valid-edge
+     {:src-type "Pattern" :dest-type "Pattern" :type :sequence
+      :src-indegree 1 :src-outdegree 2 :src-primary false}
+     {:src-type "Pattern" :dest-type "StatementTemplate" :type :sequence
+      :src-indegree 0 :src-outdegree 1 :src-primary true}
+     :bad
+     {:src-type "Pattern" :dest-type "Pattern" :type :sequence
+      :src-indegree 0 :src-outdegree 1 :src-primary true}
+     {:src-type "Pattern" :dest-type "StatementTemplate" :type :sequence
+      :src-indegree 1 :src-outdegree 1 :src-primary true}
+     {:src-type "Pattern" :dest-type "StatementTemplate" :type :sequence
+      :src-indegree 0 :src-outdegree 1 :src-primary false})))
+
+(deftest edge-test
+  (testing "Optional, oneOrMore, or zeroOrMore pattern edges"
+    (should-satisfy+
+     ::pattern/valid-edge
+     {:src-type "Pattern" :dest-type "Pattern" :type :optional}
+     {:src-type "Pattern" :dest-type "Pattern" :type :one-or-more}
+     {:src-type "Pattern" :dest-type "Pattern" :type :zero-or-more}
+     {:src-type "Pattern" :dest-type "StatementTemplate" :type :optional}
+     {:src-type "Pattern" :dest-type "StatementTemplate" :type :one-or-more}
+     {:src-type "Pattern" :dest-type "StatementTemplate" :type :zero-or-more}
+     {:src-type "Pattern" :dest-type "Pattern" :type :optional
+      :src-primary true :src-indegree 0 :src-outdegree 1 :dest-property :one-or-more}
+     :bad
+     {:src-type "Pattern" :dest-type "Verb" :type :optional}
+     {:src-type "Pattern" :dest-type "Verb" :type :one-or-more}
+     {:src-type "Pattern" :dest-type "Verb" :type :zero-or-more}
+     {:src-type "Pattern" :dest-type nil :type :optional}
+     {:src-type "Pattern" :dest-type nil :type :one-or-more}
+     {:src-type "Pattern" :dest-type nil :type :zero-or-more})))
+
+(def ex-templates
+  [{:id "https://foo.org/template1"
+    :type "StatementTemplate" :in-scheme "https://foo.org/v1"}
+   {:id "https://foo.org/template2"
+    :type "StatementTemplate" :in-scheme "https://foo.org/v1"}
+   {:id "https://foo.org/template3"
+    :type "StatementTemplate" :in-scheme "https://foo.org/v1"}
+   {:id "https://foo.org/template4"
+    :type "StatementTemplate" :in-scheme "https://foo.org/v1"}
+   {:id "https://foo.org/template5"
+    :type "StatementTemplate" :in-scheme "https://foo.org/v1"}])
+
+(def ex-patterns
+  [{:id "https://foo.org/pattern1" :type "Pattern"
+    :in-scheme "https://foo.org/v1" :primary true
+    :alternates ["https://foo.org/pattern2"
+                 "https://foo.org/template1"]}
+   {:id "https://foo.org/pattern2" :type "Pattern"
+    :in-scheme "https://foo.org/v1" :primary true
+    :sequence ["https://foo.org/pattern3"
+               "https://foo.org/template2"]}
+   {:id "https://foo.org/pattern3" :type "Pattern"
+    :in-scheme "https://foo.org/v1" :primary true
+    :optional {:id "https://foo.org/template3"}}
+   {:id "https://foo.org/pattern4" :type "Pattern"
+    :in-scheme "https://foo.org/v1" :primary true
+    :one-or-more {:id "https://foo.org/template4"}}
+   {:id "https://foo.org/pattern5" :type "Pattern"
+    :in-scheme "https://foo.org/v1" :primary true
+    :zero-or-more {:id "https://foo.org/template5"}}])
+
+(def pgraph
+  (let [graph (uber/digraph)
+        ;; Nodes
+        tnodes (mapv (partial u/node-with-attrs) ex-templates)
+        pnodes (mapv (partial u/node-with-attrs) ex-patterns)
+        ;; Edges
+        tedges (reduce concat (mapv (partial u/edges-with-attrs) ex-templates))
+        pedges (reduce concat (mapv (partial u/edges-with-attrs) ex-patterns))]
+    (-> graph
+        (uber/add-nodes-with-attrs* tnodes)
+        (uber/add-nodes-with-attrs* pnodes)
+        (uber/add-directed-edges* tedges)
+        (uber/add-directed-edges* pedges))))
+
+(deftest graph-test
+  (testing "Pattern graph should satisfy various properties"
+    (is (= 10 (count (uber/nodes pgraph))))
+    (is (= 7 (count (uber/edges pgraph))))
+    (is (= 7 (count (pattern/get-edges pgraph))))
+    (should-satisfy ::pattern/valid-edges (pattern/get-edges pgraph))
+    (should-satisfy ::pattern/acyclic-graph pgraph)
+    (should-satisfy ::pattern/pattern-graph pgraph)))

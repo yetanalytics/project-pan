@@ -89,53 +89,60 @@
 (defn get-edges
   [tgraph]
   (let [edges (uber/edges tgraph)]
-    (mapv #({:src-id (uber/src %)
-             :src-type (uber/attr tgraph (uber/src %) :type)
-             :src-version (uber/attr tgraph (uber/src %) :in-scheme)
-             :dest-id (uber/dest %)
-             :dest-type (uber/attr tgraph (uber/dest %) :type)
-             :dest-version (uber/attr tgraph (uber/src % :in-scheme))
-             :type (:type (uber/attr tgraph %))})
+    (mapv (fn [edge]
+            (let [src (uber/src edge) dest (uber/dest edge)]
+              {:src src
+               :src-type (uber/attr tgraph src :type)
+               :src-version (uber/attr tgraph src :in-scheme)
+               :dest dest
+               :dest-type (uber/attr tgraph dest :type)
+               :dest-version (uber/attr tgraph dest :in-scheme)
+               :type (uber/attr tgraph edge :type)}))
           edges)))
 
 (defmulti valid-edge? #(:type %))
 
-(defmethod valid-edge? :verb [{:keys src-type dest-type}]
+(defmethod valid-edge? :verb [{:keys [src-type dest-type]}]
   (and (#{"StatementTemplate"} src-type)
        (#{"Verb"} dest-type)))
 
-(defmethod valid-edge? :object-activity-type [{:keys src-type dest-type}]
+(defmethod valid-edge? :object-activity-type [{:keys [src-type dest-type]}]
   (and (#{"StatementTemplate"} src-type)
        (#{"ActivityType"} dest-type)))
 
 (defmethod valid-edge? :context-grouping-activity-type
-  [{:keys src-type dest-type}]
+  [{:keys [src-type dest-type]}]
   (and (#{"StatementTemplate"} src-type)
        (#{"ActivityType"} dest-type)))
 
 (defmethod valid-edge? :context-parent-activity-type
-  [{:keys src-type dest-type}]
+  [{:keys [src-type dest-type]}]
   (and (#{"StatementTemplate"} src-type)
        (#{"ActivityType"} dest-type)))
 
 (defmethod valid-edge? :context-other-activity-type
-  [{:keys src-type dest-type}]
+  [{:keys [src-type dest-type]}]
+  (and (#{"StatementTemplate"} src-type)
+       (#{"ActivityType"} dest-type)))
+
+(defmethod valid-edge? :context-category-activity-type
+  [{:keys [src-type dest-type]}]
   (and (#{"StatementTemplate"} src-type)
        (#{"ActivityType"} dest-type)))
 
 (defmethod valid-edge? :attachment-usage-type
-  [{:keys src-type dest-type}]
+  [{:keys [src-type dest-type]}]
   (and (#{"StatementTemplate"} src-type)
        (#{"AttachmentUsageType"} dest-type)))
 
 (defmethod valid-edge? :object-statement-ref-template
-  [{:keys src-type dest-type src-version dest-version}]
+  [{:keys [src-type dest-type src-version dest-version]}]
   (and (#{"StatementTemplate"} src-type)
        (#{"StatementTemplate"} dest-type)
        (= src-version dest-version)))
 
 (defmethod valid-edge? :context-statement-ref-template
-  [{:keys src-type dest-type src-version dest-version}]
+  [{:keys [src-type dest-type src-version dest-version]}]
   (and (#{"StatementTemplate"} src-type)
        (#{"StatementTemplate"} dest-type)
        (= src-version dest-version)))

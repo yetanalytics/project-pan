@@ -258,4 +258,41 @@
             ["https://foo.org/template" "https://foo.org/csrt1" {:type :context-statement-ref-template}]
             ["https://foo.org/template" "https://foo.org/csrt2" {:type :context-statement-ref-template}]]))))
 
-(util/edges-with-attrs template-ex)
+(deftest valid-edge-test
+  (testing "Valid edge properties"
+    (should-satisfy+
+     ::template/valid-edge
+     {:type :verb :src-type "StatementTemplate" :dest-type "Verb"}
+     {:type :object-activity-type
+      :src-type "StatementTemplate" :dest-type "ActivityType"}
+     {:type :context-grouping-activity-type
+      :src-type "StatementTemplate" :dest-type "ActivityType"}
+     {:type :context-parent-activity-type
+      :src-type "StatementTemplate" :dest-type "ActivityType"}
+     {:type :context-other-activity-type
+      :src-type "StatementTemplate" :dest-type "ActivityType"}
+     {:type :context-category-activity-type
+      :src-type "StatementTemplate" :dest-type "ActivityType"}
+     {:type :attachment-usage-type
+      :src-type "StatementTemplate" :dest-type "AttachmentUsageType"}
+     {:type :object-statement-ref-template
+      :src-type "StatementTemplate" :dest-type "StatementTemplate"
+      :src-version "https://foo.org/v1" :dest-version "https://foo.org/v1"}
+     {:type :context-statement-ref-template
+      :src-type "StatementTemplate" :dest-type "StatementTemplate"
+      :src-version "https://foo.org/v1" :dest-version "https://foo.org/v1"}
+     :bad
+     {:type :verb :src-type "StatementTemplate" :dest-type "ActivityType"}
+     {:type :object-activity-type
+      :src-type "StatementTemplate" :dest-type "Verb"}
+     {:type :attachment-usage-type
+      :src-type "ActivityType" :dest-type "AttachmentUsageType"}
+     {:type :object-statement-ref-template
+      :src-type "StatementTemplate" :dest-type "StatementTemplate"
+      :src-version "https://foo.org/v1" :dest-version "https://foo.org/v2"}
+     {:type :context-statement-ref-template
+      :src-type "StatementTemplate" :dest-type "ActivityType"
+      :src-version "https://foo.org/v1" :dest-version "https://foo.org/v1"}
+     {:type :blah :src-type "StatementTemplate" :dest-type "Verb"})))
+
+;; TODO Add graph integration tests

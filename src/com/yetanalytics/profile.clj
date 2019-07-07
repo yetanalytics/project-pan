@@ -87,7 +87,7 @@
         ;; Edges
         tedges (reduce concat (mapv (partial util/edges-with-attrs) templates))
         pedges (reduce concat (mapv (partial util/edges-with-attrs) patterns))]
-    (-> tgraph
+    (-> pgraph
         (uber/add-nodes-with-attrs* tnodes)
         (uber/add-nodes-with-attrs* pnodes)
         (uber/add-directed-edges* tedges)

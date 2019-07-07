@@ -31,12 +31,12 @@
 ;; in-profile validation+ helpers
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(s/def ::activity-in-profile-strict
-  (fn [{:keys [activity profile]}]
-    (let [{:keys [in-scheme]} activity]
-      (s/and (s/valid? ::activity activity)
-             (s/valid? ::u/in-scheme-strict-scalar {:in-scheme in-scheme
-                                                    :profile profile})))))
+; (s/def ::activity-in-profile-strict
+;   (fn [{:keys [activity profile]}]
+;     (let [{:keys [in-scheme]} activity]
+;       (s/and (s/valid? ::activity activity)
+;              (s/valid? ::u/in-scheme-strict-scalar {:in-scheme in-scheme
+;                                                     :profile profile})))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; advanced processing for spec MUSTS
@@ -50,4 +50,4 @@
 ;; https://github.com/adlnet/xapi-profiles/blob/master/xapi-profiles-structure.md#74-activities
 
 ;; Currently does nothing
-(defemthod util/edges-with-attrs "Activity" [_] [])
+(defmethod util/edges-with-attrs "Activity" [_] [])

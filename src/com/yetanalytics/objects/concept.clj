@@ -1,5 +1,6 @@
 (ns com.yetanalytics.objects.concept
   (:require [clojure.spec.alpha :as s]
+            [ubergraph.core :as uber]
             [com.yetanalytics.objects.concepts.verbs :as v]
             [com.yetanalytics.objects.concepts.activities :as a]
             [com.yetanalytics.objects.concepts.activity-types :as at]
@@ -32,9 +33,11 @@
             (let [src (uber/src edge) dest (uber/dest edge)]
               {:src src
                :src-type (uber/attr cgraph src :type)
+               :src-version (uber/attr cgraph src :version)
                :dest dest
                :dest-type (uber/attr cgraph dest :type)
-               :type (uber/attr pgraph edge :type)}))
+               :dest-version (uber/attr cgraph dest :version)
+               :type (uber/attr cgraph edge :type)}))
           edges)))
 
 (defmulti valid-edge? #(:type %))
@@ -43,21 +46,21 @@
 ;; TODO broadMatch, narrowMatch, relatedMatch and exactMatch
 
 (defmethod valid-edge? :broader
-  [{:keys src-type dest-type src-version dest-version}]
+  [{:keys [src-type dest-type src-version dest-version]}]
   (and (#{"ActivityType" "AttachmentUsageType" "Verb"} src-type)
        (#{"ActivityType" "AttachmentUsageType" "Verb"} dest-type)
        (= src-type dest-type)
        (= src-version dest-version)))
 
 (defmethod valid-edge? :narrower
-  [{:keys src-type dest-type src-version dest-version}]
+  [{:keys [src-type dest-type src-version dest-version]}]
   (and (#{"ActivityType" "AttachmentUsageType" "Verb"} src-type)
        (#{"ActivityType" "AttachmentUsageType" "Verb"} dest-type)
        (= src-type dest-type)
        (= src-version dest-version)))
 
 (defmethod valid-edge? :related
-  [{:keys src-type dest-type src-version dest-version}]
+  [{:keys [src-type dest-type src-version dest-version]}]
   (and (#{"ActivityType" "AttachmentUsageType" "Verb"} src-type)
        (#{"ActivityType" "AttachmentUsageType" "Verb"} dest-type)
        (= src-type dest-type)
@@ -65,12 +68,12 @@
 
 ;; Extensions
 (defmethod valid-edge? :recommended-activity-types
-  [{:keys src-type dest-type}]
-  (and (#{"ActvityExtension"} src-type)
+  [{:keys [src-type dest-type]}]
+  (and (#{"ActivityExtension"} src-type)
        (#{"ActivityType"} dest-type)))
 
 (defmethod valid-edge? :recommended-verbs
-  [{:keys src-type dest-type}]
+  [{:keys [src-type dest-type]}]
   (and (#{"ContextExtension" "ResultExtension"} src-type)
        (#{"Verb"} dest-type)))
 
@@ -79,11 +82,6 @@
 (s/def ::valid-edge valid-edge?)
 
 (s/def ::valid-edges (s/coll-of ::valid-edge))
-
-(s/def ::concept-graph
-  (fn [cgraph]
-    (let [edges (get-edges cgraph)]
-      (s/valid? (s/coll-of ::valid-edge edges)))))
 
 (s/def ::concept-graph
   (fn [cgraph] (s/valid? ::valid-edges (get-edges cgraph))))
