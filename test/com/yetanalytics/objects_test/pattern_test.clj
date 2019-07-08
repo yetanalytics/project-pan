@@ -334,187 +334,84 @@
     (is (= 10 (count (uber/nodes pgraph))))
     (is (= 7 (count (uber/edges pgraph))))
     (is (= 7 (count (pattern/get-edges pgraph))))
+    (is (= (set (uber/nodes pgraph))
+           #{"https://foo.org/pattern1" "https://foo.org/pattern2"
+             "https://foo.org/pattern3" "https://foo.org/pattern4"
+             "https://foo.org/pattern5" "https://foo.org/template1"
+             "https://foo.org/template2" "https://foo.org/template3"
+             "https://foo.org/template4" "https://foo.org/template5"}))
+    (is (= (set (pattern/get-edges pgraph))
+           #{{:src "https://foo.org/pattern1" :src-type "Pattern"
+              :src-primary true :src-indegree 0 :src-outdegree 2
+              :dest "https://foo.org/pattern2" :dest-type "Pattern"
+              :dest-property :sequence :type :alternates}
+             {:src "https://foo.org/pattern1" :src-type "Pattern"
+              :src-primary true :src-indegree 0 :src-outdegree 2
+              :dest "https://foo.org/template1" :dest-type "StatementTemplate"
+              :dest-property nil :type :alternates}
+             {:src "https://foo.org/pattern2" :src-type "Pattern"
+              :src-primary true :src-indegree 1 :src-outdegree 2
+              :dest "https://foo.org/pattern3" :dest-type "Pattern"
+              :dest-property :optional :type :sequence}
+             {:src "https://foo.org/pattern2" :src-type "Pattern"
+              :src-primary true :src-indegree 1 :src-outdegree 2
+              :dest "https://foo.org/template2" :dest-type "StatementTemplate"
+              :dest-property nil :type :sequence}
+             {:src "https://foo.org/pattern3" :src-type "Pattern"
+              :src-primary true :src-indegree 1 :src-outdegree 1
+              :dest "https://foo.org/template3" :dest-type "StatementTemplate"
+              :dest-property nil :type :optional}
+             {:src "https://foo.org/pattern4" :src-type "Pattern"
+              :src-primary true :src-indegree 0 :src-outdegree 1
+              :dest "https://foo.org/template4" :dest-type "StatementTemplate"
+              :dest-property nil :type :one-or-more}
+             {:src "https://foo.org/pattern5" :src-type "Pattern"
+              :src-primary true :src-indegree 0 :src-outdegree 1
+              :dest "https://foo.org/template5" :dest-type "StatementTemplate"
+              :dest-property nil :type :zero-or-more}}))
     (should-satisfy ::pattern/valid-edges (pattern/get-edges pgraph))
     (should-satisfy ::pattern/acyclic-graph pgraph)
     (should-satisfy ::pattern/pattern-graph pgraph)))
 
-; (def templates-map {"https://foo.org/statement-one"
-;                     {:id "https://foo.org/statement-one"
-;                      :type "StatementTemplate"}
-;                     "https://foo.org/statement-two"
-;                     {:id "https://foo.org/statement-two"
-;                      :type "StatementTemplate"}
-;                     "https://foo.org/statement-three"
-;                     {:id "https://foo.org/statement-three"
-;                      :type "StatementTemplate"}
-;                     "https://foo.org/statement-four"
-;                     {:id "https://foo.org/statement-four"
-;                      :type "StatementTemplate"}
-;                     "https://foo.org/statement-five"
-;                     {:id "https://foo.org/statement-five"
-;                      :type "StatementTemplate"}})
+(def cyclic-patterns-1
+  [{:id "https://foo.org/pattern-one"
+    :type "Pattern"
+    :primary true
+    :one-or-more {:id "https://foo.org/pattern-two"}}
+   {:id "https://foo.org/pattern-two"
+    :type "Pattern"
+    :primary true
+    :one-or-more {:id "https://foo.org/pattern-one"}}])
 
-; (def patterns-map
-;   {"https://foo.org/primary-pattern-one"
-;    {:id "https://foo.org/primary-pattern-one"
-;     :type "Pattern"
-;     :primary true
-;     :alternates ["https://foo.org/not-primary-one"
-;                  "https://foo.org/primary-pattern-two"]}
-;    "https://foo.org/primary-pattern-two"
-;    {:id "https://foo.org/primary-pattern-two"
-;     :type "Pattern"
-;     :primary true
-;     :sequence ["https://foo.org/not-primary-three"
-;                "https://foo.org/not-primary-four"]}
-;    "https://foo.org/primary-pattern-three"
-;    {:id "https://foo.org/primary-pattern-three"
-;     :type "Pattern"
-;     :primary true
-;     :one-or-more {:id "https://foo.org/not-primary-five"}}
-;    "https://foo.org/primary-pattern-four"
-;    {:id "https://foo.org/primary-pattern-four"
-;     :type "Pattern"
-;     :primary true
-;     :zero-or-more {:id "https://foo.org/not-primary-five"}}
-;    "https://foo.org/primary-pattern-five"
-;    {:id "https://foo.org/primary-pattern-five"
-;     :type "Pattern"
-;     :primary true
-;     :optional {:id "https://foo.org/not-primary-five"}}
-;    "https://foo.org/primary-pattern-six"
-;    {:id "https://foo.org/primary-pattern-six"
-;     :type "Pattern"
-;     :primary true
-;     :sequence ["https://foo.org/not-primary-four"
-;                "https://foo.org/statement-one"]}
-;    "https://foo.org/not-primary-one"
-;    {:id "https://foo.org/not-primary-one"
-;     :type "Pattern"
-;     :primary false
-;     :alternates ["https://foo.org/statement-one"]}
-;    "https://foo.org/not-primary-two"
-;    {:id "https://foo.org/not-primary-two"
-;     :type "Pattern"
-;     :primary false
-;     :sequence ["https://foo.org/statement-two"
-;                "https://foo.org/statement-three"]}
-;    "https://foo.org/not-primary-three"
-;    {:id "https://foo.org/not-primary-three"
-;     :type "Pattern"
-;     :primary false
-;     :optional {:id "https://foo.org/statement-three"}}
-;    "https://foo.org/not-primary-four"
-;    {:id "https://foo.org/not-primary-four"
-;     :type "Pattern"
-;     :primary false
-;     :one-or-more {:id "https://foo.org/statement-four"}}
-;    "https://foo.org/not-primary-five"
-;    {:id "https://foo.org/not-primary-five"
-;     :type "Pattern"
-;     :primary false
-;     :zero-or-more {:id "https://foo.org/statement-five"}}})
+(def cyclic-patterns-2
+  [{:id "https://foo.org/pattern-three"
+    :type "Pattern"
+    :primary true
+    :one-or-more {:id "https://foo.org/pattern-three"}}])
 
+(def cyclic-pgraph-1
+  (let [graph (uber/digraph)
+        ;; Nodes
+        pnodes (mapv (partial u/node-with-attrs) cyclic-patterns-1)
+        ;; Edges
+        pedges (reduce concat (mapv (partial u/edges-with-attrs) cyclic-patterns-1))]
+    (-> graph
+        (uber/add-nodes-with-attrs* pnodes)
+        (uber/add-directed-edges* pedges))))
 
-; (def pgraph (pattern/pattern-graph patterns-map))
+(def cyclic-pgraph-2
+  (let [graph (uber/digraph)
+        ;; Nodes
+        pnodes (mapv (partial u/node-with-attrs) cyclic-patterns-2)
+        ;; Edges
+        pedges (reduce concat (mapv (partial u/edges-with-attrs) cyclic-patterns-2))]
+    (-> graph
+        (uber/add-nodes-with-attrs* pnodes)
+        (uber/add-directed-edges* pedges))))
 
-; (deftest min-sequence-count-test
-;   (testing "MUST include at least two members of sequence, unless sequence
-;            consists of a single Template in a primary pattern not use elsewhere"
-;     ;; Pattern MUST be primary
-;     (is (not (s/valid? ::pattern/min-sequence-count
-;                        {:object
-;                         {:id "https://foo.org/not-primary-pattern"
-;                          :type "Pattern"
-;                          :primary false
-;                          :sequence ["https://foo.org/statement-two"]}
-;                         :templates-table templates-map
-;                         :patterns-table patterns-map
-;                         :patterns-graph pgraph})))
-;     ;; Sequence MUST contain a statement template
-;     (is (not (s/valid? ::pattern/min-sequence-count
-;                        {:object
-;                         {:id "https://foo.org/primary-pattern"
-;                          :type "Pattern"
-;                          :primary true
-;                          :sequence ["https://foo.org/primary-pattern-three"]}
-;                         :templates-table templates-map
-;                         :patterns-table patterns-map
-;                         :patterns-graph pgraph})))
-;     ;; Sequence MUST NOT be used elsehwere in the graph
-;     (is (not (s/valid? ::pattern/min-sequence-count
-;                        {:object
-;                         {:id "https://foo.org/primary-pattern-two"
-;                          :type "Pattern"
-;                          :primary true
-;                          :sequence ["https://foo.org/statement-two"]}
-;                         :templates-table templates-map
-;                         :patterns-table patterns-map
-;                         :patterns-graph pgraph})))
-;     ;; Valid pattern
-;     (is (s/valid? ::pattern/min-sequence-count
-;                   {:object
-;                    {:id "https://foo.org/primary-pattern-six"
-;                     :type "Pattern"
-;                     :primary true
-;                     :sequence ["https://foo.org/statement-one"]}
-;                    :templates-table templates-map
-;                    :patterns-table patterns-map
-;                    :patterns-graph pgraph}))
-;     ;; Moot point if sequence has two or more IRIs
-;     (is (s/valid? ::pattern/min-sequence-count
-;                   {:object
-;                    {:id "https://foo.org/not-primary-two"
-;                     :type "Pattern"
-;                     :primary false
-;                     :sequence ["https://foo.org/statement-two"
-;                                "https://foo.org/statement-three"]}
-;                    :templates-table templates-map
-;                    :patterns-table patterns-map
-;                    :patterns-graph pgraph}))
-;     ;; Moot point if our pattern is not sequence 
-;     (is (s/valid? ::pattern/min-sequence-count
-;                   {:object
-;                    {:id "https://foo.org/not-primary-two"
-;                     :type "Pattern"
-;                     :primary false
-;                     :alternates ["https://foo.org/statement-two"
-;                                  "https://foo.org/statement-three"]}
-;                    :templates-table templates-map
-;                    :patterns-table patterns-map
-;                    :patterns-graph pgraph}))))
-
-; (def patterns-map-bad
-;   {"https://foo.org/pattern-one"
-;    {:id "https://foo.org/pattern-one"
-;     :type "Pattern"
-;     :primary true
-;     :one-or-more {:id "https://foo.org/pattern-two"}}
-;    "https://foo.org/pattern-two"
-;    {:id "https://foo.org/pattern-two"
-;     :type "Pattern"
-;     :primary true
-;     :one-or-more {:id "https://foo.org/pattern-one"}}})
-
-; (def patterns-map-bad-2
-;   {"https://foo.org/pattern-three"
-;    {:id "https://foo.org/pattern-three"
-;     :type "Pattern"
-;     :primary true
-;     :one-or-more {:id "https://foo.org/pattern-three"}}})
-
-; (def pgraph-bad (pattern/pattern-graph patterns-map-bad))
-; (def pgraph-bad-2 (pattern/pattern-graph patterns-map-bad-2))
-
-; (deftest no-cycles-test
-;   (testing "MUST not have any cycles in graph"
-;     (is (s/valid? ::pattern/no-cycles
-;                   [{:patterns-graph pgraph}
-;                    {:patterns-graph pgraph}]))
-;     ;; No cycles
-;     (is (not (s/valid? ::pattern/no-cycles
-;                        [{:patterns-graph pgraph-bad}
-;                         {:patterns-graph pgraph-bad}])))
-;     ;; No self loops
-;     (is (not (s/valid? ::pattern/no-cycles
-;                        [{:patterns-graph pgraph-bad-2}])))))
+(deftest no-cycles-test
+  (testing "MUST not have any cycles in graph"
+    ;; No cycles
+    (is (not (s/valid? ::pattern/acyclic-graph cyclic-pgraph-1)))
+    ;; No self loops
+    (is (not (s/valid? ::pattern/acyclic-graph cyclic-pgraph-2)))))

@@ -2,6 +2,7 @@
   (:require [clojure.test :refer :all]
             [clojure.spec.alpha :as s]
             [ubergraph.core :as uber]
+            [com.yetanalytics.util :as util]
             [com.yetanalytics.utils :refer :all]
             [com.yetanalytics.objects.concept :as concept]))
 
@@ -70,3 +71,65 @@
       :type :recommended-verbs})))
 
 ;; TODO Add graph integration tests
+
+(def ex-concepts
+  [{:id "https://foo.org/verb1"
+    :type "Verb"
+    :in-scheme "https://foo.org/v1"
+    :broader ["https://foo.org/verb2"]}
+   {:id "https://foo.org/verb2"
+    :type "Verb"
+    :in-scheme "https://foo.org/v1"
+    :narrower ["https://foo.org/verb1"]}
+   {:id "https://foo.org/at1"
+    :type "ActivityType"
+    :in-scheme "https://foo.org/v1"
+    :broader ["https://foo.org/at2"]}
+   {:id "https://foo.org/at2"
+    :type "ActivityType"
+    :in-scheme "https://foo.org/v1"
+    :narrower ["https://foo.org/at1"]}
+   {:id "https://foo.org/aut1"
+    :type "AttachmentUsageType"
+    :in-scheme "https://foo.org/v1"
+    :broader ["https://foo.org/aut2"]}
+   {:id "https://foo.org/aut2"
+    :type "AttachmentUsageType"
+    :in-scheme "https://foo.org/v1"
+    :narrower ["https://foo.org/aut1"]}])
+
+(def cgraph (let [graph (uber/digraph)
+                  nodes (mapv (partial util/node-with-attrs) ex-concepts)
+                  edges (reduce concat (mapv (partial util/edges-with-attrs) ex-concepts))]
+              (-> graph
+                  (uber/add-nodes-with-attrs* nodes)
+                  (uber/add-directed-edges* edges))))
+
+(deftest graph-test
+  (testing "Graph properties"
+    (is (= 6 (count (uber/nodes cgraph))))
+    (is (= 6 (count (uber/edges cgraph))))
+    (is (= (set (uber/nodes cgraph))
+           #{"https://foo.org/verb1" "https://foo.org/verb2"
+             "https://foo.org/at1" "https://foo.org/at2"
+             "https://foo.org/aut1" "https://foo.org/aut2"}))
+    (is (= (set (concept/get-edges cgraph))
+           #{{:src "https://foo.org/verb1" :src-type "Verb" :src-version "https://foo.org/v1"
+              :dest "https://foo.org/verb2" :dest-type "Verb" :dest-version "https://foo.org/v1"
+              :type :broader}
+             {:src "https://foo.org/verb2" :src-type "Verb" :src-version "https://foo.org/v1"
+              :dest "https://foo.org/verb1" :dest-type "Verb" :dest-version "https://foo.org/v1"
+              :type :narrower}
+             {:src "https://foo.org/at1" :src-type "ActivityType" :src-version "https://foo.org/v1"
+              :dest "https://foo.org/at2" :dest-type "ActivityType" :dest-version "https://foo.org/v1"
+              :type :broader}
+             {:src "https://foo.org/at2" :src-type "ActivityType" :src-version "https://foo.org/v1"
+              :dest "https://foo.org/at1" :dest-type "ActivityType" :dest-version "https://foo.org/v1"
+              :type :narrower}
+             {:src "https://foo.org/aut1" :src-type "AttachmentUsageType" :src-version "https://foo.org/v1"
+              :dest "https://foo.org/aut2" :dest-type "AttachmentUsageType" :dest-version "https://foo.org/v1"
+              :type :broader}
+             {:src "https://foo.org/aut2" :src-type "AttachmentUsageType" :src-version "https://foo.org/v1"
+              :dest "https://foo.org/aut1" :dest-type "AttachmentUsageType" :dest-version "https://foo.org/v1"
+              :type :narrower}}))
+    (should-satisfy ::concept/concept-graph cgraph)))

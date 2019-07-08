@@ -33,8 +33,7 @@
     (let [version-ids (util/only-ids versions)]
       (nil? (some #(= id %) version-ids)))))
 
-(s/def ::versions (s/and ::versions/versions
-                         ::id-distinct))
+(s/def ::versions (s/and ::versions/versions ::id-distinct))
 
 (s/def ::profile
   (s/keys :req-un [::id ::context ::type ::conforms-to ::pref-label
@@ -70,7 +69,7 @@
 
 ;; Validate an individual in-scheme
 (s/def ::valid-in-scheme
-  (fn [{:keys object vid-set}]
+  (fn [{:keys [object vid-set]}]
     (vid-set (:in-scheme object))))
 
 (s/def ::valid-in-schemes (s/coll-of ::valid-in-scheme))

@@ -41,13 +41,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defmethod util/edges-with-attrs "Verb"
-  [{:keys [id
-           broader
-           broad-match
-           narrower
-           narrow-match
-           related
-           related-match
+  [{:keys [id broader broad-match narrower narrow-match related related-match
            exact-match]}]
   (into [] (filter #(some? (second %))
                    (concat
@@ -57,7 +51,7 @@
                     (map #(vector id % {:type :narrow-match}) narrow-match)
                     (map #(vector id % {:type :related}) related)
                     (map #(vector id % {:type :related-match}) related-match)
-                    (map #(vector id % {:type :exact-match} exact-match))))))
+                    (map #(vector id % {:type :exact-match}) exact-match)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; validation which requires external profile

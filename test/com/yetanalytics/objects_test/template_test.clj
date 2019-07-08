@@ -1,6 +1,7 @@
 (ns com.yetanalytics.objects-test.template-test
   (:require [clojure.test :refer :all]
             [clojure.spec.alpha :as s]
+            [ubergraph.core :as uber]
             [com.yetanalytics.util :as util]
             [com.yetanalytics.utils :refer :all]
             [com.yetanalytics.objects.template :as template]))
@@ -244,357 +245,67 @@
 
 ;; TODO Add graph integration tests
 
-; (def concept-map
-;   {"https://w3id.org/xapi/catch/verbs/provided"
-;    {:id "https://w3id.org/xapi/catch/verbs/provided"
-;     :type "Verb"
-;     :in-scheme "https://w3id.org/xapi/catch/v1"
-;     :pref-label {"en" "provided"}
-;     :definition {"en" "supplying a link to an online resource"}}
-;    "https://w3id.org/xapi/catch/activitytypes/reflection"
-;    {:id "https://w3id.org/xapi/catch/activitytypes/reflection"
-;     :type "ActivityType"
-;     :in-scheme "https://w3id.org/xapi/catch/v1"
-;     :pref-label {"en" "Reflection"}
-;     :definition {"en" "An activity where a learner reads an article and optionally provides a reflection on that article."}}
-;    "https://w3id.org/xapi/catch/activitytypes/check-in"
-;    {:id "https://w3id.org/xapi/catch/activitytypes/check-in"
-;     :type "ActivityType"
-;     :in-scheme "https://w3id.org/xapi/catch/v1"
-;     :pref-label {"en" "Check in"}
-;     :definition {"en" "An activity in which the learner reports progression."}}
-;    "https://w3id.org/xapi/catch/attachment-usage-types/evidence/parent-survey"
-;    {:id "https://w3id.org/xapi/catch/attachment-usage-types/evidence/parent-survey"
-;     :type "AttachmentUsageType"
-;     :in-scheme "https://w3id.org/xapi/catch/v1"
-;     :pref-label {"en" "Parent Survey"}
-;     :definition {"en" "A survey provided to the parent(s) of a DL student"}}
-;    "https://w3id.org/xapi/catch/attachment-usage-types/evidence/parent-survey-result"
-;    {:id "https://w3id.org/xapi/catch/attachment-usage-types/evidence/parent-survey-result"
-;     :type "AttachmentUsageType"
-;     :in-scheme "https://w3id.org/xapi/catch/v1"
-;     :pref-label {"en" "Parent Survey Result"}
-;     :definition {"en" "The results of the survey provided to the parent(s) of a DL student"}}})
+(def ex-concepts
+  [{:id "https://foo.org/verb"
+    :type "Verb"
+    :in-scheme "https://foo.org/v1"}
+   {:id "https://foo.org/activity-type"
+    :type "ActivityType"
+    :in-scheme "https://foo.org/v1"}
+   {:id "https://foo.org/attachment-usage-type"
+    :type "AttachmentUsageType"
+    :in-scheme "https://foo.org/v1"}])
 
-; (def template-map
-;   {"https://w3id.org/xapi/catch/templates#score-rubric"
-;    {:id "https://w3id.org/xapi/catch/templates#score-rubric"
-;     :type "StatementTemplate"
-;     :in-scheme "https://w3id.org/xapi/catch/v1"
-;     :pref-label {"en" "score rubric"}
-;     :definition {"en" "This template is for statements that are the result of a mentor reviewing and scoring somthing within the catch application."}}
-;    "https://w3id.org/xapi/catch/templates#score-rubric-futuristic"
-;    {:id "https://w3id.org/xapi/catch/templates#score-rubric-futuristic"
-;     :type "StatementTemplate"
-;     :in-scheme "https://w3id.org/xapi/catch/v2"
-;     :pref-label {"en" "score rubric"}
-;     :definition {"en" "This template is for statements that are the result of a mentor reviewing and scoring somthing within a futuristic version of the catch application."}}})
+(def ex-templates
+  [{:id "https://foo.org/template1"
+    :type "StatementTemplate"
+    :in-scheme "https://foo.org/v1"
+    :verb "https://foo.org/verb"
+    :object-activity-type "https://foo.org/activity-type"
+    :attachment-usage-type ["https://foo.org/attachment-usage-type"]
+    :context-statement-ref-template ["https://foo.org/template2"]}
+   {:id "https://foo.org/template2"
+    :type "StatementTemplate"
+    :in-scheme "https://foo.org/v1"
+    :object-statement-ref-template ["https://foo.org/template1"]}])
 
-; (deftest verb-iri-test
-;   (testing "verb IRI MUST point to a Verb"
-;     (is (s/valid? ::template/verb-iri
-;                   {:object
-;                    {:id "https://w3id/xapi/minimal/template"
-;                     :type "StatementTemplate"
-;                     :in-scheme "https://w3id.org/xapi/catch/v1"
-;                     :pref-label {"en" "minimal template"}
-;                     :definition {"en" "A test of only the required properties for a template"}
-;                     :verb "https://w3id.org/xapi/catch/verbs/provided"}
-;                    :concepts-table concept-map}))
-;     (is (s/valid? ::template/verb-iri
-;                   {:object
-;                    {:id "https://w3id/xapi/minimal/template"
-;                     :type "StatementTemplate"
-;                     :in-scheme "https://w3id.org/xapi/catch/v1"
-;                     :pref-label {"en" "minimal template"}
-;                     :definition {"en" "A test of only the required properties for a template"}}
-;                    :concepts-table concept-map}))
-;     (is (not (s/valid? ::template/verb-iri
-;                        {:object
-;                         {:id "https://w3id/xapi/minimal/template"
-;                          :type "StatementTemplate"
-;                          :in-scheme "https://w3id.org/xapi/catch/v1"
-;                          :pref-label {"en" "minimal template"}
-;                          :definition {"en" "A test of only the required properties for a template"}
-;                          :verb "https://w3id.org/xapi/catch/activitytypes/check-in"}
-;                         :concepts-table concept-map})))))
+(def tgraph
+  (let [graph (uber/digraph)
+        ;; Nodes
+        cnodes (mapv (partial util/node-with-attrs) ex-concepts)
+        tnodes (mapv (partial util/node-with-attrs) ex-templates)
+        ;; Edges
+        cedges (reduce concat (mapv (partial util/edges-with-attrs) ex-concepts))
+        tedges (reduce concat (mapv (partial util/edges-with-attrs) ex-templates))]
+    (-> graph
+        (uber/add-nodes-with-attrs* cnodes)
+        (uber/add-nodes-with-attrs* tnodes)
+        (uber/add-directed-edges* cedges)
+        (uber/add-directed-edges* tedges))))
 
-; (deftest object-activity-type-iri-test
-;   (testing "objectActivityType MUST point to an ActivityType"
-;     (is (s/valid? ::template/object-activity-type-iri
-;                   {:object
-;                    {:id "https://w3id/xapi/minimal/template"
-;                     :type "StatementTemplate"
-;                     :in-scheme "https://w3id.org/xapi/catch/v1"
-;                     :pref-label {"en" "minimal template"}
-;                     :definition {"en" "A test of only the required properties for a template"}
-;                     :object-activity-type "https://w3id.org/xapi/catch/activitytypes/check-in"}
-;                    :concepts-table concept-map}))
-;     (is (s/valid? ::template/object-activity-type-iri
-;                   {:object
-;                    {:id "https://w3id/xapi/minimal/template"
-;                     :type "StatementTemplate"
-;                     :in-scheme "https://w3id.org/xapi/catch/v1"
-;                     :pref-label {"en" "minimal template"}
-;                     :definition {"en" "A test of only the required properties for a template"}}
-;                    :concepts-table concept-map}))
-;     (is (not (s/valid? ::template/object-activity-type-iri
-;                        {:object
-;                         {:id "https://w3id/xapi/minimal/template"
-;                          :type "StatementTemplate"
-;                          :in-scheme "https://w3id.org/xapi/catch/v1"
-;                          :pref-label {"en" "minimal template"}
-;                          :definition {"en" "A test of only the required properties for a template"}
-;                          :object-activity-type "https://w3id.org/xapi/catch/verbs/provided"}
-;                         :concepts-table concept-map})))))
-
-; (deftest context-grouping-activity-type-iris-test
-;   (testing "contextGroupingActiivtyType MUST be an array of ActivityType"
-;     (is (s/valid? ::template/context-grouping-activity-type-iris
-;                   {:object
-;                    {:id "https://w3id/xapi/minimal/template"
-;                     :type "StatementTemplate"
-;                     :in-scheme "https://w3id.org/xapi/catch/v1"
-;                     :pref-label {"en" "minimal template"}
-;                     :definition {"en" "A test of only the required properties for a template"}
-;                     :context-grouping-activity-type
-;                     ["https://w3id.org/xapi/catch/activitytypes/reflection"
-;                      "https://w3id.org/xapi/catch/activitytypes/check-in"]}
-;                    :concepts-table concept-map}))
-;     (is (s/valid? ::template/context-grouping-activity-type-iris
-;                   {:object
-;                    {:id "https://w3id/xapi/minimal/template"
-;                     :type "StatementTemplate"
-;                     :in-scheme "https://w3id.org/xapi/catch/v1"
-;                     :pref-label {"en" "minimal template"}
-;                     :definition {"en" "A test of only the required properties for a template"}}
-;                    :concepts-table concept-map}))
-;     (is (not (s/valid? ::template/context-grouping-activity-type-iris
-;                        {:object
-;                         {:id "https://w3id/xapi/minimal/template"
-;                          :type "StatementTemplate"
-;                          :in-scheme "https://w3id.org/xapi/catch/v1"
-;                          :pref-label {"en" "minimal template"}
-;                          :definition {"en" "A test of only the required properties for a template"}
-;                          :context-grouping-activity-type
-;                          ["https://w3id.org/xapi/catch/activitytypes/reflection"
-;                           "https://w3id.org/xapi/catch/verbs/provided"]}
-;                         :concepts-table concept-map})))))
-
-; (deftest context-parent-activity-type-iris-test
-;   (testing "contextParentActivityType MUST be an array of ActivityType"
-;     (is (s/valid? ::template/context-parent-activity-type-iris
-;                   {:object
-;                    {:id "https://w3id/xapi/minimal/template"
-;                     :type "StatementTemplate"
-;                     :in-scheme "https://w3id.org/xapi/catch/v1"
-;                     :pref-label {"en" "minimal template"}
-;                     :definition {"en" "A test of only the required properties for a template"}
-;                     :context-parent-activity-type
-;                     ["https://w3id.org/xapi/catch/activitytypes/reflection"
-;                      "https://w3id.org/xapi/catch/activitytypes/check-in"]}
-;                    :concepts-table concept-map}))
-;     (is (s/valid? ::template/context-parent-activity-type-iris
-;                   {:object
-;                    {:id "https://w3id/xapi/minimal/template"
-;                     :type "StatementTemplate"
-;                     :in-scheme "https://w3id.org/xapi/catch/v1"
-;                     :pref-label {"en" "minimal template"}
-;                     :definition {"en" "A test of only the required properties for a template"}}
-;                    :concepts-table concept-map}))
-;     (is (not (s/valid? ::template/context-parent-activity-type-iris
-;                        {:object
-;                         {:id "https://w3id/xapi/minimal/template"
-;                          :type "StatementTemplate"
-;                          :in-scheme "https://w3id.org/xapi/catch/v1"
-;                          :pref-label {"en" "minimal template"}
-;                          :definition {"en" "A test of only the required properties for a template"}
-;                          :context-parent-activity-type
-;                          ["https://w3id.org/xapi/catch/activitytypes/reflection"
-;                           "https://w3id.org/xapi/catch/verbs/provided"]}
-;                         :concepts-table concept-map})))))
-
-; (deftest context-other-activity-type-iris-test
-;   (testing "contextOtherActivityType MUST be an array of ActivityType"
-;     (is (s/valid? ::template/context-other-activity-type-iris
-;                   {:object
-;                    {:id "https://w3id/xapi/minimal/template"
-;                     :type "StatementTemplate"
-;                     :in-scheme "https://w3id.org/xapi/catch/v1"
-;                     :pref-label {"en" "minimal template"}
-;                     :definition {"en" "A test of only the required properties for a template"}
-;                     :context-other-activity-type
-;                     ["https://w3id.org/xapi/catch/activitytypes/reflection"
-;                      "https://w3id.org/xapi/catch/activitytypes/check-in"]}
-;                    :concepts-table concept-map}))
-;     (is (s/valid? ::template/context-other-activity-type-iris
-;                   {:object
-;                    {:id "https://w3id/xapi/minimal/template"
-;                     :type "StatementTemplate"
-;                     :in-scheme "https://w3id.org/xapi/catch/v1"
-;                     :pref-label {"en" "minimal template"}
-;                     :definition {"en" "A test of only the required properties for a template"}}
-;                    :concepts-table concept-map}))
-;     (is (not (s/valid? ::template/context-other-activity-type-iris
-;                        {:object
-;                         {:id "https://w3id/xapi/minimal/template"
-;                          :type "StatementTemplate"
-;                          :in-scheme "https://w3id.org/xapi/catch/v1"
-;                          :pref-label {"en" "minimal template"}
-;                          :definition {"en" "A test of only the required properties for a template"}
-;                          :context-other-activity-type
-;                          ["https://w3id.org/xapi/catch/activitytypes/reflection"
-;                           "https://w3id.org/xapi/catch/verbs/provided"]}
-;                         :concepts-table concept-map})))))
-
-; (deftest context-category-activity-type-iris-test
-;   (testing "contextCategoryActivityType MUST be an array of ActivityType"
-;     (is (s/valid? ::template/context-category-activity-type-iris
-;                   {:object
-;                    {:id "https://w3id/xapi/minimal/template"
-;                     :type "StatementTemplate"
-;                     :in-scheme "https://w3id.org/xapi/catch/v1"
-;                     :pref-label {"en" "minimal template"}
-;                     :definition {"en" "A test of only the required properties for a template"}
-;                     :context-category-activity-type
-;                     ["https://w3id.org/xapi/catch/activitytypes/reflection"
-;                      "https://w3id.org/xapi/catch/activitytypes/check-in"]}
-;                    :concepts-table concept-map}))
-;     (is (s/valid? ::template/context-category-activity-type-iris
-;                   {:object
-;                    {:id "https://w3id/xapi/minimal/template"
-;                     :type "StatementTemplate"
-;                     :in-scheme "https://w3id.org/xapi/catch/v1"
-;                     :pref-label {"en" "minimal template"}
-;                     :definition {"en" "A test of only the required properties for a template"}}
-;                    :concepts-table concept-map}))
-;     (is (not (s/valid? ::template/context-category-activity-type-iris
-;                        {:object
-;                         {:id "https://w3id/xapi/minimal/template"
-;                          :type "StatementTemplate"
-;                          :in-scheme "https://w3id.org/xapi/catch/v1"
-;                          :pref-label {"en" "minimal template"}
-;                          :definition {"en" "A test of only the required properties for a template"}
-;                          :context-category-activity-type
-;                          ["https://w3id.org/xapi/catch/activitytypes/reflection"
-;                           "https://w3id.org/xapi/catch/verbs/provided"]}
-;                         :concepts-table concept-map})))))
-
-; (deftest attachment-usage-type-iris-test
-;   (testing "attachmentUsageType MUST be an array of AttachmentUsageType"
-;     (is (s/valid? ::template/attachment-usage-type-iris
-;                   {:object
-;                    {:id "https://w3id/xapi/minimal/template"
-;                     :type "StatementTemplate"
-;                     :in-scheme "https://w3id.org/xapi/catch/v1"
-;                     :pref-label {"en" "minimal template"}
-;                     :definition {"en" "A test of only the required properties for a template"}
-;                     :attachment-usage-type
-;                     ["https://w3id.org/xapi/catch/attachment-usage-types/evidence/parent-survey"
-;                      "https://w3id.org/xapi/catch/attachment-usage-types/evidence/parent-survey-result"]}
-;                    :concepts-table concept-map}))
-;     (is (s/valid? ::template/attachment-usage-type-iris
-;                   {:object
-;                    {:id "https://w3id/xapi/minimal/template"
-;                     :type "StatementTemplate"
-;                     :in-scheme "https://w3id.org/xapi/catch/v1"
-;                     :pref-label {"en" "minimal template"}
-;                     :definition {"en" "A test of only the required properties for a template"}}
-;                    :concepts-table concept-map}))
-;     (is (not (s/valid? ::template/attachment-usage-type-iris
-;                        {:object
-;                         {:id "https://w3id/xapi/minimal/template"
-;                          :type "StatementTemplate"
-;                          :in-scheme "https://w3id.org/xapi/catch/v1"
-;                          :pref-label {"en" "minimal template"}
-;                          :definition {"en" "A test of only the required properties for a template"}
-;                          :attachment-usage-type
-;                          ["https://w3id.org/xapi/catch/activitytypes/reflection"
-;                           "https://w3id.org/xapi/catch/verbs/provided"]}
-;                         :concepts-table concept-map})))))
-
-; (deftest object-statement-ref-template-iris-test
-;   (testing "objectStatementRefTemplate MUST be an array of Statement Template identifiers from this Profile version"
-;     (is (s/valid? ::template/object-statement-ref-template-iris
-;                   {:object
-;                    {:id "https://w3id/xapi/minimal/template"
-;                     :type "StatementTemplate"
-;                     :in-scheme "https://w3id.org/xapi/catch/v1"
-;                     :pref-label {"en" "minimal template"}
-;                     :definition {"en" "A test of only the required properties for a template"}
-;                     :object-statement-ref-template
-;                     ["https://w3id.org/xapi/catch/templates#score-rubric"]}
-;                    :templates-table template-map}))
-;     (is (s/valid? ::template/object-statement-ref-template-iris
-;                   {:object
-;                    {:id "https://w3id/xapi/minimal/template"
-;                     :type "statementtemplate"
-;                     :in-scheme "https://w3id.org/xapi/catch/v1"
-;                     :pref-label {"en" "minimal template"}
-;                     :definition {"en" "a test of only the required properties for a template"}}
-;                    :templates-table template-map}))
-;     (is (not (s/valid? ::template/object-statement-ref-template-iris
-;                        {:object
-;                         {:id "https://w3id/xapi/minimal/template"
-;                          :type "statementtemplate"
-;                          :in-scheme "https://w3id.org/xapi/catch/v1"
-;                          :pref-label {"en" "minimal template"}
-;                          :definition {"en" "a test of only the required properties for a template"}
-;                          :object-statement-ref-template
-;                          ["https://w3id.org/xapi/catch/templates#score-rubric-futuristic"]}
-;                         :templates-table
-;                         template-map})))
-;     (is (not (s/valid? ::template/object-statement-ref-template-iris
-;                        {:object
-;                         {:id "https://w3id/xapi/minimal/template"
-;                          :type "statementtemplate"
-;                          :in-scheme "https://w3id.org/xapi/catch/v1"
-;                          :pref-label {"en" "minimal template"}
-;                          :definition {"en" "a test of only the required properties for a template"}
-;                          :object-statement-ref-template
-;                          ["https://w3id.org/xapi/catch/templates#non-existent"]}
-;                         :templates-table
-;                         template-map})))))
-
-; (deftest context-statement-ref-template-iris-test
-;   (testing "contextStatementRefTemplate MUST be an array of Statement Template identifiers from this Profile version"
-;     (is (s/valid? ::template/context-statement-ref-template-iris
-;                   {:object
-;                    {:id "https://w3id/xapi/minimal/template"
-;                     :type "StatementTemplate"
-;                     :in-scheme "https://w3id.org/xapi/catch/v1"
-;                     :pref-label {"en" "minimal template"}
-;                     :definition {"en" "A test of only the required properties for a template"}
-;                     :context-statement-ref-template
-;                     ["https://w3id.org/xapi/catch/templates#score-rubric"]}
-;                    :templates-table template-map}))
-;     (is (s/valid? ::template/context-statement-ref-template-iris
-;                   {:object
-;                    {:id "https://w3id/xapi/minimal/template"
-;                     :type "statementtemplate"
-;                     :in-scheme "https://w3id.org/xapi/catch/v1"
-;                     :pref-label {"en" "minimal template"}
-;                     :definition {"en" "a test of only the required properties for a template"}}
-;                    :templates-table template-map}))
-;     (is (not (s/valid? ::template/context-statement-ref-template-iris
-;                        {:object
-;                         {:id "https://w3id/xapi/minimal/template"
-;                          :type "statementtemplate"
-;                          :in-scheme "https://w3id.org/xapi/catch/v1"
-;                          :pref-label {"en" "minimal template"}
-;                          :definition {"en" "a test of only the required properties for a template"}
-;                          :context-statement-ref-template
-;                          ["https://w3id.org/xapi/catch/templates#score-rubric-futuristic"]}
-;                         :templates-table
-;                         template-map})))
-;     (is (not (s/valid? ::template/context-statement-ref-template-iris
-;                        {:object
-;                         {:id "https://w3id/xapi/minimal/template"
-;                          :type "statementtemplate"
-;                          :in-scheme "https://w3id.org/xapi/catch/v1"
-;                          :pref-label {"en" "minimal template"}
-;                          :definition {"en" "a test of only the required properties for a template"}
-;                          :context-statement-ref-template
-;                          ["https://w3id.org/xapi/catch/templates#non-existent"]}
-;                         :templates-table
-;                         template-map})))))
+(deftest graph-test
+  (testing "graph properties"
+    (is (= 5 (count (uber/nodes tgraph))))
+    (is (= 5 (count (uber/edges tgraph))))
+    (is (= 5 (count (template/get-edges tgraph))))
+    (is (= (set (uber/nodes tgraph))
+           #{"https://foo.org/template1" "https://foo.org/template2"
+             "https://foo.org/verb" "https://foo.org/activity-type"
+             "https://foo.org/attachment-usage-type"}))
+    (is (= (set (template/get-edges tgraph))
+           #{{:src "https://foo.org/template1" :src-type "StatementTemplate" :src-version "https://foo.org/v1"
+              :dest "https://foo.org/verb" :dest-type "Verb" :dest-version "https://foo.org/v1"
+              :type :verb}
+             {:src "https://foo.org/template1" :src-type "StatementTemplate" :src-version "https://foo.org/v1"
+              :dest "https://foo.org/activity-type" :dest-type "ActivityType" :dest-version "https://foo.org/v1"
+              :type :object-activity-type}
+             {:src "https://foo.org/template1" :src-type "StatementTemplate" :src-version "https://foo.org/v1"
+              :dest "https://foo.org/attachment-usage-type" :dest-type "AttachmentUsageType" :dest-version "https://foo.org/v1"
+              :type :attachment-usage-type}
+             {:src "https://foo.org/template1" :src-type "StatementTemplate" :src-version "https://foo.org/v1"
+              :dest "https://foo.org/template2" :dest-type "StatementTemplate" :dest-version "https://foo.org/v1"
+              :type :context-statement-ref-template}
+             {:src "https://foo.org/template2" :src-type "StatementTemplate" :src-version "https://foo.org/v1"
+              :dest "https://foo.org/template1" :dest-type "StatementTemplate" :dest-version "https://foo.org/v1"
+              :type :object-statement-ref-template}}))
+    (should-satisfy ::template/template-graph tgraph)))

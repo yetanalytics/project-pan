@@ -1,6 +1,7 @@
 (ns com.yetanalytics.objects-test.concepts-test.extensions-test.activity-test
   (:require [clojure.test :refer :all]
             [clojure.spec.alpha :as s]
+            [com.yetanalytics.util :as util]
             [com.yetanalytics.utils :refer :all]
             [com.yetanalytics.objects.concepts.extensions.activity
              :as activity-extension]))
@@ -123,76 +124,18 @@
                         :schema "https://some.schema"
                         :recommended-verbs ["https://this.org/is-bad"]})))))
 
-; (def concept-map
-;   {"https://w3id.org/xapi/catch/verbs/provided"
-;    {:id "https://w3id.org/xapi/catch/verbs/provided"
-;     :type "Verb"
-;     :in-scheme "https://w3id.org/xapi/catch/v1"
-;     :pref-label {"en" "provided"}
-;     :definition {"en" "supplying a link to an online resource"}}
-;    "https://w3id.org/xapi/catch/verbs/submitted"
-;    {:id "https://w3id.org/xapi/catch/verbs/submitted"
-;     :type "Verb"
-;     :in-scheme "https://w3id.org/xapi/catch/v1"
-;     :pref-label {"en" "submitted"}
-;     :definition {"en" "The actor has clicked the submit or save button within the CATCH application"}}
-;    "https://w3id.org/xapi/catch/activitytypes/reflection"
-;    {:id "https://w3id.org/xapi/catch/activitytypes/reflection"
-;     :type "ActivityType"
-;     :in-scheme "https://w3id.org/xapi/catch/v1"
-;     :pref-label {"en" "Reflection"}
-;     :definition {"en" "An activity where a learner reads an article and optionally provides a reflection on that article."}}
-;    "https://w3id.org/xapi/catch/activitytypes/check-in"
-;    {:id "https://w3id.org/xapi/catch/activitytypes/check-in"
-;     :type "ActivityType"
-;     :in-scheme "https://w3id.org/xapi/catch/v1"
-;     :pref-label {"en" "Check in"}
-;     :definition {"en" "An activity in which the learner reports progression."}}})
-
-; (deftest recommended-activity-types-uri-test
-;   (testing "Recommended activity types URI array"
-;     (is (s/valid? ::activity-extension/recommended-activity-types-uris
-;                   {:object
-;                    {:id "https://w3id.org/xapi/catch/activity-extensions/lesson-plan/design"
-;                     :type "ActivityExtension"
-;                     :in-scheme "https://w3id.org/xapi/catch/v1"
-;                     :pref-label {"en" "Lesson Plan Info"}
-;                     :definition {"en" "The fields of a Lesson Plan template filled in by the learner"}
-;                     :recommended-activity-types
-;                     ["https://w3id.org/xapi/catch/activitytypes/check-in"
-;                      "https://w3id.org/xapi/catch/activitytypes/reflection"]
-;                     :inline-schema "{\"foo\":\"bar\"}"}
-;                    :concepts-table concept-map}))
-;     (is (s/valid? ::activity-extension/recommended-activity-types-uris
-;                   {:object
-;                    {:id "https://w3id.org/xapi/catch/activity-extensions/lesson-plan/design"
-;                     :type "ActivityExtension"
-;                     :in-scheme "https://w3id.org/xapi/catch/v1"
-;                     :pref-label {"en" "Lesson Plan Info"}
-;                     :definition {"en" "The fields of a Lesson Plan template filled in by the learner"}
-;                     :inline-schema "{\"foo\":\"bar\"}"}
-;                    :concepts-table concept-map}))
-;     (is (not (s/valid? ::activity-extension/recommended-activity-types-uris
-;                        {:object
-;                         {:id "https://w3id.org/xapi/catch/activity-extensions/lesson-plan/design"
-;                          :type "ActivityExtension"
-;                          :in-scheme "https://w3id.org/xapi/catch/v1"
-;                          :pref-label {"en" "Lesson Plan Info"}
-;                          :definition {"en" "The fields of a Lesson Plan template filled in by the learner"}
-;                          :recommended-activity-types
-;                          ["https://w3id.org/xapi/catch/activitytypes/check-in"
-;                           "https://w3id.org/xapi/catch/verbs/provided"]
-;                          :inline-schema "{\"foo\":\"bar\"}"}
-;                         :concepts-table concept-map})))
-;     (is (not (s/valid? ::activity-extension/recommended-activity-types-uris
-;                        {:object
-;                         {:id "https://w3id.org/xapi/catch/activity-extensions/lesson-plan/design"
-;                          :type "ActivityExtension"
-;                          :in-scheme "https://w3id.org/xapi/catch/v1"
-;                          :pref-label {"en" "Lesson Plan Info"}
-;                          :definition {"en" "The fields of a Lesson Plan template filled in by the learner"}
-;                          :recommended-activity-types
-;                          ["https://w3id.org/xapi/catch/activitytypes/check-in"
-;                           "https://w3id.org/xapi/catch/activitytypes/non-existent"]
-;                          :inline-schema "{\"foo\":\"bar\"}"}
-;                         :concepts-table concept-map})))))
+;; Graph tests
+(deftest edges-with-attrs-test
+  (testing "Creating edges from node"
+    (is (= (util/edges-with-attrs {:id "https://foo.org/ae"
+                                   :type "ActivityExtension"
+                                   :in-scheme "https://foo.org/v1"
+                                   :recommended-activity-types
+                                   ["https://foo.org/at1"
+                                    "https://foo.org/at2"]})
+           [["https://foo.org/ae" "https://foo.org/at1" {:type :recommended-activity-types}]
+            ["https://foo.org/ae" "https://foo.org/at2" {:type :recommended-activity-types}]]))
+    (is (= (util/edges-with-attrs {:id "https://foo.org/ae2"
+                                   :type "ActivityExtension"
+                                   :in-scheme "https://foo.org/v1"})
+           []))))

@@ -5,41 +5,16 @@
             [com.yetanalytics.util :as util]
             [com.yetanalytics.profile :as profile]))
 
-(defn remove-chars [s]
+(defn remove-chars
   "Remove chars that are illegal in keywords, ie. spaces and the @ symbol."
-  (string/replace s #"@|\s" ""))
+  [s] (string/replace s #"@|\s" ""))
 
-(defn convert-json [json]
-  (cheshire/parse-string json (fn [k] (-> k remove-chars kebab/->kebab-case-keyword))))
+(defn convert-json
+  "Convert a JSON string into an edn data structure."
+  [json]
+  (cheshire/parse-string
+   json (fn [k] (-> k remove-chars kebab/->kebab-case-keyword))))
 ;; ^ example usage of ->
-
-(defn validate-profile
-  "Validate a profile from the top down.
-  *** Validation strictness settings ***
-  1. Weak Validation: Check only properties and simple syntax
-  2. Semi-Strict Validation: Validate and resolve IRIs that point to locations
-  WITHIN the profile. This includes:
-      - inSchema validation
-      - in-profile Concept relation validation
-      - in-profile Extensions URI array validation
-      - in-profile StatementTemplate IRI validation
-      - in-profile Pattern validation
-  If an IRI cannot be resolved, then the validation fails (or should it just
-  give a warning?)
-  3. Strict Validation: Validate and resolve IRIs that can point to locations
-  OUTSIDE the profile. This include:
-      - Same validations as Semi-Strict validation, except that IRIs can now
-        point outside the profile.
-      - Validation relating to @contexts 
-  EXTRA SETTING: No short-circuit errors
-      - Allow the validator to collect all errors, instead of terminating on 
-      the first error encountered."
-  [profile & {:keys [validation-level no-short?]}]
-  (let [edn-profile (convert-json profile)]
-    (cond
-      ;; TODO Add strict validation and no-short-circuit
-      (= validation-level 1) (profile/validate-profile+ edn-profile)
-      :else (profile/validate-profile edn-profile))))
 
 ;; ID VALIDATION
 ;; 1. Check that top-level properties pass basic validation
@@ -74,3 +49,30 @@
 ;; 4. If a one-member 'sequence' Pattern exists, ensure:
 ;; - It has no incoming edges (ie. not used elswhere in the Profile)
 ;; - Its outgoing edge points to a Template and not a Pattern
+
+(defn validate-profile
+  "Validate a profile from the top down.
+  *** Validation strictness settings ***
+  1. Weak Validation: Check only properties and simple syntax
+  2. Semi-Strict Validation: Validate and resolve IRIs that point to locations
+  WITHIN the profile. This includes:
+      - inSchema validation
+      - in-profile Concept relation validation
+      - in-profile Extensions URI array validation
+      - in-profile StatementTemplate IRI validation
+      - in-profile Pattern validation
+  If an IRI cannot be resolved, then the validation fails (or should it just
+  give a warning?)
+  3. Strict Validation: Validate and resolve IRIs that can point to locations
+  OUTSIDE the profile. This include:
+      - Same validations as Semi-Strict validation, except that IRIs can now
+        point outside the profile.
+      - Validation relating to @contexts 
+  EXTRA SETTING: No short-circuit errors
+      - Allow the validator to collect all errors, instead of terminating on 
+      the first error encountered."
+  [profile & {:keys [validation-level no-short?]}]
+  ;; TODO Add validation levels
+  (if (string? profile)
+    (profile/validate (convert-json profile))
+    (profile/validate profile)))

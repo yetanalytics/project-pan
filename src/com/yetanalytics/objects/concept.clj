@@ -48,6 +48,7 @@
 ;; Strict validation
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; Returns a vector of edge maps, with src, dest and attribute keys
 (defn get-edges
   [cgraph]
   (let [edges (uber/edges cgraph)]
@@ -62,6 +63,7 @@
                :type (uber/attr cgraph edge :type)}))
           edges)))
 
+;; Validate an edge
 (defmulti valid-edge? #(:type %))
 
 ;; Verbs, ActivityTypes, and AttachmentUsageTypes

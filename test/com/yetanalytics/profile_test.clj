@@ -69,7 +69,7 @@
 
 (deftest profile-test
   (testing "top-level profile properties"
-    (is (s/valid? ::profile/profile-top-level
+    (is (s/valid? ::profile/profile
                   {:versions
                    [{:id "https://w3id.org/xapi/catch/v1"
                      :generated-at-time "2017-12-22T22:30:00-07:00"}]

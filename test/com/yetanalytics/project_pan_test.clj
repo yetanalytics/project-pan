@@ -1,20 +1,14 @@
 (ns com.yetanalytics.project-pan-test
   (:require [clojure.test :refer :all]
+            [clojure.spec.alpha :as s]
+            [com.yetanalytics.profile :as profile]
             [com.yetanalytics.project-pan :refer :all]))
 
+;; Profiles to test
 (def will-profile (slurp "resources/sample_profiles/will-profile.json"))
-
-(validate-profile will-profile)
-
-(validate-profile will-profile :validation-level 1)
-
 (def dod-profile (slurp "resources/sample_profiles/dod-isd.json"))
-
-(validate-profile dod-profile)
-
-;; TODO Fix validator if concepts, templates or pattern array is nil
-; (validate-profile dod-profile :validation-level 1)
-
 (def scorm-profile (slurp "resources/sample_profiles/scorm.json"))
 
-(validate-profile scorm-profile)
+(deftest will-profile-integration
+  (testing "Integration test of Will's CATCH profile, basic validation"
+    (is (true? (validate-profile will-profile)))))
