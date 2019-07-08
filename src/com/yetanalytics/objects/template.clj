@@ -33,9 +33,8 @@
 (s/def ::context-statement-ref-template
   (s/coll-of ::ax/iri :type vector? :min-count 1))
 
-;; Ensure that any Statement Template does not have both objectActivityType
-;; and objectStatementRefTemplate at the same time
-
+;; A StatementTemplate MUST NOT have both objectStatementRefTemplate and
+;; objectActivityType at the same time.
 (s/def ::type-or-reference
   (fn [st]
     (let [otype? (contains? st :object-activity-type)
@@ -65,6 +64,10 @@
 ;; Strict validation
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; Graph creation functions
+
+;; From a single StatementTemplate, return a 1D vector of edge vectors of 
+;; form [src dest {:type type-kword}]
 (defmethod util/edges-with-attrs "StatementTemplate"
   [{:keys [id
            verb
@@ -96,6 +99,24 @@
                     (map #(vector id % {:type :context-statement-ref-template})
                          context-statement-ref-template)))))
 
+;; Create a template graph from its constitutent concepts and templates
+(defn create-template-graph [concepts templates]
+  (let [tgraph (uber/digraph)
+        ;; Nodes
+        cnodes (mapv (partial util/node-with-attrs) concepts)
+        tnodes (mapv (partial util/node-with-attrs) templates)
+        ;; Edges
+        cedges (util/collect-edges
+                (mapv (partial util/edges-with-attrs) concepts))
+        tedges (util/collect-edges
+                (mapv (partial util/edges-with-attrs) templates))]
+    (-> tgraph
+        (uber/add-nodes-with-attrs* cnodes)
+        (uber/add-nodes-with-attrs* tnodes)
+        (uber/add-directed-edges* cedges)
+        (uber/add-directed-edges* tedges))))
+
+;; Dissassociate a graph into its edges, in the form of attribute maps
 (defn get-edges
   [tgraph]
   (let [edges (uber/edges tgraph)]

@@ -269,19 +269,7 @@
     :in-scheme "https://foo.org/v1"
     :object-statement-ref-template ["https://foo.org/template1"]}])
 
-(def tgraph
-  (let [graph (uber/digraph)
-        ;; Nodes
-        cnodes (mapv (partial util/node-with-attrs) ex-concepts)
-        tnodes (mapv (partial util/node-with-attrs) ex-templates)
-        ;; Edges
-        cedges (reduce concat (mapv (partial util/edges-with-attrs) ex-concepts))
-        tedges (reduce concat (mapv (partial util/edges-with-attrs) ex-templates))]
-    (-> graph
-        (uber/add-nodes-with-attrs* cnodes)
-        (uber/add-nodes-with-attrs* tnodes)
-        (uber/add-directed-edges* cedges)
-        (uber/add-directed-edges* tedges))))
+(def tgraph (template/create-template-graph ex-concepts ex-templates))
 
 (deftest graph-test
   (testing "graph properties"

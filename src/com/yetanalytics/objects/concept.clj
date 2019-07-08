@@ -1,6 +1,7 @@
 (ns com.yetanalytics.objects.concept
   (:require [clojure.spec.alpha :as s]
             [ubergraph.core :as uber]
+            [com.yetanalytics.util :as util]
             [com.yetanalytics.objects.concepts.verbs :as v]
             [com.yetanalytics.objects.concepts.activities :as a]
             [com.yetanalytics.objects.concepts.activity-types :as at]
@@ -47,6 +48,17 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Strict validation
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; Graph creation functions
+
+(defn create-concept-graph [concepts]
+  (let [cgraph (uber/digraph)
+        cnodes (mapv (partial util/node-with-attrs) concepts)
+        cedges (util/collect-edges
+                (mapv (partial util/edges-with-attrs) concepts))]
+    (-> cgraph
+        (uber/add-nodes-with-attrs* cnodes)
+        (uber/add-directed-edges* cedges))))
 
 ;; Returns a vector of edge maps, with src, dest and attribute keys
 (defn get-edges

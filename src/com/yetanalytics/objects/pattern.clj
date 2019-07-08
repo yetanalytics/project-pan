@@ -76,6 +76,8 @@
 ;; Strict validation
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; Graph creation functions
+
 ;; Get the IRIs of a Pattern (within a sequence), depending on its property
 (defn dispatch-on-pattern [pattern]
   (keys (dissoc pattern :id :type :pref-label :definition
@@ -112,6 +114,24 @@
                :property (first (dispatch-on-pattern pattern))}]
     (vector id attrs)))
 
+;; Create a pattern graph from its constitutent templates and patterns
+(defn create-pattern-graph [templates patterns]
+  (let [pgraph (uber/digraph)
+        ;; Nodes
+        tnodes (mapv (partial util/node-with-attrs) templates)
+        pnodes (mapv (partial util/node-with-attrs) patterns)
+        ;; Edges
+        tedges (util/collect-edges
+                (mapv (partial util/edges-with-attrs) templates))
+        pedges (util/collect-edges
+                (mapv (partial util/edges-with-attrs) patterns))]
+    (-> pgraph
+        (uber/add-nodes-with-attrs* tnodes)
+        (uber/add-nodes-with-attrs* pnodes)
+        (uber/add-directed-edges* tedges)
+        (uber/add-directed-edges* pedges))))
+
+;; Dissassociate a graph into its edges, in the form of attribute maps
 (defn get-edges
   [pgraph]
   (let [edges (uber/edges pgraph)]

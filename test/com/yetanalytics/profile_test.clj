@@ -67,6 +67,17 @@
                          {:id "https://w3id.org/xapi/catch/v1"
                           :gen-at-time "2017-12-22T22:30:00-07:00"}]})))))
 
+(deftest in-scheme-test
+  (testing "object in-scheme MUST be a valid Profile version"
+    (is (s/valid? ::profile/valid-in-schemes
+                  [{:object {:in-scheme "https://foo.org/v1"}
+                    :vid-set #{"https://foo.org/v1" "https://foo.org/v2"}}
+                   {:object {:in-scheme "https://foo.org/v2"}
+                    :vid-set #{"https://foo.org/v1" "https://foo.org/v2"}}]))
+    (is (not (s/valid? ::profile/valid-in-schemes
+                       [{:object {:in-scheme "https://foo.org/v0"}
+                         :vid-set #{"https://foo.org/v1" "https://foo.org/v2"}}])))))
+
 (deftest profile-test
   (testing "top-level profile properties"
     (is (s/valid? ::profile/profile

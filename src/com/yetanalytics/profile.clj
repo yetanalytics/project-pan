@@ -21,13 +21,14 @@
 (s/def ::definition ::ax/language-map)
 (s/def ::see-also ::ax/url)
 
+;; @context SHOULD be the following URI and MUST contain it if URI valued
 (def context-url "https://w3id.org/xapi/profiles/context")
 (s/def ::context (s/or :context ::ax/uri
                        :context-array (s/and
                                        (s/coll-of ::ax/uri :type vector?)
                                        (partial some #(= context-url %)))))
 
-;; Check that the overall profile ID is not any of the version IDs
+;; Overall profile ID MUST NOT be any of the version IDs
 (s/def ::id-distinct
   (fn [{:keys [id versions]}]
     (let [version-ids (util/only-ids versions)]
@@ -59,74 +60,34 @@
 
 ;; In-scheme validation
 
-;; Set of all version IDs
-(defn version-set [{:keys [versions]}]
-  (-> versions util/only-ids set))
-
-;; Create a new vector [{:object-coll object :vid-set version-id-set}]
-(defn zip-vids [object-coll vid-set]
-  (mapv #({:object % :vid-set vid-set}) object-coll))
-
 ;; Validate an individual in-scheme
 (s/def ::valid-in-scheme
-  (fn [{:keys [object vid-set]}]
-    (vid-set (:in-scheme object))))
+  (fn [{:keys [object vid-set]}] (contains? vid-set (:in-scheme object))))
 
 (s/def ::valid-in-schemes (s/coll-of ::valid-in-scheme))
 
 ;; IRI validation (via graphs)
 
-(defn create-concept-graph [{:keys [concepts]}]
-  (let [cgraph (uber/digraph)
-        cnodes (mapv (partial util/node-with-attrs) concepts)
-        cedges (reduce concat (mapv (partial util/edges-with-attrs) concepts))]
-    (-> cgraph
-        (uber/add-nodes-with-attrs* cnodes)
-        (uber/add-directed-edges* cedges))))
-
-(defn create-template-graph [{:keys [concepts templates]}]
-  (let [tgraph (uber/digraph)
-        ;; Nodes
-        cnodes (mapv (partial util/node-with-attrs) concepts)
-        tnodes (mapv (partial util/node-with-attrs) templates)
-        ;; Edges
-        cedges (reduce concat (mapv (partial util/edges-with-attrs) concepts))
-        tedges (reduce concat (mapv (partial util/edges-with-attrs) templates))]
-    (-> tgraph
-        (uber/add-nodes-with-attrs* cnodes)
-        (uber/add-nodes-with-attrs* tnodes)
-        (uber/add-directed-edges* cedges)
-        (uber/add-directed-edges* tedges))))
-
-(defn create-pattern-graph [{:keys [templates patterns]}]
-  (let [pgraph (uber/digraph)
-        ;; Nodes
-        tnodes (mapv (partial util/node-with-attrs) templates)
-        pnodes (mapv (partial util/node-with-attrs) patterns)
-        ;; Edges
-        tedges (reduce concat (mapv (partial util/edges-with-attrs) templates))
-        pedges (reduce concat (mapv (partial util/edges-with-attrs) patterns))]
-    (-> pgraph
-        (uber/add-nodes-with-attrs* tnodes)
-        (uber/add-nodes-with-attrs* pnodes)
-        (uber/add-directed-edges* tedges)
-        (uber/add-directed-edges* pedges))))
-
 (defn validate+
   "Validation of in-profile identifiers and locators.
   Returns true if valid, false otherwise."
   [profile]
-  (let [concepts (:concepts profile)
-        templates (:templates profile)
-        patterns (:patterns profile)
-        vid-set (-> profile :versions util/only-ids)
-        cgraph (create-concept-graph profile)
-        tgraph (create-template-graph profile)
-        pgraph (create-pattern-graph profile)]
+  (let [concepts (get profile :concepts [])
+        templates (get profile :templates [])
+        patterns (get profile :patterns [])
+        ;; in-schemes
+        vid-set (versions/version-set (:versions profile))
+        c-vids (util/combine-args concepts {:vid-set vid-set})
+        t-vids (util/combine-args templates {:vid-set vid-set})
+        p-vids (util/combine-args patterns {:vid-set vid-set})
+        ;; graphs 
+        cgraph (concept/create-concept-graph concepts)
+        tgraph (template/create-template-graph concepts templates)
+        pgraph (pattern/create-pattern-graph templates patterns)]
     (and (s/valid? ::profile profile)
-         (s/valid? ::valid-in-schemes (zip-vids concepts vid-set))
-         (s/valid? ::valid-in-schemes (zip-vids templates vid-set))
-         (s/valid? ::valid-in-schemes (zip-vids patterns vid-set))
+         (s/valid? ::valid-in-schemes c-vids)
+         (s/valid? ::valid-in-schemes t-vids)
+         (s/valid? ::valid-in-schemes p-vids)
          (s/valid? ::concept/concept-graph cgraph)
          (s/valid? ::template/template-graph tgraph)
          (s/valid? ::pattern/pattern-graph pgraph))))
@@ -135,23 +96,22 @@
   "Validation of in-profile identifiers and locators.
   Returns a spec trace if validation fails, or nil if successful."
   [profile]
-  (let [concepts (:concepts profile)
-        templates (:templates profile)
-        patterns (:patterns profile)
-        vid-set (-> profile :versions util/only-ids)
-        cgraph (create-concept-graph profile)
-        tgraph (create-template-graph profile)
-        pgraph (create-pattern-graph profile)]
+  (let [concepts (get profile :concepts [])
+        templates (get profile :templates [])
+        patterns (get profile :patterns [])
+        ;; in-schemes
+        vid-set (versions/version-set (:versions profile))
+        c-vids (util/combine-args concepts {:vid-set vid-set})
+        t-vids (util/combine-args templates {:vid-set vid-set})
+        p-vids (util/combine-args patterns {:vid-set vid-set})
+        ;; graphs 
+        cgraph (concept/create-concept-graph concepts)
+        tgraph (template/create-template-graph concepts templates)
+        pgraph (pattern/create-pattern-graph templates patterns)]
     (concat (s/explain-data ::profile profile)
-            (s/explain-data ::valid-in-schemes (zip-vids concepts vid-set))
-            (s/explain-data ::valid-in-schemes (zip-vids templates vid-set))
-            (s/explain-data ::valid-in-schemes (zip-vids patterns vid-set))
+            (s/explain-data ::valid-in-schemes c-vids)
+            (s/explain-data ::valid-in-schemes t-vids)
+            (s/explain-data ::valid-in-schemes p-vids)
             (concept/explain-concept-graph cgraph)
             (template/explain-template-graph tgraph)
             (pattern/explain-pattern-graph pgraph))))
-
-;; Map of object IDs to their respective objects
-; (defn id-object-map [profile kword]
-;   (let [obj-vec (profile kword)
-;         id-vec (util/only-ids obj-vec)]
-;     (zipmap id-vec obj-vec)))

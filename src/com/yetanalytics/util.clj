@@ -6,11 +6,12 @@
 ;; fns + specs
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; Returns a collection of ids
-(defn only-ids [filtered-coll] (mapv (fn [{:keys [id]}] id) filtered-coll))
+(defn only-ids
+  "Return a collection of IDs from a map of objects."
+  [obj-coll] (mapv (fn [{:keys [id]}] id) obj-coll))
 
-;; Create a map of ids to the objects they identify
 (defn id-map [map-with-ids]
+  "Create a map of IDs to the objects that they identify."
   (dissoc (zipmap (only-ids map-with-ids) map-with-ids) nil))
 
 (defn combine-args
@@ -18,10 +19,6 @@
   arguments."
   [obj-vec args]
   (mapv #(conj args [:object %]) obj-vec))
-
-; (s/def ::in-scheme-valid?
-;   (fn [{:keys [object vid-set]}]
-;     (contains? vid-set (object :in-scheme))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Graph functions
@@ -40,3 +37,8 @@
 (defmulti edges-with-attrs #(:type %))
 
 (defmethod edges-with-attrs :default [_] [])
+
+;; Flatten a collection of edges so that it is a 1D vector of [src dest attrs]
+;; vectors
+(defn collect-edges [attr-edges]
+  (reduce concat attr-edges))

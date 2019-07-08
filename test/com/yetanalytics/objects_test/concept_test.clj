@@ -98,12 +98,7 @@
     :in-scheme "https://foo.org/v1"
     :narrower ["https://foo.org/aut1"]}])
 
-(def cgraph (let [graph (uber/digraph)
-                  nodes (mapv (partial util/node-with-attrs) ex-concepts)
-                  edges (reduce concat (mapv (partial util/edges-with-attrs) ex-concepts))]
-              (-> graph
-                  (uber/add-nodes-with-attrs* nodes)
-                  (uber/add-directed-edges* edges))))
+(def cgraph (concept/create-concept-graph ex-concepts))
 
 (deftest graph-test
   (testing "Graph properties"

@@ -315,19 +315,7 @@
     :in-scheme "https://foo.org/v1" :primary true
     :zero-or-more {:id "https://foo.org/template5"}}])
 
-(def pgraph
-  (let [graph (uber/digraph)
-        ;; Nodes
-        tnodes (mapv (partial u/node-with-attrs) ex-templates)
-        pnodes (mapv (partial u/node-with-attrs) ex-patterns)
-        ;; Edges
-        tedges (reduce concat (mapv (partial u/edges-with-attrs) ex-templates))
-        pedges (reduce concat (mapv (partial u/edges-with-attrs) ex-patterns))]
-    (-> graph
-        (uber/add-nodes-with-attrs* tnodes)
-        (uber/add-nodes-with-attrs* pnodes)
-        (uber/add-directed-edges* tedges)
-        (uber/add-directed-edges* pedges))))
+(def pgraph (pattern/create-pattern-graph ex-templates ex-patterns))
 
 (deftest graph-test
   (testing "Pattern graph should satisfy various properties"

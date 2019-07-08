@@ -84,14 +84,14 @@
     (is (= 1 (count (::s/problems (s/explain-data ::map-id-spec+ (util/combine-args snsd-ot9 {:bool true}))))))
     (is (= 8 (count (::s/problems (s/explain-data ::map-id-spec+ (util/combine-args snsd-ot8 {:bool false}))))))))
 
-(deftest in-scheme-valid-test
-  (testing "inScheme property MUST point to a valid version ID"
-    (is (s/valid? ::util/in-scheme-valid?
-                  {:object {:in-scheme
-                            "https://foo.org/version1"}
-                   :vid-set {"https://foo.org/version1"
-                             "https://foo.org/version2"}}))
-    (is (not (s/valid? ::util/in-scheme-valid?
-                       {:object {:in-scheme "https://foo.org/version0"}
-                        :vid-set {"https://foo.org/version1"
-                                  "https://foo.org/version2"}})))))
+; (deftest in-scheme-valid-test
+;   (testing "inScheme property MUST point to a valid version ID"
+;     (is (s/valid? ::util/in-scheme-valid?
+;                   {:object {:in-scheme
+;                             "https://foo.org/version1"}
+;                    :vid-set {"https://foo.org/version1"
+;                              "https://foo.org/version2"}}))
+;     (is (not (s/valid? ::util/in-scheme-valid?
+;                        {:object {:in-scheme "https://foo.org/version0"}
+;                         :vid-set {"https://foo.org/version1"
+;                                   "https://foo.org/version2"}})))))
