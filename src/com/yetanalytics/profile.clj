@@ -57,7 +57,7 @@
 
 ;; IRI validation (via graphs)
 
-(defn create-concept-graph [{:keys concepts}]
+(defn create-concept-graph [{:keys [concepts]}]
   (let [cgraph (uber/digraph)
         cnodes (mapv (partial util/node-with-attrs) concepts)
         cedges (reduce concat (mapv (partial util/edges-with-attrs) concepts))]
@@ -65,7 +65,7 @@
         (uber/add-nodes-with-attrs* cnodes)
         (uber/add-directed-edges* cedges))))
 
-(defn create-template-graph [{:keys concepts templates}]
+(defn create-template-graph [{:keys [concepts templates]}]
   (let [tgraph (uber/digraph)
         ;; Nodes
         cnodes (mapv (partial util/node-with-attrs) concepts)
@@ -79,7 +79,7 @@
         (uber/add-directed-edges* cedges)
         (uber/add-directed-edges* tedges))))
 
-(defn create-pattern-graph [{:keys templates patterns}]
+(defn create-pattern-graph [{:keys [templates patterns]}]
   (let [pgraph (uber/digraph)
         ;; Nodes
         tnodes (mapv (partial util/node-with-attrs) templates)
