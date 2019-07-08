@@ -33,10 +33,10 @@
             (let [src (uber/src edge) dest (uber/dest edge)]
               {:src src
                :src-type (uber/attr cgraph src :type)
-               :src-version (uber/attr cgraph src :version)
+               :src-version (uber/attr cgraph src :in-scheme)
                :dest dest
                :dest-type (uber/attr cgraph dest :type)
-               :dest-version (uber/attr cgraph dest :version)
+               :dest-version (uber/attr cgraph dest :in-scheme)
                :type (uber/attr cgraph edge :type)}))
           edges)))
 
