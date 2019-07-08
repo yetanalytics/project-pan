@@ -4,8 +4,7 @@
             [ubergraph.alg :as alg]
             [com.yetanalytics.axioms :as ax]
             [com.yetanalytics.util :as util]))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Patterns 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -27,9 +26,16 @@
 (s/def ::sequence (s/coll-of ::ax/iri :type vector? :min-count 1))
 (s/def ::zero-or-more (s/keys :req-un [::id]))
 
-;; Ensure that only one of the five regex properties are included in pattern.
-;; Including two or more properties should fail the spec.
+;; Check if primary is true or false
 
+(s/def ::is-primary-true
+  (fn [p] (:primary p)))
+
+(s/def ::is-primary-false
+  (fn [p] (not (:primary p))))
+
+;; Ensure that only one of the five regex properties are included in pattern.
+;; Including two or more properties should fail the spec. 
 (s/def ::pattern-clause
   (fn [p]
     (let [alt? (contains? p :alternates)
@@ -48,18 +54,23 @@
   (s/and (s/keys :req-un [::id ::type ::pref-label ::definition ::primary]
                  :opt-un [::in-scheme ::deprecated ::alternates ::optional
                           ::one-or-more ::sequence ::zero-or-more])
-         ::pattern-clause))
+         ::pattern-clause
+         ::is-primary-true))
 
-(s/def ::pattern
+(s/def ::reg-pattern
   (s/and (s/keys :req-un [::id ::type]
                  :opt-un [::primary ::in-scheme ::pref-label ::definition
                           ::deprecated ::alternates ::optional ::one-or-more
                           ::sequence ::zero-or-more])
-         ::pattern-clause))
+         ::pattern-clause
+         ::is-primary-false))
+
+(s/def ::pattern
+  (s/or :no-primary ::reg-pattern
+        :primary ::primary-pattern))
 
 (s/def ::patterns
-  (s/coll-of (s/or :pattern ::pattern
-                   :primary ::primary-pattern) :kind vector? :min-count 1))
+  (s/coll-of ::pattern :kind vector? :min-count 1))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Strict validation
@@ -170,3 +181,5 @@
 (defn explain-pattern-graph [pgraph]
   (concat (s/explain-data ::valid-edges (get-edges pgraph))
           (s/explain-data ::acyclic-graph pgraph)))
+
+;; TODO: MAY re-use Statement Templates and Patterns from other Profiles

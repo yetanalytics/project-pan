@@ -10,23 +10,35 @@
             [com.yetanalytics.objects.template :as template]
             [com.yetanalytics.objects.pattern :as pattern]))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Profile 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (s/def ::id ::ax/iri)
+(s/def ::type #{"Profile"})
+(s/def ::conforms-to ::ax/uri)
+(s/def ::pref-label ::ax/language-map)
+(s/def ::definition ::ax/language-map)
+(s/def ::see-also ::ax/url)
+
 (def context-url "https://w3id.org/xapi/profiles/context")
 (s/def ::context (s/or :context ::ax/uri
                        :context-array (s/and
                                        (s/coll-of ::ax/uri :type vector?)
                                        (partial some #(= context-url %)))))
-(s/def ::type #{"Profile"})
-(s/def ::conforms-to ::ax/uri)
-(s/def ::pref-label ::ax/language-map)
-(s/def ::definition ::ax/language-map)
 
-;; prefLabel + definition
-(s/def ::see-also ::ax/url)
+;; Check that the overall profile ID is not any of the version IDs
+(s/def ::id-distinct
+  (fn [{:keys [id versions]}]
+    (let [version-ids (util/only-ids versions)]
+      (nil? (some #(= id %) version-ids)))))
+
+(s/def ::versions (s/and ::versions/versions
+                         ::id-distinct))
 
 (s/def ::profile
   (s/keys :req-un [::id ::context ::type ::conforms-to ::pref-label
-                   ::definition ::author/author ::versions/versions]
+                   ::definition ::author/author ::versions]
           :opt-un [::see-also
                    ::concept/concepts
                    ::template/templates
@@ -42,13 +54,21 @@
   Returns a spec trace if validation fails, or nil if successful."
   [profile] (s/explain-data ::profile profile))
 
-;; TODO: stricter validation levels
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Strict validation 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; In-scheme validation
 
+;; Set of all version IDs
+(defn version-set [{:keys [versions]}]
+  (-> versions util/only-ids set))
+
+;; Create a new vector [{:object-coll object :vid-set version-id-set}]
 (defn zip-vids [object-coll vid-set]
   (mapv #({:object % :vid-set vid-set}) object-coll))
 
+;; Validate an individual in-scheme
 (s/def ::valid-in-scheme
   (fn [{:keys object vid-set}]
     (vid-set (:in-scheme object))))
@@ -130,3 +150,9 @@
             (concept/explain-concept-graph cgraph)
             (template/explain-template-graph tgraph)
             (pattern/explain-pattern-graph pgraph))))
+
+;; Map of object IDs to their respective objects
+; (defn id-object-map [profile kword]
+;   (let [obj-vec (profile kword)
+;         id-vec (util/only-ids obj-vec)]
+;     (zipmap id-vec obj-vec)))

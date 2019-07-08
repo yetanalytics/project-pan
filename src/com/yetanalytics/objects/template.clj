@@ -1,13 +1,14 @@
 (ns com.yetanalytics.objects.template
   (:require [clojure.spec.alpha :as s]
             [ubergraph.core :as uber]
+            [com.yetanalytics.util :as util]
             [com.yetanalytics.axioms :as ax]
             [com.yetanalytics.util :as util]
             [com.yetanalytics.objects.templates.rules :as rules]))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Statement Template
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (s/def ::id ::ax/uri)
 (s/def ::type #{"StatementTemplate"})
@@ -46,10 +47,15 @@
 (s/def ::template
   (s/and
    (s/keys :req-un [::id ::type ::in-scheme ::pref-label ::definition]
-           :opt-un [::deprecated ::verb ::object-activity-type ::rules
-                    ::context-grouping-activity-type ::context-parent-activity-type
-                    ::context-other-activity-type ::context-category-activity-type
-                    ::attachment-usage-type ::object-statement-ref-template
+           :opt-un [::deprecated ::rules
+                    ::verb
+                    ::object-activity-type
+                    ::context-grouping-activity-type
+                    ::context-parent-activity-type
+                    ::context-other-activity-type
+                    ::context-category-activity-type
+                    ::attachment-usage-type
+                    ::object-statement-ref-template
                     ::context-statement-ref-template])
    ::type-or-reference))
 
@@ -173,3 +179,5 @@
 
 (defn explain-template-graph [tgraph]
   (s/explain-data ::valid-edges (get-edges tgraph)))
+
+;; TODO Fix stuff in the rules

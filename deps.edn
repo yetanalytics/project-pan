@@ -3,9 +3,11 @@
         org.clojure/test.check {:mvn/version "0.10.0-alpha2"}
         com.yetanalytics/xapi-schema {:git/url "https://github.com/yetanalytics/xapi-schema"
                                       :sha "e2c517e7adcedc7f3012b90bce274e2c33cdbcc1"}
+        camel-snake-kebab {:mvn/version "0.4.0"}
         cheshire {:mvn/version "5.8.1"}
-        ubergraph {:mvn/version "0.5.3"} 
-        luposlip/json-schema {:mvn/version "0.1.6"}}
+
+        luposlip/json-schema {:mvn/version "0.1.6"}
+        ubergraph {:mvn/version "0.5.3"}}
  :aliases
  {:test {:extra-paths ["test"]
          :extra-deps {org.clojure/test.check {:mvn/version "RELEASE"}}}
@@ -15,5 +17,4 @@
                  :sha "76568540e7f40268ad2b646110f237a60295fa3c"}}
    :main-opts ["-m" "cognitect.test-runner"
                "-d" "test"]}}
-  :mvn/repos {"jitpack" {:url "https://jitpack.io"}}
- }
+ :mvn/repos {"jitpack" {:url "https://jitpack.io"}}}

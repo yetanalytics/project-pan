@@ -190,10 +190,4 @@
     (is (not (s/valid? ::ax/json-schema "{\"$comment\" : 74}")))
     (is (not (s/valid? ::ax/json-schema schema-3))) ; valid only in draft-03
     (is (not (s/valid? ::ax/json-schema schema-4))) ; valid only in draft-03
-))
-
-
-;; Test runner
-
-
-(run-tests)
+    ))

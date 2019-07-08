@@ -241,7 +241,7 @@
       "definition": {
         "en": "Uploading a resource from a local file system"
       },
-      "related": [
+      "broader": [
         "https://w3id.org/xapi/catch/verbs/submitted",
         "https://w3id.org/xapi/catch/verbs/provided"
       ]
@@ -2702,7 +2702,7 @@
       "definition": {
         "en": "This statement template is for describing the action of clicking on a link which takes the learner to an article.  The object should be the article itself with the object id being the url of the article.  This template should be used for each article viewed this way"
       },
-      "type": "statementTemplate",
+      "type": "StatementTemplate",
       "prefLabel": {
         "en": "viewed article"
       },
@@ -3123,7 +3123,7 @@
       "definition": {
         "en": "This template is for statements regarding the learner reaching out to families in some way.  The object's name will be the provided type in activity f4.2.01.  Each type of communication should have a unique IRI associated with it so patterns of how teachers communicate can easily be established. ie. when the type is email, that has a unique id vs flyer has its own unique identifier across all teachers.  If multiple types are supplied, the IRI should be based off of the first type entered, the one used for the object name."
       },
-      "type": "statementTemplate",
+      "type": "StatementTemplate",
       "prefLabel": {
         "en": "Learner communicated with families"
       },
@@ -3335,7 +3335,7 @@
       "definition": {
         "en": "This template is for statements regarding the submission of evidence about communication with families. For each communication-with-families/upload statement, there should be a statement matching this template.  A learner uploads/provides the evidence and then submits it."
       },
-      "type": "statementTemplate",
+      "type": "StatementTemplate",
       "prefLabel": {
         "en": "Evidence: demonstrate how learner communicates with families"
       },
@@ -3464,7 +3464,7 @@
       "definition": {
         "en": "This template is for statements regarding the learner reaching out to parents in some way.  The object's id should be a randomly generated UUID."
       },
-      "type": "statementTemplate",
+      "type": "StatementTemplate",
       "prefLabel": {
         "en": "Learner communicated with parents"
       },
@@ -3648,7 +3648,7 @@
       "definition": {
         "en": "this template describes the user hitting submit.  A statement matching this template should be produced for each piece of evidence provided or uploaded."
       },
-      "type": "statementTemplate",
+      "type": "StatementTemplate",
       "prefLabel": {
         "en": "Evidence - Provide examples of communication to parents"
       },
@@ -3697,7 +3697,7 @@
       "definition": {
         "en": "This template is for statements regarding the learner engaging with the community.  The object's id should be a randomly generated UUID."
       },
-      "type": "statementTemplate",
+      "type": "StatementTemplate",
       "prefLabel": {
         "en": "Learner engaged the community"
       },
@@ -4509,9 +4509,9 @@
       "prefLabel": {
         "en": "complete Two-Way Sheltered Instruction"
       },
-      "oneOrMore": [
-        "https://w3id.org/xapi/catch/patterns#f3-2-01-completion"
-      ]
+      "oneOrMore": {
+        "id": "https://w3id.org/xapi/catch/patterns#f3-2-01-completion"
+      }
     },
     {
       "id": "https://w3id.org/xapi/catch/patterns#m3-2-01-iteration",
