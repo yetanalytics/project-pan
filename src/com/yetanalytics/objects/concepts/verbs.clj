@@ -1,12 +1,12 @@
 (ns com.yetanalytics.objects.concepts.verbs
   (:require [clojure.spec.alpha :as s]
             [com.yetanalytics.axioms :as ax]
-            [com.yetanalytics.util :as util]
-            [com.yetanalytics.objects.concepts.util :as cu]))
+            [com.yetanalytics.util :as util]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Verb
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 
 (s/def ::id ::ax/iri)
 (s/def ::type #{"Verb"})

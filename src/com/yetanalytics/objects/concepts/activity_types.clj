@@ -1,8 +1,7 @@
 (ns com.yetanalytics.objects.concepts.activity-types
   (:require [clojure.spec.alpha :as s]
             [com.yetanalytics.axioms :as ax]
-            [com.yetanalytics.util :as util]
-            [com.yetanalytics.objects.concepts.util :as cu]))
+            [com.yetanalytics.util :as util]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Activity Type

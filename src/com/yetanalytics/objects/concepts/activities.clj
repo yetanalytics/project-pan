@@ -5,8 +5,7 @@
             [camel-snake-kebab.core :as csk]
             [xapi-schema.spec]
             [com.yetanalytics.axioms :as ax]
-            [com.yetanalytics.util :as util]
-            [com.yetanalytics.objects.concepts.util :as cu]))
+            [com.yetanalytics.util :as util]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Activity

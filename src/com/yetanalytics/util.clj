@@ -20,6 +20,14 @@
   [obj-vec args]
   (mapv #(conj args [:object %]) obj-vec))
 
+;; In Concepts that can contain a schema or an inlineSchema (ie. IRI or string)
+;; it MUST NOT contain both
+(s/def ::inline-or-iri
+  (fn [ext]
+    (let [schema? (contains? ext :schema)
+          inline-schema? (contains? ext :inline-schema)]
+      (not (and schema? inline-schema?)))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Graph functions
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

@@ -1,8 +1,7 @@
 (ns com.yetanalytics.objects.concepts.document-resources.state
   (:require [clojure.spec.alpha :as s]
             [com.yetanalytics.axioms :as ax]
-            [com.yetanalytics.util :as util]
-            [com.yetanalytics.objects.concepts.util :as cu]))
+            [com.yetanalytics.util :as util]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; State Resource
@@ -25,7 +24,7 @@
           :req-un [::id ::type ::in-scheme ::pref-label ::definition
                    ::content-type]
           :opt-un [::deprecated ::context ::schema ::inline-schema])
-         ::cu/inline-or-iri))
+         ::util/inline-or-iri))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; in-profile validation+ helpers

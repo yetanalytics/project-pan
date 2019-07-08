@@ -1,8 +1,7 @@
 (ns com.yetanalytics.objects.concepts.extensions.activity
   (:require [clojure.spec.alpha :as s]
             [com.yetanalytics.axioms :as ax]
-            [com.yetanalytics.util :as util]
-            [com.yetanalytics.objects.concepts.util :as cu]))
+            [com.yetanalytics.util :as util]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Activity Extensions
@@ -29,7 +28,7 @@
           :req-un [::id ::type ::in-scheme ::pref-label ::definition]
           :opt-un [::deprecated ::recommended-activity-types ::context
                    ::schema ::inline-schema])
-         ::cu/inline-or-iri
+         ::util/inline-or-iri
          ::no-recommended-verbs))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
