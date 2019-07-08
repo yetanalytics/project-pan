@@ -33,24 +33,13 @@
         :agent-profile    ::agent-p/document-resource
         :state            ::state/document-resource))
 
-(s/def ::concept+
-  (s/or :verb     ::v/verb+
-        :activity ::a/activity+
-        :activity-type ::at/activity-type+
-        :attachment-usage-type ::a-ut/attachment-usage-type+
-        :activity-extension ::ae/extension+
-        :context-extension ::ce/extension+
-        :result-extension  ::re/extension+
-        :activity-profile ::activity-p/document-resource+
-        :agent-profile    ::agent-p/document-resource+
-        :state            ::state/document-resource+))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Strict validation
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Graph creation functions
 
+;; Create a ubergraph digraph out of the vector of concepts
 (defn create-concept-graph [concepts]
   (let [cgraph (uber/digraph)
         cnodes (mapv (partial util/node-with-attrs) concepts)
@@ -75,7 +64,8 @@
                :type (uber/attr cgraph edge :type)}))
           edges)))
 
-;; Validate an edge
+;; Edge validation 
+
 (defmulti valid-edge? #(:type %))
 
 ;; Verbs, ActivityTypes, and AttachmentUsageTypes

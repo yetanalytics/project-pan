@@ -35,6 +35,7 @@
 ;; in-profile validation+ helpers
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; 
 
+;; Return a vector of edges in the form [src dest {:type kword}]
 (defmethod util/edges-with-attrs "ContextExtension"
   [{:keys [id recommended-verbs]}]
   (if (some? recommended-verbs)

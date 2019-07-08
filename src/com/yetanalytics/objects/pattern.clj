@@ -83,6 +83,9 @@
   (keys (dissoc pattern :id :type :pref-label :definition
                 :primary :in-scheme :deprecated)))
 
+;; Obtain a vector of edges originating from a pattern.
+;; The multimethod dispatches on what regex property the pattern has.
+
 (defmulti get-pattern-edges dispatch-on-pattern)
 
 (defmethod get-pattern-edges '(:alternates) [{:keys [id alternates]}]
@@ -104,9 +107,11 @@
 
 (defmethod get-pattern-edges :default [_] nil)
 
+;; Return a vector of pattern edges in the form [src dest {:type kword}] 
 (defmethod util/edges-with-attrs "Pattern" [pattern]
   (get-pattern-edges pattern))
 
+;; Return a vector of nodes of the form [id attribute-map]
 (defmethod util/node-with-attrs "Pattern" [pattern]
   (let [id (:id pattern)
         attrs {:type "Pattern"
@@ -170,6 +175,8 @@
                 (true? src-primary)
                 (= 0 src-indegree)))))
 
+;; Other regex properties: all MUST contain patterns or templates
+
 (defmethod valid-edge? :optional
   [{:keys [src-type dest-type]}]
   (and (#{"Pattern"} src-type)
@@ -192,6 +199,7 @@
 (s/def ::valid-edges (s/coll-of ::valid-edge))
 
 ;; MUST NOT include any Pattern within itself, at any depth
+;; In other words, no cycles
 (s/def ::acyclic-graph alg/dag?)
 
 (s/def ::pattern-graph

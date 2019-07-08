@@ -36,6 +36,7 @@
 ;; in-profile validation+ helpers
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; Return a vector of edges in the form [src dest {:type kword}]
 (defmethod util/edges-with-attrs "ActivityExtension"
   [{:keys [id recommended-activity-types]}]
   (if (some? recommended-activity-types)

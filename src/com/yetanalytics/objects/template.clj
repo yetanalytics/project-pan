@@ -131,6 +131,8 @@
                :type (uber/attr tgraph edge :type)}))
           edges)))
 
+;; Validate edges
+
 (defmulti valid-edge? #(:type %))
 
 ;; verb MUST point to a Verb Concept

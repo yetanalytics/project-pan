@@ -40,6 +40,7 @@
 ;; in-profile validation+ helpers
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; Return a vector of edges in the form [src dest {:type kword}]
 (defmethod util/edges-with-attrs "Verb"
   [{:keys [id broader broad-match narrower narrow-match related related-match
            exact-match]}]
