@@ -55,6 +55,10 @@
 
 (s/def ::templates (s/coll-of ::template :kind vector? :min-count 1))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Strict validation
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (defmethod util/edges-with-attrs "StatementTemplate"
   [{:keys [id
            verb
@@ -102,45 +106,56 @@
 
 (defmulti valid-edge? #(:type %))
 
+;; verb MUST point to a Verb Concept
 (defmethod valid-edge? :verb [{:keys [src-type dest-type]}]
   (and (#{"StatementTemplate"} src-type)
        (#{"Verb"} dest-type)))
 
+;; objectActivityType MUST point to an object ActivityType
 (defmethod valid-edge? :object-activity-type [{:keys [src-type dest-type]}]
   (and (#{"StatementTemplate"} src-type)
        (#{"ActivityType"} dest-type)))
 
+;; contextGroupingActivityType MUST point to grouping ActivityTypes
 (defmethod valid-edge? :context-grouping-activity-type
   [{:keys [src-type dest-type]}]
   (and (#{"StatementTemplate"} src-type)
        (#{"ActivityType"} dest-type)))
 
+;; contextParentActivityType MUST point to parent ActivityTypes
 (defmethod valid-edge? :context-parent-activity-type
   [{:keys [src-type dest-type]}]
   (and (#{"StatementTemplate"} src-type)
        (#{"ActivityType"} dest-type)))
 
+;; contextOtherActivityType MUST point to other ActivityTypes
 (defmethod valid-edge? :context-other-activity-type
   [{:keys [src-type dest-type]}]
   (and (#{"StatementTemplate"} src-type)
        (#{"ActivityType"} dest-type)))
 
+;; contextCategoryActivityType MUST point to category ActivityTypes
 (defmethod valid-edge? :context-category-activity-type
   [{:keys [src-type dest-type]}]
   (and (#{"StatementTemplate"} src-type)
        (#{"ActivityType"} dest-type)))
 
+;; attachmentUsageType MUST point to AttachmentUsageType Concepts
 (defmethod valid-edge? :attachment-usage-type
   [{:keys [src-type dest-type]}]
   (and (#{"StatementTemplate"} src-type)
        (#{"AttachmentUsageType"} dest-type)))
 
+;; objectStatementRefTemplate MUST point to Statement Templates from this
+;; profile version
 (defmethod valid-edge? :object-statement-ref-template
   [{:keys [src-type dest-type src-version dest-version]}]
   (and (#{"StatementTemplate"} src-type)
        (#{"StatementTemplate"} dest-type)
        (= src-version dest-version)))
 
+;; contextStatementRefTemplate MUST point to Statement Templates from this
+;; profile version
 (defmethod valid-edge? :context-statement-ref-template
   [{:keys [src-type dest-type src-version dest-version]}]
   (and (#{"StatementTemplate"} src-type)

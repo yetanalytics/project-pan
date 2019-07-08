@@ -5,6 +5,10 @@
             [com.yetanalytics.axioms :as ax]
             [com.yetanalytics.util :as util]))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Patterns 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 ;; Basic properties
 
 (s/def ::id ::ax/uri)
@@ -15,6 +19,8 @@
 (s/def ::definition ::ax/language-map)
 (s/def ::deprecated ::ax/boolean)
 
+;; Regex properties
+;; MUST include at least two members in alternates
 (s/def ::alternates (s/coll-of ::ax/iri :type vector? :min-count 2))
 (s/def ::optional (s/keys :req-un [::id]))
 (s/def ::one-or-more (s/keys :req-un [::id]))
@@ -55,8 +61,9 @@
   (s/coll-of (s/or :pattern ::pattern
                    :primary ::primary-pattern) :kind vector? :min-count 1))
 
-;; TODO: MUST + MUST NOTS from Profile Authors: section
-;; https://github.com/adlnet/xapi-profiles/blob/master/xapi-profiles-structure.md#90-patterns
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Strict validation
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Get the IRIs of a Pattern (within a sequence), depending on its property
 (defn dispatch-on-pattern [pattern]
@@ -68,6 +75,8 @@
 (defmethod get-pattern-edges '(:alternates) [{:keys [id alternates]}]
   (mapv #(vector id % {:type :alternates}) alternates))
 
+;; "sequence" is already used by clojure; cannot be used as a symbol when
+;; disassociating maps
 (defmethod get-pattern-edges '(:sequence) [pattern]
   (mapv #(vector (:id pattern) % {:type :sequence}) (:sequence pattern)))
 
@@ -119,7 +128,7 @@
            (#{"StatementTemplate"} dest-type))))
 
 ;; MUST include at least two members in sequence, unless:
-;; 1. sequence is a primary pattern not used elsewhere
+;; 1. sequence is a primary pattern not used elsewhere, and
 ;; 2. sequence member is a single StatementTemplate
 (defmethod valid-edge? :sequence
   [{:keys [src-type dest-type src-indegree src-outdegree src-primary]}]
@@ -149,8 +158,7 @@
 
 (s/def ::valid-edge valid-edge?)
 
-(s/def ::valid-edges
-  (s/coll-of ::valid-edge))
+(s/def ::valid-edges (s/coll-of ::valid-edge))
 
 ;; MUST NOT include any Pattern within itself, at any depth
 (s/def ::acyclic-graph alg/dag?)

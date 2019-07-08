@@ -12,6 +12,10 @@
             [com.yetanalytics.objects.concepts.document-resources.agent-profile :as agent-p]
             [com.yetanalytics.objects.concepts.document-resources.activity-profile :as activity-p]))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Concepts 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (s/def ::concept
   (s/or :verb     ::v/verb
         :activity ::a/activity
@@ -25,6 +29,10 @@
         :state            ::state/document-resource))
 
 (s/def ::concepts (s/coll-of ::concept :kind vector?))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Strict validation
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn get-edges
   [cgraph]
@@ -45,6 +53,7 @@
 ;; Verbs, ActivityTypes, and AttachmentUsageTypes
 ;; TODO broadMatch, narrowMatch, relatedMatch and exactMatch
 
+;; broader MUST point to same-type Concepts from the same profile version
 (defmethod valid-edge? :broader
   [{:keys [src-type dest-type src-version dest-version]}]
   (and (#{"ActivityType" "AttachmentUsageType" "Verb"} src-type)
@@ -52,6 +61,7 @@
        (= src-type dest-type)
        (= src-version dest-version)))
 
+;; narrower MUST point to same-type Concepts from the same profile version
 (defmethod valid-edge? :narrower
   [{:keys [src-type dest-type src-version dest-version]}]
   (and (#{"ActivityType" "AttachmentUsageType" "Verb"} src-type)
@@ -59,6 +69,7 @@
        (= src-type dest-type)
        (= src-version dest-version)))
 
+;; related MUST point to same-type Concepts from the same profile version
 (defmethod valid-edge? :related
   [{:keys [src-type dest-type src-version dest-version]}]
   (and (#{"ActivityType" "AttachmentUsageType" "Verb"} src-type)
@@ -67,11 +78,14 @@
        (= src-version dest-version)))
 
 ;; Extensions
+
+;; recommendedActivityTypes MUST point to ActivityType Concepts
 (defmethod valid-edge? :recommended-activity-types
   [{:keys [src-type dest-type]}]
   (and (#{"ActivityExtension"} src-type)
        (#{"ActivityType"} dest-type)))
 
+;; recommendedVerbs MUST point to Verb Concepts
 (defmethod valid-edge? :recommended-verbs
   [{:keys [src-type dest-type]}]
   (and (#{"ContextExtension" "ResultExtension"} src-type)
