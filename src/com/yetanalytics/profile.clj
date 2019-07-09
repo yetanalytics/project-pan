@@ -34,15 +34,15 @@
     (let [version-ids (util/only-ids versions)]
       (nil? (some #(= id %) version-ids)))))
 
-(s/def ::versions (s/and ::versions/versions ::id-distinct))
-
 (s/def ::profile
-  (s/keys :req-un [::id ::context ::type ::conforms-to ::pref-label
-                   ::definition ::author/author ::versions]
-          :opt-un [::see-also
-                   ::concept/concepts
-                   ::template/templates
-                   ::pattern/patterns]))
+  (s/and
+   (s/keys :req-un [::id ::context ::type ::conforms-to ::pref-label
+                    ::definition ::author/author ::versions/versions]
+           :opt-un [::see-also
+                    ::concept/concepts
+                    ::template/templates
+                    ::pattern/patterns])
+   ::id-distinct))
 
 (defn validate
   "Syntax-only validation.

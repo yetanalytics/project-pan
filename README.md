@@ -5,31 +5,29 @@ specification: https://github.com/adlnet/xapi-profiles
 
 ## TODO
 - Write axiom specs
-    - IRIs/IRLs/URIs/URLs
-    - JSON Schema :heavy_check_mark:
+    - IRIs/IRLs/URIs/URLs [Need to fix xapi-schema]
+    - JSON Schema [DONE]
         - Currently only draft-07 supported
-    - JSONPath :heavy_check_mark:
-    - Language Maps :heavy_check_mark:
-    - Keywords
-    - Misc. (Booleans, Arbitrary strings, Timestamps) :heavy_check_mark:
-    - Arrays of axioms
+    - JSONPath [DONE]
+    - Language Maps [DONE]
+    - Misc. (Booleans, Arbitrary strings, Timestamps) [DONE]
+    - Arrays of axioms [DONE]
 - Write composite specs for 
-    - Profiles (top-level)
-    - Concepts
+    - Profiles (top-level) [DONE]
+    - Concepts [DONE]
         - Verbs/ActivityTypes/AttachmentUsageTypes
         - Extensions
         - Document Resources
         - Activities
-    - Statement Templates
-    - Profiles
+    - Statement Templates [DONE]
+    - Profiles [DONE]
 
 ## Usage
 
-FIXME
+Todo
 
 ## License
 
 Copyright © 2019 Yet Analtyics
 
-Distributed under the Eclipse Public License either version 1.0 or (at
-your option) any later version.
+Distributed under the Eclipse Public License version 1.0.
