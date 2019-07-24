@@ -39,6 +39,11 @@
   "Remove chars that are illegal in keywords, ie. spaces and the @ symbol."
   [s] (string/replace s #"@|\s" ""))
 
+(defn replace-at
+  "Replace any @ symbols with 'at/' (so that they are all in their own pseudo-
+  namespace."
+  [s] (string/replace s #"@" "at/"))
+
 (defn convert-json
   "Convert a JSON string into an edn data structure."
   [json]

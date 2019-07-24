@@ -27,7 +27,9 @@
   "Get a raw context, then parse it from JSON to EDN.
   Return the JSON object given by the @context key"
   [context-uri]
-  (-> context-uri get-raw-context util/convert-json :context))
+  (-> context-uri get-raw-context
+      (cheshire/parse-string #(-> % util/replace-at keyword))
+      :at/context))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Validate context 
@@ -64,7 +66,7 @@
   "Validates whether this is a JSON object with a @id that has a valid prefix."
   [prefixes value]
   (and (map? value)
-       (compact-iri? prefixes (:id value))))
+       (compact-iri? prefixes (:at/id value))))
 
 (defn value-spec
   "Create a spec that validates a single JSON value in the context."

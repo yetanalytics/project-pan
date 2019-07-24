@@ -22,20 +22,20 @@
     (is (map? profile-context))
     (is (= activity-context
            {:xapi "https://w3id.org/xapi/ontology#"
-            :type {:id "xapi:type" :type "@id"}
-            :name {:id "xapi:name" :container "@language"}
-            :description {:id "xapi:description" :container "@language"}
-            :more-info {:id "xapi:moreInfo" :type "@id"}
-            :extensions {:id "xapi:extensions" :container "@set"}
-            :interaction-type {:id "xapi:interactionType"}
-            :correct-responses-pattern {:id "xapi:correctResponsesPattern"
-                                        :container "@set"}
-            :choices {:id "xapi:choices" :container "@list"}
-            :scale {:id "xapi:scale" :container "@list"}
-            :source {:id "xapi:source" :container "@list"}
-            :target {:id "xapi:target" :container "@list"}
-            :steps {:id "xapi:steps" :container "@list"}
-            :id {:id "xapi:interactionId"}}))))
+            :type {:at/id "xapi:type" :at/type "@id"}
+            :name {:at/id "xapi:name" :at/container "@language"}
+            :description {:at/id "xapi:description" :at/container "@language"}
+            :moreInfo {:at/id "xapi:moreInfo" :at/type "@id"}
+            :extensions {:at/id "xapi:extensions" :at/container "@set"}
+            :interactionType {:at/id "xapi:interactionType"}
+            :correctResponsesPattern {:at/id "xapi:correctResponsesPattern"
+                                      :at/container "@set"}
+            :choices {:at/id "xapi:choices" :at/container "@list"}
+            :scale {:at/id "xapi:scale" :at/container "@list"}
+            :source {:at/id "xapi:source" :at/container "@list"}
+            :target {:at/id "xapi:target" :at/container "@list"}
+            :steps {:at/id "xapi:steps" :at/container "@list"}
+            :id {:at/id "xapi:interactionId"}}))))
 
 (deftest prefix-spec-test
   (testing "prefix spec"
@@ -56,9 +56,6 @@
 
 (deftest collect-prefixes-test
   (testing "collect-prefixes function: get all prefixes from a context"
-    ;; FIXME: Spec does not pass
-    ;; Need to get rid of camelCase to kebab-case conversion
-    ;; Also should add at namespace instead of getting rid of @ symbol
     (is (= (c/collect-prefixes profile-context)
            {:prov "http://www.w3.org/ns/prov#"
             :skos "http://www.w3.org/2004/02/skos/core#"
@@ -77,14 +74,14 @@
     (is (not (c/compact-iri? {:xapi "https://w3id.org/xapi/ontology#"}
                              "skos:prefLabel")))
     (is (not (c/compact-iri? {:xapi "https://w3id.org/xapi/ontology#"}
-                             {:id "xapi:type" :type "@id"})))))
+                             {:at/id "xapi:type" :at/type "@id"})))))
 
 (deftest context-map?-test
   (testing "context-map? predicate"
     (is (c/context-map? {:xapi "https://w3id.org/xapi/ontology#"}
-                        {:id "xapi:type" :type "@id"}))
+                        {:at/id "xapi:type" :at/type "@id"}))
     (is (not (c/context-map? {:xapi "https://w3id.org/xapi/ontology#"}
-                             {:type "@id" :id "dcterms:conformsTo"})))
+                             {:at/type "@id" :at/id "dcterms:conformsTo"})))
     (is (not (c/context-map? {:xapi "https://w3id.org/xapi/ontology#"}
                              "xapi:Verb")))))
 
@@ -93,11 +90,11 @@
     (is (s/valid? (c/value-spec {:xapi "https://w3id.org/xapi/ontology#"})
                   "xapi:Verb"))
     (is (s/valid? (c/value-spec {:xapi "https://w3id.org/xapi/ontology#"})
-                  {:id "xapi:type" :type "@id"}))
+                  {:at/id "xapi:type" :at/type "@id"}))
     (is (not (s/valid? (c/value-spec {:xapi "https://w3id.org/xapi/ontology#"})
                        "skos:prefLabel")))
     (is (not (s/valid? (c/value-spec {:xapi "https://w3id.org/xapi/ontology#"})
-                       {type "@id" :id "dcterms:conformsTo"})))))
+                       {:at/type "@id" :at/id "dcterms:conformsTo"})))))
 
 (deftest context-spec-test
   (testing "context-spec spec creation function"
