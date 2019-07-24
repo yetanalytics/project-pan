@@ -1,9 +1,12 @@
 (ns com.yetanalytics.util
   (:require [clojure.spec.alpha :as s]
+            [clojure.string :as string]
+            [camel-snake-kebab.core :as kebab]
+            [cheshire.core :as cheshire]
             [ubergraph.core :as uber]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; fns + specs
+;; Generic functions and specs 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn only-ids
@@ -27,6 +30,21 @@
     (let [schema? (contains? ext :schema)
           inline-schema? (contains? ext :inline-schema)]
       (not (and schema? inline-schema?)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; JSON parsing 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn remove-chars
+  "Remove chars that are illegal in keywords, ie. spaces and the @ symbol."
+  [s] (string/replace s #"@|\s" ""))
+
+(defn convert-json
+  "Convert a JSON string into an edn data structure."
+  [json]
+  (cheshire/parse-string
+   json (fn [k] (-> k remove-chars kebab/->kebab-case-keyword))))
+;; ^ example usage of ->
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Graph functions

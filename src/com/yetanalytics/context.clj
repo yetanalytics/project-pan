@@ -3,7 +3,9 @@
             [clojure.string :as string]
             [clojure.walk :as w]
             [clojure.zip :as zip]
-            [cheshire.core :as cheshire]))
+            [cheshire.core :as cheshire]
+            [com.yetanalytics.axioms :as ax]
+            [com.yetanalytics.util :as util]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Parse context 
@@ -21,28 +23,27 @@
     :else nil ;; TODO do something
 ))
 
-(defn parse-context
-  "Turn context from a JSON string file into an EDN data structure."
-  [json-context]
-  (cheshire/parse-string json-context))
+(defn get-context
+  "Get a raw context, then parse it from JSON to EDN.
+  Return the JSON object given by the @context key"
+  [context-uri]
+  (-> context-uri get-raw-context util/convert-json :context))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Validate context 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Regular expressions
-(def gen-delims-regex #".*(\:|\/|\?|\#|\[|\]|\@)$")
+(def gen-delims-regex #".*(?:\:|\/|\?|\#|\[|\]|\@)$")
 (def prefix-regex #"(.*\:)")
 
-(defn is-prefix?
-  "True if our value is a prefix (ie. some expanded IRI) or a map of the form
-    {... \"@prefix\" : true ...}
-  False otherwise."
-  [prefix-val]
-  (or (and (string? prefix-val)
-           (not-empty (re-matches gen-delims-regex prefix-val)))
-      (and (map? prefix-val)
-           (true? (get prefix-val "@prefix")))))
+(s/def ::prefix
+  (s/or :simple-term-def
+        (s/and ::ax/iri
+               #(->> % (re-matches gen-delims-regex) some?))
+        :expanded-term-def
+        (s/and map?
+               #(-> % :prefix true?))))
 
 (defn collect-prefixes
   "Returns all the prefixes in a context."
@@ -53,23 +54,25 @@
 (defn compact-iri?
   "Validates whether this is a compact iri that has a valid prefix."
   [prefixes value]
-  (let [sub-strs (string/split value #"\:")]
-    (contains? prefixes (first sub-strs))))
+  (and (string? value)
+       (contains? prefixes (-> value (string/split #"\:") first keyword))))
 
 (defn context-map?
   "Validates whether this is a JSON object with a @id that has a valid prefix."
   [prefixes value]
   (and (map? value)
-       (compact-iri? (get value "@id"))))
+       (compact-iri? prefixes (:id value))))
 
-(s/def ::context
-  (fn [context]
-    (let [prefixes (collect-prefixes context)]
-      (every? true?
-              (map (s/or is-prefix?
-                         (partial compact-iri? prefixes)
-                         (partial context-map? prefixes))
-                   context)))))
+(defn value-spec
+  [prefixes]
+  (s/or :prefix ::prefix
+        :compact-iri (partial compact-iri? prefixes)
+        :object (partial context-map? prefixes)))
+
+(defn context-spec
+  [context]
+  (let [v-spec (-> context collect-prefixes value-spec)]
+    (s/map-of keyword? v-spec)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Validate profile against context 
