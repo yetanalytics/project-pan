@@ -49,7 +49,10 @@
   "Returns all the prefixes in a context."
   [context]
   (reduce-kv (fn [accum k v]
-               (if (is-prefix? v) (assoc accum k v) accum)) {} context))
+               (if (s/valid? ::prefix v)
+                 (assoc accum k v)
+                 accum))
+             {} context))
 
 (defn compact-iri?
   "Validates whether this is a compact iri that has a valid prefix."
@@ -64,42 +67,45 @@
        (compact-iri? prefixes (:id value))))
 
 (defn value-spec
+  "Create a spec that validates a single JSON value in the context."
   [prefixes]
   (s/or :prefix ::prefix
         :compact-iri (partial compact-iri? prefixes)
         :object (partial context-map? prefixes)))
 
 (defn context-spec
+  "Creates a spec that validates an entire context."
   [context]
   (let [v-spec (-> context collect-prefixes value-spec)]
     (s/map-of keyword? v-spec)))
+
+(defn create-context
+  "Create a valid context from a @context IRI.
+  Throws an exception if the context is invalid."
+  [context-iri]
+  (let [context (get-context context-iri)
+        errors (s/explain-data (context-spec context) context)]
+    (if (every? nil? errors)
+      context
+      (throw (ex-info "Failure to validate @context" errors)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Validate profile against context 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn profile-to-zipper
+  "Create a zipper from a profile structure."
   [profile]
   (letfn [(children [node]
-            (reduce-kv [accum k child]
-                       (cond
-                         (map? child)
-                         (conj accum child)
-                         ((s/coll-of map? :type vector?) child)
-                         (concat accum child)
-                         :else accum))
-            (list) node)]
+            (reduce-kv
+             (fn [accum k v]
+               (cond
+                 (and (map? v)
+                      (not (s/valid? ::ax/language-map v))) (conj accum v)
+                 (s/valid? (s/coll-of map? :type vector?) v) (concat accum v)
+                 :else accum))
+             (list) node))]
     (zip/zipper map? children nil profile)))
-
-(defn create-context
-  [location]
-  (let [node (zip/node location)
-        new-context (-> curr-node :context get-context)
-        error-msg (s/explain-data ::context new-context)]
-    (if (nil? error-msg)
-      {:path (zip/path location)
-       :context new-context}
-      (throw (ex-info "Failure to validate @context" error-msg)))))
 
 (defn subvec?
   "True if v1 is a subvector of v2, false otherwise."
@@ -107,22 +113,59 @@
   (and (<= (count v1) (count v2))
        (= v1 (subvec v2 0 (count v1)))))
 
-(defn update-contexts
+(defn pop-context
+  "Pop the last-added context if the path is not located at the current
+  location nor a parent of the current location."
   [context-stack location]
-  (let [stack' (if-not (subvec? (zip/path location)
-                                (-> context-stack peek :path))
-                 (pop context-stack)
-                 context-stack)
-        stack'' (if (contains? curr-node :context)
-                  (conj stack' (create-context (:context curr-node)))
-                  stack')]
-    stack''))
+  (if-not (subvec? (-> context-stack peek :path)
+                   (vec (zip/path location)))
+    (pop context-stack)
+    context-stack))
+
+(defn pop-contexts
+  "Repeatedly pop the latest-added contexts until the context is located at
+  the current location or a parent thereof."
+  [context-stack location]
+  (loop [old-stack context-stack]
+    (if (empty? old-stack)
+      old-stack
+      (let [new-stack (pop-context old-stack location)]
+        (if (= new-stack old-stack)
+          new-stack
+          (recur new-stack))))))
+
+(defn push-context
+  "If there exists a @context key at the current node, add it to the stack.
+  Recall that @context may be either a URI string or an array of URIs."
+  [context-stack location]
+  (let [curr-path (-> location zip/path vec)
+        context-iris (-> location zip/node :context)]
+    (cond
+      (s/valid? ::ax/iri context-iris)
+      (conj context-stack {:context (create-context context-iris)
+                           :path curr-path})
+      (s/valid? (s/coll-of ::ax/iri :kind vector?) context-iris)
+      (concat context-stack (mapv (fn [iri]
+                                    {:context (create-context iri)
+                                     :path curr-path})
+                                  context-iris))
+      (nil? context-iris) context-stack)))
+
+(defn update-contexts
+  "Update the contexts stack on every node (ie. pop if we are no longer a 
+  child of the latest @contexts, push if we see a new @context)."
+  [context-stack location]
+  (-> context-stack (pop-contexts location) (push-context location)))
 
 (defn search-contexts
-  [contexts k]
-  (not (every? false? (map #(-> % :context (contains? k)) contexts))))
+  "Given a key, search in all the contexts in the stack for it. Return true
+  if the key is found, false otherwise (as that indicates that the key cannot
+  be expanded to an IRI)."
+  [context-vec k]
+  (not (every? false? (map #(-> % :context (contains? k)) context-vec))))
 
-(defn foo-bar
+(defn validate-all-contexts
+  "Validate all the contexts in a Profile."
   [profile]
   (loop [profile-loc (profile-to-zipper profile)
          context-stack []]
@@ -130,6 +173,8 @@
       true
       (let [curr-node (zip/node profile-loc)
             new-stack (update-contexts context-stack profile-loc)
-            error-seq (map (partial search-contexts new-stack) (keys curr-node))]
+            error-seq (map (partial search-contexts new-stack)
+                           (keys (dissoc curr-node :context)))]
         (if (every? true? error-seq)
-          (recur (zip/next profile-loc) new-stack))))))
+          (recur (zip/next profile-loc) new-stack)
+          false)))))
