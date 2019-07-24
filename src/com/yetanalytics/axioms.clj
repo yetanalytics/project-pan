@@ -39,31 +39,14 @@
 
 (def JSONPathRegEx #"\$((((\.\.?)([^\[\]\.,\s]+|(?=\[)))|(\[\s*(('([^,']|(\\\,)|(\\\'))+'(,\s*('([^,']|(\\\,)|(\\\'))+'))*\s*)|\*)\s*\]))(\[((\d*(,\s*(\d*))*)|\*)\])?)*")
 
-(def JSONPathSplitRegEx #"\s*(?<!\\)\|\s*(?=\$)")
-
-;; TODO: Current generator is very bad; will need to improve in order to
-;; improve test coverage
-; (s/def ::json-path-old
-;   (s/with-gen
-;     (s/and string?
-;            (partial re-matches JSONPathRegEx))
-;     #(sgen/fmap (fn [nodes] (str "$" nodes))
-;                 (sgen/one-of [(sgen/elements [".*"])
-;                               (sgen/fmap (fn [s] (str "." s)) (sgen/string-alphanumeric))
-;                               (sgen/fmap (fn [s] (str "['" s "']")) (sgen/string-alphanumeric))]))))
+(def JSONPathSplitRegEx #"\s*\|\s*(?!([^\[]*\]))")
 
 (s/def ::json-path
-  (s/with-gen
-    (s/and string?
-           (fn [paths]
-             (every? some?
-                     (map (partial re-matches JSONPathRegEx)
-                          (#(string/split % JSONPathSplitRegEx) paths)))))
-    #(sgen/elements ["$"
-                     "$.store"
-                     "$.store.book"
-                     "$..book"
-                     "$.*"])))
+  (s/and string?
+         (fn [paths]
+           (every? some?
+                   (map (partial re-matches JSONPathRegEx)
+                        (#(string/split % JSONPathSplitRegEx) paths))))))
 
 ;; JSON Schema
 ;; Currently only draft-07 supported

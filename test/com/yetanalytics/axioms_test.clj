@@ -116,15 +116,17 @@
                      "$['store']['book']|$['results']['extensions']"
                      "$['store']['book'] | $['results']['extensions']"
                      "$['store']['book'][0] | $.results.extensions['https://foo.org']"
-                     "$['store\\|$.io']"  ; Need to allow the user to escape
+                     "$['store\\|$.io']"
                      "$['store   \\|$.io']"
+                     "$['store|$.io']"
+                     "$.store[*] | $.results['b|ah']"
                      :bad
                      "$.store.book $.results.extension"
                      "$.store.book | what the pineapple"
-                     "$['store|$.io']"
                      "$['store|$['io']]")))
 
 ;; JSON Schema tests
+
 
 (def schema-1 "{\"$schema\" : \"https://foo.org/\",
                 \"$comment\" : \"stan loona\"}")
