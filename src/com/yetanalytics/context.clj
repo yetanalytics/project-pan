@@ -15,9 +15,9 @@
   [context]
   (case context
     "https://w3id.org/xapi/profiles/context"
-    (slurp "resources/contexts/context")
+    (slurp "resources/context/profile-context.json")
     "https://w3id.org/xapi/profiles/activity-context"
-    (slurp "resources/contexts/activity-context")
+    (slurp "resources/context/activity-context.json")
     :else nil ;; TODO do something
 ))
 
