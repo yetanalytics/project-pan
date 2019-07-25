@@ -23,10 +23,10 @@
 
 ;; @context SHOULD be the following URI and MUST contain it if URI valued
 (def context-url "https://w3id.org/xapi/profiles/context")
-(s/def ::context (s/or :context ::ax/uri
-                       :context-array (s/and
-                                       (s/coll-of ::ax/uri :type vector?)
-                                       (partial some #(= context-url %)))))
+(s/def ::context
+  (s/or :context ::ax/uri
+        :context-array (s/and (s/coll-of ::ax/uri :type vector?)
+                              (partial some #(= context-url %)))))
 
 ;; Overall profile ID MUST NOT be any of the version IDs
 (s/def ::id-distinct
@@ -54,64 +54,58 @@
   Returns a spec trace if validation fails, or nil if successful."
   [profile] (s/explain-data ::profile profile))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Strict validation 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; In-scheme validation
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; In-scheme validation
-
 ;; Validate an individual inScheme
-(s/def ::valid-inScheme
+(s/def ::valid-in-scheme
   (fn [{:keys [object vid-set]}] (contains? vid-set (:inScheme object))))
 
-(s/def ::valid-inSchemes (s/coll-of ::valid-inScheme))
+;; Validate all the inSchemes
+(s/def ::valid-in-schemes (s/coll-of ::valid-in-scheme))
 
-;; IRI validation (via graphs)
-
-(defn validate+
-  "Validation of in-profile identifiers and locators.
-  Returns true if valid, false otherwise."
-  [profile]
-  (let [concepts (get profile :concepts [])
-        templates (get profile :templates [])
-        patterns (get profile :patterns [])
-        ;; inSchemes
-        vid-set (versions/version-set (:versions profile))
+;; Validate profile
+(defn validate-in-schemes
+  "Validation of all object inScheme properties, which MUST be one of the
+  versioning IRIs given by the ID of some Profile version object.
+  Returns an empty sequence if validation is successful, else a sequence of
+  spec errors if validation fails."
+  [{:keys [versions concepts templates patterns]}]
+  (let [vid-set (versions/version-set versions)
         c-vids (util/combine-args concepts {:vid-set vid-set})
         t-vids (util/combine-args templates {:vid-set vid-set})
-        p-vids (util/combine-args patterns {:vid-set vid-set})
-        ;; graphs 
-        cgraph (concept/create-concept-graph concepts)
-        tgraph (template/create-template-graph concepts templates)
-        pgraph (pattern/create-pattern-graph templates patterns)]
-    (and (s/valid? ::profile profile)
-         (s/valid? ::valid-inSchemes c-vids)
-         (s/valid? ::valid-inSchemes t-vids)
-         (s/valid? ::valid-inSchemes p-vids)
-         (s/valid? ::concept/concept-graph cgraph)
-         (s/valid? ::template/template-graph tgraph)
-         (s/valid? ::pattern/pattern-graph pgraph))))
-
-(defn validate-explain+
-  "Validation of in-profile identifiers and locators.
-  Returns a spec trace if validation fails, or nil if successful."
-  [profile]
-  (let [concepts (get profile :concepts [])
-        templates (get profile :templates [])
-        patterns (get profile :patterns [])
-        ;; inSchemes
-        vid-set (versions/version-set (:versions profile))
-        c-vids (util/combine-args concepts {:vid-set vid-set})
-        t-vids (util/combine-args templates {:vid-set vid-set})
-        p-vids (util/combine-args patterns {:vid-set vid-set})
-        ;; graphs 
-        cgraph (concept/create-concept-graph concepts)
-        tgraph (template/create-template-graph concepts templates)
-        pgraph (pattern/create-pattern-graph templates patterns)]
-    (concat (s/explain-data ::profile profile)
-            (s/explain-data ::valid-inSchemes c-vids)
+        p-vids (util/combine-args patterns {:vid-set vid-set})]
+    (concat (s/explain-data ::valid-inSchemes c-vids)
             (s/explain-data ::valid-inSchemes t-vids)
-            (s/explain-data ::valid-inSchemes p-vids)
-            (concept/explain-concept-graph cgraph)
+            (s/explain-data ::valid-inSchemes p-vids))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; IRI validation (via graphs)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; Validate profile
+(defn validate-iris
+  "Validate all profile IRIs by creating a graph data structure out of the
+  Profile. Returns an empty sequence if validation is successful, else a 
+  sequence of spec errors if validation fails."
+  [{:keys [concepts templates patterns]}]
+  (let [concepts (if-not (some? concepts) [] concepts)
+        templates (if-not (some? templates) [] templates)
+        patterns (if-not (some? patterns) [] patterns)
+        ;; graphs 
+        cgraph (concept/create-concept-graph concepts)
+        tgraph (template/create-template-graph concepts templates)
+        pgraph (pattern/create-pattern-graph templates patterns)]
+    (concat (concept/explain-concept-graph cgraph)
             (template/explain-template-graph tgraph)
             (pattern/explain-pattern-graph pgraph))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; @context validation 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; Validate profile
+(defn validate-context
+  [profile]
+  (context/validate-profile profile))

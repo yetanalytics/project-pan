@@ -5,63 +5,32 @@
             [com.yetanalytics.util :as util]
             [com.yetanalytics.profile :as profile]))
 
-;; ID VALIDATION
-;; 1. Check that top-level properties pass basic validation
-;; 2. Check that IDs are distinct
-;; 3. Go in and check inSchemes
-;;
-;; CONCEPT VALIDATION
-;; 1. Make a map of IDs to concepts
-;; 2. When validating a Concept, get the correct other Concept and see that it
-;; has the same type
-;;
-;; ACTIVITY VALIDATION
-;; 1. Check to see that the activity has a correct activityDefinition
-;; 2a. Check @context
-;; 2b. ???
-;; 2c. Profit!
-;;
-;; STATEMENT TEMPLATE VALIDATION
-;; 1a. Check @context
-;; 1b. ???
-;; 1c. Profit!
-;;
-;; PATTERN VALIDATION
-;; 1. Create a directed graph of all Patterns and reachable Templates.
-;; - Primary Patterns act as entry points for the graph
-;; - Templates (and Patterns outside the graph, if External is turned off) are
-;; the leaves of the graph
-;; 2. Check for cycles. If a cycle exists, that means a Pattern includes
-;; itself, which MUST NOT occur.
-;; 3. Check that an 'alternate' Pattern does not include an 'optional' or
-;; 'zeroOrMore' Pattern in its adjacency list.
-;; 4. If a one-member 'sequence' Pattern exists, ensure:
-;; - It has no incoming edges (ie. not used elswhere in the Profile)
-;; - Its outgoing edge points to a Template and not a Pattern
-
 (defn validate-profile
-  "Validate a profile from the top down.
-  *** Validation strictness settings ***
-  1. Weak Validation: Check only properties and simple syntax
-  2. Semi-Strict Validation: Validate and resolve IRIs that point to locations
-  WITHIN the profile. This includes:
-      - inSchema validation
-      - in-profile Concept relation validation
-      - in-profile Extensions URI array validation
-      - in-profile StatementTemplate IRI validation
-      - in-profile Pattern validation
-  If an IRI cannot be resolved, then the validation fails (or should it just
-  give a warning?)
-  3. Strict Validation: Validate and resolve IRIs that can point to locations
-  OUTSIDE the profile. This include:
-      - Same validations as Semi-Strict validation, except that IRIs can now
-        point outside the profile.
-      - Validation relating to @contexts 
-  EXTRA SETTING: No short-circuit errors
-      - Allow the validator to collect all errors, instead of terminating on 
-      the first error encountered."
-  [profile & {:keys [validation-level no-short?]}]
-  ;; TODO Add validation levels
-  (if (string? profile)
-    (profile/validate (util/convert-json profile ""))
-    (profile/validate profile)))
+  "Validate a profile from the top down. Takes in a Profile (either as a
+  JSON-LD string or an EDN data structure) and returns true on validation, or
+  a clojure spec error trace if the Profile is invalid. In addition, the
+  function accepts a number of arguments for different levels of validation
+  strictness. 
+    No args - Weak validation; check only the types of properties and simple 
+  syntax of all Profile objects.
+    :in-scheme - Validate that all instances of the inScheme property are
+  valid, ie. they all correspond to a valid Profile version ID.
+    :profile-iris - Validate that all IRI-valued properties (e.g. broader and
+  narrower in Concepts, determining properties in Templates, etc.) link to
+  valid Profile objects.
+    :at-context - Validate that all instances of @context resolve to valid
+  JSON-LD contexts and that they allow all properties to expand out to absolute
+  IRIs during JSON-LD processing.
+    :external-iris - Allow the profile to access external links, either by
+  executing SPARQL queries on a RDF triple store or by executing HTTP requests.
+    :no-short - Allow the validator to collect all errors, instead of having to
+  terminate on the first error encountered."
+  ;; TODO: Implement :external-iris and :no-short
+  [profile & {:keys [in-scheme profile-iris at-context] :as extra-params}]
+  (let [profile (if (string? profile)
+                  (util/convert-json profile "")
+                  profile)]
+    (cond-> (profile/validate-explain profile)
+      (true? in-scheme) (profile/validate-in-schemes profile)
+      (true? profile-iris) (profile-validate-context profile)
+      (true? at-context) (profile/validate-context profile))))
