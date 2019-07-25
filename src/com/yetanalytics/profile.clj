@@ -16,10 +16,10 @@
 
 (s/def ::id ::ax/iri)
 (s/def ::type #{"Profile"})
-(s/def ::conforms-to ::ax/uri)
-(s/def ::pref-label ::ax/language-map)
+(s/def ::conformsTo ::ax/uri)
+(s/def ::prefLabel ::ax/language-map)
 (s/def ::definition ::ax/language-map)
-(s/def ::see-also ::ax/url)
+(s/def ::seeAlso ::ax/url)
 
 ;; @context SHOULD be the following URI and MUST contain it if URI valued
 (def context-url "https://w3id.org/xapi/profiles/context")
@@ -36,7 +36,7 @@
 
 (s/def ::profile
   (s/and
-   (s/keys :req-un [::id ::context ::type ::conforms-to ::pref-label
+   (s/keys :req-un [::id ::context ::type ::conformsTo ::prefLabel
                     ::definition ::author/author ::versions/versions]
            :opt-un [::see-also
                     ::concept/concepts
@@ -60,11 +60,11 @@
 
 ;; In-scheme validation
 
-;; Validate an individual in-scheme
-(s/def ::valid-in-scheme
-  (fn [{:keys [object vid-set]}] (contains? vid-set (:in-scheme object))))
+;; Validate an individual inScheme
+(s/def ::valid-inScheme
+  (fn [{:keys [object vid-set]}] (contains? vid-set (:inScheme object))))
 
-(s/def ::valid-in-schemes (s/coll-of ::valid-in-scheme))
+(s/def ::valid-inSchemes (s/coll-of ::valid-inScheme))
 
 ;; IRI validation (via graphs)
 
@@ -75,7 +75,7 @@
   (let [concepts (get profile :concepts [])
         templates (get profile :templates [])
         patterns (get profile :patterns [])
-        ;; in-schemes
+        ;; inSchemes
         vid-set (versions/version-set (:versions profile))
         c-vids (util/combine-args concepts {:vid-set vid-set})
         t-vids (util/combine-args templates {:vid-set vid-set})
@@ -85,9 +85,9 @@
         tgraph (template/create-template-graph concepts templates)
         pgraph (pattern/create-pattern-graph templates patterns)]
     (and (s/valid? ::profile profile)
-         (s/valid? ::valid-in-schemes c-vids)
-         (s/valid? ::valid-in-schemes t-vids)
-         (s/valid? ::valid-in-schemes p-vids)
+         (s/valid? ::valid-inSchemes c-vids)
+         (s/valid? ::valid-inSchemes t-vids)
+         (s/valid? ::valid-inSchemes p-vids)
          (s/valid? ::concept/concept-graph cgraph)
          (s/valid? ::template/template-graph tgraph)
          (s/valid? ::pattern/pattern-graph pgraph))))
@@ -99,7 +99,7 @@
   (let [concepts (get profile :concepts [])
         templates (get profile :templates [])
         patterns (get profile :patterns [])
-        ;; in-schemes
+        ;; inSchemes
         vid-set (versions/version-set (:versions profile))
         c-vids (util/combine-args concepts {:vid-set vid-set})
         t-vids (util/combine-args templates {:vid-set vid-set})
@@ -109,9 +109,9 @@
         tgraph (template/create-template-graph concepts templates)
         pgraph (pattern/create-pattern-graph templates patterns)]
     (concat (s/explain-data ::profile profile)
-            (s/explain-data ::valid-in-schemes c-vids)
-            (s/explain-data ::valid-in-schemes t-vids)
-            (s/explain-data ::valid-in-schemes p-vids)
+            (s/explain-data ::valid-inSchemes c-vids)
+            (s/explain-data ::valid-inSchemes t-vids)
+            (s/explain-data ::valid-inSchemes p-vids)
             (concept/explain-concept-graph cgraph)
             (template/explain-template-graph tgraph)
             (pattern/explain-pattern-graph pgraph))))

@@ -28,7 +28,7 @@
 (s/def ::inline-or-iri
   (fn [ext]
     (let [schema? (contains? ext :schema)
-          inline-schema? (contains? ext :inline-schema)]
+          inline-schema? (contains? ext :inlineSchema)]
       (not (and schema? inline-schema?)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -42,13 +42,14 @@
 (defn replace-at
   "Replace any @ symbols with 'at/' (so that they are all in their own pseudo-
   namespace."
-  [s] (string/replace s #"@" "at/"))
+  [s replacement] (string/replace s #"@" replacement))
 
 (defn convert-json
   "Convert a JSON string into an edn data structure."
-  [json]
+  [json at-replacement]
   (cheshire/parse-string
-   json (fn [k] (-> k remove-chars kebab/->kebab-case-keyword))))
+   json #(-> % (replace-at at-replacement) keyword)
+   #_(fn [k] (-> k remove-chars kebab/->kebab-case-keyword))))
 ;; ^ example usage of ->
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -61,7 +62,7 @@
 (defmethod node-with-attrs :default [node]
   (let [node-name (:id node)
         node-attrs {:type (:type node)
-                    :in-scheme (:in-scheme node)}]
+                    :inScheme (:inScheme node)}]
     (vector node-name node-attrs)))
 
 ;; Return a vector of all outgoing edges

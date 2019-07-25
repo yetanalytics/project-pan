@@ -65,47 +65,47 @@
 
 (deftest one-or-more-test
   (testing "oneOrMore (A+) property"
-    (should-satisfy ::pattern/one-or-more
+    (should-satisfy ::pattern/oneOrMore
                     {:id "https://w3id.org/xapi/catch/patterns#f1-2-01-scored"})
-    (should-not-satisfy ::pattern/one-or-more
+    (should-not-satisfy ::pattern/oneOrMore
                         {:foo "https://w3id.org/xapi/catch/patterns#f1-2-01-scored"})
-    (should-not-satisfy ::pattern/one-or-more
+    (should-not-satisfy ::pattern/oneOrMore
                         "https://w3id.org/xapi/catch/patterns#f1-2-01-scored")
-    (should-not-satisfy ::pattern/one-or-more
+    (should-not-satisfy ::pattern/oneOrMore
                         ["https://w3id.org/xapi/catch/patterns#f1-2-01-scored"])
-    (should-not-satisfy ::pattern/one-or-more "")))
+    (should-not-satisfy ::pattern/oneOrMore "")))
 
 (deftest zero-or-more-test
   (testing "zeroOrMore (A*) property"
-    (should-satisfy ::pattern/zero-or-more
+    (should-satisfy ::pattern/zeroOrMore
                     {:id "https://w3id.org/xapi/catch/patterns#system-updates-status-incomplete"})
-    (should-not-satisfy ::pattern/zero-or-more
+    (should-not-satisfy ::pattern/zeroOrMore
                         {:foo "https://w3id.org/xapi/catch/patterns#system-updates-status-incomplete"})
-    (should-not-satisfy ::pattern/zero-or-more
+    (should-not-satisfy ::pattern/zeroOrMore
                         "https://w3id.org/xapi/catch/patterns#system-updates-status-incomplete")
-    (should-not-satisfy ::pattern/zero-or-more
+    (should-not-satisfy ::pattern/zeroOrMore
                         ["https://w3id.org/xapi/catch/patterns#system-updates-status-incomplete"])
-    (should-not-satisfy ::pattern/zero-or-more "")))
+    (should-not-satisfy ::pattern/zeroOrMore "")))
 
 (deftest pattern-clause-test
   (testing "ensure that only one of the five regex properties are included"
     (should-satisfy+ ::pattern/pattern-clause
                      {:alternates "foo"}
                      {:optional "foo"}
-                     {:one-or-more "foo"}
+                     {:oneOrMore "foo"}
                      {:sequence "foo"}
-                     {:zero-or-more "foo"}
+                     {:zeroOrMore "foo"}
                      :bad
                      ;; 32 possible combos in total - impractical to test all
                      {}
                      {:alternates "foo" :optional "bar"}
-                     {:optional "foo" :one-or-more "bar"}
-                     {:one-or-more "foo" :sequence "bar"}
-                     {:sequence "foo" :zero-or-more "bar"}
-                     {:alternates "foo" :optional "baz" :one-or-more "bar"}
-                     {:optional "foo" :one-or-more "baz" :zero-or-more "bar"}
-                     {:alternates "foo" :optional "baz" :one-or-more "goop"
-                      :sequence "durr" :zero-or-more "bar"})))
+                     {:optional "foo" :oneOrMore "bar"}
+                     {:oneOrMore "foo" :sequence "bar"}
+                     {:sequence "foo" :zeroOrMore "bar"}
+                     {:alternates "foo" :optional "baz" :oneOrMore "bar"}
+                     {:optional "foo" :oneOrMore "baz" :zeroOrMore "bar"}
+                     {:alternates "foo" :optional "baz" :oneOrMore "goop"
+                      :sequence "durr" :zeroOrMore "bar"})))
 
 (deftest primary-pattern-test
   (testing "primary pattern"
@@ -113,8 +113,8 @@
                   {:id "https://w3id.org/xapi/catch/patterns#system-progress-response"
                    :type "Pattern"
                    :primary true
-                   :in-scheme "https://w3id.org/xapi/catch/v1"
-                   :pref-label {"en" "system response progress"}
+                   :inScheme "https://w3id.org/xapi/catch/v1"
+                   :prefLabel {"en" "system response progress"}
                    :definition {"en" "System responses to progress within an activity"}
                    :sequence ["https://w3id.org/xapi/catch/templates#system-notification-submission"
                               "https://w3id.org/xapi/catch/templates#system-notification-progression"]}))
@@ -123,16 +123,16 @@
                        {:id "https://w3id.org/xapi/catch/patterns#pattern"
                         :type "Pattern"
                         :primary true
-                        :in-scheme "https://w3id.org/xapi/catch/v1"
-                        :pref-label {"en" "pattern"}
+                        :inScheme "https://w3id.org/xapi/catch/v1"
+                        :prefLabel {"en" "pattern"}
                         :definition {"en" "pattern definition"}})))
     ; Patterns cannot have two or more regex rules
     (is (not (s/valid? ::pattern/pattern
                        {:id "https://w3id.org/xapi/catch/patterns#pattern"
                         :type "Pattern"
                         :primary true
-                        :in-scheme "https://w3id.org/xapi/catch/v1"
-                        :pref-label {"en" "pattern"}
+                        :inScheme "https://w3id.org/xapi/catch/v1"
+                        :prefLabel {"en" "pattern"}
                         :definition {"en" "pattern definition"}
                         :sequence ["https://w3id.org/xapi/catch/templates#one"
                                    "https://w3id.org/xapi/catch/templates#two"]
@@ -143,7 +143,7 @@
                        {:id "https://w3id.org/xapi/minimal/pattern"
                         :type "Pattern"
                         :primary true
-                        :in-scheme "https://w3id.org/xapi/catch/v1"
+                        :inScheme "https://w3id.org/xapi/catch/v1"
                         :optional {:id "https://w3id.org/xapi/catch/templates#view-rubric"}})))))
 
 (deftest non-primary-pattern-test
@@ -151,35 +151,35 @@
     (is (s/valid? ::pattern/pattern
                   {:id "https://w3id.org/xapi/catch/patterns#view-rubric"
                    :type "Pattern"
-                   :in-scheme "https://w3id.org/xapi/catch/v1"
-                   :pref-label {"en" "view rubric"}
+                   :inScheme "https://w3id.org/xapi/catch/v1"
+                   :prefLabel {"en" "view rubric"}
                    :definition {"en" "This is a pattern for someone looking at a rubric"}
                    :optional {:id "https://w3id.org/xapi/catch/templates#view-rubric"}}))
     ; Remove properties that are optional in non-primary patterns
     (is (s/valid? ::pattern/pattern
                   {:id "https://w3id.org/xapi/minimal/pattern"
                    :type "Pattern"
-                   :in-scheme "https://w3id.org/xapi/catch/v1"
+                   :inScheme "https://w3id.org/xapi/catch/v1"
                    :optional {:id "https://w3id.org/xapi/catch/templates#view-rubric"}}))
     ; Add the "primary" property (set to false)
     (is (s/valid? ::pattern/pattern
                   {:id "https://w3id.org/xapi/minimal/pattern"
                    :type "Pattern"
                    :primary false
-                   :in-scheme "https://w3id.org/xapi/catch/v1"
+                   :inScheme "https://w3id.org/xapi/catch/v1"
                    :optional {:id "https://w3id.org/xapi/catch/templates#view-rubric"}}))
     ; Pattern require one regex rule
     (is (not (s/valid? ::pattern/pattern
                        {:id "https://w3id.org/xapi/minimal/pattern"
                         :type "Pattern"
-                        :in-scheme "https://w3id.org/xapi/catch/v1"})))
+                        :inScheme "https://w3id.org/xapi/catch/v1"})))
     ; Patterns cannot have two or more regex rules
     (is (not (s/valid? ::pattern/pattern
                        {:id "https://w3id.org/xapi/minimal/pattern"
                         :type "Pattern"
-                        :in-scheme "https://w3id.org/xapi/catch/v1"
+                        :inScheme "https://w3id.org/xapi/catch/v1"
                         :optional {:id "https://w3id.org/xapi/catch/templates#one"}
-                        :zero-or-more {:id "https://w3id.org/xapi/catch/templates#two"}})))))
+                        :zeroOrMore {:id "https://w3id.org/xapi/catch/templates#two"}})))))
 
 ;; Graph tests
 
@@ -221,12 +221,12 @@
            [["https://foo.org/pattern3" "https://foo.org/p0" {:type :optional}]]))
     (is (= (u/edges-with-attrs {:id "https://foo.org/pattern4"
                                 :type "Pattern"
-                                :one-or-more {:id "https://foo.org/p0"}})
-           [["https://foo.org/pattern4" "https://foo.org/p0" {:type :one-or-more}]]))
+                                :oneOrMore {:id "https://foo.org/p0"}})
+           [["https://foo.org/pattern4" "https://foo.org/p0" {:type :oneOrMore}]]))
     (is (= (u/edges-with-attrs {:id "https://foo.org/pattern5"
                                 :type "Pattern"
-                                :zero-or-more {:id "https://foo.org/p0"}})
-           [["https://foo.org/pattern5" "https://foo.org/p0" {:type :zero-or-more}]]))))
+                                :zeroOrMore {:id "https://foo.org/p0"}})
+           [["https://foo.org/pattern5" "https://foo.org/p0" {:type :zeroOrMore}]]))))
 
 (deftest alternates-test
   (testing "Alternates pattern MUST NOT include optional or zeroOrMore directly."
@@ -237,14 +237,14 @@
      {:src-type "Pattern" :dest-type "Pattern"
       :type :alternates :dest-property :sequence}
      {:src-type "Pattern" :dest-type "Pattern"
-      :type :alternates :dest-property :one-or-more}
+      :type :alternates :dest-property :oneOrMore}
      {:src-type "Pattern" :dest-type "StatementTemplate"
       :type :alternates :dest-property nil}
      :bad
      {:src-type "Pattern" :dest-type "Pattern"
       :type :alternates :dest-property :optional}
      {:src-type "Pattern" :dest-type "Pattern"
-      :type :alternates :dest-property :zero-or-more}
+      :type :alternates :dest-property :zeroOrMore}
      {:src-type "Pattern" :dest-type "Verb"
       :type :alternates :dest-property nil})))
 
@@ -269,51 +269,51 @@
     (should-satisfy+
      ::pattern/valid-edge
      {:src-type "Pattern" :dest-type "Pattern" :type :optional}
-     {:src-type "Pattern" :dest-type "Pattern" :type :one-or-more}
-     {:src-type "Pattern" :dest-type "Pattern" :type :zero-or-more}
+     {:src-type "Pattern" :dest-type "Pattern" :type :oneOrMore}
+     {:src-type "Pattern" :dest-type "Pattern" :type :zeroOrMore}
      {:src-type "Pattern" :dest-type "StatementTemplate" :type :optional}
-     {:src-type "Pattern" :dest-type "StatementTemplate" :type :one-or-more}
-     {:src-type "Pattern" :dest-type "StatementTemplate" :type :zero-or-more}
+     {:src-type "Pattern" :dest-type "StatementTemplate" :type :oneOrMore}
+     {:src-type "Pattern" :dest-type "StatementTemplate" :type :zeroOrMore}
      {:src-type "Pattern" :dest-type "Pattern" :type :optional
-      :src-primary true :src-indegree 0 :src-outdegree 1 :dest-property :one-or-more}
+      :src-primary true :src-indegree 0 :src-outdegree 1 :dest-property :oneOrMore}
      :bad
      {:src-type "Pattern" :dest-type "Verb" :type :optional}
-     {:src-type "Pattern" :dest-type "Verb" :type :one-or-more}
-     {:src-type "Pattern" :dest-type "Verb" :type :zero-or-more}
+     {:src-type "Pattern" :dest-type "Verb" :type :oneOrMore}
+     {:src-type "Pattern" :dest-type "Verb" :type :zeroOrMore}
      {:src-type "Pattern" :dest-type nil :type :optional}
-     {:src-type "Pattern" :dest-type nil :type :one-or-more}
-     {:src-type "Pattern" :dest-type nil :type :zero-or-more})))
+     {:src-type "Pattern" :dest-type nil :type :oneOrMore}
+     {:src-type "Pattern" :dest-type nil :type :zeroOrMore})))
 
 (def ex-templates
   [{:id "https://foo.org/template1"
-    :type "StatementTemplate" :in-scheme "https://foo.org/v1"}
+    :type "StatementTemplate" :inScheme "https://foo.org/v1"}
    {:id "https://foo.org/template2"
-    :type "StatementTemplate" :in-scheme "https://foo.org/v1"}
+    :type "StatementTemplate" :inScheme "https://foo.org/v1"}
    {:id "https://foo.org/template3"
-    :type "StatementTemplate" :in-scheme "https://foo.org/v1"}
+    :type "StatementTemplate" :inScheme "https://foo.org/v1"}
    {:id "https://foo.org/template4"
-    :type "StatementTemplate" :in-scheme "https://foo.org/v1"}
+    :type "StatementTemplate" :inScheme "https://foo.org/v1"}
    {:id "https://foo.org/template5"
-    :type "StatementTemplate" :in-scheme "https://foo.org/v1"}])
+    :type "StatementTemplate" :inScheme "https://foo.org/v1"}])
 
 (def ex-patterns
   [{:id "https://foo.org/pattern1" :type "Pattern"
-    :in-scheme "https://foo.org/v1" :primary true
+    :inScheme "https://foo.org/v1" :primary true
     :alternates ["https://foo.org/pattern2"
                  "https://foo.org/template1"]}
    {:id "https://foo.org/pattern2" :type "Pattern"
-    :in-scheme "https://foo.org/v1" :primary true
+    :inScheme "https://foo.org/v1" :primary true
     :sequence ["https://foo.org/pattern3"
                "https://foo.org/template2"]}
    {:id "https://foo.org/pattern3" :type "Pattern"
-    :in-scheme "https://foo.org/v1" :primary true
+    :inScheme "https://foo.org/v1" :primary true
     :optional {:id "https://foo.org/template3"}}
    {:id "https://foo.org/pattern4" :type "Pattern"
-    :in-scheme "https://foo.org/v1" :primary true
-    :one-or-more {:id "https://foo.org/template4"}}
+    :inScheme "https://foo.org/v1" :primary true
+    :oneOrMore {:id "https://foo.org/template4"}}
    {:id "https://foo.org/pattern5" :type "Pattern"
-    :in-scheme "https://foo.org/v1" :primary true
-    :zero-or-more {:id "https://foo.org/template5"}}])
+    :inScheme "https://foo.org/v1" :primary true
+    :zeroOrMore {:id "https://foo.org/template5"}}])
 
 (def pgraph (pattern/create-pattern-graph ex-templates ex-patterns))
 
@@ -352,11 +352,11 @@
              {:src "https://foo.org/pattern4" :src-type "Pattern"
               :src-primary true :src-indegree 0 :src-outdegree 1
               :dest "https://foo.org/template4" :dest-type "StatementTemplate"
-              :dest-property nil :type :one-or-more}
+              :dest-property nil :type :oneOrMore}
              {:src "https://foo.org/pattern5" :src-type "Pattern"
               :src-primary true :src-indegree 0 :src-outdegree 1
               :dest "https://foo.org/template5" :dest-type "StatementTemplate"
-              :dest-property nil :type :zero-or-more}}))
+              :dest-property nil :type :zeroOrMore}}))
     (should-satisfy ::pattern/valid-edges (pattern/get-edges pgraph))
     (should-satisfy ::pattern/acyclic-graph pgraph)
     (should-satisfy ::pattern/pattern-graph pgraph)))
@@ -365,17 +365,17 @@
   [{:id "https://foo.org/pattern-one"
     :type "Pattern"
     :primary true
-    :one-or-more {:id "https://foo.org/pattern-two"}}
+    :oneOrMore {:id "https://foo.org/pattern-two"}}
    {:id "https://foo.org/pattern-two"
     :type "Pattern"
     :primary true
-    :one-or-more {:id "https://foo.org/pattern-one"}}])
+    :oneOrMore {:id "https://foo.org/pattern-one"}}])
 
 (def cyclic-patterns-2
   [{:id "https://foo.org/pattern-three"
     :type "Pattern"
     :primary true
-    :one-or-more {:id "https://foo.org/pattern-three"}}])
+    :oneOrMore {:id "https://foo.org/pattern-three"}}])
 
 (def cyclic-pgraph-1
   (let [graph (uber/digraph)

@@ -57,10 +57,10 @@
             (let [src (uber/src edge) dest (uber/dest edge)]
               {:src src
                :src-type (uber/attr cgraph src :type)
-               :src-version (uber/attr cgraph src :in-scheme)
+               :src-version (uber/attr cgraph src :inScheme)
                :dest dest
                :dest-type (uber/attr cgraph dest :type)
-               :dest-version (uber/attr cgraph dest :in-scheme)
+               :dest-version (uber/attr cgraph dest :inScheme)
                :type (uber/attr cgraph edge :type)}))
           edges)))
 
@@ -98,13 +98,13 @@
 ;; Extensions
 
 ;; recommendedActivityTypes MUST point to ActivityType Concepts
-(defmethod valid-edge? :recommended-activity-types
+(defmethod valid-edge? :recommendedActivityTypes
   [{:keys [src-type dest-type]}]
   (and (#{"ActivityExtension"} src-type)
        (#{"ActivityType"} dest-type)))
 
 ;; recommendedVerbs MUST point to Verb Concepts
-(defmethod valid-edge? :recommended-verbs
+(defmethod valid-edge? :recommendedVerbs
   [{:keys [src-type dest-type]}]
   (and (#{"ContextExtension" "ResultExtension"} src-type)
        (#{"Verb"} dest-type)))

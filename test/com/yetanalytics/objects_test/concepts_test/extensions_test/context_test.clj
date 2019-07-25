@@ -17,7 +17,7 @@
 
 (deftest recommended-verbs-test
   (testing "recommendedVerbs property"
-    (should-satisfy+ ::context-extension/recommended-verbs
+    (should-satisfy+ ::context-extension/recommendedVerbs
                      ["https://w3id.org/xapi/catch/contexttypes/lesson-plan"]
                      :bad
                      []
@@ -46,11 +46,11 @@
 
 (deftest inline-schema-test
   (testing "inline (JSON) schema property"
-    (should-satisfy ::context-extension/inline-schema
+    (should-satisfy ::context-extension/inlineSchema
                     "{\"type\":\"array\",
                       \"items\":{\"type\":\"string\"},
                       \"uniqueItems\":true}")
-    (should-satisfy ::context-extension/inline-schema
+    (should-satisfy ::context-extension/inlineSchema
                     "{\"type\":\"object\",
                       \"properties\":{
                         \"application\":{\"type\":\"string\"},
@@ -71,54 +71,54 @@
                              \"type\":\"string\",
                              \"uniqueItems\":true}},
                           \"linguistic-cognitive-scaffolds\":{\"type\":\"string\"}}}")
-    (should-not-satisfy ::context-extension/inline-schema "what the pineapple")))
+    (should-not-satisfy ::context-extension/inlineSchema "what the pineapple")))
 
 (deftest context-extension-test
   (testing "ContextExtension extension"
     (is (s/valid? ::context-extension/extension
                   {:id "https://w3id.org/xapi/catch/context-extensions/communication-with-families-criteria"
                    :type "ContextExtension"
-                   :in-scheme "https://w3id.org/xapi/catch/v1"
-                   :pref-label {"en" "Communication Criteria"}
+                   :inScheme "https://w3id.org/xapi/catch/v1"
+                   :prefLabel {"en" "Communication Criteria"}
                    :definition {"en" "Criteria for demonstrating communication with families."}
-                   :recommended-verbs
+                   :recommendedVerbs
                    ["https://w3id.org/xapi/catch/verbs/sent"
                     "https://w3id.org/xapi/catch/verbs/provided"
                     "https://w3id.org/xapi/catch/verbs/uploaded"
                     "https://w3id.org/xapi/catch/verbs/submitted"]
-                   :inline-schema
+                   :inlineSchema
                    "{\"type\":\"array\",\"items\":{\"type\":\"string\"},\"uniqueItems\":true}"}))
     ;; Cannot both have schema and inlineSchema
     (is (not (s/valid? ::context-extension/extension
                        {:id "https://foo.org/bar"
                         :type "ContextExtension"
-                        :in-scheme "https://foo.org/"
-                        :pref-label {"en" "Bar"}
+                        :inScheme "https://foo.org/"
+                        :prefLabel {"en" "Bar"}
                         :definition {"en" "Supercalifragilisticexpialidocious"}
                         :schema "https://some.schema"
-                        :inline-schema "{\"some\" : \"schema\"}"})))
+                        :inlineSchema "{\"some\" : \"schema\"}"})))
     ;; Cannot have recommended activity types
     (is (not (s/valid? ::context-extension/extension
                        {:id "https://foo.org/bar"
                         :type "ContextExtension"
-                        :in-scheme "https://foo.org/"
-                        :pref-label {"en" "Bar"}
+                        :inScheme "https://foo.org/"
+                        :prefLabel {"en" "Bar"}
                         :definition {"en" "Supercalifragilisticexpialidocious"}
                         :schema "https://some.schema"
-                        :recommended-activity-types ["https://this.org/is-bad"]})))))
+                        :recommendedActivityTypes ["https://this.org/is-bad"]})))))
 
 ;; Graph tests
 (deftest edges-with-attrs-test
   (testing "Creating edges from node"
     (is (= (util/edges-with-attrs {:id "https://foo.org/ce"
                                    :type "ContextExtension"
-                                   :in-scheme "https://foo.org/v1"
-                                   :recommended-verbs
+                                   :inScheme "https://foo.org/v1"
+                                   :recommendedVerbs
                                    ["https://foo.org/verb1"
                                     "https://foo.org/verb2"]})
-           [["https://foo.org/ce" "https://foo.org/verb1" {:type :recommended-verbs}]
-            ["https://foo.org/ce" "https://foo.org/verb2" {:type :recommended-verbs}]]))
+           [["https://foo.org/ce" "https://foo.org/verb1" {:type :recommendedVerbs}]
+            ["https://foo.org/ce" "https://foo.org/verb2" {:type :recommendedVerbs}]]))
     (is (= (util/edges-with-attrs {:id "https://foo.org/ce2"
                                    :type "ContextExtension"
-                                   :in-scheme "https://foo.org/v1"})
+                                   :inScheme "https://foo.org/v1"})
            []))))

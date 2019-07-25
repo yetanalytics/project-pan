@@ -52,7 +52,7 @@
 
 (deftest activity-definition
   (testing "activityDefinition property"
-    (is (s/valid? ::activities/activity-definition
+    (is (s/valid? ::activities/activityDefinition
                   {:context "https://w3id.org/xapi/profiles/activity-context"
                    :name {:en "Cross Linguistic Connections"}
                    :description {"en" "The cross linguistic connections competency as described by the EPISD Dual Language Competency Framework"}
@@ -63,8 +63,8 @@
     (is (s/valid? ::activities/activity
                   {:id "https://w3id.org/xapi/catch/activities/competency/cross-linguistic-connections"
                    :type "Activity"
-                   :in-scheme "https://w3id.org/xapi/catch/v1"
-                   :activity-definition
+                   :inScheme "https://w3id.org/xapi/catch/v1"
+                   :activityDefinition
                    {:context "https://w3id.org/xapi/profiles/activity-context"
                     :name {:en "Cross Linguistic Connections"}
                     :description {"en" "The cross linguistic connections competency as described by the EPISD Dual Language Competency Framework"}

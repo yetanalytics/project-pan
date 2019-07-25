@@ -26,11 +26,11 @@
 
 (deftest broad-match-test
   (testing "broadMatch property"
-    (should-satisfy ::verbs/broad-match
+    (should-satisfy ::verbs/broadMatch
                     ["http://adlnet.gov/expapi/verbs/shared"])
-    (should-not-satisfy ::verbs/broad-match
+    (should-not-satisfy ::verbs/broadMatch
                         "http://adlnet.gov/expapi/verbs/shared")
-    (should-not-satisfy ::verbs/broad-match [])))
+    (should-not-satisfy ::verbs/broadMatch [])))
 
 (deftest narrower-test
   (testing "narrower property"
@@ -43,11 +43,11 @@
 
 (deftest narrow-match-test
   (testing "narrowMatch property"
-    (should-satisfy ::verbs/narrow-match
+    (should-satisfy ::verbs/narrowMatch
                     ["http://adlnet.gov/expapi/verbs/shared"])
-    (should-not-satisfy ::verbs/narrow-match
+    (should-not-satisfy ::verbs/narrowMatch
                         "http://adlnet.gov/expapi/verbs/shared")
-    (should-not-satisfy ::verbs/narrow-match [])))
+    (should-not-satisfy ::verbs/narrowMatch [])))
 
 (deftest related-test
   (testing "related property"
@@ -60,19 +60,19 @@
 
 (deftest related-match-test
   (testing "relatedMatch property"
-    (should-satisfy ::verbs/related-match
+    (should-satisfy ::verbs/relatedMatch
                     ["http://adlnet.gov/expapi/verbs/shared"])
-    (should-not-satisfy ::verbs/related-match
+    (should-not-satisfy ::verbs/relatedMatch
                         "http://adlnet.gov/expapi/verbs/shared")
-    (should-not-satisfy ::verbs/related-match [])))
+    (should-not-satisfy ::verbs/relatedMatch [])))
 
 (deftest exact-match-test
   (testing "exactMatch property"
-    (should-satisfy ::verbs/exact-match
+    (should-satisfy ::verbs/exactMatch
                     ["http://activitystrea.ms/schema/1.0/article"])
-    (should-not-satisfy ::verbs/exact-match
+    (should-not-satisfy ::verbs/exactMatch
                         "http://activitystrea.ms/schema/1.0/article")
-    (should-not-satisfy ::verbs/exact-match [])))
+    (should-not-satisfy ::verbs/exactMatch [])))
 
 (deftest related-only-deprecated-test
   (testing "related MUST only be used on deprecated concepts"
@@ -96,28 +96,28 @@
     (is (s/valid? ::verbs/verb
                   {:id "https://w3id.org/xapi/catch/verbs/presented"
                    :type "Verb"
-                   :in-scheme "https://w3id.org/xapi/catch/v1"
-                   :pref-label {"en" "presented"}
+                   :inScheme "https://w3id.org/xapi/catch/v1"
+                   :prefLabel {"en" "presented"}
                    :definition {"en" "leading a discussion at an advocacy event"}}))))
 
 (def ex-concept {:id "https://foo.org/verb"
                  :type "Verb"
-                 :in-scheme "https://foo.org/v1"
+                 :inScheme "https://foo.org/v1"
                  :broader ["https://foo.org/verb2"]
-                 :broad-match ["https://foo.org/verb3"]
+                 :broadMatch ["https://foo.org/verb3"]
                  :narrower ["https://foo.org/verb4"]
-                 :narrow-match ["https://foo.org/verb5"]
+                 :narrowMatch ["https://foo.org/verb5"]
                  :related ["https://foo.org/verb6"]
-                 :related-match ["https://foo.org/verb7"]
-                 :exact-match ["https://foo.org/verb8"]})
+                 :relatedMatch ["https://foo.org/verb7"]
+                 :exactMatch ["https://foo.org/verb8"]})
 
 (deftest edges-with-attrs-test
   (testing "create edges from node"
     (is (= (util/edges-with-attrs ex-concept)
            [["https://foo.org/verb" "https://foo.org/verb2" {:type :broader}]
-            ["https://foo.org/verb" "https://foo.org/verb3" {:type :broad-match}]
+            ["https://foo.org/verb" "https://foo.org/verb3" {:type :broadMatch}]
             ["https://foo.org/verb" "https://foo.org/verb4" {:type :narrower}]
-            ["https://foo.org/verb" "https://foo.org/verb5" {:type :narrow-match}]
+            ["https://foo.org/verb" "https://foo.org/verb5" {:type :narrowMatch}]
             ["https://foo.org/verb" "https://foo.org/verb6" {:type :related}]
-            ["https://foo.org/verb" "https://foo.org/verb7" {:type :related-match}]
-            ["https://foo.org/verb" "https://foo.org/verb8" {:type :exact-match}]]))))
+            ["https://foo.org/verb" "https://foo.org/verb7" {:type :relatedMatch}]
+            ["https://foo.org/verb" "https://foo.org/verb8" {:type :exactMatch}]]))))

@@ -17,7 +17,7 @@
 
 (deftest recommended-activity-types-test
   (testing "recommendedActivityTypes property"
-    (should-satisfy+ ::activity-extension/recommended-activity-types
+    (should-satisfy+ ::activity-extension/recommendedActivityTypes
                      ["https://w3id.org/xapi/catch/activitytypes/lesson-plan"]
                      :bad
                      []
@@ -46,11 +46,11 @@
 
 (deftest inline-schema-test
   (testing "inline (JSON) schema property"
-    (should-satisfy ::activity-extension/inline-schema
+    (should-satisfy ::activity-extension/inlineSchema
                     "{\"type\":\"array\",
                       \"items\":{\"type\":\"string\"},
                       \"uniqueItems\":true}")
-    (should-satisfy ::activity-extension/inline-schema
+    (should-satisfy ::activity-extension/inlineSchema
                     "{\"type\":\"object\",
                       \"properties\":{
                         \"application\":{\"type\":\"string\"},
@@ -71,20 +71,20 @@
                              \"type\":\"string\",
                              \"uniqueItems\":true}},
                           \"linguistic-cognitive-scaffolds\":{\"type\":\"string\"}}}")
-    (should-not-satisfy ::activity-extension/inline-schema "what the pineapple")))
+    (should-not-satisfy ::activity-extension/inlineSchema "what the pineapple")))
 
-(deftest activity-extension
+(deftest activity-extension-test
   (testing "ActivityExtension extension"
     (is (s/valid? ::activity-extension/extension
                   {:id "https://w3id.org/xapi/catch/activity-extensions/lesson-plan/design"
                    :type "ActivityExtension"
-                   :in-scheme "https://w3id.org/xapi/catch/v1"
-                   :pref-label {"en" "Lesson Plan Info"}
+                   :inScheme "https://w3id.org/xapi/catch/v1"
+                   :prefLabel {"en" "Lesson Plan Info"}
                    :definition {"en"
                                 "The fields of a Lesson Plan template filled in by the learner"}
                    :recommended-activity-types
                    ["https://w3id.org/xapi/catch/activitytypes/lesson-plan"]
-                   :inline-schema
+                   :inlineSchema
                    "{\"type\":\"object\",
                       \"properties\":{
                         \"application\":{\"type\":\"string\"},
@@ -109,33 +109,33 @@
     (is (not (s/valid? ::activity-extension/extension
                        {:id "https://foo.org/bar"
                         :type "ActivityExtension"
-                        :in-scheme "https://foo.org/"
-                        :pref-label {"en" "Bar"}
+                        :inScheme "https://foo.org/"
+                        :prefLabel {"en" "Bar"}
                         :definition {"en" "Supercalifragilisticexpialidocious"}
                         :schema "https://some.schema"
-                        :inline-schema "{\"some\" : \"schema\"}"})))
+                        :inlineSchema "{\"some\" : \"schema\"}"})))
     ;; Cannot have recommended verbs
     (is (not (s/valid? ::activity-extension/extension
                        {:id "https://foo.org/bar"
                         :type "ActivityExtension"
-                        :in-scheme "https://foo.org/"
-                        :pref-label {"en" "Bar"}
+                        :inScheme "https://foo.org/"
+                        :prefLabel {"en" "Bar"}
                         :definition {"en" "Supercalifragilisticexpialidocious"}
                         :schema "https://some.schema"
-                        :recommended-verbs ["https://this.org/is-bad"]})))))
+                        :recommendedVerbs ["https://this.org/is-bad"]})))))
 
 ;; Graph tests
 (deftest edges-with-attrs-test
   (testing "Creating edges from node"
     (is (= (util/edges-with-attrs {:id "https://foo.org/ae"
                                    :type "ActivityExtension"
-                                   :in-scheme "https://foo.org/v1"
-                                   :recommended-activity-types
+                                   :inScheme "https://foo.org/v1"
+                                   :recommendedActivityTypes
                                    ["https://foo.org/at1"
                                     "https://foo.org/at2"]})
-           [["https://foo.org/ae" "https://foo.org/at1" {:type :recommended-activity-types}]
-            ["https://foo.org/ae" "https://foo.org/at2" {:type :recommended-activity-types}]]))
+           [["https://foo.org/ae" "https://foo.org/at1" {:type :recommendedActivityTypes}]
+            ["https://foo.org/ae" "https://foo.org/at2" {:type :recommendedActivityTypes}]]))
     (is (= (util/edges-with-attrs {:id "https://foo.org/ae2"
                                    :type "ActivityExtension"
-                                   :in-scheme "https://foo.org/v1"})
+                                   :inScheme "https://foo.org/v1"})
            []))))

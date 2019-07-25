@@ -27,8 +27,8 @@
   "Get a raw context, then parse it from JSON to EDN.
   Return the JSON object given by the @context key"
   [context-uri]
-  (-> context-uri get-raw-context
-      (cheshire/parse-string #(-> % util/replace-at keyword))
+  (-> context-uri get-raw-context (util/convert-json "at/")
+      #_(cheshire/parse-string #(-> % util/replace-at keyword))
       :at/context))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

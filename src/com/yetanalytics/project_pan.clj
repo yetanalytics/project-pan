@@ -63,5 +63,5 @@
   [profile & {:keys [validation-level no-short?]}]
   ;; TODO Add validation levels
   (if (string? profile)
-    (profile/validate (util/convert-json profile))
+    (profile/validate (util/convert-json profile ""))
     (profile/validate profile)))

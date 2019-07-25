@@ -13,8 +13,8 @@
 (s/def ::id ::ax/uri)
 (s/def ::type #{"Pattern"})
 (s/def ::primary ::ax/boolean)
-(s/def ::in-scheme ::ax/iri)
-(s/def ::pref-label ::ax/language-map)
+(s/def ::inScheme ::ax/iri)
+(s/def ::prefLabel ::ax/language-map)
 (s/def ::definition ::ax/language-map)
 (s/def ::deprecated ::ax/boolean)
 
@@ -22,9 +22,9 @@
 ;; MUST include at least two members in alternates
 (s/def ::alternates (s/coll-of ::ax/iri :type vector? :min-count 2))
 (s/def ::optional (s/keys :req-un [::id]))
-(s/def ::one-or-more (s/keys :req-un [::id]))
+(s/def ::oneOrMore (s/keys :req-un [::id]))
 (s/def ::sequence (s/coll-of ::ax/iri :type vector? :min-count 1))
-(s/def ::zero-or-more (s/keys :req-un [::id]))
+(s/def ::zeroOrMore (s/keys :req-un [::id]))
 
 ;; Check if primary is true or false
 
@@ -40,9 +40,9 @@
   (fn [p]
     (let [alt? (contains? p :alternates)
           opt? (contains? p :optional)
-          oom? (contains? p :one-or-more)
+          oom? (contains? p :oneOrMore)
           sqn? (contains? p :sequence)
-          zom? (contains? p :zero-or-more)]
+          zom? (contains? p :zeroOrMore)]
       (cond
         alt? (not (or opt? oom? sqn? zom?))
         opt? (not (or alt? oom? sqn? zom?))
@@ -51,17 +51,17 @@
         zom? (not (or alt? opt? oom? sqn?))))))
 
 (s/def ::primary-pattern
-  (s/and (s/keys :req-un [::id ::type ::pref-label ::definition ::primary]
-                 :opt-un [::in-scheme ::deprecated ::alternates ::optional
-                          ::one-or-more ::sequence ::zero-or-more])
+  (s/and (s/keys :req-un [::id ::type ::prefLabel ::definition ::primary]
+                 :opt-un [::inScheme ::deprecated ::alternates ::optional
+                          ::oneOrMore ::sequence ::zeroOrMore])
          ::pattern-clause
          ::is-primary-true))
 
 (s/def ::reg-pattern
   (s/and (s/keys :req-un [::id ::type]
-                 :opt-un [::primary ::in-scheme ::pref-label ::definition
-                          ::deprecated ::alternates ::optional ::one-or-more
-                          ::sequence ::zero-or-more])
+                 :opt-un [::primary ::inScheme ::prefLabel ::definition
+                          ::deprecated ::alternates ::optional ::oneOrMore
+                          ::sequence ::zeroOrMore])
          ::pattern-clause
          ::is-primary-false))
 
@@ -80,8 +80,8 @@
 
 ;; Get the IRIs of a Pattern (within a sequence), depending on its property
 (defn dispatch-on-pattern [pattern]
-  (keys (dissoc pattern :id :type :pref-label :definition
-                :primary :in-scheme :deprecated)))
+  (keys (dissoc pattern :id :type :prefLabel :definition
+                :primary :inScheme :deprecated)))
 
 ;; Obtain a vector of edges originating from a pattern.
 ;; The multimethod dispatches on what regex property the pattern has.
@@ -99,11 +99,11 @@
 (defmethod get-pattern-edges '(:optional) [{:keys [id optional]}]
   (vector (vector id (:id optional) {:type :optional})))
 
-(defmethod get-pattern-edges '(:one-or-more) [{:keys [id one-or-more]}]
-  (vector (vector id (:id one-or-more) {:type :one-or-more})))
+(defmethod get-pattern-edges '(:oneOrMore) [{:keys [id oneOrMore]}]
+  (vector (vector id (:id oneOrMore) {:type :oneOrMore})))
 
-(defmethod get-pattern-edges '(:zero-or-more) [{:keys [id zero-or-more]}]
-  (vector (vector id (:id zero-or-more) {:type :zero-or-more})))
+(defmethod get-pattern-edges '(:zeroOrMore) [{:keys [id zeroOrMore]}]
+  (vector (vector id (:id zeroOrMore) {:type :zeroOrMore})))
 
 (defmethod get-pattern-edges :default [_] nil)
 
@@ -155,12 +155,12 @@
 
 (defmulti valid-edge? #(:type %))
 
-;; MUST NOT include optional or zero-or-more directly inside alternates
+;; MUST NOT include optional or zeroOrMore directly inside alternates
 (defmethod valid-edge? :alternates
   [{:keys [src-type dest-type dest-property]}]
   (and (#{"Pattern"} src-type)
        (or (and (#{"Pattern"} dest-type)
-                (not (#{:optional :zero-or-more} dest-property)))
+                (not (#{:optional :zeroOrMore} dest-property)))
            (#{"StatementTemplate"} dest-type))))
 
 ;; MUST include at least two members in sequence, unless:
@@ -182,12 +182,12 @@
   (and (#{"Pattern"} src-type)
        (#{"Pattern" "StatementTemplate"} dest-type)))
 
-(defmethod valid-edge? :one-or-more
+(defmethod valid-edge? :oneOrMore
   [{:keys [src-type dest-type]}]
   (and (#{"Pattern"} src-type)
        (#{"Pattern" "StatementTemplate"} dest-type)))
 
-(defmethod valid-edge? :zero-or-more
+(defmethod valid-edge? :zeroOrMore
   [{:keys [src-type dest-type]}]
   (and (#{"Pattern"} src-type)
        (#{"Pattern" "StatementTemplate"} dest-type)))

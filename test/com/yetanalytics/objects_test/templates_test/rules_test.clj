@@ -65,7 +65,7 @@
 
 (deftest scope-note-test
   (testing "scopeNote property"
-    (should-satisfy ::rules/scope-note
+    (should-satisfy ::rules/scopeNote
                     {"en" "this states the the statement conforms to this
                           profile"})))
 
@@ -74,7 +74,7 @@
     (is (s/valid? ::rules/rule
                   {:location "$.result.score.raw"
                    :presence "included"
-                   :scope-note {"en" "the total number of points awarded.
+                   :scopeNote {"en" "the total number of points awarded.
                                     This value will be determined by the point
                                     values associated w/ various criteria."}}))
     (is (s/valid? ::rules/rule
@@ -82,24 +82,19 @@
                    :any
                    ["https://w3id.org/xapi/catch/activitytypes/evidence"
                     "https://w3id.org/xapi/catch/activitytypes/lesson-plan"]
-                   :scope-note
-                   {"en" "the different types of activities within the
-                         CATCH application. Select the one appropriate to the
-                         completed activity."}}))
+                   :scopeNote
+                   {"en" "the different types of activities within the CATCH application. Select the one appropriate to the completed activity."}}))
     (is (s/valid? ::rules/rule
                   {:location "$.object.definition.foobar"
                    :presence "included"
                    :any
                    ["https://w3id.org/xapi/catch/activitytypes/evidence"
                     "https://w3id.org/xapi/catch/activitytypes/lesson-plan"]
-                   :scope-note
+                   :scopeNote
                    {"en" "In this case, both 'presence' and 'any' are included in the rule."}}))
     (is (not (s/valid? ::rules/rule
                        {:presence "included"
-                        :scope-note {"en" "This rule is invalid because
-                                          it lacks a location."}})))
+                        :scopeNote {"en" "This rule is invalid because it lacks a location."}})))
     (is (not (s/valid? ::rules/rule
                        {:location "$.foo.bar"
-                        :scope-note {"en" "This rule is invalid because it
-                                          does not include presence, any, all
-                                          nor none."}})))))
+                        :scopeNote {"en" "This rule is invalid because it does not include presence, any, all nor none."}})))))

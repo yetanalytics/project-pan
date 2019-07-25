@@ -13,7 +13,7 @@
 
 (s/def ::id ::ax/iri)
 (s/def ::type #{"Activity"})
-(s/def ::in-scheme ::ax/iri)
+(s/def ::inScheme ::ax/iri)
 (s/def ::deprecated ::ax/boolean)
 (def context-url "https://w3id.org/xapi/profiles/activity-context")
 (s/def ::context (s/or :context ::ax/uri
@@ -36,15 +36,14 @@
 
 ;; Need to use this function instead of s/merge because of restrict-keys in
 ;; xapi-schema function.
-(s/def ::activity-definition
+(s/def ::activityDefinition
   (s/and (s/keys :req-un [::context])
          (fn [adef]
            (s/valid? :activity/definition
-                     (stringify-lang-keys
-                      (camel-case-keys (dissoc adef :context)))))))
+                     (stringify-lang-keys (camel-case-keys (dissoc adef :context)))))))
 
 (s/def ::activity
-  (s/keys :req-un [::id ::type ::in-scheme ::activity-definition]
+  (s/keys :req-un [::id ::type ::inScheme ::activityDefinition]
           :opt-un [::deprecated]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

@@ -50,52 +50,52 @@
      ;; TODO Let broadMatch be a valid relation
      {:src-type "ActivityType" :dest-type "ActivityType"
       :src-version "https://foo.org/v1" :dest-version "https://foo.org/v2"
-      :type :broad-match})))
+      :type :broadMatch})))
 
 (deftest valid-extension-test
   (testing "Extensions MUST point to appropriate recommended concepts."
     (should-satisfy+
      ::concept/valid-edge
      {:src-type "ActivityExtension" :dest-type "ActivityType"
-      :type :recommended-activity-types}
+      :type :recommendedActivityTypes}
      {:src-type "ContextExtension" :dest-type "Verb"
-      :type :recommended-verbs}
+      :type :recommendedVerbs}
      {:src-type "ResultExtension" :dest-type "Verb"
-      :type :recommended-verbs}
+      :type :recommendedVerbs}
      :bad
      {:src-type "ActivityExtension" :dest-type "Activity"
-      :type :recommended-activity-types}
+      :type :recommendedActivityTypes}
      {:src-type "ActivityExtension" :dest-type "ActivityType"
-      :type :recommended-verbs}
+      :type :recommendedVerbs}
      {:src-type "ActivityExtension" :dest-type "Verb"
-      :type :recommended-verbs})))
+      :type :recommendedVerbs})))
 
 ;; TODO Add graph integration tests
 
 (def ex-concepts
   [{:id "https://foo.org/verb1"
     :type "Verb"
-    :in-scheme "https://foo.org/v1"
+    :inScheme "https://foo.org/v1"
     :broader ["https://foo.org/verb2"]}
    {:id "https://foo.org/verb2"
     :type "Verb"
-    :in-scheme "https://foo.org/v1"
+    :inScheme "https://foo.org/v1"
     :narrower ["https://foo.org/verb1"]}
    {:id "https://foo.org/at1"
     :type "ActivityType"
-    :in-scheme "https://foo.org/v1"
+    :inScheme "https://foo.org/v1"
     :broader ["https://foo.org/at2"]}
    {:id "https://foo.org/at2"
     :type "ActivityType"
-    :in-scheme "https://foo.org/v1"
+    :inScheme "https://foo.org/v1"
     :narrower ["https://foo.org/at1"]}
    {:id "https://foo.org/aut1"
     :type "AttachmentUsageType"
-    :in-scheme "https://foo.org/v1"
+    :inScheme "https://foo.org/v1"
     :broader ["https://foo.org/aut2"]}
    {:id "https://foo.org/aut2"
     :type "AttachmentUsageType"
-    :in-scheme "https://foo.org/v1"
+    :inScheme "https://foo.org/v1"
     :narrower ["https://foo.org/aut1"]}])
 
 (def cgraph (concept/create-concept-graph ex-concepts))
