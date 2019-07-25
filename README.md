@@ -17,22 +17,23 @@ from the non-core namespaces.
 
 ## Done
 
-- Axiom specs: 
-    - JSONPath
+- Axiom specs:
+    - Basic types: booleans and strings
+    - Timestamps
+    - JSONPath strings
+    - JSON Schema (but only supports draft-07)
+    - RFC 2046 Media Types
     - Language Maps
-    - Booleans, Strings, Timestamps
     - Arrays of axioms
 - Basic syntax validation
 - In-profile identifier links
 
 ## TODO
 
-- Axiom specs:
-    - IRIs/IRLs/URIs/URLs (This is an xapi-schema problem)
-    - JSON Schema: Currently only draft-07 supported
-- at-context validation
+- IRIs/IRLs/URIs/URLs (This is an xapi-schema problem)
 - Identifiers that link to external profiles (need triple store)
 - Interface to outside world
+- Demo of the completed product
 
 ## License
 
