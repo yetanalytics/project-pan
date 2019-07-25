@@ -1,6 +1,7 @@
 (ns com.yetanalytics.profile-test
   (:require [clojure.test :refer :all]
             [clojure.spec.alpha :as s]
+            [com.yetanalytics.util :as util]
             [com.yetanalytics.utils :refer :all]
             [com.yetanalytics.profile :as profile]
             [com.yetanalytics.profiles.versions :as versions]))
@@ -67,14 +68,14 @@
                          {:id "https://w3id.org/xapi/catch/v1"
                           :generatedAtTime "2017-12-22T22:30:00-07:00"}]})))))
 
-(deftest inScheme-test
+(deftest in-scheme-test
   (testing "object inScheme MUST be a valid Profile version"
-    (is (s/valid? ::profile/valid-inSchemes
+    (is (s/valid? ::profile/valid-in-schemes
                   [{:object {:inScheme "https://foo.org/v1"}
                     :vid-set #{"https://foo.org/v1" "https://foo.org/v2"}}
                    {:object {:inScheme "https://foo.org/v2"}
                     :vid-set #{"https://foo.org/v1" "https://foo.org/v2"}}]))
-    (is (not (s/valid? ::profile/valid-inSchemes
+    (is (not (s/valid? ::profile/valid-in-schemes
                        [{:object {:inScheme "https://foo.org/v0"}
                          :vid-set #{"https://foo.org/v1" "https://foo.org/v2"}}])))))
 
@@ -93,3 +94,12 @@
                    :definition {"en" "The profile for the trinity education application CATCH"}
                    :conformsTo "https://w3id.org/xapi/profiles#1.0"
                    :prefLabel {"en" "Catch"}}))))
+
+(def will-profile
+  (util/convert-json (slurp "resources/sample_profiles/will-profile.json") ""))
+
+(deftest profile-integration-test
+  (testing "performing intergration testing using Will's CATCH profile"
+    (is (nil? (profile/validate will-profile)))
+    (is (empty? (profile/validate-in-schemes will-profile)))
+    (is (empty? (profile/validate-context will-profile)))))

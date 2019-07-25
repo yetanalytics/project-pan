@@ -10,7 +10,8 @@
   JSON-LD string or an EDN data structure) and returns true on validation, or
   a clojure spec error trace if the Profile is invalid. In addition, the
   function accepts a number of arguments for different levels of validation
-  strictness. 
+  strictness.
+
     No args - Weak validation; check only the types of properties and simple 
   syntax of all Profile objects.
     :in-scheme - Validate that all instances of the inScheme property are
@@ -26,11 +27,15 @@
     :no-short - Allow the validator to collect all errors, instead of having to
   terminate on the first error encountered."
   ;; TODO: Implement :external-iris and :no-short
-  [profile & {:keys [in-scheme profile-iris at-context] :as extra-params}]
+  [profile & {:keys [in-scheme profile-iris at-context]
+              :or {in-scheme false profile-iris false at-context false}}]
   (let [profile (if (string? profile)
-                  (util/convert-json profile "")
-                  profile)]
-    (cond-> (profile/validate-explain profile)
-      (true? in-scheme) (profile/validate-in-schemes profile)
-      (true? profile-iris) (profile-validate-context profile)
-      (true? at-context) (profile/validate-context profile))))
+                  (util/convert-json profile "") profile)]
+    (let [errors
+          (cond-> (seq (profile/validate profile))
+            (true? in-scheme) (concat (profile/validate-in-schemes profile))
+            (true? profile-iris) (concat (profile/validate-iris profile))
+            (true? at-context) (concat (profile/validate-context profile)))]
+      (if (empty? errors)
+        true
+        (vec errors))))) ;; TODO Log errors to a logger

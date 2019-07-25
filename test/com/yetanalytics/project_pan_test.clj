@@ -11,4 +11,6 @@
 
 (deftest will-profile-integration
   (testing "Integration test of Will's CATCH profile, basic validation"
-    (is (true? (validate-profile will-profile)))))
+    (is (validate-profile will-profile))
+    (is (validate-profile will-profile :in-scheme true))
+    (is (validate-profile will-profile :at-context true))))

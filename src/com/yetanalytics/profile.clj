@@ -1,18 +1,20 @@
 (ns com.yetanalytics.profile
   (:require [clojure.spec.alpha :as s]
-            [com.yetanalytics.axioms :as ax]
-            [com.yetanalytics.util :as util]
             [ubergraph.core :as uber]
             [ubergraph.alg :as alg]
+            [com.yetanalytics.axioms :as ax]
+            [com.yetanalytics.context :as context]
             [com.yetanalytics.profiles.versions :as versions]
             [com.yetanalytics.profiles.author :as author]
             [com.yetanalytics.objects.concept :as concept]
             [com.yetanalytics.objects.template :as template]
-            [com.yetanalytics.objects.pattern :as pattern]))
+            [com.yetanalytics.objects.pattern :as pattern]
+            [com.yetanalytics.util :as util]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Profile 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 
 (s/def ::id ::ax/iri)
 (s/def ::type #{"Profile"})
@@ -44,12 +46,12 @@
                     ::pattern/patterns])
    ::id-distinct))
 
-(defn validate
-  "Syntax-only validation.
-  Returns true if validation succeeds, and false otherwise."
-  [profile] (s/valid? ::profile profile))
+; (defn validate
+;   "Syntax-only validation.
+;   Returns true if validation succeeds, and false otherwise."
+;   [profile] (s/valid? ::profile profile))
 
-(defn validate-explain
+(defn validate
   "Syntax-only validation.
   Returns a spec trace if validation fails, or nil if successful."
   [profile] (s/explain-data ::profile profile))
@@ -71,14 +73,14 @@
   versioning IRIs given by the ID of some Profile version object.
   Returns an empty sequence if validation is successful, else a sequence of
   spec errors if validation fails."
-  [{:keys [versions concepts templates patterns]}]
+  [{:keys [versions concepts templates patterns] :as profile}]
   (let [vid-set (versions/version-set versions)
         c-vids (util/combine-args concepts {:vid-set vid-set})
         t-vids (util/combine-args templates {:vid-set vid-set})
         p-vids (util/combine-args patterns {:vid-set vid-set})]
-    (concat (s/explain-data ::valid-inSchemes c-vids)
-            (s/explain-data ::valid-inSchemes t-vids)
-            (s/explain-data ::valid-inSchemes p-vids))))
+    (concat (s/explain-data ::valid-in-schemes c-vids)
+            (s/explain-data ::valid-in-schemes t-vids)
+            (s/explain-data ::valid-in-schemes p-vids))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; IRI validation (via graphs)
@@ -108,4 +110,6 @@
 ;; Validate profile
 (defn validate-context
   [profile]
-  (context/validate-profile profile))
+  (if (context/validate-all-contexts profile)
+    '()
+    '("@context error")))

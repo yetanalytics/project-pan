@@ -196,6 +196,8 @@
           true
           (recur (pop context-stack)))))))
 
+;; TODO Right now it returns only true or false
+;; Change it so that it returns a sequence of spec errors
 (defn validate-all-contexts
   "Validate all the contexts in a Profile."
   [profile]
