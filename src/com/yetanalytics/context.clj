@@ -7,6 +7,15 @@
             [com.yetanalytics.axioms :as ax]
             [com.yetanalytics.util :as util]))
 
+;; This library takes a Profile (which is simply a JSON-LD file) and does a
+;; recursive depth-first search in order to ensure that all properties can be
+;; expanded to IRIs using contexts. 
+;;
+;; JSON-LD @context validation is based off of the JSON-LD 1.1 specification
+;; found at https://www.w3.org/2018/jsonld-cg-reports/json-ld/
+;; This is not a comprehensive JSON-LD validator suite; more comprehensive
+;; validation may be added in a later iteration.
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Parse context 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -20,7 +29,7 @@
     (slurp "resources/context/profile-context.json")
     "https://w3id.org/xapi/profiles/activity-context"
     (slurp "resources/context/activity-context.json")
-    :else nil ;; TODO do something
+    :else nil ;; TODO get other contexts from the Internet 
 ))
 
 (defn get-context
@@ -33,17 +42,26 @@
 ;; Validate context 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; JSON-LD node objects may be aliased to the following keywords.
+;; This spec checks if a @context key is an alias to a keyword value.
+;; See section 6.2: Node Objects in the JSON-LD grammar.
+(s/def ::keyword
+  (fn [k]
+    (contains? #{"@context" "@id" "@graph" "@nest" "@type" "@reverse" "@index"}
+               k)))
+
 ;; Regular expressions
 (def gen-delims-regex #".*(?:\:|\/|\?|\#|\[|\]|\@)$")
 (def prefix-regex #"(.*\:)")
 
+;; JSON-LD 1.1 prefixes may be a simple term definition that ends in a URI
+;; general delimiter char or an expanded term definition with @prefix set to
+;; true. See section 4.4: Compact IRIs in the JSON-LD grammar.
 (s/def ::prefix
   (s/or :simple-term-def
-        (s/and ::ax/iri
-               #(->> % (re-matches gen-delims-regex) some?))
+        (s/and ::ax/iri #(->> % (re-matches gen-delims-regex) some?))
         :expanded-term-def
-        (s/and map?
-               #(-> % :prefix true?))))
+        (s/and map?  #(-> % :prefix true?))))
 
 (defn collect-prefixes
   "Returns all the prefixes in a context."
@@ -66,12 +84,15 @@
   (and (map? value)
        (compact-iri? prefixes (:at/id value))))
 
+;; A term definition may either have a string as a value (ie. a simple term
+;; definition) or a map (ie. an expanded term definition).
 (defn value-spec
   "Create a spec that validates a single JSON value in the context."
   [prefixes]
-  (s/or :prefix ::prefix
-        :compact-iri (partial compact-iri? prefixes)
-        :object (partial context-map? prefixes)))
+  (s/or :keyword ::keyword
+        :prefix ::prefix
+        :simple-term-def (partial compact-iri? prefixes)
+        :expanded-term-def (partial context-map? prefixes)))
 
 (defn context-spec
   "Creates a spec that validates an entire context."
@@ -79,6 +100,7 @@
   (let [v-spec (-> context collect-prefixes value-spec)]
     (s/map-of keyword? v-spec)))
 
+;; TODO Handle inline @context values?
 (defn create-context
   "Create a valid context from a @context IRI.
   Throws an exception if the context is invalid."
@@ -87,7 +109,8 @@
         errors (s/explain-data (context-spec context) context)]
     (if (every? nil? errors)
       context
-      (throw (ex-info "Failure to validate @context" errors)))))
+      (throw (ex-info (str "Failure to validate @context " context-iri)
+                      errors)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Validate profile against context 
@@ -101,7 +124,8 @@
              (fn [accum k v]
                (cond ;; TODO Get a better solution to the lang map issue?
                  (and (map? v)
-                      (not (#{:prefLabel :description :scopeNote :name} k)))
+                      (not (#{:prefLabel :definition :scopeNote
+                              :name :description} k)))
                  (conj accum v)
                  (s/valid? (s/coll-of map? :type vector?) v)
                  (concat accum v)
@@ -163,8 +187,14 @@
   "Given a key, search in all the contexts in the stack for it. Return true
   if the key is found, false otherwise (as that indicates that the key cannot
   be expanded to an IRI)."
-  [context-vec k]
-  (not (every? false? (map #(-> % :context (contains? k)) context-vec))))
+  [contexts k]
+  (loop [context-stack contexts]
+    (if (empty? context-stack)
+      false
+      (let [curr (peek context-stack)]
+        (if (-> curr :context (contains? k))
+          true
+          (recur (pop context-stack)))))))
 
 (defn validate-all-contexts
   "Validate all the contexts in a Profile."
@@ -179,4 +209,4 @@
                            (keys (dissoc curr-node :context)))]
         (if (every? true? error-seq)
           (recur (zip/next profile-loc) new-stack)
-          false)))))
+          curr-node)))))

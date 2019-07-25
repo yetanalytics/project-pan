@@ -3,6 +3,7 @@
             [clojure.spec.alpha :as s]
             [clojure.zip :as zip]
             [com.yetanalytics.context :as c]
+            [com.yetanalytics.util :as util]
             [com.yetanalytics.utils :refer :all]))
 
 (def profile-context
@@ -91,6 +92,8 @@
                   "xapi:Verb"))
     (is (s/valid? (c/value-spec {:xapi "https://w3id.org/xapi/ontology#"})
                   {:at/id "xapi:type" :at/type "@id"}))
+    (is (s/valid? (c/value-spec (c/collect-prefixes profile-context))
+                  {:at/id "profile:schema" :at/type "@id"}))
     (is (not (s/valid? (c/value-spec {:xapi "https://w3id.org/xapi/ontology#"})
                        "skos:prefLabel")))
     (is (not (s/valid? (c/value-spec {:xapi "https://w3id.org/xapi/ontology#"})
@@ -98,11 +101,12 @@
 
 (deftest context-spec-test
   (testing "context-spec spec creation function"
-    (is (s/valid? (c/context-spec activity-context) activity-context))
-    (is (not (s/valid? (c/context-spec activity-context) profile-context)))))
+    (is (s/valid? (c/context-spec profile-context) profile-context))
+    (is (s/valid? (c/context-spec activity-context) activity-context))))
 
 (deftest create-context-test
   (testing "create-context function"
+    (is (some? (c/create-context "https://w3id.org/xapi/profiles/context")))
     (is (some? (c/create-context "https://w3id.org/xapi/profiles/activity-context")))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -112,6 +116,7 @@
 
 (def dummy-profile {:foo {:bar "b1" :baz "b2"}
                     :nums [{:one 1} {:two 2} {:three 3}]
+                    :prefLabel {:en "example"}
                     :context "https://w3id.org/xapi/profiles/activity-context"})
 
 (def ex-activity-def {:context "https://w3id.org/xapi/profiles/activity-context"
@@ -187,12 +192,14 @@
            (c/push-context [{:path [] :context activity-context}]
                            (-> dummy-profile c/profile-to-zipper zip/down))))
     ;; Push if we have a vector as an @context value
-    (is (= [{:path [] :context activity-context}]
+    (is (= [{:path [] :context activity-context}
+            {:path [] :context profile-context}]
            (c/push-context
             [] (c/profile-to-zipper
                 {:foo {:bar "b1" :baz "b2"}
                  :nums [{:one 1} {:two 2} {:three 3}]
-                 :context ["https://w3id.org/xapi/profiles/activity-context"]}))))))
+                 :context ["https://w3id.org/xapi/profiles/activity-context"
+                           "https://w3id.org/xapi/profiles/context"]}))))))
 
 (deftest update-contexts-test
   (testing "update-contexts function"
@@ -216,10 +223,17 @@
 (deftest search-contexts-test
   (testing "search-contexts function"
     (is (c/search-contexts [{:path [] :context activity-context}] :type))
+    (is (c/search-contexts [{:path [] :context profile-context}
+                            {:path [] :context activity-context}] :versions))
     (is (not (c/search-contexts [{:path [] :context activity-context}] :context)))
     (is (not (c/search-contexts [{:path [] :context activity-context}] :foo)))))
 
 (deftest validate-all-contexts-test
   (testing "validate-all-contexts function"
     (is (c/validate-all-contexts ex-activity-def))
-    (is (not (c/validate-all-contexts dummy-profile)))))
+    (is (not (true? (c/validate-all-contexts dummy-profile))))))
+
+(deftest validate-contexts-integration-test
+  (testing "integration testing on Will's CATCH profile"
+    (is (c/validate-all-contexts
+         (util/convert-json (slurp "resources/sample_profiles/will-profile.json") "")))))
