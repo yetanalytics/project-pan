@@ -9,21 +9,21 @@
 
 (s/def ::id ::ax/iri)
 (s/def ::type #{"ActivityProfileResource"})
-(s/def ::in-scheme ::ax/iri)
-(s/def ::pref-label ::ax/language-map)
+(s/def ::inScheme ::ax/iri)
+(s/def ::prefLabel ::ax/language-map)
 (s/def ::definition ::ax/language-map)
-(s/def ::content-type ::ax/string)
+(s/def ::contentType ::ax/string)
 ;; TODO: RFC 2046 valid content types
 (s/def ::deprecated ::ax/boolean)
 (s/def ::context ::ax/iri)
 (s/def ::schema ::ax/iri)
-(s/def ::inline-schema ::ax/json-schema)
+(s/def ::inlineSchema ::ax/json-schema)
 
 (s/def ::document-resource
   (s/and (s/keys
-          :req-un [::id ::type ::in-scheme ::pref-label ::definition
-                   ::content-type]
-          :opt-un [::deprecated ::context ::schema ::inline-schema])
+          :req-un [::id ::type ::inScheme ::prefLabel ::definition
+                   ::contentType]
+          :opt-un [::deprecated ::context ::schema ::inlineSchema])
          ::util/inline-or-iri))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -45,4 +45,4 @@
 
 ;; TODO: LRS clients sending Document resources checks required by the spec
 ;; - id
-;; - content-type
+;; - contentType

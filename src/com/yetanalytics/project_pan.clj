@@ -5,17 +5,6 @@
             [com.yetanalytics.util :as util]
             [com.yetanalytics.profile :as profile]))
 
-(defn remove-chars
-  "Remove chars that are illegal in keywords, ie. spaces and the @ symbol."
-  [s] (string/replace s #"@|\s" ""))
-
-(defn convert-json
-  "Convert a JSON string into an edn data structure."
-  [json]
-  (cheshire/parse-string
-   json (fn [k] (-> k remove-chars kebab/->kebab-case-keyword))))
-;; ^ example usage of ->
-
 ;; ID VALIDATION
 ;; 1. Check that top-level properties pass basic validation
 ;; 2. Check that IDs are distinct
@@ -74,5 +63,5 @@
   [profile & {:keys [validation-level no-short?]}]
   ;; TODO Add validation levels
   (if (string? profile)
-    (profile/validate (convert-json profile))
+    (profile/validate (util/convert-json profile ""))
     (profile/validate profile)))

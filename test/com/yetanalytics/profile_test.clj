@@ -30,13 +30,13 @@
 
 (deftest conforms-to-test
   (testing "conformsTo property"
-    (is (s/valid? ::profile/conforms-to "https://w3id.org/xapi/profiles#1.0"))))
+    (is (s/valid? ::profile/conformsTo "https://w3id.org/xapi/profiles#1.0"))))
 
-(deftest pref-label-test
+(deftest prefLabel-test
   (testing "prefLabel property"
-    (is (s/valid? ::profile/pref-label {"en" "Catch"}))
-    (is (s/valid? ::profile/pref-label {"en" ""}))
-    (is (s/valid? ::profile/pref-label {:en "Catch"}))))
+    (is (s/valid? ::profile/prefLabel {"en" "Catch"}))
+    (is (s/valid? ::profile/prefLabel {"en" ""}))
+    (is (s/valid? ::profile/prefLabel {:en "Catch"}))))
 
 (deftest definition-test
   (testing "definition property"
@@ -48,7 +48,7 @@
 
 (deftest see-also-test
   (testing "seeAlso property"
-    (is (s/valid? ::profile/see-also "https://see.also.org/"))))
+    (is (s/valid? ::profile/seeAlso "https://see.also.org/"))))
 
 (deftest id-distinct-test
   (testing "profile ID MUST be distinct from version IDs"
@@ -56,26 +56,26 @@
                   {:id "https://w3id.org/xapi/catch"
                    :versions
                    [{:id "https://w3id.org/xapi/catch/v2"
-                     :generated-at-time "2017-12-22T22:30:00-07:00"}
+                     :generatedAtTime "2017-12-22T22:30:00-07:00"}
                     {:id "https://w3id.org/xapi/catch/v1"
-                     :gen-at-time "2017-12-22T22:30:00-07:00"}]}))
+                     :generatedAtTime "2017-12-22T22:30:00-07:00"}]}))
     (is (not (s/valid? ::profile/id-distinct
                        {:id "https://w3id.org/xapi/catch"
                         :versions
                         [{:id "https://w3id.org/xapi/catch"
-                          :generated-at-time "2017-12-22T22:30:00-07:00"}
+                          :generatedAtTime "2017-12-22T22:30:00-07:00"}
                          {:id "https://w3id.org/xapi/catch/v1"
-                          :gen-at-time "2017-12-22T22:30:00-07:00"}]})))))
+                          :generatedAtTime "2017-12-22T22:30:00-07:00"}]})))))
 
-(deftest in-scheme-test
-  (testing "object in-scheme MUST be a valid Profile version"
-    (is (s/valid? ::profile/valid-in-schemes
-                  [{:object {:in-scheme "https://foo.org/v1"}
+(deftest inScheme-test
+  (testing "object inScheme MUST be a valid Profile version"
+    (is (s/valid? ::profile/valid-inSchemes
+                  [{:object {:inScheme "https://foo.org/v1"}
                     :vid-set #{"https://foo.org/v1" "https://foo.org/v2"}}
-                   {:object {:in-scheme "https://foo.org/v2"}
+                   {:object {:inScheme "https://foo.org/v2"}
                     :vid-set #{"https://foo.org/v1" "https://foo.org/v2"}}]))
-    (is (not (s/valid? ::profile/valid-in-schemes
-                       [{:object {:in-scheme "https://foo.org/v0"}
+    (is (not (s/valid? ::profile/valid-inSchemes
+                       [{:object {:inScheme "https://foo.org/v0"}
                          :vid-set #{"https://foo.org/v1" "https://foo.org/v2"}}])))))
 
 (deftest profile-test
@@ -83,14 +83,13 @@
     (is (s/valid? ::profile/profile
                   {:versions
                    [{:id "https://w3id.org/xapi/catch/v1"
-                     :generated-at-time "2017-12-22T22:30:00-07:00"}]
+                     :generatedAtTime "2017-12-22T22:30:00-07:00"}]
                    :context "https://w3id.org/xapi/profiles/context"
                    :author {:url "https://www.yetanalytics.io"
                             :type "Organization"
                             :name "Yet Analytics"}
                    :type "Profile"
                    :id "https://w3id.org/xapi/catch"
-                   :definition {"en" "The profile for the trinity
-                                              education application CATCH"}
-                   :conforms-to "https://w3id.org/xapi/profiles#1.0"
-                   :pref-label {"en" "Catch"}}))))
+                   :definition {"en" "The profile for the trinity education application CATCH"}
+                   :conformsTo "https://w3id.org/xapi/profiles#1.0"
+                   :prefLabel {"en" "Catch"}}))))

@@ -1,9 +1,12 @@
 (ns com.yetanalytics.util
   (:require [clojure.spec.alpha :as s]
+            [clojure.string :as string]
+            [camel-snake-kebab.core :as kebab]
+            [cheshire.core :as cheshire]
             [ubergraph.core :as uber]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; fns + specs
+;; Generic functions and specs 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn only-ids
@@ -25,8 +28,29 @@
 (s/def ::inline-or-iri
   (fn [ext]
     (let [schema? (contains? ext :schema)
-          inline-schema? (contains? ext :inline-schema)]
+          inline-schema? (contains? ext :inlineSchema)]
       (not (and schema? inline-schema?)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; JSON parsing 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn remove-chars
+  "Remove chars that are illegal in keywords, ie. spaces and the @ symbol."
+  [s] (string/replace s #"@|\s" ""))
+
+(defn replace-at
+  "Replace any @ symbols with 'at/' (so that they are all in their own pseudo-
+  namespace."
+  [s replacement] (string/replace s #"@" replacement))
+
+(defn convert-json
+  "Convert a JSON string into an edn data structure."
+  [json at-replacement]
+  (cheshire/parse-string
+   json #(-> % (replace-at at-replacement) keyword)
+   #_(fn [k] (-> k remove-chars kebab/->kebab-case-keyword))))
+;; ^ example usage of ->
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Graph functions
@@ -38,7 +62,7 @@
 (defmethod node-with-attrs :default [node]
   (let [node-name (:id node)
         node-attrs {:type (:type node)
-                    :in-scheme (:in-scheme node)}]
+                    :inScheme (:inScheme node)}]
     (vector node-name node-attrs)))
 
 ;; Return a vector of all outgoing edges

@@ -13,7 +13,7 @@
 
 (s/def ::id ::ax/iri)
 (s/def ::type #{"Activity"})
-(s/def ::in-scheme ::ax/iri)
+(s/def ::inScheme ::ax/iri)
 (s/def ::deprecated ::ax/boolean)
 (def context-url "https://w3id.org/xapi/profiles/activity-context")
 (s/def ::context (s/or :context ::ax/uri
@@ -22,29 +22,29 @@
                                        (partial some #(= context-url %)))))
 
 ;; Rename keys (as xapi-scheme uses camelCase instead of kebab-case
-(defn camel-case-keys
-  [kmap]
-  (let [keys-kebab (keys kmap)
-        keys-camel (map csk/->camelCase keys-kebab)]
-    (rename-keys kmap (zipmap keys-kebab keys-camel))))
+; (defn camel-case-keys
+;   [kmap]
+;   (let [keys-kebab (keys kmap)
+;         keys-camel (map csk/->camelCase keys-kebab)]
+;     (rename-keys kmap (zipmap keys-kebab keys-camel))))
 
 ;; Turn language map keys back into strings
 (defn stringify-lang-keys
-  [kmap]
-  (let [stringify-name (update kmap :name stringify-keys)]
-    (update stringify-name :description stringify-keys)))
+  [kmap] (-> kmap
+             (update :name stringify-keys)
+             (update :description stringify-keys)))
 
 ;; Need to use this function instead of s/merge because of restrict-keys in
 ;; xapi-schema function.
-(s/def ::activity-definition
+(s/def ::activityDefinition
   (s/and (s/keys :req-un [::context])
          (fn [adef]
            (s/valid? :activity/definition
-                     (stringify-lang-keys
-                      (camel-case-keys (dissoc adef :context)))))))
+                     (stringify-lang-keys (dissoc adef :context))
+                     #_(stringify-lang-keys (camel-case-keys (dissoc adef :context)))))))
 
 (s/def ::activity
-  (s/keys :req-un [::id ::type ::in-scheme ::activity-definition]
+  (s/keys :req-un [::id ::type ::inScheme ::activityDefinition]
           :opt-un [::deprecated]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

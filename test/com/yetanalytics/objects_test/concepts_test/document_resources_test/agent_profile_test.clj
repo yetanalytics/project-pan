@@ -18,7 +18,7 @@
 
 (deftest content-type-test
   (testing "contentType property"
-    (should-satisfy+ ::agent-profile/content-type
+    (should-satisfy+ ::agent-profile/contentType
                      "application/json"
                      :bad
                      74)))
@@ -35,10 +35,10 @@
     (is (s/valid? ::agent-profile/document-resource
                   {:id "https://w3id.org/xapi/scorm/agent-profile"
                    :type "AgentProfileResource"
-                   :in-scheme "https://w3id.org/xapi/scorm/v1.0"
-                   :pref-label {"en" "SCORM Agent Profile"}
+                   :inScheme "https://w3id.org/xapi/scorm/v1.0"
+                   :prefLabel {"en" "SCORM Agent Profile"}
                    :definition
                    {"en" "The SCORM Activity State Object contains the profile data for the specified Agent. The agent profile has three properties: learner_id, learner_name, and preferences."}
-                   :content-type "application/json"
+                   :contentType "application/json"
                    :schema
                    "https://raw.githubusercontent.com/adlnet/xAPI-SCORM-Profile/master/document-schemas/scorm.profile.agent.profile.schema.json"}))))

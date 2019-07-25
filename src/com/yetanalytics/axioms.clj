@@ -24,6 +24,7 @@
 
 ;; Language Maps
 ;; Differs from xs/language-map in that empty strings are banned.
+;; TODO Should revise language maps such that keys like :foo are not counted
 (s/def ::language-map
   (s/map-of (s/or :string ::xs/language-tag :keyword keyword?)
             (s/or :not-empty ::xs/string-not-empty

@@ -12,12 +12,12 @@
 (s/def ::any (s/coll-of any? :type vector? :min-count 1))
 (s/def ::all (s/coll-of any? :type vector? :min-count 1))
 (s/def ::none (s/coll-of any? :type vector? :min-count 1))
-(s/def ::scope-note ::ax/language-map)
+(s/def ::scopeNote ::ax/language-map)
 
 (s/def ::rule
   (s/and (s/keys :req-un [::location
                           (or ::presence ::any ::all ::none)]
-                 :opt-un [::selector ::scope-note])))
+                 :opt-un [::selector ::scopeNote])))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; validation which requires external calls

@@ -9,24 +9,24 @@
 
 (s/def ::id ::ax/iri)
 (s/def ::type #{"ContextExtension"})
-(s/def ::in-scheme ::ax/iri)
-(s/def ::pref-label ::ax/language-map)
+(s/def ::inScheme ::ax/iri)
+(s/def ::prefLabel ::ax/language-map)
 (s/def ::definition ::ax/language-map)
 (s/def ::deprecated ::ax/boolean)
 ;; (s/def ::recommended-activity-types (fn [coll] (-> coll not-empty nil?))) ;; if present, it should be nil
-(s/def ::recommended-verbs ::ax/array-of-iri)
+(s/def ::recommendedVerbs ::ax/array-of-iri)
 (s/def ::context ::ax/iri)
 (s/def ::schema ::ax/iri)
-(s/def ::inline-schema ::ax/json-schema)
+(s/def ::inlineSchema ::ax/json-schema)
 
 (s/def ::no-recommended-activity-types
-  (fn [ext] (not (contains? ext :recommended-activity-types))))
+  (fn [ext] (not (contains? ext :recommendedActivityTypes))))
 
 (s/def ::extension
   (s/and (s/keys
-          :req-un [::id ::type ::in-scheme ::pref-label ::definition]
-          :opt-un [::deprecated ::recommended-verbs
-                   ::context ::schema ::inline-schema])
+          :req-un [::id ::type ::inScheme ::prefLabel ::definition]
+          :opt-un [::deprecated ::recommendedVerbs
+                   ::context ::schema ::inlineSchema])
          ::util/inline-or-iri
          ::no-recommended-activity-types))
 
@@ -36,10 +36,10 @@
 
 ;; Return a vector of edges in the form [src dest {:type kword}]
 (defmethod util/edges-with-attrs "ContextExtension"
-  [{:keys [id recommended-verbs]}]
-  (if (some? recommended-verbs)
-    (mapv #(vector id % {:type :recommended-verbs})
-          recommended-verbs)
+  [{:keys [id recommendedVerbs]}]
+  (if (some? recommendedVerbs)
+    (mapv #(vector id % {:type :recommendedVerbs})
+          recommendedVerbs)
     []))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

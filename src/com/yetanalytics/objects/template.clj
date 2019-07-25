@@ -12,50 +12,50 @@
 
 (s/def ::id ::ax/uri)
 (s/def ::type #{"StatementTemplate"})
-(s/def ::in-scheme ::ax/iri)
-(s/def ::pref-label ::ax/language-map)
+(s/def ::inScheme ::ax/iri)
+(s/def ::prefLabel ::ax/language-map)
 (s/def ::definition ::ax/language-map)
 (s/def ::deprecated ::ax/boolean)
 (s/def ::verb ::ax/iri)
-(s/def ::object-activity-type ::ax/iri)
-(s/def ::context-grouping-activity-type
+(s/def ::objectActivityType ::ax/iri)
+(s/def ::contextGroupingActivityType
   (s/coll-of ::ax/iri :type vector? :min-count 1))
-(s/def ::context-parent-activity-type
+(s/def ::contextParentActivityType
   (s/coll-of ::ax/iri :type vector? :min-count 1))
-(s/def ::context-other-activity-type
+(s/def ::contextOtherActivityType
   (s/coll-of ::ax/iri :type vector? :min-count 1))
-(s/def ::context-category-activity-type
+(s/def ::contextCategoryActivityType
   (s/coll-of ::ax/iri :type vector? :min-count 1))
-(s/def ::attachment-usage-type
+(s/def ::attachmentUsageType
   (s/coll-of ::ax/iri :type vector? :min-count 1))
-(s/def ::object-statement-ref-template
+(s/def ::objectStatementRefTemplate
   (s/coll-of ::ax/iri :type vector? :min-count 1))
-(s/def ::context-statement-ref-template
+(s/def ::contextStatementRefTemplate
   (s/coll-of ::ax/iri :type vector? :min-count 1))
 
 ;; A StatementTemplate MUST NOT have both objectStatementRefTemplate and
 ;; objectActivityType at the same time.
 (s/def ::type-or-reference
   (fn [st]
-    (let [otype? (contains? st :object-activity-type)
-          otemp? (contains? st :object-statement-ref-template)]
+    (let [otype? (contains? st :objectActivityType)
+          otemp? (contains? st :objectStatementRefTemplate)]
       (not (and otype? otemp?)))))
 
 (s/def ::rules (s/coll-of ::rules/rule :type vector?))
 
 (s/def ::template
   (s/and
-   (s/keys :req-un [::id ::type ::in-scheme ::pref-label ::definition]
+   (s/keys :req-un [::id ::type ::inScheme ::prefLabel ::definition]
            :opt-un [::deprecated ::rules
                     ::verb
-                    ::object-activity-type
-                    ::context-grouping-activity-type
-                    ::context-parent-activity-type
-                    ::context-other-activity-type
-                    ::context-category-activity-type
-                    ::attachment-usage-type
-                    ::object-statement-ref-template
-                    ::context-statement-ref-template])
+                    ::objectActivityType
+                    ::contextGroupingActivityType
+                    ::contextParentActivityType
+                    ::contextOtherActivityType
+                    ::contextCategoryActivityType
+                    ::attachmentUsageType
+                    ::objectStatementRefTemplate
+                    ::contextStatementRefTemplate])
    ::type-or-reference))
 
 (s/def ::templates (s/coll-of ::template :kind vector? :min-count 1))
@@ -71,33 +71,33 @@
 (defmethod util/edges-with-attrs "StatementTemplate"
   [{:keys [id
            verb
-           object-activity-type
-           context-grouping-activity-type
-           context-parent-activity-type
-           context-other-activity-type
-           context-category-activity-type
-           attachment-usage-type
-           object-statement-ref-template
-           context-statement-ref-template]}]
+           objectActivityType
+           contextGroupingActivityType
+           contextParentActivityType
+           contextOtherActivityType
+           contextCategoryActivityType
+           attachmentUsageType
+           objectStatementRefTemplate
+           contextStatementRefTemplate]}]
   (into [] (filter #(some? (second %))
                    (concat
                     (vector (vector id verb {:type :verb}))
-                    (vector (vector id object-activity-type
-                                    {:type :object-activity-type}))
-                    (map #(vector id % {:type :context-grouping-activity-type})
-                         context-grouping-activity-type)
-                    (map #(vector id % {:type :context-parent-activity-type})
-                         context-parent-activity-type)
-                    (map #(vector id % {:type :context-other-activity-type})
-                         context-other-activity-type)
-                    (map #(vector id % {:type :context-category-activity-type})
-                         context-category-activity-type)
-                    (map #(vector id % {:type :attachment-usage-type})
-                         attachment-usage-type)
-                    (map #(vector id % {:type :object-statement-ref-template})
-                         object-statement-ref-template)
-                    (map #(vector id % {:type :context-statement-ref-template})
-                         context-statement-ref-template)))))
+                    (vector (vector id objectActivityType
+                                    {:type :objectActivityType}))
+                    (map #(vector id % {:type :contextGroupingActivityType})
+                         contextGroupingActivityType)
+                    (map #(vector id % {:type :contextParentActivityType})
+                         contextParentActivityType)
+                    (map #(vector id % {:type :contextOtherActivityType})
+                         contextOtherActivityType)
+                    (map #(vector id % {:type :contextCategoryActivityType})
+                         contextCategoryActivityType)
+                    (map #(vector id % {:type :attachmentUsageType})
+                         attachmentUsageType)
+                    (map #(vector id % {:type :objectStatementRefTemplate})
+                         objectStatementRefTemplate)
+                    (map #(vector id % {:type :contextStatementRefTemplate})
+                         contextStatementRefTemplate)))))
 
 ;; Create a template graph from its constitutent concepts and templates
 (defn create-template-graph [concepts templates]
@@ -124,10 +124,10 @@
             (let [src (uber/src edge) dest (uber/dest edge)]
               {:src src
                :src-type (uber/attr tgraph src :type)
-               :src-version (uber/attr tgraph src :in-scheme)
+               :src-version (uber/attr tgraph src :inScheme)
                :dest dest
                :dest-type (uber/attr tgraph dest :type)
-               :dest-version (uber/attr tgraph dest :in-scheme)
+               :dest-version (uber/attr tgraph dest :inScheme)
                :type (uber/attr tgraph edge :type)}))
           edges)))
 
@@ -141,43 +141,43 @@
        (#{"Verb"} dest-type)))
 
 ;; objectActivityType MUST point to an object ActivityType
-(defmethod valid-edge? :object-activity-type [{:keys [src-type dest-type]}]
+(defmethod valid-edge? :objectActivityType [{:keys [src-type dest-type]}]
   (and (#{"StatementTemplate"} src-type)
        (#{"ActivityType"} dest-type)))
 
 ;; contextGroupingActivityType MUST point to grouping ActivityTypes
-(defmethod valid-edge? :context-grouping-activity-type
+(defmethod valid-edge? :contextGroupingActivityType
   [{:keys [src-type dest-type]}]
   (and (#{"StatementTemplate"} src-type)
        (#{"ActivityType"} dest-type)))
 
 ;; contextParentActivityType MUST point to parent ActivityTypes
-(defmethod valid-edge? :context-parent-activity-type
+(defmethod valid-edge? :contextParentActivityType
   [{:keys [src-type dest-type]}]
   (and (#{"StatementTemplate"} src-type)
        (#{"ActivityType"} dest-type)))
 
 ;; contextOtherActivityType MUST point to other ActivityTypes
-(defmethod valid-edge? :context-other-activity-type
+(defmethod valid-edge? :contextOtherActivityType
   [{:keys [src-type dest-type]}]
   (and (#{"StatementTemplate"} src-type)
        (#{"ActivityType"} dest-type)))
 
 ;; contextCategoryActivityType MUST point to category ActivityTypes
-(defmethod valid-edge? :context-category-activity-type
+(defmethod valid-edge? :contextCategoryActivityType
   [{:keys [src-type dest-type]}]
   (and (#{"StatementTemplate"} src-type)
        (#{"ActivityType"} dest-type)))
 
 ;; attachmentUsageType MUST point to AttachmentUsageType Concepts
-(defmethod valid-edge? :attachment-usage-type
+(defmethod valid-edge? :attachmentUsageType
   [{:keys [src-type dest-type]}]
   (and (#{"StatementTemplate"} src-type)
        (#{"AttachmentUsageType"} dest-type)))
 
 ;; objectStatementRefTemplate MUST point to Statement Templates from this
 ;; profile version
-(defmethod valid-edge? :object-statement-ref-template
+(defmethod valid-edge? :objectStatementRefTemplate
   [{:keys [src-type dest-type src-version dest-version]}]
   (and (#{"StatementTemplate"} src-type)
        (#{"StatementTemplate"} dest-type)
@@ -185,7 +185,7 @@
 
 ;; contextStatementRefTemplate MUST point to Statement Templates from this
 ;; profile version
-(defmethod valid-edge? :context-statement-ref-template
+(defmethod valid-edge? :contextStatementRefTemplate
   [{:keys [src-type dest-type src-version dest-version]}]
   (and (#{"StatementTemplate"} src-type)
        (#{"StatementTemplate"} dest-type)

@@ -17,7 +17,7 @@
 ;; TODO: RFC 2046 valid content types
 (deftest content-type-test
   (testing "contentType property"
-    (should-satisfy+ ::state/content-type
+    (should-satisfy+ ::state/contentType
                      "application/json"
                      :bad
                      74)))
@@ -34,11 +34,11 @@
     (is (s/valid? ::state/document-resource
                   {:id "https://w3id.org/xapi/scorm/attempt-state"
                    :type "StateResource"
-                   :in-scheme "https://w3id.org/xapi/scorm/v1.0"
-                   :pref-label {"en" "SCORM Activity Attempt State"}
+                   :inScheme "https://w3id.org/xapi/scorm/v1.0"
+                   :prefLabel {"en" "SCORM Activity Attempt State"}
                    :definition
                    {"en" "The SCORM Activity Attempt State Object contains the state data for the specified attempt on an Activity. It has the following properties: credit, mode, location, preferences, total_time, and adl_data."}
-                   :content-type "application/json"
+                   :contentType "application/json"
                    :context
                    "https://raw.githubusercontent.com/adlnet/xAPI-SCORM-Profile/master/context/attempt-state-context.jsonld"
                    :schema

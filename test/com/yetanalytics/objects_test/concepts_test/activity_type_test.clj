@@ -27,11 +27,11 @@
 
 (deftest broad-match-test
   (testing "broadMatch property"
-    (should-satisfy ::activity-types/broad-match
+    (should-satisfy ::activity-types/broadMatch
                     ["http://adlnet.gov/expapi/activity-types/shared"])
-    (should-not-satisfy ::activity-types/broad-match
+    (should-not-satisfy ::activity-types/broadMatch
                         "http://adlnet.gov/expapi/activity-types/shared")
-    (should-not-satisfy ::activity-types/broad-match [])))
+    (should-not-satisfy ::activity-types/broadMatch [])))
 
 (deftest narrower-test
   (testing "narrower property"
@@ -44,11 +44,11 @@
 
 (deftest narrow-match-test
   (testing "narrowMatch property"
-    (should-satisfy ::activity-types/narrow-match
+    (should-satisfy ::activity-types/narrowMatch
                     ["http://adlnet.gov/expapi/activity-types/shared"])
-    (should-not-satisfy ::activity-types/narrow-match
+    (should-not-satisfy ::activity-types/narrowMatch
                         "http://adlnet.gov/expapi/activity-types/shared")
-    (should-not-satisfy ::activity-types/narrow-match [])))
+    (should-not-satisfy ::activity-types/narrowMatch [])))
 
 (deftest related-test
   (testing "related property"
@@ -61,27 +61,27 @@
 
 (deftest related-match-test
   (testing "relatedMatch property"
-    (should-satisfy ::activity-types/related-match
+    (should-satisfy ::activity-types/relatedMatch
                     ["http://adlnet.gov/expapi/activity-types/shared"])
-    (should-not-satisfy ::activity-types/related-match
+    (should-not-satisfy ::activity-types/relatedMatch
                         "http://adlnet.gov/expapi/activity-types/shared")
-    (should-not-satisfy ::activity-types/related-match [])))
+    (should-not-satisfy ::activity-types/relatedMatch [])))
 
 (deftest exact-match-test
   (testing "exactMatch property"
-    (should-satisfy ::activity-types/exact-match
+    (should-satisfy ::activity-types/exactMatch
                     ["http://activitystrea.ms/schema/1.0/article"])
-    (should-not-satisfy ::activity-types/exact-match
+    (should-not-satisfy ::activity-types/exactMatch
                         "http://activitystrea.ms/schema/1.0/article")
-    (should-not-satisfy ::activity-types/exact-match [])))
+    (should-not-satisfy ::activity-types/exactMatch [])))
 
 (deftest activity-type-test
   (testing "activityType concept"
     (is (s/valid? ::activity-types/activity-type
                   {:id "https://w3id.org/xapi/catch/activitytypes/check-in"
                    :type "ActivityType"
-                   :in-scheme "https://w3id.org/xapi/catch/v1"
-                   :pref-label {"en" "Check in"}
+                   :inScheme "https://w3id.org/xapi/catch/v1"
+                   :prefLabel {"en" "Check in"}
                    :definition {"en" "An activity in which the learner reports progression."}}))))
 
 (deftest related-only-deprecated-test
@@ -103,22 +103,22 @@
 
 (def ex-concept {:id "https://foo.org/at"
                  :type "ActivityType"
-                 :in-scheme "https://foo.org/v1"
+                 :inScheme "https://foo.org/v1"
                  :broader ["https://foo.org/at2"]
-                 :broad-match ["https://foo.org/at3"]
+                 :broadMatch ["https://foo.org/at3"]
                  :narrower ["https://foo.org/at4"]
-                 :narrow-match ["https://foo.org/at5"]
+                 :narrowMatch ["https://foo.org/at5"]
                  :related ["https://foo.org/at6"]
-                 :related-match ["https://foo.org/at7"]
-                 :exact-match ["https://foo.org/at8"]})
+                 :relatedMatch ["https://foo.org/at7"]
+                 :exactMatch ["https://foo.org/at8"]})
 
 (deftest edges-with-attrs-test
   (testing "create edges from node"
     (is (= (util/edges-with-attrs ex-concept)
            [["https://foo.org/at" "https://foo.org/at2" {:type :broader}]
-            ["https://foo.org/at" "https://foo.org/at3" {:type :broad-match}]
+            ["https://foo.org/at" "https://foo.org/at3" {:type :broadMatch}]
             ["https://foo.org/at" "https://foo.org/at4" {:type :narrower}]
-            ["https://foo.org/at" "https://foo.org/at5" {:type :narrow-match}]
+            ["https://foo.org/at" "https://foo.org/at5" {:type :narrowMatch}]
             ["https://foo.org/at" "https://foo.org/at6" {:type :related}]
-            ["https://foo.org/at" "https://foo.org/at7" {:type :related-match}]
-            ["https://foo.org/at" "https://foo.org/at8" {:type :exact-match}]]))))
+            ["https://foo.org/at" "https://foo.org/at7" {:type :relatedMatch}]
+            ["https://foo.org/at" "https://foo.org/at8" {:type :exactMatch}]]))))
