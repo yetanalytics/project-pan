@@ -27,12 +27,14 @@ from the non-core namespaces.
     - Arrays of axioms
 - Basic syntax validation
 - In-profile identifier links
+- at-context validation
 
 ## TODO
 
 - IRIs/IRLs/URIs/URLs (This is an xapi-schema problem)
 - Identifiers that link to external profiles (need triple store)
 - Interface to outside world
+- "Collecting" all errors thrown by the validator
 - Demo of the completed product
 
 ## License
