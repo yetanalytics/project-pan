@@ -27,9 +27,7 @@
   "Get a raw context, then parse it from JSON to EDN.
   Return the JSON object given by the @context key"
   [context-uri]
-  (-> context-uri get-raw-context (util/convert-json "at/")
-      #_(cheshire/parse-string #(-> % util/replace-at keyword))
-      :at/context))
+  (-> context-uri get-raw-context (util/convert-json "at/") :at/context))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Validate context 
@@ -101,10 +99,12 @@
   (letfn [(children [node]
             (reduce-kv
              (fn [accum k v]
-               (cond
+               (cond ;; TODO Get a better solution to the lang map issue?
                  (and (map? v)
-                      (not (s/valid? ::ax/language-map v))) (conj accum v)
-                 (s/valid? (s/coll-of map? :type vector?) v) (concat accum v)
+                      (not (#{:prefLabel :description :scopeNote :name} k)))
+                 (conj accum v)
+                 (s/valid? (s/coll-of map? :type vector?) v)
+                 (concat accum v)
                  :else accum))
              (list) node))]
     (zip/zipper map? children nil profile)))

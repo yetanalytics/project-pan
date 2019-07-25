@@ -23,20 +23,20 @@
     (should-not-satisfy ::activities/context ["https://some-other-context"])
     (should-not-satisfy ::activities/context "foo bar")))
 
-(deftest camel-case-keys-test
-  (testing "turning kebab-case keys into camelCase keys"
-    (is (= (activities/camel-case-keys
-            {:key "Zero" :key-one "One" :key-two-Two "Two"})
-           {:key "Zero" :keyOne "One" :keyTwoTwo "Two"}))
-    (is (= (activities/camel-case-keys
-            {:context "https://w3id.org/xapi/profiles/activity-context"
-             :name {:en "Blah"}
-             :description {"en" "Blah Blah Blah"}
-             :type "https://w3id.org/xapi/catch/activitytypes/blah"})
-           {:context "https://w3id.org/xapi/profiles/activity-context"
-            :name {:en "Blah"}
-            :description {"en" "Blah Blah Blah"}
-            :type "https://w3id.org/xapi/catch/activitytypes/blah"}))))
+; (deftest camel-case-keys-test
+;   (testing "turning kebab-case keys into camelCase keys"
+;     (is (= (activities/camel-case-keys
+;             {:key "Zero" :key-one "One" :key-two-Two "Two"})
+;            {:key "Zero" :keyOne "One" :keyTwoTwo "Two"}))
+;     (is (= (activities/camel-case-keys
+;             {:context "https://w3id.org/xapi/profiles/activity-context"
+;              :name {:en "Blah"}
+;              :description {"en" "Blah Blah Blah"}
+;              :type "https://w3id.org/xapi/catch/activitytypes/blah"})
+;            {:context "https://w3id.org/xapi/profiles/activity-context"
+;             :name {:en "Blah"}
+;             :description {"en" "Blah Blah Blah"}
+;             :type "https://w3id.org/xapi/catch/activitytypes/blah"}))))
 
 (deftest stringify-lang-keys-test
   (testing "turning keys in the name and description language maps into strings"

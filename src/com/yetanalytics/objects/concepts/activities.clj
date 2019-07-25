@@ -22,17 +22,17 @@
                                        (partial some #(= context-url %)))))
 
 ;; Rename keys (as xapi-scheme uses camelCase instead of kebab-case
-(defn camel-case-keys
-  [kmap]
-  (let [keys-kebab (keys kmap)
-        keys-camel (map csk/->camelCase keys-kebab)]
-    (rename-keys kmap (zipmap keys-kebab keys-camel))))
+; (defn camel-case-keys
+;   [kmap]
+;   (let [keys-kebab (keys kmap)
+;         keys-camel (map csk/->camelCase keys-kebab)]
+;     (rename-keys kmap (zipmap keys-kebab keys-camel))))
 
 ;; Turn language map keys back into strings
 (defn stringify-lang-keys
-  [kmap]
-  (let [stringify-name (update kmap :name stringify-keys)]
-    (update stringify-name :description stringify-keys)))
+  [kmap] (-> kmap
+             (update :name stringify-keys)
+             (update :description stringify-keys)))
 
 ;; Need to use this function instead of s/merge because of restrict-keys in
 ;; xapi-schema function.
@@ -40,7 +40,8 @@
   (s/and (s/keys :req-un [::context])
          (fn [adef]
            (s/valid? :activity/definition
-                     (stringify-lang-keys (camel-case-keys (dissoc adef :context)))))))
+                     (stringify-lang-keys (dissoc adef :context))
+                     #_(stringify-lang-keys (camel-case-keys (dissoc adef :context)))))))
 
 (s/def ::activity
   (s/keys :req-un [::id ::type ::inScheme ::activityDefinition]
