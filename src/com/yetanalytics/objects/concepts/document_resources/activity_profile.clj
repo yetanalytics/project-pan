@@ -12,8 +12,7 @@
 (s/def ::inScheme ::ax/iri)
 (s/def ::prefLabel ::ax/language-map)
 (s/def ::definition ::ax/language-map)
-(s/def ::contentType ::ax/string)
-;; TODO: RFC 2046 valid content types
+(s/def ::contentType ::ax/media-type)
 (s/def ::deprecated ::ax/boolean)
 (s/def ::context ::ax/iri)
 (s/def ::schema ::ax/iri)

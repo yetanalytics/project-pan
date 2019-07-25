@@ -4,6 +4,18 @@
             [com.yetanalytics.axioms :as ax]
             [com.yetanalytics.utils :refer :all]))
 
+;; RFC 2046 media types tests
+
+(deftest test-media-types
+  (testing "RFC 2046 media types"
+    (is (s/valid? ::ax/media-type "application/json"))
+    (is (s/valid? ::ax/media-type "text/plain"))
+    (is (s/valid? ::ax/media-type "video/vnd.youtube.yt"))
+    (is (not (s/valid? ::ax/media-type "application")))
+    (is (not (s/valid? ::ax/media-type "application/json/ld")))
+    (is (not (s/valid? ::ax/media-type "application/this-does-not-exist")))
+    (is (not (s/valid? ::ax/media-type "what the pineapple")))))
+
 ;; JSONPath tests
 
 ;; Basic unit tests
@@ -17,7 +29,6 @@
     (is (not (s/valid? ::ax/json-path "what the pineapple")))))
 
 ;; Test in bulk
-
 (deftest test-jsonpath-dot
   (testing "JSONPath strings with dot child notation"
     (should-satisfy+ ::ax/json-path

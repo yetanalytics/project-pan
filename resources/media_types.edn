@@ -1,5 +1,6 @@
+{
 "application" #{
- "1d-interleaved-parityfec"
+"1d-interleaved-parityfec"
 "3gpdash-qoe-report+xml"
 "3gpp-ims+xml"
 "A2L"
@@ -1749,4 +1750,4 @@
 "vnd.youtube.yt"
 "vnd.vivo"
 "VP8"
-}
+}}

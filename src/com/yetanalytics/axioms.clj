@@ -1,5 +1,6 @@
 (ns com.yetanalytics.axioms
-  (:require [clojure.string :as string]
+  (:require [clojure.edn :as edn]
+            [clojure.string :as string]
             [clojure.spec.alpha :as s]
             [clojure.spec.gen.alpha :as sgen]
             [xapi-schema.spec :as xs]
@@ -7,13 +8,10 @@
 
 ;; Booleans
 ;; (Useless wrapper, but exists for consistency)
-
-
 (s/def ::boolean boolean?)
 
 ;; Arbitrary strings
 ;; By the xAPI-Profile specification, they cannot be empty
-
 (s/def ::string ::xs/string-not-empty)
 ; (s/valid? ::string "")
 ; (s/valid? ::string "Hello World")
@@ -22,8 +20,19 @@
 ;; Timestamps
 (s/def ::timestamp ::xs/timestamp)
 
+(def media-types (edn/read-string (slurp "resources/media_types.edn")))
+
+;; RFC 2046 media types. List of media types can be found at: 
+;; https://www.iana.org/assignments/media-types/media-types.xml
+;; Currently only the five discrete top-level media type values are supported:
+;; application, audio, image, text and video.
+(s/def ::media-type
+  (s/and string?
+         (fn [mt]
+           (let [substrs (string/split mt #"\/" 2)]
+             (contains? (get media-types (first substrs)) (second substrs))))))
+
 ;; Language Maps
-;; Differs from xs/language-map in that empty strings are banned.
 ;; TODO Should revise language maps such that keys like :foo are not counted
 (s/def ::language-map
   (s/map-of (s/or :string ::xs/language-tag :keyword keyword?)
@@ -31,17 +40,16 @@
                   :maybe-empty string?)
             :min-count 1))
 
+;; JSONPath regexes
+(def JSONPathRegEx #"\$((((\.\.?)([^\[\]\.,\s]+|(?=\[)))|(\[\s*(('([^,']|(\\\,)|(\\\'))+'(,\s*('([^,']|(\\\,)|(\\\'))+'))*\s*)|\*)\s*\]))(\[((\d*(,\s*(\d*))*)|\*)\])?)*")
+(def JSONPathSplitRegEx #"\s*\|\s*(?!([^\[]*\]))")
+
 ;; JSONPath strings
 ;; Implementation of the spec is mostly based off of the Jayway implementation
 ;; of JSONPath, particularly handling of special characters and other edge
 ;; cases. The main exception is with the pipe character '|', which, if placed
 ;; before the '$' character separates two JSONPath strings (unless escaped).
-;; See: regexr.com/4fk7v
-
-(def JSONPathRegEx #"\$((((\.\.?)([^\[\]\.,\s]+|(?=\[)))|(\[\s*(('([^,']|(\\\,)|(\\\'))+'(,\s*('([^,']|(\\\,)|(\\\'))+'))*\s*)|\*)\s*\]))(\[((\d*(,\s*(\d*))*)|\*)\])?)*")
-
-(def JSONPathSplitRegEx #"\s*\|\s*(?!([^\[]*\]))")
-
+;; See: regexr.com/4fk7v 
 (s/def ::json-path
   (s/and string?
          (fn [paths]
@@ -51,7 +59,7 @@
 
 ;; JSON Schema
 ;; Currently only draft-07 supported
-
+;; TODO Determine whether to support previous versions
 (defn schema-validate [schema json]
   (try (do (js/validate schema json) true)
        (catch Exception e false)))
