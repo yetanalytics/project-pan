@@ -58,6 +58,14 @@
 ;; In-scheme validation
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(defn normalize-profile
+  [{:keys [versions concepts templates patterns] :as profile}]
+  (-> profile
+      (update :versions (vec versions))
+      (update :concepts (vec concepts))
+      (update :templates (vec templates))
+      (update :patterns (vec patterns))))
+
 ;; Validate all the inSchemes
 (defn in-schemes-spec
   [versions]
@@ -68,14 +76,11 @@
 
 ;; Validate profile
 (defn validate-ids
-  [{:keys [id versions] :as profile}]
-  (let [concepts (get profile :concepts [])
-        templates (get profile :templates [])
-        patterns (get profile :patterns [])
-        ;; All IDs in one collection
-        all-ids (concat [id] (util/only-ids-multiple [versions concepts
-                                                      templates patterns]))])
-  (s/explain-data ::util/distinct-ids (util/count-ids)))
+  [{:keys [id versions concepts templates patterns] :as profile}]
+  (let [;; All IDs in one collection
+        ids (concat [id] (util/only-ids-multiple [versions concepts
+                                                  templates patterns]))]
+    (s/explain-data ::util/distinct-ids (util/count-ids ids))))
 
 ;; Validate profile
 (defn validate-in-schemes
@@ -90,15 +95,14 @@
             (s/explain-data in-schemes? patterns))))
 
 (defn validate-all-ids
-  [profile]
-  (concat (validate-ids profile)
-          (validate-in-schemes profile)))
+  [{:keys [versions concepts templates patterns]} profile]
+  (let [profile (normalize-profile profile)]
+    (concat (validate-ids profile)
+            (validate-in-schemes profile))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; IRI validation (via graphs)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-
 (defn validate-graphs
   ;; Version for one collection (concept graphs only)
   ([create-graph-fn explain-graph-fn coll]
@@ -115,15 +119,21 @@
        (explain-graph-fn (create-graph-fn coll1 coll2))
        id-errors))))
 
+(defn validate-graphs*
+  ([create-graph-fn explain-graph-fn coll]
+   (explain-graph-fn (create-graph-fn coll)))
+  ([create-graph-fn explain-graph-fn coll1 coll2]
+   (explain-graph-fn (create-graph-fn coll1 coll2))))
+
 ;; Validate profile
+
+
 (defn validate-iris
   "Validate all profile IRIs by creating a graph data structure out of the
   Profile. Returns an empty sequence if validation is successful, else a 
   sequence of spec errors if validation fails."
   [{:keys [concepts templates patterns]}]
-  (let [concepts (if-not (some? concepts) [] concepts)
-        templates (if-not (some? templates) [] templates)
-        patterns (if-not (some? patterns) [] patterns)]
+  (let [{:keys [concepts templates patterns]} (normalize-profile profile)]
     (concat (validate-graphs concept/create-concept-graph concept/explain-concept-graph concepts)
             (validate-graphs template/create-template-graph template/explain-template-graph concepts templates)
             (validate-graphs pattern/create-pattern-graph pattern/explain-pattern-graph templates patterns))))

@@ -51,34 +51,6 @@
   (testing "seeAlso property"
     (is (s/valid? ::profile/seeAlso "https://see.also.org/"))))
 
-(deftest id-distinct-test
-  (testing "profile ID MUST be distinct from version IDs"
-    (is (s/valid? ::profile/id-distinct
-                  {:id "https://w3id.org/xapi/catch"
-                   :versions
-                   [{:id "https://w3id.org/xapi/catch/v2"
-                     :generatedAtTime "2017-12-22T22:30:00-07:00"}
-                    {:id "https://w3id.org/xapi/catch/v1"
-                     :generatedAtTime "2017-12-22T22:30:00-07:00"}]}))
-    (is (not (s/valid? ::profile/id-distinct
-                       {:id "https://w3id.org/xapi/catch"
-                        :versions
-                        [{:id "https://w3id.org/xapi/catch"
-                          :generatedAtTime "2017-12-22T22:30:00-07:00"}
-                         {:id "https://w3id.org/xapi/catch/v1"
-                          :generatedAtTime "2017-12-22T22:30:00-07:00"}]})))))
-
-(deftest in-scheme-test
-  (testing "object inScheme MUST be a valid Profile version"
-    (is (s/valid? ::profile/valid-in-schemes
-                  [{:object {:inScheme "https://foo.org/v1"}
-                    :vid-set #{"https://foo.org/v1" "https://foo.org/v2"}}
-                   {:object {:inScheme "https://foo.org/v2"}
-                    :vid-set #{"https://foo.org/v1" "https://foo.org/v2"}}]))
-    (is (not (s/valid? ::profile/valid-in-schemes
-                       [{:object {:inScheme "https://foo.org/v0"}
-                         :vid-set #{"https://foo.org/v1" "https://foo.org/v2"}}])))))
-
 (deftest profile-test
   (testing "top-level profile properties"
     (is (s/valid? ::profile/profile
@@ -95,11 +67,98 @@
                    :conformsTo "https://w3id.org/xapi/profiles#1.0"
                    :prefLabel {"en" "Catch"}}))))
 
+;; Test IDs
+
+(deftest validate-ids-test
+  (testing "profile ID MUST be distinct from version IDs"
+    (is (nil? (profile/validate-ids
+               {:id "https://w3id.org/xapi/catch"
+                :versions [{:id "https://w3id.org/xapi/catch/v2"}
+                           {:id "https://w3id.org/xapi/catch/v1"}]})))
+    (is (some? (profile/validate-ids
+                {:id "https://w3id.org/xapi/catch"
+                 :versions [{:id "https://w3id.org/xapi/catch"}
+                            {:id "https://w3id.org/xapi/catch/v1"}]}))))
+  (testing "Every Profile version ID MUST be distinct"
+    (is (some? (profile/validate-ids
+                {:id "https://w3id.org/xapi/catch"
+                 :versions [{:id "https://w3id.org/xapi/catch/v1"}
+                            {:id "https://w3id.org/xapi/catch/v1"}]}))))
+  (testing "Concept IDs MUST be distinct"
+    (is (nil? (profile/validate-ids
+               {:id "https://w3id.org/xapi/catch"
+                :concepts [{:id "https://w3id.org/xapi/catch/verb#1"
+                            :type "Verb"}
+                           {:id "https://w3id.org/xapi/catch/verb#2"
+                            :type "Verb"}]})))
+    (is (some? (profile/validate-ids
+                {:id "https://w3id.org/xapi/catch"
+                 :concepts [{:id "https://w3id.org/xapi/catch/verb#duplicate"
+                             :type "Verb"}
+                            {:id "https://w3id.org/xapi/catch/verb#duplicate"
+                             :type "Verb"}]}))))
+  (testing "Statement Template IDs MUST be distinct"
+    (is (nil? (profile/validate-ids
+               {:id "https://w3id.org/xapi/catch"
+                :templates [{:id "https://w3id.org/xapi/catch/template#1"
+                             :type "StatementTemplate"}
+                            {:id "https://w3id.org/xapi/catch/template#2"
+                             :type "StatementTemplate"}]})))
+    (is (some? (profile/validate-ids
+                {:id "https://w3id.org/xapi/catch"
+                 :templates [{:id "https://w3id.org/xapi/catch/template#dup"
+                              :type "StatementTemplate"}
+                             {:id "https://w3id.org/xapi/catch/template#dup"
+                              :type "StatementTemplate"}]}))))
+  (testing "Pattern IDs MUST be distinct"
+    (is (nil? (profile/validate-ids
+               {:id "https://w3id.org/xapi/catch"
+                :patterns [{:id "https://w3id.org/xapi/catch/pattern#1"
+                            :type "Pattern"}
+                           {:id "https://w3id.org/xapi/catch/pattern#2"
+                            :type "Pattern"}]})))
+    (is (some? (profile/validate-ids
+                {:id "https://w3id.org/xapi/catch"
+                 :patterns [{:id "https://w3id.org/xapi/catch/pattern#dup"
+                             :type "Pattern"}
+                            {:id "https://w3id.org/xapi/catch/pattern#dup"
+                             :type "Pattern"}]})))))
+
+(deftest in-scheme-test
+  (testing "object inScheme MUST be a valid Profile version"
+    (is (empty? (profile/validate-in-schemes
+                 {:versions [{:id "https://w3id.org/catch/v1"}
+                             {:id "https://w3id.org/catch/v2"}]
+                  :concepts [{:id "https://w3id.org/catch/some-verb"
+                              :inScheme "https://w3id.org/catch/v1"}]
+                  :templates [{:id "https://w3id.org/catch/some-template"
+                               :inScheme "https://w3id.org/catch/v1"}]
+                  :patterns [{:id "https://w3id.org/catch/some-pattern"
+                              :inScheme "https://w3id.org/catch/v2"}]})))
+    (is (some? (profile/validate-in-schemes
+                {:versions [{:id "https://w3id.org/catch/v1"}
+                            {:id "https://w3id.org/catch/v2"}]
+                 :concepts [{:id "https://w3id.org/catch/some-verb"
+                             :inScheme "https://w3id.org/catch/v3"}]
+                 :templates [] :patterns []})))
+    (is (some? (profile/validate-in-schemes
+                {:versions [{:id "https://w3id.org/catch/v1"}
+                            {:id "https://w3id.org/catch/v2"}]
+                 :templates [{:id "https://w3id.org/catch/some-template"
+                              :inScheme "https://w3id.org/catch/v3"}]
+                 :concepts [] :patterns []})))
+    (is (some? (profile/validate-in-schemes
+                {:versions [{:id "https://w3id.org/catch/v1"}
+                            {:id "https://w3id.org/catch/v2"}]
+                 :patterns [{:id "https://w3id.org/catch/some-pattern"
+                             :inScheme "https://w3id.org/catch/v3"}]
+                 :concepts [] :templates []})))))
+
 (def will-profile
   (util/convert-json (slurp "resources/sample_profiles/will-profile.json") ""))
 
-(deftest profile-integration-test
-  (testing "performing intergration testing using Will's CATCH profile"
-    (is (nil? (profile/validate will-profile)))
-    (is (empty? (profile/validate-in-schemes will-profile)))
-    (is (empty? (profile/validate-context will-profile)))))
+#_(deftest profile-integration-test
+    (testing "performing intergration testing using Will's CATCH profile"
+      (is (nil? (profile/validate will-profile)))
+      (is (empty? (profile/validate-in-schemes will-profile)))
+      (is (empty? (profile/validate-context will-profile)))))

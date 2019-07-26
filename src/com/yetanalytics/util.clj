@@ -44,7 +44,7 @@
 
 (s/def ::distinct-ids
   (s/map-of (s/or :iri ::ax/iri :irl ::ax/irl :uri ::ax/uri :url ::ax/url)
-            #(= % 1)))
+            one?))
 
 ;; In Concepts that can contain a schema or an inlineSchema (ie. IRI or string)
 ;; it MUST NOT contain both
