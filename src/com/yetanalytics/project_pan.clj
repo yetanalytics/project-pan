@@ -1,8 +1,5 @@
 (ns com.yetanalytics.project-pan
-  (:require [clojure.string :as string]
-            [camel-snake-kebab.core :as kebab]
-            [cheshire.core :as cheshire]
-            [com.yetanalytics.util :as util]
+  (:require [com.yetanalytics.util :as util]
             [com.yetanalytics.profile :as profile]))
 
 (defn validate-profile
@@ -11,31 +8,42 @@
   a clojure spec error trace if the Profile is invalid. In addition, the
   function accepts a number of arguments for different levels of validation
   strictness.
-
-    No args - Weak validation; check only the types of properties and simple 
+    (no args) - Weak validation; check only the types of properties and simple 
   syntax of all Profile objects.
-    :in-scheme - Validate that all instances of the inScheme property are
-  valid, ie. they all correspond to a valid Profile version ID.
-    :profile-iris - Validate that all IRI-valued properties (e.g. broader and
-  narrower in Concepts, determining properties in Templates, etc.) link to
-  valid Profile objects.
-    :at-context - Validate that all instances of @context resolve to valid
+    :ids - Validate the correctness of all object and versioning IDs (the id
+  and inScheme properties). Validate that all IDs are distinct and that all
+  inScheme values correspond to valid Profile version IDs.
+    :relations - Validate that all relations between Profile objects are valid.
+  These relations are given by IRIs and include the following:
+    - the broader, narrower, related, broadMatch, narrowMatch, relatedMatch and
+      exactMatch properties for Verbs, Activity Types and Attachment Usage 
+      Types. 
+    - the recommendedActivityTypes property for Activity Extensions 
+    - the recommendedVerbs property for Context and Result Extensions 
+    - Determining Properties, objectStatementRefTemplate property and the
+    contextStatementRefTemplate properties for Statement Templates.
+    - sequence, alternates, optional, oneOrMore and zeroOrMore properties for
+      Patterns.
+    :contexts - Validate that all instances of @context resolve to valid
   JSON-LD contexts and that they allow all properties to expand out to absolute
-  IRIs during JSON-LD processing.
+  IRIs during JSON-LD processing. The @context property is always found in the
+  Profile metadata and in Activity Definitions, though they can also be found
+  in Extensions for said Activity Definitions.
     :external-iris - Allow the profile to access external links, either by
   executing SPARQL queries on a RDF triple store or by executing HTTP requests.
+  This is useful when :relations and :contexts are set to true.
     :no-short - Allow the validator to collect all errors, instead of having to
   terminate on the first error encountered."
   ;; TODO: Implement :external-iris and :no-short
-  [profile & {:keys [in-scheme profile-iris at-context]
-              :or {in-scheme false profile-iris false at-context false}}]
+  [profile & {:keys [ids relations contexts]
+              :or {ids false relations false contexts false}}]
   (let [profile (if (string? profile)
                   (util/convert-json profile "") profile)]
     (let [errors
           (cond-> (seq (profile/validate profile))
-            (true? in-scheme) (concat (profile/validate-in-schemes profile))
-            (true? profile-iris) (concat (profile/validate-iris profile))
-            (true? at-context) (concat (profile/validate-context profile)))]
+            (true? ids) (concat (profile/validate-in-schemes profile))
+            (true? profiles) (concat (profile/validate-iris profile))
+            (true? contexts) (concat (profile/validate-context profile)))]
       (if (empty? errors)
         true
         (vec errors))))) ;; TODO Log errors to a logger
