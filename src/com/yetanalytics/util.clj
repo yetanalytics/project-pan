@@ -3,14 +3,16 @@
             [clojure.string :as string]
             [camel-snake-kebab.core :as kebab]
             [cheshire.core :as cheshire]
-            [ubergraph.core :as uber]))
+            [ubergraph.core :as uber]
+            [com.yetanalytics.axioms :as ax]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Generic functions and specs 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+
 (defn only-ids
-  "Return a collection of IDs from a map of objects."
+  "Return a collection of IDs from a collection of objects."
   [obj-coll] (mapv (fn [{:keys [id]}] id) obj-coll))
 
 (defn id-map [map-with-ids]
@@ -22,6 +24,19 @@
   arguments."
   [obj-vec args]
   (mapv #(conj args [:object %]) obj-vec))
+
+(defn count-ids
+  "Count the number of ID instances by creating a map between IDs and their
+  respective counts. (Ideally theys should all be one, as IDs MUST be unique
+  by definition.)"
+  [ids-coll]
+  (reduce (fn [accum id]
+            (update accum k #(if (nil? %) 1 (inc %)))) {} ids-coll))
+
+;; IDs MUST be distinct.
+(s/def ::distinct-ids
+  (s/map-of (s/or :iri ::ax/iri :irl ::ax/irl :uri ::ax/uri :url ::ax/url)
+            #(= 1)))
 
 ;; In Concepts that can contain a schema or an inlineSchema (ie. IRI or string)
 ;; it MUST NOT contain both

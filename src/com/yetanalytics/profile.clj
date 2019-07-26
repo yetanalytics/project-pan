@@ -15,7 +15,6 @@
 ;; Profile 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-
 (s/def ::id ::ax/iri)
 (s/def ::type #{"Profile"})
 (s/def ::conformsTo ::ax/uri)
@@ -43,8 +42,7 @@
            :opt-un [::see-also
                     ::concept/concepts
                     ::template/templates
-                    ::pattern/patterns])
-   ::id-distinct))
+                    ::pattern/patterns])))
 
 ; (defn validate
 ;   "Syntax-only validation.
@@ -60,12 +58,24 @@
 ;; In-scheme validation
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; Validate an individual inScheme
-(s/def ::valid-in-scheme
-  (fn [{:keys [object vid-set]}] (contains? vid-set (:inScheme object))))
-
 ;; Validate all the inSchemes
-(s/def ::valid-in-schemes (s/coll-of ::valid-in-scheme))
+(defn in-schemes-spec
+  [versions]
+  (let [version-ids (-> versions util/only-ids set)
+        in-scheme? (fn [{:keys [inScheme]}]
+                     (contains? version-ids inScheme))]
+    (s/coll-of in-scheme?)))
+
+;; Validate profile
+(defn validate-ids
+  [{:keys [id versions] :as profile}]
+  (let [concepts (get profile :concepts [])
+        templates (get profile :templates [])
+        patterns (get profile :patterns [])
+        ;; All IDs in one collection
+        all-ids (concat [id] (util/only-ids-multiple [versions concepts
+                                                      templates patterns]))])
+  (s/explain-data ::util/distinct-ids (util/count-ids)))
 
 ;; Validate profile
 (defn validate-in-schemes
@@ -74,17 +84,36 @@
   Returns an empty sequence if validation is successful, else a sequence of
   spec errors if validation fails."
   [{:keys [versions concepts templates patterns] :as profile}]
-  (let [vid-set (versions/version-set versions)
-        c-vids (util/combine-args concepts {:vid-set vid-set})
-        t-vids (util/combine-args templates {:vid-set vid-set})
-        p-vids (util/combine-args patterns {:vid-set vid-set})]
-    (concat (s/explain-data ::valid-in-schemes c-vids)
-            (s/explain-data ::valid-in-schemes t-vids)
-            (s/explain-data ::valid-in-schemes p-vids))))
+  (let [in-schemes? (in-schemes-spec versions)]
+    (concat (s/explain-data in-schemes? concepts)
+            (s/explain-data in-schemes? templates)
+            (s/explain-data in-schemes? patterns))))
+
+(defn validate-all-ids
+  [profile]
+  (concat (validate-ids profile)
+          (validate-in-schemes profile)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; IRI validation (via graphs)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+(defn validate-graphs
+  ;; Version for one collection (concept graphs only)
+  ([create-graph-fn explain-graph-fn coll]
+   (let [id-counts (-> coll util/only-ids util/count-ids)
+         id-errors (s/explain-data ::util/distinct-ids id-counts)]
+     (if (empty? id-errors)
+       (-> coll create-graph-fn explain-graph-fn)
+       id-errors)))
+  ;; Version for two collections (template and pattern graphs)
+  ([create-graph-fn explain-graph-fn coll1 coll2]
+   (let [id-counts (-> [coll1 coll2] util/only-ids-multiple util/count-ids)
+         id-errors (s/explain-data ::util/distinct-ids id-counts)]
+     (if (empty? id-errors)
+       (explain-graph-fn (create-graph-fn coll1 coll2))
+       id-errors))))
 
 ;; Validate profile
 (defn validate-iris
@@ -94,20 +123,18 @@
   [{:keys [concepts templates patterns]}]
   (let [concepts (if-not (some? concepts) [] concepts)
         templates (if-not (some? templates) [] templates)
-        patterns (if-not (some? patterns) [] patterns)
-        ;; graphs 
-        cgraph (concept/create-concept-graph concepts)
-        tgraph (template/create-template-graph concepts templates)
-        pgraph (pattern/create-pattern-graph templates patterns)]
-    (concat (concept/explain-concept-graph cgraph)
-            (template/explain-template-graph tgraph)
-            (pattern/explain-pattern-graph pgraph))))
+        patterns (if-not (some? patterns) [] patterns)]
+    (concat (validate-graphs concept/create-concept-graph concept/explain-concept-graph concepts)
+            (validate-graphs template/create-template-graph template/explain-template-graph concepts templates)
+            (validate-graphs pattern/create-pattern-graph pattern/explain-pattern-graph templates patterns))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; @context validation 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Validate profile
+
+
 (defn validate-context
   [profile]
   (if (context/validate-all-contexts profile)
