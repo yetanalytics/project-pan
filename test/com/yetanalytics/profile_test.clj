@@ -205,6 +205,7 @@
 (deftest profile-integration-test
   (testing "performing intergration testing using Will's CATCH profile"
     (is (nil? (profile/validate will-profile)))
-    #_(is (empty? (profile/validate-all-ids will-profile)))
-    #_(is (empty? (profile/validate-in-schemes will-profile)))
+    (is (empty? (profile/validate-all-ids will-profile)))
+    (is (empty? (profile/validate-in-schemes will-profile)))
+    (is (empty? (profile/validate-iris will-profile)))
     (is (empty? (profile/validate-context will-profile)))))

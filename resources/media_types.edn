@@ -1,3 +1,5 @@
+;; Taken from https://www.iana.org/assignments/media-types/media-types.xml
+;; Valid as of July 22, 2019
 {
 "application" #{
 "1d-interleaved-parityfec"

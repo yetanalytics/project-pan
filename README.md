@@ -35,6 +35,8 @@ from the non-core namespaces.
 - Identifiers that link to external profiles (need triple store)
 - Interface to outside world
 - "Collecting" all errors thrown by the validator
+- Logging of errors
+- Handling non-JSON-LD Profiles (eg. XML, Turtle)
 - Demo of the completed product
 
 ## License
