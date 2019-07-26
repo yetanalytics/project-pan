@@ -39,10 +39,12 @@
               :or {ids false relations false contexts false}}]
   (let [profile (if (string? profile)
                   (util/convert-json profile "") profile)]
+    ;; FIXME Change such that subsequent validations can only happen if basic
+    ;; validation is passed (or else you will be failing tests left and right)
     (let [errors
           (cond-> (seq (profile/validate profile))
-            (true? ids) (concat (profile/validate-in-schemes profile))
-            (true? profiles) (concat (profile/validate-iris profile))
+            (true? ids) (concat (profile/validate-all-ids profile))
+            (true? relations) (concat (profile/validate-iris profile))
             (true? contexts) (concat (profile/validate-context profile)))]
       (if (empty? errors)
         true

@@ -58,13 +58,16 @@
 ;; In-scheme validation
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(defn normalize-nil [value]
+  (if (nil? value) [] value))
+
 (defn normalize-profile
-  [{:keys [versions concepts templates patterns] :as profile}]
+  [profile]
   (-> profile
-      (update :versions (vec versions))
-      (update :concepts (vec concepts))
-      (update :templates (vec templates))
-      (update :patterns (vec patterns))))
+      (update :versions normalize-nil)
+      (update :concepts normalize-nil)
+      (update :templates normalize-nil)
+      (update :patterns normalize-nil)))
 
 ;; Validate all the inSchemes
 (defn in-schemes-spec
@@ -77,8 +80,7 @@
 ;; Validate profile
 (defn validate-ids
   [{:keys [id versions concepts templates patterns] :as profile}]
-  (let [;; All IDs in one collection
-        ids (concat [id] (util/only-ids-multiple [versions concepts
+  (let [ids (concat [id] (util/only-ids-multiple [versions concepts
                                                   templates patterns]))]
     (s/explain-data ::util/distinct-ids (util/count-ids ids))))
 
@@ -95,7 +97,7 @@
             (s/explain-data in-schemes? patterns))))
 
 (defn validate-all-ids
-  [{:keys [versions concepts templates patterns]} profile]
+  [profile]
   (let [profile (normalize-profile profile)]
     (concat (validate-ids profile)
             (validate-in-schemes profile))))
@@ -103,40 +105,33 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; IRI validation (via graphs)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn validate-graphs
-  ;; Version for one collection (concept graphs only)
-  ([create-graph-fn explain-graph-fn coll]
-   (let [id-counts (-> coll util/only-ids util/count-ids)
-         id-errors (s/explain-data ::util/distinct-ids id-counts)]
-     (if (empty? id-errors)
-       (-> coll create-graph-fn explain-graph-fn)
-       id-errors)))
-  ;; Version for two collections (template and pattern graphs)
-  ([create-graph-fn explain-graph-fn coll1 coll2]
-   (let [id-counts (-> [coll1 coll2] util/only-ids-multiple util/count-ids)
-         id-errors (s/explain-data ::util/distinct-ids id-counts)]
-     (if (empty? id-errors)
-       (explain-graph-fn (create-graph-fn coll1 coll2))
-       id-errors))))
 
-(defn validate-graphs*
-  ([create-graph-fn explain-graph-fn coll]
-   (explain-graph-fn (create-graph-fn coll)))
-  ([create-graph-fn explain-graph-fn coll1 coll2]
-   (explain-graph-fn (create-graph-fn coll1 coll2))))
+(defn validate-graphs
+  [create-graph-fn explain-graph-fn coll1 & [coll2]]
+  (let [id-errors (->> (concat coll1 coll2) util/only-ids util/count-ids
+                       (s/explain-data ::util/distinct-ids))]
+    (if (empty? id-errors)
+      (if (some? coll2)
+        (explain-graph-fn (create-graph-fn coll1 coll2))
+        (explain-graph-fn (create-graph-fn coll1)))
+      (throw (ex-info "Cannot create graph due to duplicate IDs!"
+                      id-errors)))))
 
 ;; Validate profile
-
-
+;; TODO Add try-catch blocks to each validate-graphs line
 (defn validate-iris
   "Validate all profile IRIs by creating a graph data structure out of the
   Profile. Returns an empty sequence if validation is successful, else a 
   sequence of spec errors if validation fails."
-  [{:keys [concepts templates patterns]}]
-  (let [{:keys [concepts templates patterns]} (normalize-profile profile)]
-    (concat (validate-graphs concept/create-concept-graph concept/explain-concept-graph concepts)
-            (validate-graphs template/create-template-graph template/explain-template-graph concepts templates)
-            (validate-graphs pattern/create-pattern-graph pattern/explain-pattern-graph templates patterns))))
+  [profile]
+  (let [{:keys [concepts templates patterns] :as profile}
+        (normalize-profile profile)]
+    (concat (validate-graphs concept/create-graph concept/explain-graph
+                             concepts)
+            (validate-graphs template/create-graph template/explain-graph
+                             concepts templates)
+            (validate-graphs pattern/create-graph pattern/explain-graph
+                             templates patterns))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; @context validation 

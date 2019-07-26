@@ -267,7 +267,7 @@
     :inScheme "https://foo.org/v1"
     :objectStatementRefTemplate ["https://foo.org/template1"]}])
 
-(def tgraph (template/create-template-graph ex-concepts ex-templates))
+(def tgraph (template/create-graph ex-concepts ex-templates))
 
 (deftest graph-test
   (testing "graph properties"

@@ -67,7 +67,25 @@
                    :conformsTo "https://w3id.org/xapi/profiles#1.0"
                    :prefLabel {"en" "Catch"}}))))
 
+(deftest normalize-profile-test
+  (testing "normalize-profile function"
+    (is (= (profile/normalize-profile {:id "https://w3id.org/xapi/catch"})
+           {:id "https://w3id.org/xapi/catch"
+            :versions [] :concepts [] :templates [] :patterns []}))
+    (is (= (profile/normalize-profile
+            {:id "https://foo.org"
+             :versions [{:id "https://foo.org/v1"}]
+             :concepts [{:id "https://foo.org/verb"}]
+             :templates [{:id "https://foo.org/template"}]
+             :patterns [{:id "https://foo.org/patterns"}]})
+           {:id "https://foo.org"
+            :versions [{:id "https://foo.org/v1"}]
+            :concepts [{:id "https://foo.org/verb"}]
+            :templates [{:id "https://foo.org/template"}]
+            :patterns [{:id "https://foo.org/patterns"}]}))))
+
 ;; Test IDs
+
 
 (deftest validate-ids-test
   (testing "profile ID MUST be distinct from version IDs"
@@ -154,11 +172,39 @@
                              :inScheme "https://w3id.org/catch/v3"}]
                  :concepts [] :templates []})))))
 
+(deftest validate-all-ids-test
+  (testing "validate-all-ids function"
+    (is (empty? (profile/validate-all-ids
+                 {:id "https://w3id.org/xapi/catch"
+                  :versions [{:id "https://w3id.org/catch/v1"}
+                             {:id "https://w3id.org/catch/v2"}]
+                  :concepts [{:id "https://w3id.org/catch/some-verb"
+                              :inScheme "https://w3id.org/catch/v1"}]
+                  :templates [{:id "https://w3id.org/catch/some-template"
+                               :inScheme "https://w3id.org/catch/v1"}]
+                  :patterns [{:id "https://w3id.org/catch/some-pattern"
+                              :inScheme "https://w3id.org/catch/v2"}]})))))
+
+;; Graph testing
+(deftest validate-iris
+  (is (empty? (profile/validate-iris
+               {:concepts [{:id "https://foo.org/verb1"
+                            :broader ["https://foo.org/verb2"]}
+                           {:id "https://foo.org/verb2"}]
+                :templates [{:id "https://foo.org/template"
+                             :verb "https://foo.org/verb1"}]
+                :patterns [{:id "https://foo.org/pattern"
+                            :optional "https://foo.org/template"}]})))
+  (is (try (profile/validate-iris {:concepts [{:id "https://foo.org/dup"}
+                                              {:id "https://foo.org/dup"}]})
+           (catch Exception e true))))
+
 (def will-profile
   (util/convert-json (slurp "resources/sample_profiles/will-profile.json") ""))
 
-#_(deftest profile-integration-test
-    (testing "performing intergration testing using Will's CATCH profile"
-      (is (nil? (profile/validate will-profile)))
-      (is (empty? (profile/validate-in-schemes will-profile)))
-      (is (empty? (profile/validate-context will-profile)))))
+(deftest profile-integration-test
+  (testing "performing intergration testing using Will's CATCH profile"
+    (is (nil? (profile/validate will-profile)))
+    #_(is (empty? (profile/validate-all-ids will-profile)))
+    #_(is (empty? (profile/validate-in-schemes will-profile)))
+    (is (empty? (profile/validate-context will-profile)))))

@@ -100,7 +100,7 @@
                          contextStatementRefTemplate)))))
 
 ;; Create a template graph from its constitutent concepts and templates
-(defn create-template-graph [concepts templates]
+(defn create-graph [concepts templates]
   (let [tgraph (uber/digraph)
         ;; Nodes
         cnodes (mapv (partial util/node-with-attrs) concepts)
@@ -200,7 +200,7 @@
 (s/def ::template-graph
   (fn [tgraph] (s/valid? ::valid-edges (get-edges tgraph))))
 
-(defn explain-template-graph [tgraph]
+(defn explain-graph [tgraph]
   (s/explain-data ::valid-edges (get-edges tgraph)))
 
 ;; TODO Fix stuff in the rules

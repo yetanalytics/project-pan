@@ -40,7 +40,7 @@
 ;; Graph creation functions
 
 ;; Create a ubergraph digraph out of the vector of concepts
-(defn create-concept-graph [concepts]
+(defn create-graph [concepts]
   (let [cgraph (uber/digraph)
         cnodes (mapv (partial util/node-with-attrs) concepts)
         cedges (util/collect-edges
@@ -118,5 +118,5 @@
 (s/def ::concept-graph
   (fn [cgraph] (s/valid? ::valid-edges (get-edges cgraph))))
 
-(defn explain-concept-graph [cgraph]
+(defn explain-graph [cgraph]
   (s/explain-data ::valid-edges (get-edges cgraph)))

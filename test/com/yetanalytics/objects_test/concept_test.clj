@@ -98,7 +98,7 @@
     :inScheme "https://foo.org/v1"
     :narrower ["https://foo.org/aut1"]}])
 
-(def cgraph (concept/create-concept-graph ex-concepts))
+(def cgraph (concept/create-graph ex-concepts))
 
 (deftest graph-test
   (testing "Graph properties"

@@ -315,7 +315,7 @@
     :inScheme "https://foo.org/v1" :primary true
     :zeroOrMore {:id "https://foo.org/template5"}}])
 
-(def pgraph (pattern/create-pattern-graph ex-templates ex-patterns))
+(def pgraph (pattern/create-graph ex-templates ex-patterns))
 
 (deftest graph-test
   (testing "Pattern graph should satisfy various properties"

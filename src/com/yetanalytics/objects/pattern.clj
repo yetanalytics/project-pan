@@ -120,7 +120,7 @@
     (vector id attrs)))
 
 ;; Create a pattern graph from its constitutent templates and patterns
-(defn create-pattern-graph [templates patterns]
+(defn create-graph [templates patterns]
   (let [pgraph (uber/digraph)
         ;; Nodes
         tnodes (mapv (partial util/node-with-attrs) templates)
@@ -206,7 +206,7 @@
   (fn [pgraph] (and (s/valid? ::valid-edges (get-edges pgraph))
                     (s/valid? ::acyclic-graph pgraph))))
 
-(defn explain-pattern-graph [pgraph]
+(defn explain-graph [pgraph]
   (concat (s/explain-data ::valid-edges (get-edges pgraph))
           (s/explain-data ::acyclic-graph pgraph)))
 
