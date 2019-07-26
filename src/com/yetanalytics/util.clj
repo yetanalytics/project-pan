@@ -15,15 +15,21 @@
   "Return a collection of IDs from a collection of objects."
   [obj-coll] (mapv (fn [{:keys [id]}] id) obj-coll))
 
-(defn id-map [map-with-ids]
-  "Create a map of IDs to the objects that they identify."
-  (dissoc (zipmap (only-ids map-with-ids) map-with-ids) nil))
+(defn only-ids-multiple
+  "Return a collection of all IDs from multiple collections of objects"
+  [obj-colls]
+  (flatten (mapv only-ids obj-colls)))
 
-(defn combine-args
-  "Return a vector of maps that each include an object and additional
+#_(defn id-map
+    "Create a map of IDs to the objects that they identify."
+    [map-with-ids]
+    (dissoc (zipmap (only-ids map-with-ids) map-with-ids) nil))
+
+#_(defn combine-args
+    "Return a vector of maps that each include an object and additional
   arguments."
-  [obj-vec args]
-  (mapv #(conj args [:object %]) obj-vec))
+    [obj-vec args]
+    (mapv #(conj args [:object %]) obj-vec))
 
 (defn count-ids
   "Count the number of ID instances by creating a map between IDs and their
@@ -31,12 +37,14 @@
   by definition.)"
   [ids-coll]
   (reduce (fn [accum id]
-            (update accum k #(if (nil? %) 1 (inc %)))) {} ids-coll))
+            (update accum id #(if (nil? %) 1 (inc %)))) {} ids-coll))
 
 ;; IDs MUST be distinct.
+(defn one? [n] (= 1 n))
+
 (s/def ::distinct-ids
   (s/map-of (s/or :iri ::ax/iri :irl ::ax/irl :uri ::ax/uri :url ::ax/url)
-            #(= 1)))
+            #(= % 1)))
 
 ;; In Concepts that can contain a schema or an inlineSchema (ie. IRI or string)
 ;; it MUST NOT contain both
