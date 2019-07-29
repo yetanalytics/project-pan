@@ -125,15 +125,12 @@
         ;; Nodes
         tnodes (mapv (partial util/node-with-attrs) templates)
         pnodes (mapv (partial util/node-with-attrs) patterns)
-        ;; Edges
-        tedges (util/collect-edges
-                (mapv (partial util/edges-with-attrs) templates))
+        ;; Edges 
         pedges (util/collect-edges
                 (mapv (partial util/edges-with-attrs) patterns))]
     (-> pgraph
         (uber/add-nodes-with-attrs* tnodes)
         (uber/add-nodes-with-attrs* pnodes)
-        (uber/add-directed-edges* tedges)
         (uber/add-directed-edges* pedges))))
 
 ;; Dissassociate a graph into its edges, in the form of attribute maps

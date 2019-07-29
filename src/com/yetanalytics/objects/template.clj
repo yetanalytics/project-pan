@@ -106,14 +106,11 @@
         cnodes (mapv (partial util/node-with-attrs) concepts)
         tnodes (mapv (partial util/node-with-attrs) templates)
         ;; Edges
-        cedges (util/collect-edges
-                (mapv (partial util/edges-with-attrs) concepts))
         tedges (util/collect-edges
                 (mapv (partial util/edges-with-attrs) templates))]
     (-> tgraph
         (uber/add-nodes-with-attrs* cnodes)
         (uber/add-nodes-with-attrs* tnodes)
-        (uber/add-directed-edges* cedges)
         (uber/add-directed-edges* tedges))))
 
 ;; Dissassociate a graph into its edges, in the form of attribute maps
@@ -191,6 +188,8 @@
        (#{"StatementTemplate"} dest-type)
        (= src-version dest-version)))
 
+;; If the source object is a Statement Template, then it did not satisfy any
+;; of the other properties so we return false.
 (defmethod valid-edge? :default [_] false)
 
 (s/def ::valid-edge valid-edge?)

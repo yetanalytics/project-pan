@@ -26,6 +26,10 @@ from the non-core namespaces.
     - Language Maps
     - Arrays of axioms
 - Basic syntax validation
+    - Profile metadata
+    - Concepts
+    - Statement Templates
+    - Patterns
 - In-profile identifier links
 - at-context validation
 

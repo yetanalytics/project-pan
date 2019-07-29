@@ -730,7 +730,6 @@
       "contextGroupingActivityType": [
         "https://w3id.org/xapi/catch/activitytypes/domain"
       ],
-      "verb": "http://adlnet.gov/expapi/verbs/scored",
       "id": "https://w3id.org/xapi/catch/templates#score-rubric",
       "contextParentActivityType": [
         "https://w3id.org/xapi/catch/activitytypes/competency"
@@ -1353,7 +1352,6 @@
       "contextGroupingActivityType": [
         "https://w3id.org/xapi/catch/activitytypes/domain"
       ],
-      "verb": "http://adlnet.gov/expapi/verbs/completed",
       "id": "https://w3id.org/xapi/catch/templates#activity-completion",
       "contextParentActivityType": [
         "https://w3id.org/xapi/catch/activitytypes/competency"
@@ -1418,7 +1416,6 @@
     },
     {
       "objectActivityType": "https://w3id.org/xapi/catch/activitytypes/competency",
-      "verb": "http://adlnet.gov/expapi/verbs/completed",
       "id": "https://w3id.org/xapi/catch/templates#competency-completion",
       "contextParentActivityType": [
         "https://w3id.org/xapi/catch/activitytypes/domain"
