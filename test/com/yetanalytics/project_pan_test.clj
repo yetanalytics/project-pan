@@ -11,7 +11,6 @@
 (def dod-profile (slurp "resources/sample_profiles/dod-isd.json"))
 (def scorm-profile (slurp "resources/sample_profiles/scorm.json"))
 
-(pprint/pprint (validate-profile will-profile-red :relations true))
 (deftest will-profile-integration
   (testing "Integration test of Will's CATCH profile"
     (is (validate-profile will-profile))
