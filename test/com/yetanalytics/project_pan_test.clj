@@ -17,7 +17,7 @@
   (testing "Integration test of Will's CATCH profile"
     (is (validate-profile will-profile))
     (is (validate-profile will-profile :ids true))
-    #_(is (validate-profile will-profile-red :relations true))
+    (is (validate-profile will-profile-red :relations true))
     (is (validate-profile will-profile :contexts true))))
 
 (deftest dod-profile-integration

@@ -200,7 +200,7 @@
            (catch Exception e true))))
 
 (def will-profile
-  (util/convert-json (slurp "resources/sample_profiles/will-profile.json") ""))
+  (util/convert-json (slurp "resources/sample_profiles/will-profile-reduced.json") ""))
 
 (deftest profile-integration-test
   (testing "performing intergration testing using Will's CATCH profile"
