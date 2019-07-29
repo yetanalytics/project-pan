@@ -3,6 +3,6 @@
 clean:
 	rm -rf target
 
-test: clean
+ci: clean
 	clojure -A:test:runner
 
