@@ -32,6 +32,17 @@
       }
     },
     {
+      "id": "https://w3id.org/xapi/catch/activitytypes/assessment",
+      "type": "ActivityType",
+      "inScheme": "https://w3id.org/xapi/catch/v1",
+      "prefLabel": {
+        "en": "Assessment"
+      },
+      "definition": {
+        "en": "An assessment (such as a quiz or an exam)."
+      }
+    },
+    {
       "id": "https://w3id.org/xapi/catch/activities/domain/planning-and-preparation",
       "type": "Activity",
       "inScheme": "https://w3id.org/xapi/catch/v1",
@@ -282,6 +293,28 @@
       },
       "definition": {
         "en": "to complete the process of viewing, reading and optionally reflecting on a article within the catch application"
+      }
+    },
+    {
+      "id": "https://w3id.org/xapi/catch/verbs/notified",
+      "type": "Verb",
+      "inScheme": "https://w3id.org/xapi/catch/v1",
+      "prefLabel": {
+        "en": "notified"
+      },
+      "definition": {
+        "en": "to notify someone or something."
+      }
+    },
+    {
+      "id": "https://w3id.org/xapi/catch/verbs/updated",
+      "type": "Verb",
+      "inScheme": "https://w3id.org/xapi/catch/v1",
+      "prefLabel": {
+        "en": "updated"
+      },
+      "definition": {
+        "en": "to update something."
       }
     },
     {
@@ -700,6 +733,28 @@
       },
       "definition": {
         "en": "Documents which provide aditional information about the lesson plan. Can be instructions for lesson plan execution, demonstrating implementation or any other documents related to the lesson plan"
+      }
+    },
+    {
+      "id": "https://w3id.org/xapi/catch/attachment-usage-types/evidence/survey",
+      "type": "AttachmentUsageType",
+      "inScheme": "https://w3id.org/xapi/catch/v1",
+      "prefLabel": {
+        "en": "Survey"
+      },
+      "definition": {
+        "en": "A survey that was provided"
+      }
+    },
+    {
+      "id": "https://w3id.org/xapi/catch/attachment-usage-types/evidence/survey-result",
+      "type": "AttachmentUsageType",
+      "inScheme": "https://w3id.org/xapi/catch/v1",
+      "prefLabel": {
+        "en": "Survey results"
+      },
+      "definition": {
+        "en": "Results of a survey that was provided"
       }
     },
     {
@@ -1659,7 +1714,7 @@
         "https://w3id.org/xapi/catch/activitytypes/domain"
       ],
       "contextStatementRefTemplate": [
-        "https://w3id.org/xapi/catch/templates/professional-development/event"
+        "https://w3id.org/xapi/catch/templates#professional-development-event"
       ],
       "verb": "https://w3id.org/xapi/catch/verbs/submitted",
       "id": "https://w3id.org/xapi/catch/templates#f1-1-01",
@@ -3552,7 +3607,7 @@
         }
       ],
       "definition": {
-        "en": "This template matches statements about uploading evidence of communication to parents.  This statement should refrence a statement which matches the communicated-with-parents template.  The object is the uploaded document."
+        "en": "This template matches statements about uploading evidence of communication to parents.  This statement should refrence a statement which matches the communicated-to-parents template.  The object is the uploaded document."
       },
       "type": "StatementTemplate",
       "prefLabel": {
@@ -3566,7 +3621,7 @@
         "https://w3id.org/xapi/catch/activitytypes/domain"
       ],
       "contextStatementRefTemplate": [
-        "https://w3id.org/xapi/catch/templates#communicated-with-parents"
+        "https://w3id.org/xapi/catch/templates#communicated-to-parents"
       ],
       "verb": "https://w3id.org/xapi/catch/verbs/submitted",
       "id": "https://w3id.org/xapi/catch/templates#f4-3-01",
