@@ -3,7 +3,8 @@
             [ubergraph.core :as uber]
             [ubergraph.alg :as alg]
             [com.yetanalytics.axioms :as ax]
-            [com.yetanalytics.util :as util]))
+            [com.yetanalytics.graph :as graph]))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Patterns 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -108,11 +109,11 @@
 (defmethod get-pattern-edges :default [_] nil)
 
 ;; Return a vector of pattern edges in the form [src dest {:type kword}] 
-(defmethod util/edges-with-attrs "Pattern" [pattern]
+(defmethod graph/edges-with-attrs "Pattern" [pattern]
   (get-pattern-edges pattern))
 
 ;; Return a vector of nodes of the form [id attribute-map]
-(defmethod util/node-with-attrs "Pattern" [pattern]
+(defmethod graph/node-with-attrs "Pattern" [pattern]
   (let [id (:id pattern)
         attrs {:type "Pattern"
                :primary (get pattern :primary false)
@@ -123,11 +124,11 @@
 (defn create-graph [templates patterns]
   (let [pgraph (uber/digraph)
         ;; Nodes
-        tnodes (mapv (partial util/node-with-attrs) templates)
-        pnodes (mapv (partial util/node-with-attrs) patterns)
+        tnodes (mapv (partial graph/node-with-attrs) templates)
+        pnodes (mapv (partial graph/node-with-attrs) patterns)
         ;; Edges 
-        pedges (util/collect-edges
-                (mapv (partial util/edges-with-attrs) patterns))]
+        pedges (graph/collect-edges
+                (mapv (partial graph/edges-with-attrs) patterns))]
     (-> pgraph
         (uber/add-nodes-with-attrs* tnodes)
         (uber/add-nodes-with-attrs* pnodes)

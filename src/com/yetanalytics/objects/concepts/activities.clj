@@ -5,6 +5,7 @@
             [camel-snake-kebab.core :as csk]
             [xapi-schema.spec]
             [com.yetanalytics.axioms :as ax]
+            [com.yetanalytics.graph :as graph]
             [com.yetanalytics.util :as util]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -52,7 +53,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Currently does nothing
-(defmethod util/edges-with-attrs "Activity" [_] [])
+(defmethod graph/edges-with-attrs "Activity" [_] [])
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; advanced processing for spec MUSTS

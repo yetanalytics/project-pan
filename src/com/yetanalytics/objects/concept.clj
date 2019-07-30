@@ -1,7 +1,7 @@
 (ns com.yetanalytics.objects.concept
   (:require [clojure.spec.alpha :as s]
             [ubergraph.core :as uber]
-            [com.yetanalytics.util :as util]
+            [com.yetanalytics.graph :as graph]
             [com.yetanalytics.objects.concepts.verbs :as v]
             [com.yetanalytics.objects.concepts.activities :as a]
             [com.yetanalytics.objects.concepts.activity-types :as at]
@@ -42,9 +42,9 @@
 ;; Create a ubergraph digraph out of the vector of concepts
 (defn create-graph [concepts]
   (let [cgraph (uber/digraph)
-        cnodes (mapv (partial util/node-with-attrs) concepts)
-        cedges (util/collect-edges
-                (mapv (partial util/edges-with-attrs) concepts))]
+        cnodes (mapv (partial graph/node-with-attrs) concepts)
+        cedges (graph/collect-edges
+                (mapv (partial graph/edges-with-attrs) concepts))]
     (-> cgraph
         (uber/add-nodes-with-attrs* cnodes)
         (uber/add-directed-edges* cedges))))

@@ -1,6 +1,7 @@
 (ns com.yetanalytics.objects.concepts.document-resources.activity-profile
   (:require [clojure.spec.alpha :as s]
             [com.yetanalytics.axioms :as ax]
+            [com.yetanalytics.graph :as graph]
             [com.yetanalytics.util :as util]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -30,7 +31,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Currently does nothing
-(defmethod util/edges-with-attrs "ActivityProfileResource" [_] nil)
+(defmethod graph/edges-with-attrs "ActivityProfileResource" [_] nil)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; validation which requires external calls

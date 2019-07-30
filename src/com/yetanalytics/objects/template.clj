@@ -1,9 +1,8 @@
 (ns com.yetanalytics.objects.template
   (:require [clojure.spec.alpha :as s]
             [ubergraph.core :as uber]
-            [com.yetanalytics.util :as util]
             [com.yetanalytics.axioms :as ax]
-            [com.yetanalytics.util :as util]
+            [com.yetanalytics.graph :as graph]
             [com.yetanalytics.objects.templates.rules :as rules]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -68,7 +67,7 @@
 
 ;; From a single StatementTemplate, return a 1D vector of edge vectors of 
 ;; form [src dest {:type type-kword}]
-(defmethod util/edges-with-attrs "StatementTemplate"
+(defmethod graph/edges-with-attrs "StatementTemplate"
   [{:keys [id
            verb
            objectActivityType
@@ -103,11 +102,11 @@
 (defn create-graph [concepts templates]
   (let [tgraph (uber/digraph)
         ;; Nodes
-        cnodes (mapv (partial util/node-with-attrs) concepts)
-        tnodes (mapv (partial util/node-with-attrs) templates)
+        cnodes (mapv (partial graph/node-with-attrs) concepts)
+        tnodes (mapv (partial graph/node-with-attrs) templates)
         ;; Edges
-        tedges (util/collect-edges
-                (mapv (partial util/edges-with-attrs) templates))]
+        tedges (graph/collect-edges
+                (mapv (partial graph/edges-with-attrs) templates))]
     (-> tgraph
         (uber/add-nodes-with-attrs* cnodes)
         (uber/add-nodes-with-attrs* tnodes)

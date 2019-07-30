@@ -1,6 +1,22 @@
 (ns com.yetanalytics.project-pan
-  (:require [com.yetanalytics.util :as util]
-            [com.yetanalytics.profile :as profile]))
+  (:require [clojure.spec.alpha :as s]
+            [com.yetanalytics.profile :as profile]
+            [com.yetanalytics.identifiers :as id]
+            [com.yetanalytics.graph :as graph]
+            [com.yetanalytics.context :as context]
+            [com.yetanalytics.util :as util]))
+
+;; TODO Add conversion from Turtle and XML formats
+;; Currently only supports JSON-LD
+
+
+(defn- convert-profile
+  "Converts profile, if it is a JSON-LD string, into EDN format.
+  Otherwise keeps it in EDN format."
+  [profile]
+  (if (string? profile)
+    (util/convert-json profile "")
+    profile))
 
 (defn validate-profile
   "Validate a profile from the top down. Takes in a Profile (either as a
@@ -37,15 +53,16 @@
   ;; TODO: Implement :external-iris and :no-short
   [profile & {:keys [ids relations contexts]
               :or {ids false relations false contexts false}}]
-  (let [profile (if (string? profile)
-                  (util/convert-json profile "") profile)]
-    ;; FIXME Change such that subsequent validations can only happen if basic
-    ;; validation is passed (or else you will be failing tests left and right)
-    (let [errors
-          (cond-> (seq (profile/validate profile))
-            (true? ids) (concat (profile/validate-all-ids profile))
-            (true? relations) (concat (profile/validate-iris profile))
-            (true? contexts) (concat (profile/validate-context profile)))]
-      (if (empty? errors)
-        true
-        (vec errors))))) ;; TODO Log errors to a logger
+  (let [profile (convert-profile profile)
+        errors (cond-> {:syntax-errors (profile/validate profile)}
+                 (true? ids)
+                 (assoc :id-errors (id/validate-ids profile)
+                        :in-scheme-errors (id/validate-in-schemes profile))
+                 (true? relations)
+                 (merge (graph/validate-iris profile ids))
+                 (true? contexts)
+                 (assoc :context-errors (context/validate-all-contexts profile)))]
+    (if (every? nil? (vals errors))
+      (do (println "Success!") nil) ;; Exactly like spec/explain
+      errors ;; TODO Prettify errors using expound
+      )))
