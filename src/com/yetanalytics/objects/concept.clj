@@ -11,27 +11,44 @@
             [com.yetanalytics.objects.concepts.attachment-usage-types
              :as a-ut]
             [com.yetanalytics.objects.concepts.document-resources.state
-             :as state]
+             :as s-pr]
             [com.yetanalytics.objects.concepts.document-resources.agent-profile
-             :as agent-p]
+             :as ag-pr]
             [com.yetanalytics.objects.concepts.document-resources.activity-profile
-             :as activity-p]))
+             :as act-pr]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Concepts 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(s/def ::concept
-  (s/or :verb     ::v/verb
-        :activity ::a/activity
-        :activity-type ::at/activity-type
-        :attachment-usage-type ::a-ut/attachment-usage-type
-        :activity-extension ::ae/extension
-        :context-extension ::ce/extension
-        :result-extension  ::re/extension
-        :activity-profile ::activity-p/document-resource
-        :agent-profile    ::agent-p/document-resource
-        :state            ::state/document-resource))
+; (s/def ::concept
+;   (s/or :verb     ::v/verb
+;         :activity ::a/activity
+;         :activity-type ::at/activity-type
+;         :attachment-usage-type ::a-ut/attachment-usage-type
+;         :activity-extension ::ae/extension
+;         :context-extension ::ce/extension
+;         :result-extension  ::re/extension
+;         :activity-profile ::activity-p/document-resource
+;         :agent-profile    ::agent-p/document-resource
+;         :state            ::state/document-resource))
+
+(defmulti concept? #(:type %))
+
+(defmethod concept? "Verb" [_] ::v/verb)
+(defmethod concept? "Activity" [_] ::a/activity)
+(defmethod concept? "ActivityType" [_] ::at/activity-type)
+(defmethod concept? "AttachmentUsageType" [_] ::a-ut/attachment-usage-type)
+(defmethod concept? "ActivityExtension" [_] ::ae/extension)
+(defmethod concept? "ContextExtension" [_] ::ce/extension)
+(defmethod concept? "ResultExtension" [_] ::re/extension)
+(defmethod concept? "ActivityProfileResource" [_] ::act-pr/document-resource)
+(defmethod concept? "AgentProfileResource" [_] ::ag-pr/document-resource)
+(defmethod concept? "StateResource" [_] ::s-pr/document-resource)
+
+(s/def ::concept (s/multi-spec concept? #(:type %)))
+
+(s/def ::concepts (s/coll-of ::concept :type vector? :min-count 1))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Strict validation

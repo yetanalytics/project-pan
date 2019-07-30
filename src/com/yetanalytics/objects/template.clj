@@ -193,6 +193,10 @@
 (defmethod valid-edge? :default [_] false)
 
 (s/def ::valid-edge valid-edge?)
+#_(s/def ::valid-edge
+    (s/and (s/valid? ::type src-type)
+           (some? dest-type)
+           (s/or :verb (s/and))))
 
 (s/def ::valid-edges (s/coll-of ::valid-edge))
 
@@ -203,3 +207,9 @@
   (s/explain-data ::valid-edges (get-edges tgraph)))
 
 ;; TODO Fix stuff in the rules
+
+(defn explain
+  [problem]
+  (let [src (-> problem :val :src)
+        dest (-> problem :val :dest)])
+  (str "Invalid edge between "))
