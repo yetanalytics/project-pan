@@ -192,17 +192,35 @@
 
 (defmethod valid-edge? :default [_] false)
 
-(s/def ::valid-edge valid-edge?)
+(s/def ::valid-edge (s/and ::graph/no-self-loop
+                           valid-edge?))
 
 (s/def ::valid-edges (s/coll-of ::valid-edge))
 
-;; MUST NOT include any Pattern within itself, at any depth
-;; In other words, no cycles
+;; MUST NOT include any Pattern within itself, at any depth.
+;; In other words, no cycles.
+;;
+;; To do so, we must check that all strongly connected components (found using
+;; Kosaraju's Algorithm) are singletons (any SCC with more than one vertex will
+;; have cycles among its components), and that there are no self-loops.
+;; Normally self-loops are impossible in a valid Pattern list, but if there
+;; are duplicate IDs we can have them.
+;; Algorithm takes Theta(V+E).
+;; Note that Ubergraph has a built-in function for DAG determination, but we
+;; use this algorithm to make our spec errors cleaner.
+#_(s/def ::singleton-scc (s/coll-of vector? :kind vector? :min-count 1 :max-count 1))
+
+#_(s/def ::valid-sccs (s/coll-of ::singleton-scc :kind vector?))
+
+#_(s/def ::not-self-loop (fn [edge] (not= (uber/src edge) (uber/dest edge))))
+
+#_(s/def ::no-self-loops (s/coll-of ::not-self-loop :kind vector?))
+
 (s/def ::acyclic-graph alg/dag?)
 
-(s/def ::pattern-graph
-  (fn [pgraph] (and (s/valid? ::valid-edges (get-edges pgraph))
-                    (s/valid? ::acyclic-graph pgraph))))
+#_(s/def ::pattern-graph
+    (fn [pgraph] (and (s/valid? ::valid-edges (get-edges pgraph))
+                      (s/valid? ::acyclic-graph pgraph))))
 
 (defn explain-graph [pgraph]
   (concat (s/explain-data ::valid-edges (get-edges pgraph))

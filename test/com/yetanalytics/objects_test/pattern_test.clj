@@ -411,6 +411,7 @@
         (uber/add-nodes-with-attrs* pnodes)
         (uber/add-directed-edges* pedges))))
 
+#_(s/explain ::pattern/acyclic-graph cyclic-pgraph-1)
 (deftest no-cycles-test
   (testing "MUST not have any cycles in graph"
     ;; No cycles

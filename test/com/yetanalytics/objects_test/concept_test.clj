@@ -5,6 +5,8 @@
             [com.yetanalytics.utils :refer :all]
             [com.yetanalytics.objects.concept :as concept]))
 
+;; TODO Add test for testing a complete vector of concepts
+
 (deftest valid-relation-test
   (testing "Concepts MUST be of the same type from this Profile version."
     (should-satisfy+
@@ -126,4 +128,4 @@
              {:src "https://foo.org/aut2" :src-type "AttachmentUsageType" :src-version "https://foo.org/v1"
               :dest "https://foo.org/aut1" :dest-type "AttachmentUsageType" :dest-version "https://foo.org/v1"
               :type :narrower}}))
-    (should-satisfy ::concept/concept-graph cgraph)))
+    (is (nil? (concept/explain-graph cgraph)))))
