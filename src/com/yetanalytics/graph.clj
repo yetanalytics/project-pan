@@ -34,35 +34,35 @@
 ;; IRI validation (via graphs)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn evaluate-graphs*
-  "Given graph creation and explain functions, create and validate IRI specs"
-  [create-graph-fn explain-graph-fn coll1 & [coll2]]
-  (if (some? coll2)
-    (explain-graph-fn (create-graph-fn coll1 coll2))
-    (explain-graph-fn (create-graph-fn coll1))))
+; (defn evaluate-graphs*
+;   "Given graph creation and explain functions, create and validate IRI specs"
+;   [create-graph-fn explain-graph-fn coll1 & [coll2]]
+;   (if (some? coll2)
+;     (explain-graph-fn (create-graph-fn coll1 coll2))
+;     (explain-graph-fn (create-graph-fn coll1))))
 
-(defn evaluate-graphs
-  "Given graph creation and explain functions, create and validate IRI specs.
-  Return graph errors (or nil on success) if we have distinct IDs.
-  Else we cannot create the graph; return ID error data."
-  [create-graph-fn explain-graph-fn coll1 & [coll2]]
-  (let [id-errors (->> (concat coll1 coll2) id/only-ids id/count-ids
-                       (s/explain-data ::id/distinct-ids))]
-    (if (empty? id-errors)
-      (evaluate-graphs* create-graph-fn explain-graph-fn coll1 coll2)
-      id-errors)))
+; (defn evaluate-graphs
+;   "Given graph creation and explain functions, create and validate IRI specs.
+;   Return graph errors (or nil on success) if we have distinct IDs.
+;   Else we cannot create the graph; return ID error data."
+;   [create-graph-fn explain-graph-fn coll1 & [coll2]]
+;   (let [id-errors (->> (concat coll1 coll2) id/only-ids id/count-ids
+;                        (s/explain-data ::id/distinct-ids))]
+;     (if (empty? id-errors)
+;       (evaluate-graphs* create-graph-fn explain-graph-fn coll1 coll2)
+;       id-errors)))
 
 ;; TODO Take care of potentially duplicate IDs - may mess up graph functions
-(defn validate-iris
-  "Validate all profile IRIs by creating a graph data structure out of the
+#_(defn validate-iris
+    "Validate all profile IRIs by creating a graph data structure out of the
   Profile. Returns an empty sequence if validation is successful, else a 
   sequence of spec errors if validation fails.
   If this is false, we have to validate before graph evaluation."
-  [profile]
-  (let [profile (u/normalize-profile profile)
-        {:keys [concepts templates patterns] :as profile} profile]
-    {:concept-errors (-> concepts concept/create-graph concept/explain-graph)
-     :template-errors (template/explain-graph
-                       (template/create-graph concepts templates))
-     :pattern-errors (pattern/explain-graph
-                      (pattern/explain-graph templates patterns))}))
+    [profile]
+    (let [profile (u/normalize-profile profile)
+          {:keys [concepts templates patterns] :as profile} profile]
+      {:concept-errors (-> concepts concept/create-graph concept/explain-graph)
+       :template-errors (template/explain-graph
+                         (template/create-graph concepts templates))
+       :pattern-errors (pattern/explain-graph
+                        (pattern/explain-graph templates patterns))}))

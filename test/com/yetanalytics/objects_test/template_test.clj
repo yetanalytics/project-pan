@@ -2,7 +2,7 @@
   (:require [clojure.test :refer :all]
             [clojure.spec.alpha :as s]
             [ubergraph.core :as uber]
-            [com.yetanalytics.util :as util]
+            [com.yetanalytics.graph :as graph]
             [com.yetanalytics.utils :refer :all]
             [com.yetanalytics.objects.template :as template]))
 
@@ -190,7 +190,7 @@
 
 (deftest edge-with-attrs-test
   (testing "Creating list of edges"
-    (is (= (util/edges-with-attrs template-ex)
+    (is (= (graph/edges-with-attrs template-ex)
            [["https://foo.org/template" "https://foo.org/verb" {:type :verb}]
             ["https://foo.org/template" "https://foo.org/oat" {:type :objectActivityType}]
             ["https://foo.org/template" "https://foo.org/cgat1" {:type :contextGroupingActivityType}]

@@ -1,8 +1,10 @@
 (ns com.yetanalytics.project-pan
   (:require [clojure.spec.alpha :as s]
             [com.yetanalytics.profile :as profile]
+            [com.yetanalytics.objects.concept :as concept]
+            [com.yetanalytics.objects.template :as template]
+            [com.yetanalytics.objects.pattern :as pattern]
             [com.yetanalytics.identifiers :as id]
-            [com.yetanalytics.graph :as graph]
             [com.yetanalytics.context :as context]
             [com.yetanalytics.util :as util]))
 
@@ -59,9 +61,21 @@
                  (assoc :id-errors (id/validate-ids profile)
                         :in-scheme-errors (id/validate-in-schemes profile))
                  (true? relations)
-                 (merge (graph/validate-iris profile ids))
+                 (assoc :concept-errors
+                        (-> profile :concepts
+                            concept/create-graph
+                            concept/explain-graph)
+                        :template-errors (template/explain-graph
+                                          (template/create-graph
+                                           (:concepts profile)
+                                           (:templates profile)))
+                        :pattern-errors (pattern/explain-graph
+                                         (template/create-graph
+                                          (:templates profile)
+                                          (:patterns profile))))
                  (true? contexts)
-                 (assoc :context-errors (context/validate-all-contexts profile)))]
+                 (assoc :context-errors
+                        (context/validate-all-contexts profile)))]
     (if (every? nil? (vals errors))
       (do (println "Success!") nil) ;; Exactly like spec/explain
       errors ;; TODO Prettify errors using expound

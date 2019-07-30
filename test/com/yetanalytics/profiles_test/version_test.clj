@@ -45,10 +45,4 @@
     (is (not (s/valid? ::versions/versions
                        [{:id "https://w3id.org/xapi/catch/v2"
                          :wasRevisionOf []
-                         :generatedAtTime "2017-12-22T22:30:00-07:00"}])))
-    ;; Every Profile version ID MUST be distinct
-    (is (not (s/valid? ::versions/versions
-                       [{:id "https://w3id.org/xapi/catch/"
-                         :generatedAtTime "2017-12-22T22:30:00-07:00"}
-                        {:id "https://w3id.org/xapi/catch/"
-                         :generatedAtTime "2020-02-20T20:20:20Z"}])))))
+                         :generatedAtTime "2017-12-22T22:30:00-07:00"}])))))

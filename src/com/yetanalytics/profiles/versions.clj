@@ -14,5 +14,4 @@
 (s/def ::version (s/keys :req-un [::id ::generatedAtTime]
                          :opt-un [::wasRevisionOf]))
 
-(s/def ::versions (s/and (s/coll-of ::version :type vector? :min-count 1)
-                         ::versions-distinct))
+(s/def ::versions (s/coll-of ::version :type vector? :min-count 1))

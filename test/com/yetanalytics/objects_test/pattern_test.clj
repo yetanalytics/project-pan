@@ -3,7 +3,7 @@
             [clojure.spec.alpha :as s]
             [clojure.pprint :as pprint]
             [ubergraph.core :as uber]
-            [com.yetanalytics.util :as u]
+            [com.yetanalytics.graph :as graph]
             [com.yetanalytics.utils :refer :all]
             [com.yetanalytics.objects.pattern :as pattern]))
 
@@ -185,47 +185,47 @@
 
 (deftest node-with-attrs
   (testing "Creating node with attributes"
-    (is (= (u/node-with-attrs {:id "https://foo.org/pattern1"
-                               :type "Pattern"
-                               :primary true
-                               :alternates ["https://foo.org/p1"
-                                            "https://foo.org/p2"]})
+    (is (= (graph/node-with-attrs {:id "https://foo.org/pattern1"
+                                   :type "Pattern"
+                                   :primary true
+                                   :alternates ["https://foo.org/p1"
+                                                "https://foo.org/p2"]})
            ["https://foo.org/pattern1" {:type "Pattern"
                                         :primary true
                                         :property :alternates}]))
-    (is (= (u/node-with-attrs {:id "https://foo.org/pattern1"
-                               :type "Pattern"
-                               :primary false
-                               :optional {:id "https://foo.org/p3"}})
+    (is (= (graph/node-with-attrs {:id "https://foo.org/pattern1"
+                                   :type "Pattern"
+                                   :primary false
+                                   :optional {:id "https://foo.org/p3"}})
            ["https://foo.org/pattern1" {:type "Pattern"
                                         :primary false
                                         :property :optional}]))))
 
 (deftest edge-with-attrs-test
   (testing "Creating vector of edges"
-    (is (= (u/edges-with-attrs {:id "https://foo.org/pattern1"
-                                :type "Pattern"
-                                :alternates ["https://foo.org/p1"
-                                             "https://foo.org/p2"]})
+    (is (= (graph/edges-with-attrs {:id "https://foo.org/pattern1"
+                                    :type "Pattern"
+                                    :alternates ["https://foo.org/p1"
+                                                 "https://foo.org/p2"]})
            [["https://foo.org/pattern1" "https://foo.org/p1" {:type :alternates}]
             ["https://foo.org/pattern1" "https://foo.org/p2" {:type :alternates}]]))
-    (is (= (u/edges-with-attrs {:id "https://foo.org/pattern2"
-                                :type "Pattern"
-                                :sequence ["https://foo.org/p1"
-                                           "https://foo.org/p2"]})
+    (is (= (graph/edges-with-attrs {:id "https://foo.org/pattern2"
+                                    :type "Pattern"
+                                    :sequence ["https://foo.org/p1"
+                                               "https://foo.org/p2"]})
            [["https://foo.org/pattern2" "https://foo.org/p1" {:type :sequence}]
             ["https://foo.org/pattern2" "https://foo.org/p2" {:type :sequence}]]))
-    (is (= (u/edges-with-attrs {:id "https://foo.org/pattern3"
-                                :type "Pattern"
-                                :optional {:id "https://foo.org/p0"}})
+    (is (= (graph/edges-with-attrs {:id "https://foo.org/pattern3"
+                                    :type "Pattern"
+                                    :optional {:id "https://foo.org/p0"}})
            [["https://foo.org/pattern3" "https://foo.org/p0" {:type :optional}]]))
-    (is (= (u/edges-with-attrs {:id "https://foo.org/pattern4"
-                                :type "Pattern"
-                                :oneOrMore {:id "https://foo.org/p0"}})
+    (is (= (graph/edges-with-attrs {:id "https://foo.org/pattern4"
+                                    :type "Pattern"
+                                    :oneOrMore {:id "https://foo.org/p0"}})
            [["https://foo.org/pattern4" "https://foo.org/p0" {:type :oneOrMore}]]))
-    (is (= (u/edges-with-attrs {:id "https://foo.org/pattern5"
-                                :type "Pattern"
-                                :zeroOrMore {:id "https://foo.org/p0"}})
+    (is (= (graph/edges-with-attrs {:id "https://foo.org/pattern5"
+                                    :type "Pattern"
+                                    :zeroOrMore {:id "https://foo.org/p0"}})
            [["https://foo.org/pattern5" "https://foo.org/p0" {:type :zeroOrMore}]]))))
 
 (deftest alternates-test
@@ -380,9 +380,9 @@
 (def cyclic-pgraph-1
   (let [graph (uber/digraph)
         ;; Nodes
-        pnodes (mapv (partial u/node-with-attrs) cyclic-patterns-1)
+        pnodes (mapv (partial graph/node-with-attrs) cyclic-patterns-1)
         ;; Edges
-        pedges (reduce concat (mapv (partial u/edges-with-attrs) cyclic-patterns-1))]
+        pedges (reduce concat (mapv (partial graph/edges-with-attrs) cyclic-patterns-1))]
     (-> graph
         (uber/add-nodes-with-attrs* pnodes)
         (uber/add-directed-edges* pedges))))
@@ -390,9 +390,9 @@
 (def cyclic-pgraph-2
   (let [graph (uber/digraph)
         ;; Nodes
-        pnodes (mapv (partial u/node-with-attrs) cyclic-patterns-2)
+        pnodes (mapv (partial graph/node-with-attrs) cyclic-patterns-2)
         ;; Edges
-        pedges (reduce concat (mapv (partial u/edges-with-attrs) cyclic-patterns-2))]
+        pedges (reduce concat (mapv (partial graph/edges-with-attrs) cyclic-patterns-2))]
     (-> graph
         (uber/add-nodes-with-attrs* pnodes)
         (uber/add-directed-edges* pedges))))

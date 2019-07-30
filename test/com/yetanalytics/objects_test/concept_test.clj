@@ -2,7 +2,6 @@
   (:require [clojure.test :refer :all]
             [clojure.spec.alpha :as s]
             [ubergraph.core :as uber]
-            [com.yetanalytics.util :as util]
             [com.yetanalytics.utils :refer :all]
             [com.yetanalytics.objects.concept :as concept]))
 

@@ -1,7 +1,7 @@
 (ns com.yetanalytics.objects-test.concepts-test.verb-test
   (:require [clojure.test :refer :all]
             [clojure.spec.alpha :as s]
-            [com.yetanalytics.util :as util]
+            [com.yetanalytics.graph :as graph]
             [com.yetanalytics.utils :refer :all]
             [com.yetanalytics.objects.concepts.verbs :as verbs]))
 
@@ -113,7 +113,7 @@
 
 (deftest edges-with-attrs-test
   (testing "create edges from node"
-    (is (= (util/edges-with-attrs ex-concept)
+    (is (= (graph/edges-with-attrs ex-concept)
            [["https://foo.org/verb" "https://foo.org/verb2" {:type :broader}]
             ["https://foo.org/verb" "https://foo.org/verb3" {:type :broadMatch}]
             ["https://foo.org/verb" "https://foo.org/verb4" {:type :narrower}]

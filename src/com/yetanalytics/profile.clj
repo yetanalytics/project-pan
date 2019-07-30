@@ -30,10 +30,10 @@
                               (partial some #(= context-url %)))))
 
 ;; Overall profile ID MUST NOT be any of the version IDs
-(s/def ::id-distinct
-  (fn [{:keys [id versions]}]
-    (let [version-ids (util/only-ids versions)]
-      (nil? (some #(= id %) version-ids)))))
+#_(s/def ::id-distinct
+    (fn [{:keys [id versions]}]
+      (let [version-ids (util/only-ids versions)]
+        (nil? (some #(= id %) version-ids)))))
 
 (s/def ::profile
   (s/and
