@@ -58,7 +58,7 @@
          ::pattern-clause
          ::is-primary-true))
 
-(s/def ::reg-pattern
+(s/def ::non-primary-pattern
   (s/and (s/keys :req-un [::id ::type]
                  :opt-un [::primary ::inScheme ::prefLabel ::definition
                           ::deprecated ::alternates ::optional ::oneOrMore
@@ -67,7 +67,7 @@
          ::is-primary-false))
 
 (s/def ::pattern
-  (s/or :no-primary ::reg-pattern
+  (s/or :non-primary ::non-primary-pattern
         :primary ::primary-pattern))
 
 (s/def ::patterns

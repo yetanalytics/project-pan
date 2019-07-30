@@ -30,6 +30,20 @@
                      74
                      nil)))
 
+(deftest is-primary-test
+  (testing "is-primary-true spec"
+    (should-satisfy+ ::pattern/is-primary-true
+                     {:primary true}
+                     :bad
+                     {:primary false}
+                     {}))
+  (testing "is-primary-false spec"
+    (should-satisfy+ ::pattern/is-primary-false
+                     {:primary false}
+                     {}
+                     :bad
+                     {:primary true})))
+
 (deftest alternates-test
   (testing "alternates (A | B) property"
     (should-satisfy ::pattern/alternates
