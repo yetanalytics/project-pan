@@ -3,13 +3,15 @@
             [ubergraph.core :as uber]
             [ubergraph.alg :as alg]
             [com.yetanalytics.axioms :as ax]
-            [com.yetanalytics.graph :as graph]))
+            [com.yetanalytics.graph :as graph]
+            [com.yetanalytics.util :as util]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Patterns 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Basic properties
+
 
 (s/def ::id ::ax/uri)
 (s/def ::type #{"Pattern"})
@@ -151,49 +153,128 @@
                :type (uber/attr pgraph edge :type)}))
           edges)))
 
-(defmulti valid-edge? #(:type %))
+(s/def ::valid-dest
+  (fn [{:keys [dest-type]}]
+    (some? dest-type)))
+
+(s/def ::pattern-src
+  (fn [{:keys [src-type]}] (contains? #{"Pattern"} src-type)))
+
+(s/def ::pattern-dest
+  (fn [{:keys [dest-type]}]
+    (contains? #{"Pattern"} dest-type)))
+
+(s/def ::template-dest
+  (fn [{:keys [dest-type]}] (contains? #{"StatementTemplate"} dest-type)))
+
+;; Unique to alternates patterns
+(s/def ::non-opt-dest
+  (fn [{:keys [dest-property]}]
+    (not (contains? #{:optional :zeroOrMore} dest-property))))
+
+;; Unique to sequence patterns
+(s/def ::singleton-src
+  (fn [{:keys [src-outdegree]}]
+    (= 1 src-outdegree)))
+
+(s/def ::not-singleton-src
+  (fn [{:keys [src-outdegree]}]
+    (<= 2 src-outdegree)))
+
+(s/def ::primary-src
+  (fn [{:keys [src-primary]}]
+    (true? src-primary)))
+
+(s/def ::zero-indegree-src
+  (fn [{:keys [src-indegree]}]
+    (= 0 src-indegree)))
+
+(defmulti valid-edge? util/type-dispatch)
+
+(defmethod valid-edge? :alternates [_]
+  (s/and ::graph/not-self-loop
+         ::pattern-src
+         ::valid-dest
+         (s/or :pattern (s/and ::pattern-dest
+                               ::non-opt-dest)
+               :template ::template-dest)))
 
 ;; MUST NOT include optional or zeroOrMore directly inside alternates
-(defmethod valid-edge? :alternates
-  [{:keys [src-type dest-type dest-property]}]
-  (and (#{"Pattern"} src-type)
-       (or (and (#{"Pattern"} dest-type)
-                (not (#{:optional :zeroOrMore} dest-property)))
-           (#{"StatementTemplate"} dest-type))))
+; #_(defmethod valid-edge? :alternates
+;     [{:keys [src-type dest-type dest-property]}]
+;     (and (#{"Pattern"} src-type)
+;          (or (and (#{"Pattern"} dest-type)
+;                   (not (#{:optional :zeroOrMore} dest-property)))
+;              (#{"StatementTemplate"} dest-type))))
+
+(defmethod valid-edge? :sequence [_]
+  (s/and ::graph/not-self-loop
+         ::pattern-src
+         ::valid-dest
+         (s/or :two-or-more (s/and ::not-singleton-src
+                                   (s/or :pattern ::pattern-dest
+                                         :template ::template-dest))
+               :one (s/and ::singleton-src
+                           ::template-dest
+                           ::primary-src
+                           ::zero-indegree-src))))
 
 ;; MUST include at least two members in sequence, unless:
 ;; 1. sequence is a primary pattern not used elsewhere, and
 ;; 2. sequence member is a single StatementTemplate
-(defmethod valid-edge? :sequence
-  [{:keys [src-type dest-type src-indegree src-outdegree src-primary]}]
-  (and (#{"Pattern"} src-type)
-       (#{"Pattern" "StatementTemplate"} dest-type)
-       (or (<= 2 src-outdegree)
-           (and (#{"StatementTemplate"} dest-type)
-                (true? src-primary)
-                (= 0 src-indegree)))))
+
+
+; #_(defmethod valid-edge? :sequence
+;     [{:keys [src-type dest-type src-indegree src-outdegree src-primary]}]
+;     (and (#{"Pattern"} src-type)
+;          (#{"Pattern" "StatementTemplate"} dest-type)
+;          (or (<= 2 src-outdegree)
+;              (and (#{"StatementTemplate"} dest-type)
+;                   (true? src-primary)
+;                   (= 0 src-indegree)))))
 
 ;; Other regex properties: all MUST contain patterns or templates
 
-(defmethod valid-edge? :optional
-  [{:keys [src-type dest-type]}]
-  (and (#{"Pattern"} src-type)
-       (#{"Pattern" "StatementTemplate"} dest-type)))
+(defmethod valid-edge? :optional [_]
+  (s/and ::graph/not-self-loop
+         ::pattern-src
+         ::valid-dest
+         (s/or :pattern ::pattern-dest
+               :template ::template-dest)))
 
-(defmethod valid-edge? :oneOrMore
-  [{:keys [src-type dest-type]}]
-  (and (#{"Pattern"} src-type)
-       (#{"Pattern" "StatementTemplate"} dest-type)))
+(defmethod valid-edge? :oneOrMore [_]
+  (s/and ::graph/not-self-loop
+         ::pattern-src
+         ::valid-dest
+         (s/or :pattern ::pattern-dest
+               :template ::template-dest)))
 
-(defmethod valid-edge? :zeroOrMore
-  [{:keys [src-type dest-type]}]
-  (and (#{"Pattern"} src-type)
-       (#{"Pattern" "StatementTemplate"} dest-type)))
+(defmethod valid-edge? :zeroOrMore [_]
+  (s/and ::graph/not-self-loop
+         ::pattern-src
+         ::valid-dest
+         (s/or :pattern ::pattern-dest
+               :template ::template-dest)))
+
+; (defmethod valid-edge? :optional
+;   [{:keys [src-type dest-type]}]
+;   (and (#{"Pattern"} src-type)
+;        (#{"Pattern" "StatementTemplate"} dest-type)))
+
+; (defmethod valid-edge? :oneOrMore
+;   [{:keys [src-type dest-type]}]
+;   (and (#{"Pattern"} src-type)
+;        (#{"Pattern" "StatementTemplate"} dest-type)))
+
+; (defmethod valid-edge? :zeroOrMore
+;   [{:keys [src-type dest-type]}]
+;   (and (#{"Pattern"} src-type)
+;        (#{"Pattern" "StatementTemplate"} dest-type)))
+
 
 (defmethod valid-edge? :default [_] false)
 
-(s/def ::valid-edge (s/and ::graph/no-self-loop
-                           valid-edge?))
+(s/def ::valid-edge (s/multi-spec valid-edge? util/type-dispatch))
 
 (s/def ::valid-edges (s/coll-of ::valid-edge))
 
@@ -205,25 +286,27 @@
 ;; have cycles among its components), and that there are no self-loops.
 ;; Normally self-loops are impossible in a valid Pattern list, but if there
 ;; are duplicate IDs we can have them.
-;; Algorithm takes Theta(V+E).
+;; Algorithm takes Theta(V+E) time.
 ;; Note that Ubergraph has a built-in function for DAG determination, but we
 ;; use this algorithm to make our spec errors cleaner.
-#_(s/def ::singleton-scc (s/coll-of vector? :kind vector? :min-count 1 :max-count 1))
+(s/def ::singleton-scc
+  (s/and vector?
+         (s/cat :identifier (s/or :iri ::ax/iri :irl ::ax/irl
+                                  :uri ::ax/uri :url ::ax/url))))
 
-#_(s/def ::valid-sccs (s/coll-of ::singleton-scc :kind vector?))
+(s/def ::singleton-sccs (s/coll-of ::singleton-scc :kind vector?))
 
-#_(s/def ::not-self-loop (fn [edge] (not= (uber/src edge) (uber/dest edge))))
-
-#_(s/def ::no-self-loops (s/coll-of ::not-self-loop :kind vector?))
-
-(s/def ::acyclic-graph alg/dag?)
+#_(s/def ::acyclic-graph alg/dag?)
 
 #_(s/def ::pattern-graph
     (fn [pgraph] (and (s/valid? ::valid-edges (get-edges pgraph))
                       (s/valid? ::acyclic-graph pgraph))))
 
 (defn explain-graph [pgraph]
-  (concat (s/explain-data ::valid-edges (get-edges pgraph))
-          (s/explain-data ::acyclic-graph pgraph)))
+  (s/explain-data ::valid-edges (get-edges pgraph))
+  #_(concat (s/explain-data ::valid-edges (get-edges pgraph))
+            (s/explain-data ::acyclic-graph pgraph)))
 
+(defn explain-graph-cycles [pgraph]
+  (s/explain-data ::singleton-sccs))
 ;; TODO: MAY re-use Statement Templates and Patterns from other Profiles
