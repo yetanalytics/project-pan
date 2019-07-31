@@ -279,21 +279,29 @@
 (s/def ::valid-edges (s/coll-of ::valid-edge))
 
 ;; MUST NOT include any Pattern within itself, at any depth.
-;; In other words, no cycles.
+;; In other words, no cycles. We need to check for two things:
 ;;
-;; To do so, we must check that all strongly connected components (found using
-;; Kosaraju's Algorithm) are singletons (any SCC with more than one vertex will
-;; have cycles among its components), and that there are no self-loops.
-;; Normally self-loops are impossible in a valid Pattern list, but if there
-;; are duplicate IDs we can have them.
-;; Algorithm takes Theta(V+E) time.
-;; Note that Ubergraph has a built-in function for DAG determination, but we
-;; use this algorithm to make our spec errors cleaner.
+;; 1. All strongly connected components (subgraphs where all nodes can be
+;; reached from any other node in the subgraph) must be singletons. (Imagine
+;; a SCC of two nodes - there must be a cycle present; induct from there.)
+;; We find our SCCs using Kosaraju's Algorithm (which is what Ubergraph uses
+;; in alg/scc), which has a time complexity of O(V+E); we then validate that 
+;; they all only have one member node.
+;;
+;; 2. No self-loops exist. This condition is not caught by Kosaraju's Algorithm
+;; (and thus not by our SCC specs) but is caught by our edge validation.
+;;
+;; Note that Ubergraph has a built-in function for DAG determination (which
+;; does correctly identify self-loops), but we use this algorithm to make our 
+;; spec errors cleaner.
+
+;; Check that one SCC is a singleton
 (s/def ::singleton-scc
   (s/and vector?
          (s/cat :identifier (s/or :iri ::ax/iri :irl ::ax/irl
                                   :uri ::ax/uri :url ::ax/url))))
 
+;; Check that all SCCs are singletons
 (s/def ::singleton-sccs (s/coll-of ::singleton-scc :kind vector?))
 
 #_(s/def ::acyclic-graph alg/dag?)
@@ -302,11 +310,13 @@
     (fn [pgraph] (and (s/valid? ::valid-edges (get-edges pgraph))
                       (s/valid? ::acyclic-graph pgraph))))
 
+;; Edge validation
 (defn explain-graph [pgraph]
   (s/explain-data ::valid-edges (get-edges pgraph))
   #_(concat (s/explain-data ::valid-edges (get-edges pgraph))
             (s/explain-data ::acyclic-graph pgraph)))
 
+;; Cycle validation
 (defn explain-graph-cycles [pgraph]
-  (s/explain-data ::singleton-sccs))
+  (s/explain-data ::singleton-sccs (alg/scc pgraph)))
 ;; TODO: MAY re-use Statement Templates and Patterns from other Profiles

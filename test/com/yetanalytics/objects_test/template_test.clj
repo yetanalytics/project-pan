@@ -210,38 +210,60 @@
   (testing "Valid edge properties"
     (should-satisfy+
      ::template/valid-edge
-     {:type :verb :src-type "StatementTemplate" :dest-type "Verb"}
-     {:type :objectActivityType
-      :src-type "StatementTemplate" :dest-type "ActivityType"}
-     {:type :contextGroupingActivityType
-      :src-type "StatementTemplate" :dest-type "ActivityType"}
-     {:type :contextParentActivityType
-      :src-type "StatementTemplate" :dest-type "ActivityType"}
-     {:type :contextOtherActivityType
-      :src-type "StatementTemplate" :dest-type "ActivityType"}
-     {:type :contextCategoryActivityType
-      :src-type "StatementTemplate" :dest-type "ActivityType"}
-     {:type :attachmentUsageType
-      :src-type "StatementTemplate" :dest-type "AttachmentUsageType"}
-     {:type :objectStatementRefTemplate
+     {:src "http://foo.org/st" :dest "http://foo.org/bar"
+      :type :verb :src-type "StatementTemplate" :dest-type "Verb"
+      :src-version "https://foo.org/v1" :dest-version "https://foo.org/v1"}
+     {:src "http://foo.org/st" :dest "http://foo.org/bar"
+      :type :objectActivityType
+      :src-type "StatementTemplate" :dest-type "ActivityType"
+      :src-version "https://foo.org/v1" :dest-version "https://foo.org/v1"}
+     {:src "http://foo.org/st" :dest "http://foo.org/bar"
+      :type :contextGroupingActivityType
+      :src-type "StatementTemplate" :dest-type "ActivityType"
+      :src-version "https://foo.org/v1" :dest-version "https://foo.org/v1"}
+     {:src "http://foo.org/st" :dest "http://foo.org/bar"
+      :type :contextParentActivityType
+      :src-type "StatementTemplate" :dest-type "ActivityType"
+      :src-version "https://foo.org/v1" :dest-version "https://foo.org/v1"}
+     {:src "http://foo.org/st" :dest "http://foo.org/bar"
+      :type :contextOtherActivityType
+      :src-type "StatementTemplate" :dest-type "ActivityType"
+      :src-version "https://foo.org/v1" :dest-version "https://foo.org/v1"}
+     {:src "http://foo.org/st" :dest "http://foo.org/bar"
+      :type :contextCategoryActivityType
+      :src-type "StatementTemplate" :dest-type "ActivityType"
+      :src-version "https://foo.org/v1" :dest-version "https://foo.org/v1"}
+     {:src "http://foo.org/st" :dest "http://foo.org/bar"
+      :type :attachmentUsageType
+      :src-type "StatementTemplate" :dest-type "AttachmentUsageType"
+      :src-version "https://foo.org/v1" :dest-version "https://foo.org/v1"}
+     {:src "http://foo.org/st" :dest "http://foo.org/bar"
+      :type :objectStatementRefTemplate
       :src-type "StatementTemplate" :dest-type "StatementTemplate"
       :src-version "https://foo.org/v1" :dest-version "https://foo.org/v1"}
-     {:type :contextStatementRefTemplate
+     {:src "http://foo.org/st" :dest "http://foo.org/bar"
+      :type :contextStatementRefTemplate
       :src-type "StatementTemplate" :dest-type "StatementTemplate"
       :src-version "https://foo.org/v1" :dest-version "https://foo.org/v1"}
      :bad
-     {:type :verb :src-type "StatementTemplate" :dest-type "ActivityType"}
-     {:type :objectActivityType
+     {:src "http://foo.org/st" :dest "http://foo.org/bar"
+      :type :verb :src-type "StatementTemplate" :dest-type "ActivityType"}
+     {:src "http://foo.org/st" :dest "http://foo.org/bar"
+      :type :objectActivityType
       :src-type "StatementTemplate" :dest-type "Verb"}
-     {:type :attachmentUsageType
+     {:src "http://foo.org/st" :dest "http://foo.org/bar"
+      :type :attachmentUsageType
       :src-type "ActivityType" :dest-type "AttachmentUsageType"}
-     {:type :objectStatementRefTemplate
+     {:src "http://foo.org/st" :dest "http://foo.org/bar"
+      :type :objectStatementRefTemplate
       :src-type "StatementTemplate" :dest-type "StatementTemplate"
       :src-version "https://foo.org/v1" :dest-version "https://foo.org/v2"}
-     {:type :contextStatementRefTemplate
+     {:src "http://foo.org/st" :dest "http://foo.org/bar"
+      :type :contextStatementRefTemplate
       :src-type "StatementTemplate" :dest-type "ActivityType"
       :src-version "https://foo.org/v1" :dest-version "https://foo.org/v1"}
-     {:type :blah :src-type "StatementTemplate" :dest-type "Verb"})))
+     {:src "http://foo.org/st" :dest "http://foo.org/bar"
+      :type :blah :src-type "StatementTemplate" :dest-type "Verb"})))
 
 (def ex-concepts
   [{:id "https://foo.org/verb"
@@ -294,4 +316,5 @@
              {:src "https://foo.org/template2" :src-type "StatementTemplate" :src-version "https://foo.org/v1"
               :dest "https://foo.org/template1" :dest-type "StatementTemplate" :dest-version "https://foo.org/v1"
               :type :objectStatementRefTemplate}}))
-    (should-satisfy ::template/template-graph tgraph)))
+    (should-satisfy ::template/template-graph tgraph)
+    (is (nil? (template/explain-graph tgraph)))))

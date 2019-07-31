@@ -129,69 +129,155 @@
 
 ;; Validate edges
 
-(defmulti valid-edge? #(:type %))
+(s/def ::template-src
+  (fn [{:keys [src-type]}]
+    (contains? #{"StatementTemplate"} src-type)))
+
+(s/def ::valid-dest
+  (fn [{:keys [dest-type dest-version]}]
+    (and (some? dest-type) (some? dest-version))))
+
+(s/def ::verb-dest
+  (fn [{:keys [dest-type]}]
+    (contains? #{"Verb"} dest-type)))
+
+(s/def ::at-dest
+  (fn [{:keys [dest-type]}]
+    (contains? #{"ActivityType"} dest-type)))
+
+(s/def ::aut-dest
+  (fn [{:keys [dest-type]}]
+    (contains? #{"AttachmentUsageType"} dest-type)))
+
+(s/def ::template-dest
+  (fn [{:keys [dest-type]}]
+    (contains? #{"StatementTemplate"} dest-type)))
+
+(s/def ::same-version
+  (fn [{:keys [src-version dest-version]}]
+    (= src-version dest-version)))
+
+(defmulti valid-edge? util/type-dispatch)
+
+(defmethod valid-edge? :verb [_]
+  (s/and ::graph/not-self-loop
+         ::template-src
+         ::valid-dest
+         ::verb-dest))
+
+(defmethod valid-edge? :objectActivityType [_]
+  (s/and ::graph/not-self-loop
+         ::template-src
+         ::valid-dest
+         ::at-dest))
+
+(defmethod valid-edge? :contextGroupingActivityType [_]
+  (s/and ::graph/not-self-loop
+         ::template-src
+         ::valid-dest
+         ::at-dest))
+
+(defmethod valid-edge? :contextParentActivityType [_]
+  (s/and ::graph/not-self-loop
+         ::template-src
+         ::valid-dest
+         ::at-dest))
+
+(defmethod valid-edge? :contextOtherActivityType [_]
+  (s/and ::graph/not-self-loop
+         ::template-src
+         ::valid-dest
+         ::at-dest))
+
+(defmethod valid-edge? :contextCategoryActivityType [_]
+  (s/and ::graph/not-self-loop
+         ::template-src
+         ::valid-dest
+         ::at-dest))
+
+(defmethod valid-edge? :attachmentUsageType [_]
+  (s/and ::graph/not-self-loop
+         ::template-src
+         ::valid-dest
+         ::aut-dest))
+
+(defmethod valid-edge? :contextStatementRefTemplate [_]
+  (s/and ::template-src
+         ::valid-dest
+         ::template-dest
+         ::same-version))
+
+(defmethod valid-edge :objectStatementRefTemplate [_]
+  (s/and ::template/src
+         ::valid-dest
+         ::template-dest
+         ::same-version))
 
 ;; verb MUST point to a Verb Concept
-(defmethod valid-edge? :verb [{:keys [src-type dest-type]}]
-  (and (#{"StatementTemplate"} src-type)
-       (#{"Verb"} dest-type)))
+
+
+; (defmethod valid-edge? :verb [{:keys [src-type dest-type]}]
+;   (and (#{"StatementTemplate"} src-type)
+;        (#{"Verb"} dest-type)))
 
 ;; objectActivityType MUST point to an object ActivityType
-(defmethod valid-edge? :objectActivityType [{:keys [src-type dest-type]}]
-  (and (#{"StatementTemplate"} src-type)
-       (#{"ActivityType"} dest-type)))
+; (defmethod valid-edge? :objectActivityType [{:keys [src-type dest-type]}]
+;   (and (#{"StatementTemplate"} src-type)
+;        (#{"ActivityType"} dest-type)))
 
 ;; contextGroupingActivityType MUST point to grouping ActivityTypes
-(defmethod valid-edge? :contextGroupingActivityType
-  [{:keys [src-type dest-type]}]
-  (and (#{"StatementTemplate"} src-type)
-       (#{"ActivityType"} dest-type)))
+; (defmethod valid-edge? :contextGroupingActivityType
+;   [{:keys [src-type dest-type]}]
+;   (and (#{"StatementTemplate"} src-type)
+;        (#{"ActivityType"} dest-type)))
 
 ;; contextParentActivityType MUST point to parent ActivityTypes
-(defmethod valid-edge? :contextParentActivityType
-  [{:keys [src-type dest-type]}]
-  (and (#{"StatementTemplate"} src-type)
-       (#{"ActivityType"} dest-type)))
+; (defmethod valid-edge? :contextParentActivityType
+;   [{:keys [src-type dest-type]}]
+;   (and (#{"StatementTemplate"} src-type)
+;        (#{"ActivityType"} dest-type)))
 
 ;; contextOtherActivityType MUST point to other ActivityTypes
-(defmethod valid-edge? :contextOtherActivityType
-  [{:keys [src-type dest-type]}]
-  (and (#{"StatementTemplate"} src-type)
-       (#{"ActivityType"} dest-type)))
+; (defmethod valid-edge? :contextOtherActivityType
+;   [{:keys [src-type dest-type]}]
+;   (and (#{"StatementTemplate"} src-type)
+;        (#{"ActivityType"} dest-type)))
 
 ;; contextCategoryActivityType MUST point to category ActivityTypes
-(defmethod valid-edge? :contextCategoryActivityType
-  [{:keys [src-type dest-type]}]
-  (and (#{"StatementTemplate"} src-type)
-       (#{"ActivityType"} dest-type)))
+; (defmethod valid-edge? :contextCategoryActivityType
+;   [{:keys [src-type dest-type]}]
+;   (and (#{"StatementTemplate"} src-type)
+;        (#{"ActivityType"} dest-type)))
 
 ;; attachmentUsageType MUST point to AttachmentUsageType Concepts
-(defmethod valid-edge? :attachmentUsageType
-  [{:keys [src-type dest-type]}]
-  (and (#{"StatementTemplate"} src-type)
-       (#{"AttachmentUsageType"} dest-type)))
+; (defmethod valid-edge? :attachmentUsageType
+;   [{:keys [src-type dest-type]}]
+;   (and (#{"StatementTemplate"} src-type)
+;        (#{"AttachmentUsageType"} dest-type)))
 
 ;; objectStatementRefTemplate MUST point to Statement Templates from this
 ;; profile version
-(defmethod valid-edge? :objectStatementRefTemplate
-  [{:keys [src-type dest-type src-version dest-version]}]
-  (and (#{"StatementTemplate"} src-type)
-       (#{"StatementTemplate"} dest-type)
-       (= src-version dest-version)))
+; (defmethod valid-edge? :objectStatementRefTemplate
+;   [{:keys [src-type dest-type src-version dest-version]}]
+;   (and (#{"StatementTemplate"} src-type)
+;        (#{"StatementTemplate"} dest-type)
+;        (= src-version dest-version)))
 
 ;; contextStatementRefTemplate MUST point to Statement Templates from this
 ;; profile version
-(defmethod valid-edge? :contextStatementRefTemplate
-  [{:keys [src-type dest-type src-version dest-version]}]
-  (and (#{"StatementTemplate"} src-type)
-       (#{"StatementTemplate"} dest-type)
-       (= src-version dest-version)))
+
+
+; (defmethod valid-edge? :contextStatementRefTemplate
+;   [{:keys [src-type dest-type src-version dest-version]}]
+;   (and (#{"StatementTemplate"} src-type)
+;        (#{"StatementTemplate"} dest-type)
+;        (= src-version dest-version)))
 
 ;; If the source object is a Statement Template, then it did not satisfy any
 ;; of the other properties so we return false.
 (defmethod valid-edge? :default [_] false)
 
-(s/def ::valid-edge valid-edge?)
+(s/def ::valid-edge (s/multi-spec valid-edge? util/type-dispatch))
 
 (s/def ::valid-edges (s/coll-of ::valid-edge))
 
