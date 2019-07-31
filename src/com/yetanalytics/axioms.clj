@@ -4,6 +4,7 @@
             [clojure.spec.alpha :as s]
             [clojure.spec.gen.alpha :as sgen]
             [xapi-schema.spec :as xs]
+            [xapi-schema.spec.regex :as xsr]
             [json-schema.core :as js]))
 
 ;; Booleans
@@ -12,18 +13,22 @@
 
 ;; Arbitrary strings
 ;; By the xAPI-Profile specification, they cannot be empty
-(s/def ::string ::xs/string-not-empty)
+;; Same as xapi-schema.spec/string-not-empty
+(s/def ::string (s/and string? (complement empty?)))
+
+;; (s/def ::string ::xs/string-not-empty)
 
 ;; Timestamps
 ;; Example: "2010-01-14T12:13:14Z"
-(s/def ::timestamp ::xs/timestamp)
+(s/def ::timestamp (partial re-matches xsr/TimestampRegEx))
+;; (s/def ::timestamp ::xs/timestamp)
 
 ;; Language Maps
 ;; Example: {"en" "Hello World"} or {:en "Hello World"}
 (s/def ::language-map
   ;; TODO Should revise language maps such that keys like :foo are not counted
   (s/map-of (s/or :string ::xs/language-tag :keyword keyword?)
-            (s/or :not-empty ::xs/string-not-empty
+            (s/or :not-empty ::string
                   :maybe-empty string?)
             :min-count 1))
 
@@ -82,11 +87,17 @@
 ;; TODO We are currently using the xapi-schema specs as substitutes for the
 ;; real thing (currently they do not correctly differentiate between IRIs,
 ;; which accept non-ASCII chars, and URIs, which do not).
-(s/def ::iri ::xs/iri)
-(s/def ::irl ::xs/irl)
-(s/def ::uri ::xs/iri)
-(s/def ::url ::xs/irl)
+(s/def ::iri (partial re-matches xsr/AbsoluteIRIRegEx))
+(s/def ::irl (partial re-matches xsr/AbsoluteIRIRegEx))
+(s/def ::uri (partial re-matches xsr/AbsoluteIRIRegEx))
+(s/def ::url (partial re-matches xsr/AbsoluteIRIRegEx))
 
-;; Array of IRIs
+; (s/def ::iri ::xs/iri)
+; (s/def ::irl ::xs/irl)
+; (s/def ::uri ::xs/iri)
+; (s/def ::url ::xs/irl)
+
+;; Array of identifiers
 ;; Example: ["https://foo.org" "https://bar.org"]
 (s/def ::array-of-iri (s/coll-of ::iri :type vector? :min-count 1))
+(s/def ::array-of-uri (s/coll-of ::uri :type vector? :min-count 1))

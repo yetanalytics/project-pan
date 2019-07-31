@@ -203,4 +203,14 @@
     (is (not (s/valid? ::ax/json-schema "{\"$comment\" : 74}")))
     (is (not (s/valid? ::ax/json-schema schema-3))) ; valid only in draft-03
     (is (not (s/valid? ::ax/json-schema schema-4))) ; valid only in draft-03
-    ))
+))
+
+;; TODO Should check that IRIs with non-ASCII chars pass (currently they don't)
+(deftest test-iri
+  (testing "IRIs/IRLs/URIs/URLs"
+    (should-satisfy+ ::ax/iri
+                     "https://foo.org"
+                     "https://foo.org/"
+                     :bad
+                     "foo.org"
+                     "www.foo.org")))

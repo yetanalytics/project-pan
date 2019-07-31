@@ -16,18 +16,14 @@
 (s/def ::type #{"Activity"})
 (s/def ::inScheme ::ax/iri)
 (s/def ::deprecated ::ax/boolean)
-(def context-url "https://w3id.org/xapi/profiles/activity-context")
-(s/def ::context (s/or :context ::ax/uri
-                       :context-array (s/and
-                                       (s/coll-of ::ax/uri :type vector?)
-                                       (partial some #(= context-url %)))))
 
-;; Rename keys (as xapi-scheme uses camelCase instead of kebab-case
-; (defn camel-case-keys
-;   [kmap]
-;   (let [keys-kebab (keys kmap)
-;         keys-camel (map csk/->camelCase keys-kebab)]
-;     (rename-keys kmap (zipmap keys-kebab keys-camel))))
+;; @context validation
+(def context-url "https://w3id.org/xapi/profiles/activity-context")
+(s/def ::has-context-url (partial some #(= % context-url)))
+(s/def ::context
+  (s/or :context-ur ::ax/uri
+        :context-array (s/and ::ax/array-of-uri
+                              ::has-context-url)))
 
 ;; Turn language map keys back into strings
 (defn stringify-lang-keys

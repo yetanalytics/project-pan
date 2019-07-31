@@ -24,30 +24,19 @@
 
 ;; @context SHOULD be the following URI and MUST contain it if URI valued
 (def context-url "https://w3id.org/xapi/profiles/context")
+(s/def ::has-context-url (partial some #(= context-url %)))
 (s/def ::context
   (s/or :context-iri ::ax/uri
-        :context-array (s/and (s/coll-of ::ax/uri :type vector?)
-                              (partial some #(= context-url %)))))
-
-;; Overall profile ID MUST NOT be any of the version IDs
-#_(s/def ::id-distinct
-    (fn [{:keys [id versions]}]
-      (let [version-ids (util/only-ids versions)]
-        (nil? (some #(= id %) version-ids)))))
+        :context-array (s/and ::ax/array-of-uri
+                              ::has-context-url)))
 
 (s/def ::profile
-  (s/and
-   (s/keys :req-un [::id ::context ::type ::conformsTo ::prefLabel
-                    ::definition ::author/author ::versions/versions]
-           :opt-un [::seeAlso
-                    ::concept/concepts
-                    ::template/templates
-                    ::pattern/patterns])))
-
-; (defn validate
-;   "Syntax-only validation.
-;   Returns true if validation succeeds, and false otherwise."
-;   [profile] (s/valid? ::profile profile))
+  (s/keys :req-un [::id ::context ::type ::conformsTo ::prefLabel
+                   ::definition ::author/author ::versions/versions]
+          :opt-un [::seeAlso
+                   ::concept/concepts
+                   ::template/templates
+                   ::pattern/patterns]))
 
 (defn validate
   "Syntax-only validation.
