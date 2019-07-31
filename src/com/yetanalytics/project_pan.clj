@@ -61,18 +61,17 @@
                  (assoc :id-errors (id/validate-ids profile)
                         :in-scheme-errors (id/validate-in-schemes profile))
                  (true? relations)
-                 (assoc :concept-errors
-                        (-> profile :concepts
-                            concept/create-graph
-                            concept/explain-graph)
-                        :template-errors (template/explain-graph
-                                          (template/create-graph
-                                           (:concepts profile)
-                                           (:templates profile)))
-                        :pattern-errors (pattern/explain-graph
-                                         (template/create-graph
-                                          (:templates profile)
-                                          (:patterns profile))))
+                 (merge
+                  (let [cgraph (concept/create-graph (:concepts profile))
+                        tgraph (template/create-graph (:concepts profile)
+                                                      (:templates profile))
+                        pgraph (pattern/create-graph (:templates profile)
+                                                     (:patterns profile))]
+                    {:concept-errors (concept/explain-graph cgraph)
+                     :template-errors (template/explain-graph tgraph)
+                     :pattern-errors (pattern/explain-graph pgraph)
+                     :pattern-cycle-errors
+                     (pattern/explain-graph-cycles pgraph)}))
                  (true? contexts)
                  (assoc :context-errors
                         (context/validate-all-contexts profile)))]
