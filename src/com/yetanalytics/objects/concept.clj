@@ -38,8 +38,13 @@
 ;; Strict validation
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; Create a ubergraph digraph out of the vector of concepts
-(defn create-graph [concepts]
+;; TODO make broadMatch, narrowMatch, relatedMatch and exactMatch work
+
+;; Graph creation functions
+
+(defn create-graph
+  "Create a ubergraph digraph out of the vector of concepts"
+  [concepts]
   (let [cgraph (uber/digraph)
         cnodes (mapv (partial graph/node-with-attrs) concepts)
         cedges (graph/collect-edges
@@ -48,8 +53,16 @@
         (uber/add-nodes-with-attrs* cnodes)
         (uber/add-directed-edges* cedges))))
 
-;; Returns a sequence of edge maps, with src, dest and attribute keys
 (defn get-edges
+  "Returns a sequence of edge maps, with the following keys:
+  - src: source node ID
+  - dest: destination node ID
+  - src-type: source node 'type' property
+  - dest-type: destination node 'type' property
+  - src-version: source node 'inScheme' property
+  - dest-version: destination node 'inScheme property
+  - type: the property corresponding to this edge (eg. broader, narrower,
+  related, etc.)"
   [cgraph]
   (let [edges (uber/edges cgraph)]
     (map (fn [edge]
@@ -63,122 +76,93 @@
               :type (uber/attr cgraph edge :type)}))
          edges)))
 
-;; Spec to check that dest is not nil (i.e. the link itself is valid)
-(s/def ::dest-exists
+;; Edge property specs
+
+;; Is the destination not nil?
+(s/def ::valid-dest
   (fn [{:keys [dest-type dest-version]}]
     (and (some? dest-type) (some? dest-version))))
 
+;; Is the source an Activity Type, Attachment Usage Type, or a Verb?
 (s/def ::relatable-src
   (fn [{:keys [src-type]}]
     (contains? #{"ActivityType" "AttachmentUsageType" "Verb"} src-type)))
 
+;; Is the destination an Activity Type, Attachment Usage Type, or a Verb?
 (s/def ::relatable-dest
   (fn [{:keys [dest-type]}]
     (contains? #{"ActivityType" "AttachmentUsageType" "Verb"} dest-type)))
 
+;; Is the source an Activity Extension?
 (s/def ::aext-src
   (fn [{:keys [src-type]}]
     (contains? #{"ActivityExtension"} src-type)))
 
+;; Is the source a Context or Result Extension?
 (s/def ::crext-src
   (fn [{:keys [src-type]}]
     (contains? #{"ContextExtension" "ResultExtension"} src-type)))
 
+;; Is the destination an Activity Type?
 (s/def ::at-dest
   (fn [{:keys [dest-type]}]
     (contains? #{"ActivityType"} dest-type)))
 
+;; Is the destination a Verb?
 (s/def ::verb-dest
   (fn [{:keys [dest-type]}]
     (contains? #{"Verb"} dest-type)))
 
+;; Are both the source and destination the same type of Concept?
 (s/def ::same-concept
   (fn [{:keys [src-type dest-type]}]
     (= src-type dest-type)))
 
+;; Are both the source and destination of the same version?
 (s/def ::same-version
   (fn [{:keys [src-version dest-version]}]
     (= src-version dest-version)))
 
-;; Edge validation 
-
+;; Edge validation multimethod 
 
 (defmulti valid-edge? util/type-dispatch)
 
-(defmethod valid-edge? :broader [_]
-  (s/and ::graph/not-self-loop ::dest-exists
-         ::relatable-src ::relatable-dest
-         ::same-concept ::same-version))
-
-(defmethod valid-edge? :narrower [_]
-  (s/and ::graph/not-self-loop ::dest-exists
-         ::relatable-src ::relatable-dest
-         ::same-concept ::same-version))
-
-(defmethod valid-edge? :related [_]
-  (s/and ::graph/not-self-loop ::dest-exists
-         ::relatable-src ::relatable-dest
-         ::same-concept ::same-version))
-
-(defmethod valid-edge? :recommendedActivityTypes [_]
-  (s/and ::graph/not-self-loop ::dest-exists
-         ::aext-src ::at-dest))
-
-(defmethod valid-edge? :recommendedVerbs [_]
-  (s/and ::graph/not-self-loop ::dest-exists
-         ::crext-src ::verb-dest))
-
-;; Verbs, ActivityTypes, and AttachmentUsageTypes
-;; TODO broadMatch, narrowMatch, relatedMatch and exactMatch
-
 ;; broader MUST point to same-type Concepts from the same profile version
-
-
-; (defmethod valid-edge? :broader
-;   [{:keys [src-type dest-type src-version dest-version]}]
-;   (and (#{"ActivityType" "AttachmentUsageType" "Verb"} src-type)
-;        (#{"ActivityType" "AttachmentUsageType" "Verb"} dest-type)
-;        (= src-type dest-type)
-;        (= src-version dest-version)))
+(defmethod valid-edge? :broader [_]
+  (s/and ::graph/not-self-loop ::valid-dest
+         ::relatable-src ::relatable-dest
+         ::same-concept ::same-version))
 
 ; ;; narrower MUST point to same-type Concepts from the same profile version
-; (defmethod valid-edge? :narrower
-;   [{:keys [src-type dest-type src-version dest-version]}]
-;   (and (#{"ActivityType" "AttachmentUsageType" "Verb"} src-type)
-;        (#{"ActivityType" "AttachmentUsageType" "Verb"} dest-type)
-;        (= src-type dest-type)
-;        (= src-version dest-version)))
+(defmethod valid-edge? :narrower [_]
+  (s/and ::graph/not-self-loop ::valid-dest
+         ::relatable-src ::relatable-dest
+         ::same-concept ::same-version))
 
 ; ;; related MUST point to same-type Concepts from the same profile version
-; (defmethod valid-edge? :related
-;   [{:keys [src-type dest-type src-version dest-version]}]
-;   (and (#{"ActivityType" "AttachmentUsageType" "Verb"} src-type)
-;        (#{"ActivityType" "AttachmentUsageType" "Verb"} dest-type)
-;        (= src-type dest-type)
-;        (= src-version dest-version)))
-
-;; Extensions
+(defmethod valid-edge? :related [_]
+  (s/and ::graph/not-self-loop ::valid-dest
+         ::relatable-src ::relatable-dest
+         ::same-concept ::same-version))
 
 ; ;; recommendedActivityTypes MUST point to ActivityType Concepts
-; (defmethod valid-edge? :recommendedActivityTypes
-;   [{:keys [src-type dest-type]}]
-;   (and (#{"ActivityExtension"} src-type)
-;        (#{"ActivityType"} dest-type)))
+(defmethod valid-edge? :recommendedActivityTypes [_]
+  (s/and ::graph/not-self-loop ::valid-dest
+         ::aext-src ::at-dest))
 
 ; ;; recommendedVerbs MUST point to Verb Concepts
-; (defmethod valid-edge? :recommendedVerbs
-;   [{:keys [src-type dest-type]}]
-;   (and (#{"ContextExtension" "ResultExtension"} src-type)
-;        (#{"Verb"} dest-type)))
+(defmethod valid-edge? :recommendedVerbs [_]
+  (s/and ::graph/not-self-loop ::valid-dest
+         ::crext-src ::verb-dest))
 
-(defmethod valid-edge? :default [_] false)
-
-;(s/def ::valid-edge valid-edge?)
+;; Is one edge valid?
 (s/def ::valid-edge (s/multi-spec valid-edge? util/type-dispatch))
+
+;; Are all edges valid?
 (s/def ::valid-edges (s/coll-of ::valid-edge))
 
-#_(s/def ::concept-graph
-    (fn [cgraph] (s/valid? ::valid-edges (get-edges cgraph))))
+(s/def ::concept-graph
+  (fn [cgraph] (s/valid? ::valid-edges (get-edges cgraph))))
 
 (defn explain-graph [cgraph]
   (s/explain-data ::valid-edges (get-edges cgraph)))
