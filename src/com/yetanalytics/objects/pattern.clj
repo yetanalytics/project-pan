@@ -292,10 +292,10 @@
 ;; spec errors cleaner.
 
 ;; Check that one SCC is a singleton
+;; (Technically we can do this with s/cat, but this allows us to return the
+;; entire vector as a value in the error map)
 (s/def ::singleton-scc
-  (s/and vector?
-         (s/cat :identifier (s/or :iri ::ax/iri :irl ::ax/irl
-                                  :uri ::ax/uri :url ::ax/url))))
+  (s/coll-of any? :kind vector? :min-count 1 :max-count 1))
 
 ;; Check that all SCCs are singletons
 (s/def ::singleton-sccs (s/coll-of ::singleton-scc :kind vector?))

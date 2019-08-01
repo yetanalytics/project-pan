@@ -98,15 +98,16 @@
     "nil"
     (if (keyword? value)
       (name value)
-      (str value))))
+      ;; Use strv to get keep quotes around strings, str to remove them
+      (pr-str value))))
 
 (defn value-str-id
   "Custom value string for duplicate ID error messages. Takes the form:
   > Duplicate id: <identifier>
   >  with count: <int>"
   [_ _ path value]
-  (str "Duplicate id: " (-> path last strv) "\n"
-       " with count: " (strv value)))
+  (str "Duplicate id: " (-> path last str) "\n"
+       " with count: " (str value)))
 
 (defn value-str-ver
   "Custom value string for inScheme error messages. Takes the form:
@@ -117,70 +118,80 @@
   >   <version-id-2>
   >   ..."
   [_ _ _ value]
-  (str "Invalid inScheme: " (-> value :inScheme strv) "\n"
-       " at object: " (-> value :id strv) "\n"
+  (str "Invalid inScheme: " (-> value :inScheme str) "\n"
+       " at object: " (-> value :id str) "\n"
        " profile version ids:\n  "
        (->> value :version-ids sequence sort reverse (string/join "\n  "))))
 
 (defn value-str-edge
   "Custom value string for IRI link error messages. Takes the form:
-  > Invalid link: <link>
-  >  at object: <identifier>
-  >  link property: <property>
-  >  object properties: 
-  >   <property-1>
-  >   <property-2>
-  >  linked object properties:
-  >   <property-1>
-  >   <property-2>"
+  > Invalid <property> identifier:
+  >  <identifier>
+  > at object:
+  >  <object map>
+  > linked object:
+  >  <object map>"
   [_ _ _ value]
   (let [attrs-list
         (m/match [value]
-                 ;; Patterns
+          ;; Patterns
           [{:src-primary _ :src-indegree _ :src-outdegree _ :dest-property _}]
-          (str " object properties:\n"
-               "  type: " (-> value :src-type strv) "\n"
-               "  primary: " (-> value :src-primary strv) "\n"
-               "  number of uses" (-> value :src-indegree strv) "\n"
-               "  number of links: " (-> value :src-outdegree strv) "\n"
-               " linked object properties\n"
-               "  type: " (-> value :src-type strv) "\n"
-               "  pattern property: " (-> value :src-indegree strv))
-                 ;; Concepts and Templates
+          (str " at object:\n"
+               "  {:id " (-> value :src strv) ",\n"
+               "   :type " (-> value :src-type strv) ",\n"
+               "   :primary " (-> value :src-primary strv) ",\n"
+               "   ...}"
+               "\n"
+               " linked object:\n"
+               "   {:id " (-> value :dest strv) ",\n"
+               "    :type " (-> value :dest-type strv) ",\n"
+               "    :" (-> value :dest-property strv) " ...,\n"
+               "    ...}"
+               "\n"
+               " pattern is used " (-> value :src-indegree strv) " times in the profile\n"
+               " and links out to " (-> value :src-outdegree strv) " other objects.")
+          ;; Concepts and Templates
           [{:src-version _ :dest-version _}]
-          (str " object properties:\n"
-               "  type: " (-> value :src-type strv) "\n"
-               "  inScheme: " (-> value :src-version strv) "\n"
-               " linked object properties\n"
-               "  type: " (-> value :dest-type strv) "\n"
-               "  inScheme: " (-> value :dest-version strv))
-                 ;; Shouldn't happen but just in case
+          (str " at object:\n"
+               "  {:id " (-> value :src strv) ",\n"
+               "   :type " (-> value :src-type strv) ",\n"
+               "   :inScheme " (-> value :src-version strv) ",\n"
+               "   ...}\n"
+               "\n"
+               " linked object:\n"
+               "  {:id " (-> value :dest strv) ",\n"
+               "   :type " (-> value :dest-type strv) ",\n"
+               "   :inScheme " (-> value :dest-version strv) ",\n"
+               "   ...}")
+          ;; Shouldn't happen but just in case
           :else "")]
-    (str "Invalid link: " (-> value :dest strv) "\n"
-         " at object: " (-> value :src strv) "\n"
-         " link property: " (-> value :type strv) "\n"
-         attrs-list)))
+    (str "Invalid " (-> value :type strv) " identifier:\n"
+         " " (-> value :dest str) "\n"
+         "\n" attrs-list)))
+
+(defn value-str-scc
+  "Custom value string for strongly connected component error messages (if a
+  digraph has a cycle). Takes the form:"
+  [_ _ _ value]
+  (str "Cycle detected involving the following nodes:\n  "
+       (->> value sort (string/join "\n  "))))
 
 (defn custom-printer
   "Returns a printer based on the error-type argument. A nil error-type will
   result in the default Expound printer (except with :print-specs? set to 
   false)."
   [& [error-type]]
-  (let [error-type
-        (if (nil? error-type) :else error-type)
-        id-printer
-        (exp/custom-printer {:value-str-fn value-str-id :print-specs? false})
-        in-scheme-printer
-        (exp/custom-printer {:value-str-fn value-str-ver :print-specs? false})
-        edge-printer
-        (exp/custom-printer {:value-str-fn value-str-edge :print-specs? false})
-        default-printer
-        (exp/custom-printer {:print-specs? false})]
+  (let [error-type (if (nil? error-type) :else error-type)]
     (case error-type
-      "id" id-printer
-      "in-scheme" in-scheme-printer
-      "edge" edge-printer
-      :else default-printer)))
+      "id"
+      (exp/custom-printer {:value-str-fn value-str-id :print-specs? false})
+      "in-scheme"
+      (exp/custom-printer {:value-str-fn value-str-ver :print-specs? false})
+      "edge"
+      (exp/custom-printer {:value-str-fn value-str-edge :print-specs? false})
+      "scc"
+      (exp/custom-pinter {:value-str-fn value-str-scc :print-specs? false})
+      :else (exp/custom-printer {:print-specs? false}))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Property ordering in error messages 

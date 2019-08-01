@@ -112,8 +112,19 @@
       (assoc-in [:templates 0 :verb] "https://foo.org/template2")
       (assoc-in [:templates 0 :attachmentUsageType] ["https://foo.org/template"])))
 
-;; Tests
+;; Let's add patterns! But they have cycles
+(def bad-profile-2f
+  (assoc good-profile-2 :patterns
+         [{:id "https://foo.org/pattern-one"
+           :type "Pattern"
+           :primary true
+           :oneOrMore {:id "https://foo.org/pattern-two"}}
+          {:id "https://foo.org/pattern-two"
+           :type "Pattern"
+           :primary true
+           :oneOrMore {:id "https://foo.org/pattern-one"}}]))
 
+;; Tests
 (deftest group-by-in-test
   (testing "group-by-in function"
     (is (= (p/validate bad-profile-1a)
