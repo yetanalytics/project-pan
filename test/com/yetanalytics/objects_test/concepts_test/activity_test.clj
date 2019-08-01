@@ -14,38 +14,23 @@
                      "StanLoona")))
 
 (deftest context-test
-  (testing "context property"
-    (should-satisfy ::activities/context
+  (testing "@context property"
+    (should-satisfy ::activities/_context
                     "https://w3id.org/xapi/profiles/activity-context")
-    (should-satisfy ::activities/context "https://some-other-context")
-    (should-satisfy ::activities/context
+    (should-satisfy ::activities/_context "https://some-other-context")
+    (should-satisfy ::activities/_context
                     ["https://w3id.org/xapi/profiles/activity-context"])
-    (should-not-satisfy ::activities/context ["https://some-other-context"])
-    (should-not-satisfy ::activities/context "foo bar")))
-
-; (deftest camel-case-keys-test
-;   (testing "turning kebab-case keys into camelCase keys"
-;     (is (= (activities/camel-case-keys
-;             {:key "Zero" :key-one "One" :key-two-Two "Two"})
-;            {:key "Zero" :keyOne "One" :keyTwoTwo "Two"}))
-;     (is (= (activities/camel-case-keys
-;             {:context "https://w3id.org/xapi/profiles/activity-context"
-;              :name {:en "Blah"}
-;              :description {"en" "Blah Blah Blah"}
-;              :type "https://w3id.org/xapi/catch/activitytypes/blah"})
-;            {:context "https://w3id.org/xapi/profiles/activity-context"
-;             :name {:en "Blah"}
-;             :description {"en" "Blah Blah Blah"}
-;             :type "https://w3id.org/xapi/catch/activitytypes/blah"}))))
+    (should-not-satisfy ::activities/_context ["https://some-other-context"])
+    (should-not-satisfy ::activities/_context "foo bar")))
 
 (deftest stringify-lang-keys-test
   (testing "turning keys in the name and description language maps into strings"
     (is (= (activities/stringify-lang-keys
-            {:context "https://w3id.org/xapi/profiles/activity-context"
+            {:_context "https://w3id.org/xapi/profiles/activity-context"
              :name {:en "Blah"}
              :description {:en "Blah Blah Blah"}
              :type "https://w3id.org/xapi/catch/activitytypes/blah"})
-           {:context "https://w3id.org/xapi/profiles/activity-context"
+           {:_context "https://w3id.org/xapi/profiles/activity-context"
             :name {"en" "Blah"}
             :description {"en" "Blah Blah Blah"}
             :type "https://w3id.org/xapi/catch/activitytypes/blah"}))))
@@ -53,7 +38,7 @@
 (deftest activity-definition
   (testing "activityDefinition property"
     (is (s/valid? ::activities/activityDefinition
-                  {:context "https://w3id.org/xapi/profiles/activity-context"
+                  {:_context "https://w3id.org/xapi/profiles/activity-context"
                    :name {:en "Cross Linguistic Connections"}
                    :description {"en" "The cross linguistic connections competency as described by the EPISD Dual Language Competency Framework"}
                    :type "https://w3id.org/xapi/catch/activitytypes/competency"}))))
@@ -65,7 +50,7 @@
                    :type "Activity"
                    :inScheme "https://w3id.org/xapi/catch/v1"
                    :activityDefinition
-                   {:context "https://w3id.org/xapi/profiles/activity-context"
+                   {:_context "https://w3id.org/xapi/profiles/activity-context"
                     :name {:en "Cross Linguistic Connections"}
                     :description {"en" "The cross linguistic connections competency as described by the EPISD Dual Language Competency Framework"}
                     :type "https://w3id.org/xapi/catch/activitytypes/competency"}}))))

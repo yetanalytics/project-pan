@@ -57,11 +57,11 @@
   (testing "distinct-ids spec"
     (is (s/valid? ::id/distinct-ids {"https://foo.org" 1
                                      "https://bar.org" 1}))
+    (is (s/valid? ::id/distinct-ids {"https://foo.org" 1
+                                     "https://bar.org" 1
+                                     "what the pineapple" 1}))
     (is (not (s/valid? ::id/distinct-ids {"https://foo.org" 1
-                                          "https://bar.org" 2})))
-    (is (not (s/valid? ::id/distinct-ids {"https://foo.org" 1
-                                          "https://bar.org" 1
-                                          "what the pineapple" 1})))))
+                                          "https://bar.org" 2})))))
 
 ;; ID tests
 (deftest validate-ids-test

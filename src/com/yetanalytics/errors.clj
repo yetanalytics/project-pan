@@ -201,7 +201,7 @@
       "edge"
       (exp/custom-printer {:value-str-fn value-str-edge :print-specs? false})
       "scc"
-      (exp/custom-pinter {:value-str-fn value-str-scc :print-specs? false})
+      (exp/custom-printer {:value-str-fn value-str-scc :print-specs? false})
       :else (exp/custom-printer {:print-specs? false}))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

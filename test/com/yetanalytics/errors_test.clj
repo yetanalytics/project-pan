@@ -158,8 +158,7 @@
   (testing "compare-arrs function"
     (is (= (sort '([:z] [:a :b] [:a])) '([:a] [:z] [:a :b])))
     (is (= (sort e/compare-arrs '([:z] [:a :b] [:a])) '([:a] [:a :b] [:z])))
-    (is (= (e/compare-arrs [:author] [:template])
-           (compare :author :template)))
+    (is (neg? (e/compare-arrs [:author] [:template])))
     (is (neg? (e/compare-arrs [:author] [:author :url])))
     (is (neg? (e/compare-arrs [:author] [:template :id])))
     (is (neg? (e/compare-arrs [:author :url] [:template])))
@@ -199,7 +198,6 @@
                 (mapv #(-> % ::s/problems first :via last)))
            [::id/in-scheme ::id/in-scheme]))))
 
-(e/expound-error (p/validate bad-profile-2f))
 (deftest expound-test
   (testing "error/expound-errors error messages"
     (is (= (with-out-str
@@ -368,4 +366,4 @@
                 "object cannot refer to itself\n"
                 "\n"
                 "-------------------------\n"
-                "Detected 1 error\n"))))
+                "Detected 1 error\n")))))

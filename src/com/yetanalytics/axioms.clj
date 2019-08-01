@@ -18,7 +18,7 @@
 
 ;; Timestamps
 ;; Example: "2010-01-14T12:13:14Z"
-(s/def ::timestamp (partial re-matches xsr/TimestampRegEx))
+(s/def ::timestamp (s/and ::string (partial re-matches xsr/TimestampRegEx)))
 
 ;; Language Maps
 ;; Example: {"en" "Hello World"} or {:en "Hello World"}
@@ -41,7 +41,7 @@
 (def media-types (edn/read-string (slurp "resources/media_types.edn")))
 
 (s/def ::media-type
-  (s/and string?
+  (s/and ::string
          (fn [mt]
            (let [substrs (string/split mt #"\/" 2)]
              (contains? (get media-types (first substrs)) (second substrs))))))
@@ -60,7 +60,7 @@
 (def JSONPathSplitRegEx #"\s*\|\s*(?!([^\[]*\]))")
 
 (s/def ::json-path
-  (s/and string?
+  (s/and ::string
          (fn [paths]
            (every? some?
                    (map (partial re-matches JSONPathRegEx)
@@ -77,8 +77,7 @@
 (def meta-schema (slurp "resources/json/schema-07.json"))
 
 (s/def ::json-schema
-  (s/and string?
-         (partial schema-validate meta-schema)))
+  (s/and ::string (partial schema-validate meta-schema)))
 
 ;; IRIs/IRLs/URIs/URLs
 ;; Example: "https://yetanalytics.io"
@@ -86,10 +85,10 @@
 ;; TODO We are currently using the xapi-schema specs as substitutes for the
 ;; real thing (currently they do not correctly differentiate between IRIs,
 ;; which accept non-ASCII chars, and URIs, which do not).
-(s/def ::iri (partial re-matches xsr/AbsoluteIRIRegEx))
-(s/def ::irl (partial re-matches xsr/AbsoluteIRIRegEx))
-(s/def ::uri (partial re-matches xsr/AbsoluteIRIRegEx))
-(s/def ::url (partial re-matches xsr/AbsoluteIRIRegEx))
+(s/def ::iri (s/and ::string (partial re-matches xsr/AbsoluteIRIRegEx)))
+(s/def ::irl (s/and ::string (partial re-matches xsr/AbsoluteIRIRegEx)))
+(s/def ::uri (s/and ::string (partial re-matches xsr/AbsoluteIRIRegEx)))
+(s/def ::url (s/and ::string (partial re-matches xsr/AbsoluteIRIRegEx)))
 
 ; (s/def ::iri ::xs/iri)
 ; (s/def ::irl ::xs/irl)

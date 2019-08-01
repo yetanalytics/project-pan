@@ -16,12 +16,12 @@
 
 (deftest context-test
   (testing "context property"
-    (is (s/valid? ::profile/context "https://w3id.org/xapi/profiles/context"))
-    (is (s/valid? ::profile/context ["https://w3id.org/xapi/profiles/context"]))
-    (is (s/valid? ::profile/context ["https://w3id.org/xapi/profiles/context"
-                                     "https://w3id.org/xapi/some/other/context"]))
-    (is (not (s/valid? ::profile/context ["https://w3id.org/incorrect/context"])))
-    (is (not (s/valid? ::profile/context [])))))
+    (is (s/valid? ::profile/_context "https://w3id.org/xapi/profiles/context"))
+    (is (s/valid? ::profile/_context ["https://w3id.org/xapi/profiles/context"]))
+    (is (s/valid? ::profile/_context ["https://w3id.org/xapi/profiles/context"
+                                      "https://w3id.org/xapi/some/other/context"]))
+    (is (not (s/valid? ::profile/_context ["https://w3id.org/incorrect/context"])))
+    (is (not (s/valid? ::profile/_context [])))))
 
 (deftest type-test
   (testing "type property"
@@ -57,7 +57,7 @@
                   {:versions
                    [{:id "https://w3id.org/xapi/catch/v1"
                      :generatedAtTime "2017-12-22T22:30:00-07:00"}]
-                   :context "https://w3id.org/xapi/profiles/context"
+                   :_context "https://w3id.org/xapi/profiles/context"
                    :author {:url "https://www.yetanalytics.io"
                             :type "Organization"
                             :name "Yet Analytics"}
@@ -67,14 +67,3 @@
                    :conformsTo "https://w3id.org/xapi/profiles#1.0"
                    :prefLabel {"en"
                                "Catch"}}))))
-
-; (def will-profile
-;   (util/convert-json (slurp "resources/sample_profiles/will-profile-reduced.json") ""))
-
-; (deftest profile-integration-test
-;   (testing "performing intergration testing using Will's CATCH profile"
-;     (is (nil? (profile/validate will-profile)))
-;     (is (empty? (profile/validate-all-ids will-profile)))
-;     (is (empty? (profile/validate-in-schemes will-profile)))
-;     (is (empty? (profile/validate-iris will-profile)))
-;     (is (empty? (profile/validate-context will-profile)))))
