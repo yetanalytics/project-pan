@@ -20,8 +20,8 @@
 ;; @context validation
 (def context-url "https://w3id.org/xapi/profiles/activity-context")
 (s/def ::has-context-url (partial some #(= % context-url)))
-(s/def ::context
-  (s/or :context-ur ::ax/uri
+(s/def ::_context
+  (s/or :context-uri ::ax/uri
         :context-array (s/and ::ax/array-of-uri
                               ::has-context-url)))
 
@@ -34,11 +34,10 @@
 ;; Need to use this function instead of s/merge because of restrict-keys in
 ;; xapi-schema function.
 (s/def ::activityDefinition
-  (s/and (s/keys :req-un [::context])
+  (s/and (s/keys :req-un [::_context])
          (fn [adef]
            (s/valid? :activity/definition
-                     (stringify-lang-keys (dissoc adef :context))
-                     #_(stringify-lang-keys (camel-case-keys (dissoc adef :context)))))))
+                     (stringify-lang-keys (dissoc adef :_context))))))
 
 (s/def ::activity
   (s/keys :req-un [::id ::type ::inScheme ::activityDefinition]

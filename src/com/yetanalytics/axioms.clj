@@ -23,8 +23,8 @@
 ;; Language Maps
 ;; Example: {"en" "Hello World"} or {:en "Hello World"}
 (s/def ::language-tag
-  (or #(->> % name (re-matches xsr/LanguageTagRegEx))
-      (partial re-matches xsr/LanguageTagRegEx)))
+  (fn [t] (or (and (keyword? t) (->> t name (re-matches xsr/LanguageTagRegEx)))
+              (and (string? t) (re-matches xsr/LanguageTagRegEx t)))))
 
 ;; TODO Should revise language maps such that keys like :foo are not counted
 (s/def ::language-map

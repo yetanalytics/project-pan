@@ -50,7 +50,7 @@
                          :type "FooBar"
                          :prefLabel {"es" "uno"
                                      "en" false}
-                         :definition {:en 2}
+                         :definition {74 "definition"}
                          :versions [{:id "invalid"
                                      :generatedAtTime "not-a-timestamp"}]
                          :author {:url "bad"
@@ -131,9 +131,7 @@
     (is (neg? (e/compare-arrs [:author :url] [:template])))
     (is (neg? (e/compare-arrs [] [:id])))))
 
-(s/conform ::ax/language-tag :en)
-(s/explain ::ax/language-map {:en "true"})
-(s/explain-data ::p/profile bad-profile-1d)
+(s/explain ::p/profile bad-profile-2a)
 (deftest sort-by-path-test
   (testing "sort-by-path function"
     (is (= [:id]
@@ -146,13 +144,24 @@
            (-> bad-profile-1c p/validate e/group-by-in e/sort-by-path second ::s/problems first :path)))
     (is (= (->> bad-profile-1d p/validate e/group-by-in e/sort-by-path
                 (mapv #(-> % ::s/problems first :path)))
-           [[] [:id] [:type] [:conformsTo] [:prefLabel 1] [:definition 1]
+           [[] [:id] [:type] [:conformsTo] [:prefLabel 1] [:definition 0]
             [:author :type] [:author :name] [:author :url]
-            [:versions :id] [:versions :generatedAtTime]]))))
+            [:versions :id] [:versions :generatedAtTime]]))
+    (is (= (->> bad-profile-2a p/validate e/group-by-in e/sort-by-path
+                (mapv #(-> % ::s/problems first :path)))))))
 
 (deftest spec-test
   (testing "ensure that correct specs are returned in problem maps"
     (is (= (->> bad-profile-1d p/validate e/group-by-in e/sort-by-path
                 (mapv #(-> % ::s/problems first :via last)))
-           [::p/profile ::ax/iri ::p/type ::ax/uri ::ax/lang-map-string ::ax/lang-map-string
-            ::ah/type ::ax/string ::ax/url ::ax/iri ::ax/timestamp]))))
+           [::p/profile ::ax/iri ::p/type ::ax/uri ::ax/lang-map-string ::ax/language-tag
+            ::ah/type ::ax/string ::ax/url ::ax/iri ::ax/timestamp]))
+    (is (= (->> bad-profile-2a p/validate e/group-by-in e/sort-by-path
+                (mapv #(-> % ::s/problems first :via last)))
+           [::t/template ::ax/uri]))
+    (is (= (->> bad-profile-2b id/validate-ids e/group-by-in e/sort-by-path
+                (mapv #(-> % ::s/problems first :via last)))
+           [::id/one-count]))
+    (is (= (->> bad-profile-2c id/validate-in-schemes e/group-by-in e/sort-by-path
+                (mapv #(-> % ::s/problems first :via last)))
+           [::id/in-scheme ::id/in-scheme]))))

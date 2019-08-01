@@ -13,11 +13,12 @@
 ;; Currently only supports JSON-LD
 
 (defn- convert-profile
-  "Converts profile, if it is a JSON-LD string, into EDN format.
-  Otherwise keeps it in EDN format."
+  "Converts profile, if it is a JSON-LD string, into EDN format. Otherwise 
+  keeps it in EDN format. Note that all instances of @ in keywords are
+  replaced by underscores."
   [profile]
   (if (string? profile)
-    (util/convert-json profile "")
+    (util/convert-json profile "_")
     profile))
 
 (defn validate-profile

@@ -14,7 +14,10 @@
             [com.yetanalytics.util :as u]
             [xapi-schema.spec :as xs]))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Syntax spec messages
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (exp/defmsg ::ax/boolean "should be a boolean")
 (exp/defmsg ::ax/string "should be a non-empty string")
 (exp/defmsg ::ax/timestamp "should be a valid timestamp")
@@ -80,6 +83,10 @@
 (exp/defmsg ::p/zero-indegree-src "pattern must not be used elsewhere")
 
 (exp/defmsg ::p/singleton-scc "pattern is involved in a cyclical reference")
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Property ordering in error messages 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (def property-order
   {;; Profile metadata
@@ -156,6 +163,10 @@
    :sequence   62
    :zeroOrMore 63})
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Error map manipulation functions
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (defn compare-properties
   "Get the order of two properties based on how it was listed in the xAPI 
   Profile spec. Properties not listed in the property-order map will be pushed 
@@ -219,14 +230,13 @@
   [error-map-list]
   (sort-by #(-> % ::s/problems first :path) compare-arrs error-map-list))
 
-(defn expound-error* [error-map]
-  (let [printer (exp/custom-printer {:print-specs? false})]
-    (exp/expound-str error-map)))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Expounding functions
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn expound-error [error-map]
-  (binding [s/*explain-out* ;exp/printer
-            (exp/custom-printer {:print-specs? false})]
-    (s/explain-out error-map)))
+  (let [print-fn (exp/custom-printer {:print-specs? false})]
+    (print-fn error-map)))
 
 (defn expound-error-list
   [error-list]

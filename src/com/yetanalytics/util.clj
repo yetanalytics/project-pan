@@ -58,17 +58,16 @@
   [s] (string/replace s #"@|\s" ""))
 
 (defn replace-at
-  "Replace any @ symbols with 'at/' (so that they are all in their own pseudo-
-  namespace."
+  "Replace any @ symbols with the replacement arg (as @ cannot be used in
+  keywords)."
   [s replacement] (string/replace s #"@" replacement))
 
 (defn convert-json
-  "Convert a JSON string into an edn data structure."
+  "Convert a JSON string into an edn data structure.
+  Second argument should be what string the @ char should be replaced by."
   [json at-replacement]
   (cheshire/parse-string
-   json #(-> % (replace-at at-replacement) keyword)
-   #_(fn [k] (-> k remove-chars kebab/->kebab-case-keyword))))
-;; ^ example usage of ->
+   json #(-> % (replace-at at-replacement) keyword)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Error message formatting 
