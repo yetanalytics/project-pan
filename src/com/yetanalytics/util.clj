@@ -39,9 +39,19 @@
           inline-schema? (contains? ext :inlineSchema)]
       (not (and schema? inline-schema?)))))
 
+;; In concepts that may have the related property, it MUST only be used on a
+;; deprecated property
+(s/def ::related-only-deprecated
+  (fn [{:keys [deprecated related]}]
+    (if (some? related)
+      (true? deprecated)
+      ;; Ignore if related property is not present
+      true)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; JSON parsing 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 
 (defn remove-chars
   "Remove chars that are illegal in keywords, ie. spaces and the @ symbol."

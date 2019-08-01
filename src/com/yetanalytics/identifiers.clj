@@ -34,10 +34,11 @@
 ;; Validate that a single ID count is 1 
 (s/def ::one-count #(= 1 %))
 
-;; Validate that all ID counts are 1 
+;; Validate that all ID counts are 1
+;; Ideally IDs should be identifiers (IRIs, IRLs, etc.), but we do not check
+;; for that here.
 (s/def ::distinct-ids
-  (s/map-of (s/or :iri ::ax/iri :irl ::ax/irl :uri ::ax/uri :url ::ax/url)
-            ::one-count))
+  (s/map-of any? ::one-count))
 
 (defn validate-ids
   "Validate that all ID values in a Profile are distinct.

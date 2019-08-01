@@ -6,11 +6,11 @@
             [com.yetanalytics.objects.pattern :as pattern]
             [com.yetanalytics.identifiers :as id]
             [com.yetanalytics.context :as context]
+            [com.yetanalytics.errors :as errors]
             [com.yetanalytics.util :as util]))
 
 ;; TODO Add conversion from Turtle and XML formats
 ;; Currently only supports JSON-LD
-
 
 (defn- convert-profile
   "Converts profile, if it is a JSON-LD string, into EDN format.
@@ -77,5 +77,4 @@
                         (context/validate-all-contexts profile)))]
     (if (every? nil? (vals errors))
       (do (println "Success!") nil) ;; Exactly like spec/explain
-      errors ;; TODO Prettify errors using expound
-      )))
+      (errors/expound-errors errors))))

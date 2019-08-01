@@ -12,25 +12,23 @@
 (s/def ::boolean boolean?)
 
 ;; Arbitrary strings
-;; By the xAPI-Profile specification, they cannot be empty
-;; Same as xapi-schema.spec/string-not-empty
+;; By the xAPI-Profile specification, they cannot be empty (except Lang Maps)
 (s/def ::string (s/and string? (complement empty?)))
-
-;; (s/def ::string ::xs/string-not-empty)
+(s/def ::lang-map-string string?) ;; Language maps only
 
 ;; Timestamps
 ;; Example: "2010-01-14T12:13:14Z"
 (s/def ::timestamp (partial re-matches xsr/TimestampRegEx))
-;; (s/def ::timestamp ::xs/timestamp)
 
 ;; Language Maps
 ;; Example: {"en" "Hello World"} or {:en "Hello World"}
+(s/def ::language-tag
+  (or #(->> % name (re-matches xsr/LanguageTagRegEx))
+      (partial re-matches xsr/LanguageTagRegEx)))
+
+;; TODO Should revise language maps such that keys like :foo are not counted
 (s/def ::language-map
-  ;; TODO Should revise language maps such that keys like :foo are not counted
-  (s/map-of (s/or :string ::xs/language-tag :keyword keyword?)
-            (s/or :not-empty ::string
-                  :maybe-empty string?)
-            :min-count 1))
+  (s/map-of ::language-tag ::lang-map-string :min-count 1))
 
 ;; RFC 2046 media types, as defined by the IANA.
 ;; Example: "application/json"
