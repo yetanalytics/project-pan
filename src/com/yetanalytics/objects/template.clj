@@ -182,51 +182,51 @@
 
 ;; verb MUST point to a Verb Concept
 (defmethod valid-edge? :verb [_]
-  (s/and ::graph/not-self-loop
-         ::template-src
+  (s/and ::template-src
          ::valid-dest
+         ::graph/not-self-loop
          ::verb-dest))
 
 ;; objectActivityType MUST point to an object ActivityType
 (defmethod valid-edge? :objectActivityType [_]
-  (s/and ::graph/not-self-loop
-         ::template-src
+  (s/and ::template-src
          ::valid-dest
+         ::graph/not-self-loop
          ::at-dest))
 
 ;; contextGroupingActivityType MUST point to grouping ActivityTypes
 (defmethod valid-edge? :contextGroupingActivityType [_]
-  (s/and ::graph/not-self-loop
-         ::template-src
+  (s/and ::template-src
          ::valid-dest
+         ::graph/not-self-loop
          ::at-dest))
 
 ;; contextParentActivityType MUST point to parent ActivityTypes
 (defmethod valid-edge? :contextParentActivityType [_]
-  (s/and ::graph/not-self-loop
-         ::template-src
+  (s/and ::template-src
          ::valid-dest
+         ::graph/not-self-loop
          ::at-dest))
 
 ;; contextOtherActivityType MUST point to other ActivityTypes
 (defmethod valid-edge? :contextOtherActivityType [_]
-  (s/and ::graph/not-self-loop
-         ::template-src
+  (s/and ::template-src
          ::valid-dest
+         ::graph/not-self-loop
          ::at-dest))
 
 ;; contextCategoryActivityType MUST point to category ActivityTypes
 (defmethod valid-edge? :contextCategoryActivityType [_]
-  (s/and ::graph/not-self-loop
-         ::template-src
+  (s/and ::template-src
          ::valid-dest
+         ::graph/not-self-loop
          ::at-dest))
 
 ;; attachmentUsageType MUST point to AttachmentUsageType Concepts
 (defmethod valid-edge? :attachmentUsageType [_]
-  (s/and ::graph/not-self-loop
-         ::template-src
+  (s/and ::template-src
          ::valid-dest
+         ::graph/not-self-loop
          ::aut-dest))
 
 ;; objectStatementRefTemplate MUST point to Statement Templates from this

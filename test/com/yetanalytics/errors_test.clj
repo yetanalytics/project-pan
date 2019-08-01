@@ -61,16 +61,18 @@
 
 ;; Profile with some Templates
 
-
 (def good-profile-2
   (assoc good-profile-1
+         :versions [{:id "https://w3id.org/xapi/catch/v1"
+                     :generatedAtTime "2017-12-22T22:30:00-07:00"}
+                    {:id "https://w3id.org/xapi/catch/v2"
+                     :generatedAtTime "2018-12-22T22:30:00-07:00"}]
          :templates [{:id "https://foo.org/template"
                       :type "StatementTemplate"
                       :inScheme "https://w3id.org/xapi/catch/v1"
                       :prefLabel {"en" "Template"}
                       :definition {"en" "This StatementTemplate is only used for example purposes."}
                       :deprecated false
-                      :verb "https://foo.org/verb"
                       :rules [{:location "$.actor.mbox"
                                :all ["yet@yetanalytics.io"]}]}
                      {:id "https://foo.org/template2"
@@ -79,7 +81,6 @@
                       :prefLabel {"en" "Template"}
                       :definition {"en" "This StatementTemplate is only used for example purposes."}
                       :deprecated false
-                      :verb "https://foo.org/verb"
                       :rules [{:location "$.actor.name"
                                :all ["Yet Analytics"]}]}]))
 
@@ -99,8 +100,19 @@
       (assoc-in [:templates 0 :inScheme] "https://foo.org/invalid")
       (assoc-in [:templates 1 :inScheme] "https://foo.org/also-invalid")))
 
-;; Tests
+;; Add a bunch of dead links
+(def bad-profile-2d
+  (-> good-profile-2
+      (assoc-in [:templates 0 :verb] "https://foo.org/dead-verb")
+      (assoc-in [:templates 0 :attachmentUsageType] ["https://foo.org/dead-aut1"])))
 
+;; Add a bunch of invalid links
+(def bad-profile-2e
+  (-> good-profile-2
+      (assoc-in [:templates 0 :verb] "https://foo.org/template2")
+      (assoc-in [:templates 0 :attachmentUsageType] ["https://foo.org/template"])))
+
+;; Tests
 
 (deftest group-by-in-test
   (testing "group-by-in function"
@@ -131,7 +143,6 @@
     (is (neg? (e/compare-arrs [:author :url] [:template])))
     (is (neg? (e/compare-arrs [] [:id])))))
 
-(s/explain ::p/profile bad-profile-2a)
 (deftest sort-by-path-test
   (testing "sort-by-path function"
     (is (= [:id]
@@ -165,3 +176,45 @@
     (is (= (->> bad-profile-2c id/validate-in-schemes e/group-by-in e/sort-by-path
                 (mapv #(-> % ::s/problems first :via last)))
            [::id/in-scheme ::id/in-scheme]))))
+
+(deftest expound-test
+  (testing "error/expound-errors error messages"
+    (is (= (with-out-str
+             (e/expound-error (id/validate-ids bad-profile-2b) "id"))
+           (str "-- Spec failed --------------------\n"
+                "\n"
+                "Duplicate id: https://foo.org/template\n"
+                " with count: 2\n"
+                "\n"
+                "the id value is not unique\n"
+                "\n"
+                "-------------------------\n"
+                "Detected 1 error\n")))
+    (is (= (with-out-str
+             (e/expound-error (id/validate-in-schemes bad-profile-2c) "in-scheme"))
+           (str "-- Spec failed --------------------\n"
+                "\n"
+                "Invalid inScheme: https://foo.org/invalid\n"
+                " at object: https://foo.org/template\n"
+                " profile version ids:\n"
+                "  https://w3id.org/xapi/catch/v2\n"
+                "  https://w3id.org/xapi/catch/v1\n"
+                "\n"
+                "the inScheme value is not a valid version ID\n"
+                "\n"
+                "-- Spec failed --------------------\n"
+                "\n"
+                "Invalid inScheme: https://foo.org/also-invalid\n"
+                " at object: https://foo.org/template2\n"
+                " profile version ids:\n"
+                "  https://w3id.org/xapi/catch/v2\n"
+                "  https://w3id.org/xapi/catch/v1\n"
+                "\n"
+                "the inScheme value is not a valid version ID\n"
+                "\n"
+                "-------------------------\n"
+                "Detected 2 errors\n")))))
+
+(e/expound-error-map (t/explain-graph (t/create-graph [] (:templates bad-profile-2d))) "edge")
+
+(e/expound-error-map (t/explain-graph (t/create-graph [] (:templates bad-profile-2e))) "edge")

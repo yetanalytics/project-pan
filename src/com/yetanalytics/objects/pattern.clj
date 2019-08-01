@@ -221,8 +221,8 @@
 
 ;; MUST NOT include optional or zeroOrMore directly inside alternates
 (defmethod valid-edge? :alternates [_]
-  (s/and ::graph/not-self-loop
-         ::pattern-src
+  (s/and ::pattern-src
+         ::graph/not-self-loop
          ::valid-dest
          (s/or :pattern (s/and ::pattern-dest
                                ::non-opt-dest)
@@ -232,37 +232,39 @@
 ;; 1. sequence is a primary pattern not used elsewhere, and
 ;; 2. sequence member is a single StatementTemplate 
 (defmethod valid-edge? :sequence [_]
-  (s/and ::graph/not-self-loop
-         ::pattern-src
+  (s/and ::pattern-src
          ::valid-dest
-         (s/or :two-or-more (s/and ::not-singleton-src
-                                   (s/or :pattern ::pattern-dest
-                                         :template ::template-dest))
-               :one (s/and ::singleton-src
-                           ::template-dest
-                           ::primary-src
-                           ::zero-indegree-src))))
+         ::graph/not-self-loop
+         (s/or :two-or-more
+               (s/and ::not-singleton-src
+                      (s/or :pattern ::pattern-dest
+                            :template ::template-dest))
+               :one
+               (s/and ::singleton-src
+                      ::template-dest
+                      ::primary-src
+                      ::zero-indegree-src))))
 
 ;; Other regex properties: all MUST lead to a Pattern or Statement Template 
 
 (defmethod valid-edge? :optional [_]
-  (s/and ::graph/not-self-loop
-         ::pattern-src
+  (s/and ::pattern-src
          ::valid-dest
+         ::graph/not-self-loop
          (s/or :pattern ::pattern-dest
                :template ::template-dest)))
 
 (defmethod valid-edge? :oneOrMore [_]
-  (s/and ::graph/not-self-loop
-         ::pattern-src
+  (s/and ::pattern-src
          ::valid-dest
+         ::graph/not-self-loop
          (s/or :pattern ::pattern-dest
                :template ::template-dest)))
 
 (defmethod valid-edge? :zeroOrMore [_]
-  (s/and ::graph/not-self-loop
-         ::pattern-src
+  (s/and ::pattern-src
          ::valid-dest
+         ::graph/not-self-loop
          (s/or :pattern ::pattern-dest
                :template ::template-dest)))
 

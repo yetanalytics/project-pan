@@ -129,31 +129,44 @@
 
 ;; broader MUST point to same-type Concepts from the same profile version
 (defmethod valid-edge? :broader [_]
-  (s/and ::graph/not-self-loop ::valid-dest
-         ::relatable-src ::relatable-dest
-         ::same-concept ::same-version))
+  (s/and ::relatable-src
+         ::valid-dest
+         ::graph/not-self-loop
+         ::relatable-dest
+         ::same-concept
+         ::same-version))
 
-; ;; narrower MUST point to same-type Concepts from the same profile version
+;; narrower MUST point to same-type Concepts from the same profile version
 (defmethod valid-edge? :narrower [_]
-  (s/and ::graph/not-self-loop ::valid-dest
-         ::relatable-src ::relatable-dest
-         ::same-concept ::same-version))
+  (s/and ::relatable-src
+         ::valid-dest
+         ::graph/not-self-loop
+         ::relatable-dest
+         ::same-concept
+         ::same-version))
 
-; ;; related MUST point to same-type Concepts from the same profile version
+;; related MUST point to same-type Concepts from the same profile version
 (defmethod valid-edge? :related [_]
-  (s/and ::graph/not-self-loop ::valid-dest
-         ::relatable-src ::relatable-dest
-         ::same-concept ::same-version))
+  (s/and ::relatable-src
+         ::valid-dest
+         ::graph/not-self-loop
+         ::relatable-dest
+         ::same-concept
+         ::same-version))
 
 ; ;; recommendedActivityTypes MUST point to ActivityType Concepts
 (defmethod valid-edge? :recommendedActivityTypes [_]
-  (s/and ::graph/not-self-loop ::valid-dest
-         ::aext-src ::at-dest))
+  (s/and ::aext-src
+         ::valid-dest
+         ::graph/not-self-loop
+         ::at-dest))
 
 ; ;; recommendedVerbs MUST point to Verb Concepts
 (defmethod valid-edge? :recommendedVerbs [_]
-  (s/and ::graph/not-self-loop ::valid-dest
-         ::crext-src ::verb-dest))
+  (s/and ::crext-src
+         ::valid-dest
+         ::graph/not-self-loop
+         ::verb-dest))
 
 ;; Is one edge valid?
 (s/def ::valid-edge (s/multi-spec valid-edge? util/type-dispatch))

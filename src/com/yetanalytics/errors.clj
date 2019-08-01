@@ -1,5 +1,7 @@
 (ns com.yetanalytics.errors
   (:require [clojure.spec.alpha :as s]
+            [clojure.core.match :as m]
+            [clojure.string :as string]
             [expound.alpha :as exp]
             [com.yetanalytics.axioms :as ax]
             [com.yetanalytics.identifiers :as id]
@@ -55,27 +57,27 @@
 (exp/defmsg ::g/not-self-loop "object cannot refer to itself")
 
 (exp/defmsg ::c/valid-dest "linked concept does not exist")
-(exp/defmsg ::c/relatable-src "concept should be: \"ActivityType\", \"AttachmentUsageType\" or \"Verb\"")
-(exp/defmsg ::c/relatable-dest "should link to: \"ActivityType\", \"AttachmentUsageType\" or \"Verb\"")
-(exp/defmsg ::c/aext-src "concept should be: \"ActivityExtension\"")
-(exp/defmsg ::c/crext-src "concept should be: \"ContextExtension\" or \"ResultExtension\"")
-(exp/defmsg ::c/at-dest "should link to: \"ActivityType\"")
-(exp/defmsg ::c/verb-dest "should link to: \"Verb\"")
-(exp/defmsg ::c/same-concepts "the concepts are not of the same type")
-(exp/defmsg ::c/same-version "the concepts do not share the same version")
+(exp/defmsg ::c/relatable-src "should be type: \"ActivityType\", \"AttachmentUsageType\" or \"Verb\"")
+(exp/defmsg ::c/relatable-dest "should link to type: \"ActivityType\", \"AttachmentUsageType\" or \"Verb\"")
+(exp/defmsg ::c/aext-src "should be type: \"ActivityExtension\"")
+(exp/defmsg ::c/crext-src "should be type: \"ContextExtension\" or \"ResultExtension\"")
+(exp/defmsg ::c/at-dest "should link to type: \"ActivityType\"")
+(exp/defmsg ::c/verb-dest "should link to type: \"Verb\"")
+(exp/defmsg ::c/same-concepts "the concepts are not the same type")
+(exp/defmsg ::c/same-version "the concepts do not share the same version ID")
 
-(exp/defmsg ::t/template-src "template should be: \"StatementTemplate\"")
-(exp/defmsg ::t/valid-dest "linked object does not exist")
-(exp/defmsg ::t/verb-dest "should link to: \"Verb\"")
-(exp/defmsg ::t/at-dest "should link to: \"ActivityType\"")
-(exp/defmsg ::t/aut-dest "should link to: \"AttachmentUsageType\"")
-(exp/defmsg ::t/template-dest "should link to: \"StatementTemplate\"")
+(exp/defmsg ::t/template-src "should be type: \"StatementTemplate\"")
+(exp/defmsg ::t/valid-dest "linked concept or template does not exist")
+(exp/defmsg ::t/verb-dest "should link to type: \"Verb\"")
+(exp/defmsg ::t/at-dest "should link to type: \"ActivityType\"")
+(exp/defmsg ::t/aut-dest "should link to type: \"AttachmentUsageType\"")
+(exp/defmsg ::t/template-dest "should link to type: \"StatementTemplate\"")
 (exp/defmsg ::t/same-version "inScheme version IDs differ")
 
-(exp/defmsg ::p/valid-dest "linked object does not exist")
-(exp/defmsg ::p/pattern-src "pattern should be: \"Pattern\"")
-(exp/defmsg ::p/pattern-dest "should link to: \"Pattern\"")
-(exp/defmsg ::p/template-dest "should link to:\"StatementTemplate\"")
+(exp/defmsg ::p/valid-dest "linked template or pattern does not exist")
+(exp/defmsg ::p/pattern-src "should be type: \"Pattern\"")
+(exp/defmsg ::p/pattern-dest "should link to type: \"Pattern\"")
+(exp/defmsg ::p/template-dest "should link to type: \"StatementTemplate\"")
 (exp/defmsg ::p/non-opt-dest "alternate pattern cannot directly contain an optional or zeroOrMore pattern")
 (exp/defmsg ::p/singleton-src "pattern cannot contain multiple links")
 (exp/defmsg ::p/not-singleton-src "pattern can only contain one link")
@@ -83,6 +85,102 @@
 (exp/defmsg ::p/zero-indegree-src "pattern must not be used elsewhere")
 
 (exp/defmsg ::p/singleton-scc "pattern is involved in a cyclical reference")
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Value display 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn strv
+  "Short for 'stringify-value.' Like str or pr-str, but makes special cases
+  for nils and keywords."
+  [value]
+  (if (nil? value)
+    "nil"
+    (if (keyword? value)
+      (name value)
+      (str value))))
+
+(defn value-str-id
+  "Custom value string for duplicate ID error messages. Takes the form:
+  > Duplicate id: <identifier>
+  >  with count: <int>"
+  [_ _ path value]
+  (str "Duplicate id: " (-> path last strv) "\n"
+       " with count: " (strv value)))
+
+(defn value-str-ver
+  "Custom value string for inScheme error messages. Takes the form:
+  > Invalid inScheme: <in-scheme>
+  >  at object: <identifier>
+  >  profile version ids:
+  >   <version-id-1>
+  >   <version-id-2>
+  >   ..."
+  [_ _ _ value]
+  (str "Invalid inScheme: " (-> value :inScheme strv) "\n"
+       " at object: " (-> value :id strv) "\n"
+       " profile version ids:\n  "
+       (->> value :version-ids sequence sort reverse (string/join "\n  "))))
+
+(defn value-str-edge
+  "Custom value string for IRI link error messages. Takes the form:
+  > Invalid link: <link>
+  >  at object: <identifier>
+  >  link property: <property>
+  >  object properties: 
+  >   <property-1>
+  >   <property-2>
+  >  linked object properties:
+  >   <property-1>
+  >   <property-2>"
+  [_ _ _ value]
+  (let [attrs-list
+        (m/match [value]
+                 ;; Patterns
+          [{:src-primary _ :src-indegree _ :src-outdegree _ :dest-property _}]
+          (str " object properties:\n"
+               "  type: " (-> value :src-type strv) "\n"
+               "  primary: " (-> value :src-primary strv) "\n"
+               "  number of uses" (-> value :src-indegree strv) "\n"
+               "  number of links: " (-> value :src-outdegree strv) "\n"
+               " linked object properties\n"
+               "  type: " (-> value :src-type strv) "\n"
+               "  pattern property: " (-> value :src-indegree strv))
+                 ;; Concepts and Templates
+          [{:src-version _ :dest-version _}]
+          (str " object properties:\n"
+               "  type: " (-> value :src-type strv) "\n"
+               "  inScheme: " (-> value :src-version strv) "\n"
+               " linked object properties\n"
+               "  type: " (-> value :dest-type strv) "\n"
+               "  inScheme: " (-> value :dest-version strv))
+                 ;; Shouldn't happen but just in case
+          :else "")]
+    (str "Invalid link: " (-> value :dest strv) "\n"
+         " at object: " (-> value :src strv) "\n"
+         " link property: " (-> value :type strv) "\n"
+         attrs-list)))
+
+(defn custom-printer
+  "Returns a printer based on the error-type argument. A nil error-type will
+  result in the default Expound printer (except with :print-specs? set to 
+  false)."
+  [& [error-type]]
+  (let [error-type
+        (if (nil? error-type) :else error-type)
+        id-printer
+        (exp/custom-printer {:value-str-fn value-str-id :print-specs? false})
+        in-scheme-printer
+        (exp/custom-printer {:value-str-fn value-str-ver :print-specs? false})
+        edge-printer
+        (exp/custom-printer {:value-str-fn value-str-edge :print-specs? false})
+        default-printer
+        (exp/custom-printer {:print-specs? false})]
+    (case error-type
+      "id" id-printer
+      "in-scheme" in-scheme-printer
+      "edge" edge-printer
+      :else default-printer)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Property ordering in error messages 
@@ -234,20 +332,20 @@
 ;; Expounding functions
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn expound-error [error-map]
-  (let [print-fn (exp/custom-printer {:print-specs? false})]
+(defn expound-error [error-map & [error-type]]
+  (let [print-fn (custom-printer error-type)]
     (print-fn error-map)))
 
 (defn expound-error-list
-  [error-list]
+  [error-list & [error-type]]
   (doseq [error error-list]
-    (do (expound-error error) (println))))
+    (do (expound-error error error-type) (println))))
 
 (defn expound-error-map
-  [error-map]
-  (-> error-map group-by-in sort-by-path expound-error-list))
+  [error-map & [error-type]]
+  (-> error-map group-by-in sort-by-path (expound-error-list error-type)))
 
 (defn expound-errors
   [{:keys [syntax-errors]}]
   (do
-    (if (some? syntax-errors) (expound-error-map syntax-errors))))
+    (if (some? syntax-errors) (expound-error-map syntax-errors "syntax"))))
