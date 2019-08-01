@@ -1,6 +1,7 @@
 {:paths ["resources" "src"]
  :deps {org.clojure/clojure {:mvn/version "RELEASE"}
         org.clojure/test.check {:mvn/version "0.10.0-alpha2"}
+        org.clojure/core.match {:mvn/version "0.3.0"}
         com.yetanalytics/xapi-schema {:git/url "https://github.com/yetanalytics/xapi-schema"
                                       :sha "e2c517e7adcedc7f3012b90bce274e2c33cdbcc1"}
         camel-snake-kebab {:mvn/version "0.4.0"}
