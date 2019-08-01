@@ -9,6 +9,7 @@
             [com.yetanalytics.profile :as p]
             [com.yetanalytics.profiles.author :as ah]
             [com.yetanalytics.objects.template :as t]
+            [com.yetanalytics.objects.pattern :as pt]
             [com.yetanalytics.identifiers :as id]))
 
 ;; Sample Profiles
@@ -188,6 +189,7 @@
                 (mapv #(-> % ::s/problems first :via last)))
            [::id/in-scheme ::id/in-scheme]))))
 
+(e/expound-error (p/validate bad-profile-2f))
 (deftest expound-test
   (testing "error/expound-errors error messages"
     (is (= (with-out-str
@@ -224,8 +226,109 @@
                 "the inScheme value is not a valid version ID\n"
                 "\n"
                 "-------------------------\n"
-                "Detected 2 errors\n")))))
-
-(e/expound-error-map (t/explain-graph (t/create-graph [] (:templates bad-profile-2d))) "edge")
-
-(e/expound-error-map (t/explain-graph (t/create-graph [] (:templates bad-profile-2e))) "edge")
+                "Detected 2 errors\n")))
+    (is (= (with-out-str
+             (e/expound-error-map (t/explain-graph (t/create-graph [] (:templates bad-profile-2d))) "edge"))
+           (str "-- Spec failed --------------------\n"
+                "\n"
+                "Invalid verb identifier:\n"
+                " https://foo.org/dead-verb\n"
+                "\n"
+                " at object:\n"
+                "  {:id \"https://foo.org/template\",\n"
+                "   :type \"StatementTemplate\",\n"
+                "   :inScheme \"https://w3id.org/xapi/catch/v1\",\n"
+                "   ...}\n"
+                "\n"
+                " linked object:\n"
+                "  {:id \"https://foo.org/dead-verb\",\n"
+                "   :type nil,\n"
+                "   :inScheme nil,\n"
+                "   ...}\n"
+                "\n"
+                "linked concept or template does not exist\n"
+                "\n"
+                "-------------------------\n"
+                "Detected 1 error\n"
+                "\n"
+                "-- Spec failed --------------------\n"
+                "\n"
+                "Invalid attachmentUsageType identifier:\n"
+                " https://foo.org/dead-aut1\n"
+                "\n"
+                " at object:\n"
+                "  {:id \"https://foo.org/template\",\n"
+                "   :type \"StatementTemplate\",\n"
+                "   :inScheme \"https://w3id.org/xapi/catch/v1\",\n"
+                "   ...}\n"
+                "\n"
+                " linked object:\n"
+                "  {:id \"https://foo.org/dead-aut1\",\n"
+                "   :type nil,\n"
+                "   :inScheme nil,\n"
+                "   ...}\n"
+                "\n"
+                "linked concept or template does not exist\n"
+                "\n"
+                "-------------------------\n"
+                "Detected 1 error\n"
+                "\n")))
+    (is (= (with-out-str
+             (e/expound-error-map (t/explain-graph (t/create-graph [] (:templates bad-profile-2e))) "edge"))
+           (str "-- Spec failed --------------------\n"
+                "\n"
+                "Invalid verb identifier:\n"
+                " https://foo.org/template2\n"
+                "\n"
+                " at object:\n"
+                "  {:id \"https://foo.org/template\",\n"
+                "   :type \"StatementTemplate\",\n"
+                "   :inScheme \"https://w3id.org/xapi/catch/v1\",\n"
+                "   ...}\n"
+                "\n"
+                " linked object:\n"
+                "  {:id \"https://foo.org/template2\",\n"
+                "   :type \"StatementTemplate\",\n"
+                "   :inScheme \"https://w3id.org/xapi/catch/v1\",\n"
+                "   ...}\n"
+                "\n"
+                "should link to type: \"Verb\"\n"
+                "\n"
+                "-------------------------\n"
+                "Detected 1 error\n"
+                "\n"
+                "-- Spec failed --------------------\n"
+                "\n"
+                "Invalid attachmentUsageType identifier:\n"
+                " https://foo.org/template\n"
+                "\n"
+                " at object:\n"
+                "  {:id \"https://foo.org/template\",\n"
+                "   :type \"StatementTemplate\",\n"
+                "   :inScheme \"https://w3id.org/xapi/catch/v1\",\n"
+                "   ...}\n"
+                "\n"
+                " linked object:\n"
+                "  {:id \"https://foo.org/template\",\n"
+                "   :type \"StatementTemplate\",\n"
+                "   :inScheme \"https://w3id.org/xapi/catch/v1\",\n"
+                "   ...}\n"
+                "\n"
+                "object cannot refer to itself\n"
+                "\n"
+                "-------------------------\n"
+                "Detected 1 error\n"
+                "\n")))
+    (is (= (with-out-str
+             (e/expound-error
+              (pt/explain-graph-cycles (pt/create-graph (:templates bad-profile-2f) (:patterns bad-profile-2f))) "scc"))
+           (str "-- Spec failed --------------------\n"
+                "\n"
+                "Cycle detected involving the following nodes:\n"
+                "  https://foo.org/pattern-one\n"
+                "  https://foo.org/pattern-two\n"
+                "\n"
+                "cyclical reference detected\n"
+                "\n"
+                "-------------------------\n"
+                "Detected 1 error\n")))))

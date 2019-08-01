@@ -64,7 +64,7 @@
 (exp/defmsg ::c/at-dest "should link to type: \"ActivityType\"")
 (exp/defmsg ::c/verb-dest "should link to type: \"Verb\"")
 (exp/defmsg ::c/same-concepts "the concepts are not the same type")
-(exp/defmsg ::c/same-version "the concepts do not share the same version ID")
+(exp/defmsg ::c/same-version "inScheme values do not match")
 
 (exp/defmsg ::t/template-src "should be type: \"StatementTemplate\"")
 (exp/defmsg ::t/valid-dest "linked concept or template does not exist")
@@ -72,7 +72,7 @@
 (exp/defmsg ::t/at-dest "should link to type: \"ActivityType\"")
 (exp/defmsg ::t/aut-dest "should link to type: \"AttachmentUsageType\"")
 (exp/defmsg ::t/template-dest "should link to type: \"StatementTemplate\"")
-(exp/defmsg ::t/same-version "inScheme version IDs differ")
+(exp/defmsg ::t/same-version "inScheme values do not match")
 
 (exp/defmsg ::p/valid-dest "linked template or pattern does not exist")
 (exp/defmsg ::p/pattern-src "should be type: \"Pattern\"")
@@ -84,7 +84,7 @@
 (exp/defmsg ::p/primary-pattern "pattern is not primary")
 (exp/defmsg ::p/zero-indegree-src "pattern must not be used elsewhere")
 
-(exp/defmsg ::p/singleton-scc "pattern is involved in a cyclical reference")
+(exp/defmsg ::p/singleton-scc "cyclical reference detected")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Value display 
@@ -282,7 +282,7 @@
   to the end of the error list and sorted alphabetically.
   - neg number: prop1 comes before prop2
   - pos number: prop1 comes after prop2
-  - zero: prop1 and prop2 are equal; arbitrarily put prop1 before prop2"
+  - zero: prop1 and prop2 are equal"
   [prop1 prop2]
   (let [order1 (get property-order prop1)
         order2 (get property-order prop2)]
