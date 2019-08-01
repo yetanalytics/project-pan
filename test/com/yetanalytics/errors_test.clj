@@ -12,11 +12,11 @@
             [com.yetanalytics.objects.pattern :as pt]
             [com.yetanalytics.identifiers :as id]))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Sample Profiles
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Metadata-only profile
-
-
 (def good-profile-1
   {:id "https://w3id.org/xapi/catch"
    :type "Profile"
@@ -61,7 +61,6 @@
                         (dissoc :_context)))
 
 ;; Profile with some Templates
-
 (def good-profile-2
   (assoc good-profile-1
          :versions [{:id "https://w3id.org/xapi/catch/v1"
@@ -125,7 +124,18 @@
            :primary true
            :oneOrMore {:id "https://foo.org/pattern-one"}}]))
 
+;; Let's add patterns! But our pattern refers to itself
+(def bad-profile-2g
+  (assoc good-profile-2 :patterns
+         [{:id "https://foo.org/pattern-three"
+           :type "Pattern"
+           :primary true
+           :oneOrMore {:id "https://foo.org/pattern-three"}}]))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Tests
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (deftest group-by-in-test
   (testing "group-by-in function"
     (is (= (p/validate bad-profile-1a)
@@ -331,4 +341,31 @@
                 "cyclical reference detected\n"
                 "\n"
                 "-------------------------\n"
-                "Detected 1 error\n")))))
+                "Detected 1 error\n")))
+    (is (= (with-out-str
+             (e/expound-error
+              (pt/explain-graph (pt/create-graph (:templates bad-profile-2g) (:patterns bad-profile-2g))) "edge"))
+           (str "-- Spec failed --------------------\n"
+                "\n"
+                "Invalid oneOrMore identifier:\n"
+                " https://foo.org/pattern-three\n"
+                "\n"
+                " at object:\n"
+                "  {:id \"https://foo.org/pattern-three\",\n"
+                "   :type \"Pattern\",\n"
+                "   :primary true,\n"
+                "   ...}\n"
+                "\n"
+                " linked object:\n"
+                "   {:id \"https://foo.org/pattern-three\",\n"
+                "    :type \"Pattern\",\n"
+                "    :oneOrMore ...,\n"
+                "    ...}\n"
+                "\n"
+                " pattern is used 1 time in the profile\n"
+                " and links out to 1 other object.\n"
+                "\n"
+                "object cannot refer to itself\n"
+                "\n"
+                "-------------------------\n"
+                "Detected 1 error\n"))))

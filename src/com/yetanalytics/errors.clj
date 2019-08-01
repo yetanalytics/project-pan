@@ -101,6 +101,12 @@
       ;; Use strv to get keep quotes around strings, str to remove them
       (pr-str value))))
 
+(defn pluralize
+  "Make the word plural based off of a count if needed, by adding a plural s
+  at the end."
+  [word cnt]
+  (if (< 1 cnt) (str word "s") word))
+
 (defn value-str-id
   "Custom value string for duplicate ID error messages. Takes the form:
   > Duplicate id: <identifier>
@@ -140,16 +146,21 @@
                "  {:id " (-> value :src strv) ",\n"
                "   :type " (-> value :src-type strv) ",\n"
                "   :primary " (-> value :src-primary strv) ",\n"
-               "   ...}"
+               "   ...}\n"
                "\n"
                " linked object:\n"
                "   {:id " (-> value :dest strv) ",\n"
                "    :type " (-> value :dest-type strv) ",\n"
                "    :" (-> value :dest-property strv) " ...,\n"
-               "    ...}"
+               "    ...}\n"
                "\n"
-               " pattern is used " (-> value :src-indegree strv) " times in the profile\n"
-               " and links out to " (-> value :src-outdegree strv) " other objects.")
+               ;; Add text that says:
+               ;; "pattern is used # time(s) in the profile
+               ;; and links out to # other object(s)."
+               " pattern is used " (-> value :src-indegree strv) " "
+               (pluralize "time" (-> value :src-indegree)) " in the profile\n"
+               " and links out to " (-> value :src-outdegree strv) " other "
+               (pluralize "object" (-> value :src-outdegree)) ".")
           ;; Concepts and Templates
           [{:src-version _ :dest-version _}]
           (str " at object:\n"
