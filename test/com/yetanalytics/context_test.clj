@@ -18,6 +18,7 @@
 ;; Parsing and validating context tests 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; TODO Test getting external @context
 (deftest get-context-test
   (testing "get-context function: Get @context and convert from JSON to EDN."
     (is (map? profile-context))
@@ -68,6 +69,34 @@
     (is (= (c/collect-prefixes activity-context)
            {:xapi "https://w3id.org/xapi/ontology#"}))))
 
+(deftest dissoc-prefixes-test
+  (testing "dissoc-prefixes function: get all that are NOT prefixes or kwords"
+    (is (= (c/dissoc-prefixes activity-context)
+           {:type {:at/id "xapi:type" :at/type "@id"}
+            :name {:at/id "xapi:name" :at/container "@language"}
+            :description {:at/id "xapi:description" :at/container "@language"}
+            :moreInfo {:at/id "xapi:moreInfo" :at/type "@id"}
+            :extensions {:at/id "xapi:extensions" :at/container "@set"}
+            :interactionType {:at/id "xapi:interactionType"}
+            :correctResponsesPattern {:at/id "xapi:correctResponsesPattern"
+                                      :at/container "@set"}
+            :choices {:at/id "xapi:choices" :at/container "@list"}
+            :scale {:at/id "xapi:scale" :at/container "@list"}
+            :source {:at/id "xapi:source" :at/container "@list"}
+            :target {:at/id "xapi:target" :at/container "@list"}
+            :steps {:at/id "xapi:steps" :at/container "@list"}
+            :id {:at/id "xapi:interactionId"}}))
+    (is (not (contains? (c/dissoc-prefixes profile-context)
+                        :type)))
+    (is (not (contains? (c/dissoc-prefixes profile-context)
+                        :id)))
+    (is (not (contains? (c/dissoc-prefixes profile-context)
+                        :prov)))
+    (is (not (contains? (c/dissoc-prefixes profile-context)
+                        :skos)))
+    (is (contains? (c/dissoc-prefixes profile-context)
+                   :Profile))))
+
 (deftest compact-iri?-test
   (testing "compact-iri? predicate"
     (is (c/compact-iri? {:xapi "https://w3id.org/xapi/ontology#"}
@@ -86,7 +115,33 @@
     (is (not (c/context-map? {:xapi "https://w3id.org/xapi/ontology#"}
                              "xapi:Verb")))))
 
-(deftest value-spec
+(deftest simple-term-spec-test
+  (testing "simple term definition spec creation"
+    (is (s/valid? (c/simple-term-spec {:xapi "https://w3id.org/xapi/ontology#"})
+                  "xapi:Verb"))
+    (is (not (s/valid? (c/simple-term-spec {:xapi "https://w3id.org/xapi/ontology#"})
+                       "skos:prefLabel")))
+    (is (= (-> (s/explain-data
+                (c/simple-term-spec {:xapi "https://w3id.org/xapi/ontology#"})
+                "skos:prefLabel")
+               ::s/problems first :via)
+           [::c/simple-term-def]))))
+
+(deftest expanded-term-spec-test
+  (testing "expanded term definition spec creation"
+    (is (s/valid? (c/expanded-term-spec
+                   {:xapi "https://w3id.org/xapi/ontology#"})
+                  {:at/id "xapi:type" :at/type "@id"}))
+    (is (not (s/valid? (c/expanded-term-spec
+                        {:xapi "https://w3id.org/xapi/ontology#"})
+                       {:at/type "@id" :at/id "dcterms:conformsTo"})))
+    (is (= (-> (s/explain-data (c/expanded-term-spec
+                                {:xapi "https://w3id.org/xapi/ontology#"})
+                               {:at/type "@id" :at/id "dcterms:conformsTo"})
+               ::s/problems first :via)
+           [::c/expanded-term-def]))))
+
+(deftest value-spec-test
   (testing "value-spec spec creation function"
     (is (s/valid? (c/value-spec {:xapi "https://w3id.org/xapi/ontology#"})
                   "xapi:Verb"))
@@ -97,17 +152,62 @@
     (is (not (s/valid? (c/value-spec {:xapi "https://w3id.org/xapi/ontology#"})
                        "skos:prefLabel")))
     (is (not (s/valid? (c/value-spec {:xapi "https://w3id.org/xapi/ontology#"})
-                       {:at/type "@id" :at/id "dcterms:conformsTo"})))))
+                       {:at/type "@id" :at/id "dcterms:conformsTo"})))
+    (is (= (-> (s/explain-data
+                (c/value-spec {:xapi "https://w3id.org/xapi/ontology#"})
+                "skos:prefLabel")
+               ::s/problems first :via last) ::c/simple-term-def))
+    (is (= (-> (s/explain-data
+                (c/value-spec {:xapi "https://w3id.org/xapi/ontology#"})
+                "skos:prefLabel")
+               ::s/problems second :via last) ::c/expanded-term-def))))
 
-(deftest context-spec-test
-  (testing "context-spec spec creation function"
-    (is (s/valid? (c/context-spec profile-context) profile-context))
-    (is (s/valid? (c/context-spec activity-context) activity-context))))
+(defn values-spec-test
+  (testing "values-spec spec creation function"
+    (is (s/valid? (c/values-spec {:xapi "https://w3id.org/xapi/ontology#"})
+                  {:type {:at/id "xapi:type" :at/type "@id"}
+                   :name {:at/id "xapi:name" :at/container "@language"}}))
+    (is (not (s/valid? (c/values-spec {:xapi "https://w3id.org/xapi/ontology#"})
+                       {:prefLabel {:at/id "skos:prefLabel"
+                                    :at/container "@language"}
+                        :definition {:at/id "skos:definition"
+                                     :at/container "@language"}})))
+    (is (= (-> (s/explain-data (c/values-spec {:xapi "https://w3id.org/xapi/ontology#"})
+                               {:prefLabel {:at/id "skos:prefLabel"
+                                            :at/container "@language"}
+                                :definition {:at/id "skos:definition"
+                                             :at/container "@language"}})
+               ::s/problems count) 4))))
+
+(defn validate-context
+  (testing "validate-context function"
+    (is (nil? (c/validate-context profile-context)))
+    (is (nil? (c/validate-context activity-context)))
+    (is (some? (c/validate-context {:xapi "https://w3id.org/xapi/ontology#"
+                                    :Profile "profile:Profile"})))
+    (is (some? (c/validate-context {:xapi "https://w3id.org/xapi/ontology#"
+                                    :prefLabel {:at/id "skos:prefLabel"
+                                                :at/container "@language"}
+                                    :definition {:at/id "skos:definition"
+                                                 :at/container "@language"}})))))
 
 (deftest create-context-test
   (testing "create-context function"
-    (is (some? (c/create-context "https://w3id.org/xapi/profiles/context")))
-    (is (some? (c/create-context "https://w3id.org/xapi/profiles/activity-context")))))
+    (is (nil? (:context (c/create-context "https://non-existent"))))
+    (is (= (-> "https://non-existent" c/create-context ::s/problems first :val)
+           "https://non-existent"))
+    (is (some? (:context (create-context "https://w3id.org/xapi/profiles/context"))))
+    (is (some? (:context (create-context "https://w3id.org/xapi/profiles/activity-context"))))))
+
+; (deftest context-spec-test
+;   (testing "context-spec spec creation function"
+;     (is (s/valid? (c/context-spec profile-context) profile-context))
+;     (is (s/valid? (c/context-spec activity-context) activity-context))))
+
+; (deftest create-context-test
+;   (testing "create-context function"
+;     (is (some? (c/create-context "https://w3id.org/xapi/profiles/context")))
+;     (is (some? (c/create-context "https://w3id.org/xapi/profiles/activity-context")))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Validating profile against context tests

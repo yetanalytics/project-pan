@@ -29,8 +29,8 @@
     (slurp "resources/context/profile-context.json")
     "https://w3id.org/xapi/profiles/activity-context"
     (slurp "resources/context/activity-context.json")
-    :else nil ;; TODO get other contexts from the Internet 
-))
+    ;; TODO get other contexts from the Internet; return nil on failure 
+    :else nil))
 
 (defn get-context
   "Get a raw context, then parse it from JSON to EDN.
@@ -72,6 +72,14 @@
                  accum))
              {} context))
 
+(defn dissoc-prefixes
+  "Returns all terms in a context that are not prefixes nor keyword aliases."
+  [context]
+  (reduce-kv (fn [accum k v]
+               (if (or (s/valid? ::keyword v) (s/valid? ::prefix v))
+                 accum
+                 (assoc accum k v))) {} context))
+
 (defn compact-iri?
   "Validates whether this is a compact iri that has a valid prefix."
   [prefixes value]
@@ -84,33 +92,69 @@
   (and (map? value)
        (compact-iri? prefixes (:at/id value))))
 
+(defn simple-term-spec
+  [prefixes]
+  (s/def ::simple-term-def (partial compact-iri? prefixes)))
+
+(defn expanded-term-spec
+  [prefixes]
+  (s/def ::expanded-term-def (partial context-map? prefixes)))
+
 ;; A term definition may either have a string as a value (ie. a simple term
 ;; definition) or a map (ie. an expanded term definition).
 (defn value-spec
-  "Create a spec that validates a single JSON value in the context."
   [prefixes]
-  (s/or :keyword ::keyword
-        :prefix ::prefix
-        :simple-term-def (partial compact-iri? prefixes)
-        :expanded-term-def (partial context-map? prefixes)))
+  (s/def ::value
+    (s/or :simple-term-def (simple-term-spec prefixes)
+          :expanded-term-def (expanded-term-spec prefixes))))
 
-(defn context-spec
-  "Creates a spec that validates an entire context."
+(defn values-spec
+  [prefixes]
+  (let [v-spec (value-spec prefixes)]
+    (s/def ::values (s/map-of any? v-spec))))
+
+(defn validate-context
   [context]
-  (let [v-spec (-> context collect-prefixes value-spec)]
-    (s/map-of keyword? v-spec)))
+  (let [prefixes (collect-prefixes context)
+        term-defs (dissoc-prefixes context)
+        vals-spec (values-spec prefixes)]
+    (s/explain-data vals-spec term-defs)))
 
-;; TODO Handle inline @context values?
+;; Short for "resolvable context"
+(s/def ::res-context some?)
+
 (defn create-context
-  "Create a valid context from a @context IRI.
-  Throws an exception if the context is invalid."
   [context-iri]
-  (let [context (get-context context-iri)
-        errors (s/explain-data (context-spec context) context)]
-    (if (every? nil? errors)
-      context
-      (throw (ex-info (str "Failure to validate @context " context-iri)
-                      errors)))))
+  (if-let [context (get-context context-iri)]
+    (if-let [errors (validate-context context)]
+      {:context nil :errors errors}
+      {:context context :errors nil})
+    {:context nil :errors (s/explain-data ::res-context nil)}))
+
+; (defn value-spec
+;   "Create a spec that validates a single JSON value in the context."
+;   [prefixes]
+;   (s/or :keyword ::keyword
+;         :prefix ::prefix
+;         :simple-term-def (partial compact-iri? prefixes)
+;         :expanded-term-def (partial context-map? prefixes)))
+
+; (defn context-spec
+;   "Creates a spec that validates an entire context."
+;   [context]
+;   (let [v-spec (-> context collect-prefixes value-spec)]
+;     (s/map-of keyword? v-spec)))
+
+; (defn create-context
+;   "Create a valid context from a @context IRI.
+;   Throws an exception if the context is invalid."
+;   [context-iri]
+;   (let [context (get-context context-iri)
+;         errors (s/explain-data (context-spec context) context)]
+;     (if (every? nil? errors)
+;       context
+;       (throw (ex-info (str "Failure to validate @context " context-iri)
+;                       errors)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Validate profile against context 

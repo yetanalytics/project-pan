@@ -40,8 +40,6 @@
 ;; JSONPath tests
 
 ;; Basic unit tests
-
-
 (deftest test-jsonpath
   (testing "JSONPath string"
     (is (s/valid? ::ax/json-path "$.store"))
