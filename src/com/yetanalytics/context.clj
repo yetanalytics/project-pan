@@ -30,7 +30,7 @@
     "https://w3id.org/xapi/profiles/activity-context"
     (slurp "resources/context/activity-context.json")
     ;; TODO get other contexts from the Internet; return nil on failure 
-    :else nil))
+    nil))
 
 (defn get-context
   "Get a raw context, then parse it from JSON to EDN.
@@ -120,8 +120,7 @@
         vals-spec (values-spec prefixes)]
     (s/explain-data vals-spec term-defs)))
 
-;; Short for "resolvable context"
-(s/def ::res-context some?)
+(s/def ::context-iri-fail (constantly false))
 
 (defn create-context
   [context-iri]
@@ -129,7 +128,7 @@
     (if-let [errors (validate-context context)]
       {:context nil :errors errors}
       {:context context :errors nil})
-    {:context nil :errors (s/explain-data ::res-context nil)}))
+    {:context nil :errors (s/explain-data ::context-iri-fail context-iri)}))
 
 ; (defn value-spec
 ;   "Create a spec that validates a single JSON value in the context."
@@ -160,22 +159,26 @@
 ;; Validate profile against context 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; TODO Get a better solution to the lang map issue? 
+(defn children
+  "Zipper function for returning the children at a location in a Profile.
+  Returns nil if there are no children at the location."
+  [node]
+  (not-empty
+   (reduce-kv (fn [accum k v]
+                (cond
+                  (and (map? v) (not (#{:prefLabel :definition :scopeNote
+                                        :name :description} k)))
+                  (conj accum v)
+                  (s/valid? (s/coll-of map? :type vector?) v)
+                  (concat accum v)
+                  :else accum))
+              (list) node)))
+
 (defn profile-to-zipper
   "Create a zipper from a profile structure."
   [profile]
-  (letfn [(children [node]
-            (reduce-kv
-             (fn [accum k v]
-               (cond ;; TODO Get a better solution to the lang map issue?
-                 (and (map? v)
-                      (not (#{:prefLabel :definition :scopeNote
-                              :name :description} k)))
-                 (conj accum v)
-                 (s/valid? (s/coll-of map? :type vector?) v)
-                 (concat accum v)
-                 :else accum))
-             (list) node))]
-    (zip/zipper map? children nil profile)))
+  (zip/zipper map? children nil profile))
 
 (defn subvec?
   "True if v1 is a subvector of v2, false otherwise."
@@ -209,23 +212,33 @@
   Recall that @context may be either a URI string or an array of URIs."
   [context-stack location]
   (let [curr-path (-> location zip/path vec)
-        context-iris (-> location zip/node :context)]
+        context-iris (-> location zip/node :_context)]
     (cond
+      ;; @context is URI valued
       (s/valid? ::ax/iri context-iris)
-      (conj context-stack {:context (create-context context-iris)
-                           :path curr-path})
+      (conj context-stack (assoc (create-context context-iris)
+                                 :path curr-path))
+      ;; @context is array valued
       (s/valid? (s/coll-of ::ax/iri :kind vector?) context-iris)
       (concat context-stack (mapv (fn [iri]
-                                    {:context (create-context iri)
-                                     :path curr-path})
+                                    (assoc (create-context iri)
+                                           :path curr-path))
                                   context-iris))
       (nil? context-iris) context-stack)))
 
-(defn update-contexts
-  "Update the contexts stack on every node (ie. pop if we are no longer a 
+#_(defn update-contexts
+    "Update the contexts stack on every node (ie. pop if we are no longer a 
   child of the latest @contexts, push if we see a new @context)."
-  [context-stack location]
-  (-> context-stack (pop-contexts location) (push-context location)))
+    [context-stack location]
+    (-> context-stack (pop-contexts location) (push-context location)))
+
+(defn update-context-errors
+  "Update the list of context errors if a new erroneous context had been
+  added to the stack."
+  [old-stack new-stack context-errors]
+  (if (not= old-stack new-stack)
+    (conj context-errors (-> new-stack peek :errors))
+    context-errors))
 
 (defn search-contexts
   "Given a key, search in all the contexts in the stack for it. Return true
@@ -234,25 +247,55 @@
   [contexts k]
   (loop [context-stack contexts]
     (if (empty? context-stack)
-      false
+      false ;; We searched through all the contexts
       (let [curr (peek context-stack)]
         (if (-> curr :context (contains? k))
-          true
+          true ;; We found the key at the curr context!
           (recur (pop context-stack)))))))
 
-;; TODO Right now it returns only true or false
-;; Change it so that it returns a sequence of spec errors
-(defn validate-all-contexts
+(defn contexted-key-spec
+  [contexts]
+  (s/def ::contexed-key (partial search-contexts contexts)))
+
+;; TODO Dissassociate other JSON-LD keywords besides @context
+;; At this point all @ signs are replaced by underscores
+(defn validate-keys
+  [contexts curr-node]
+  (let [k-spec (contexted-key-spec contexts)
+        ks-spec (s/def ::contexted-keys (s/coll-of k-spec))]
+    (s/explain-data ks-spec
+                    (keys (dissoc curr-node :_context)))))
+
+(defn update-profile-errors
+  [contexts curr-node profile-errors]
+  (let [new-errors (validate-keys contexts curr-node)]
+    (if (some? new-errors)
+      (conj profile-errors new-errors)
+      profile-errors)))
+
+(defn validate-contexts
   "Validate all the contexts in a Profile."
   [profile]
   (loop [profile-loc (profile-to-zipper profile)
-         context-stack []]
+         context-stack []
+         ;; For contexts themselves that are bad 
+         context-errors (list)
+         ;; When the profile doesn't follow the context 
+         profile-errors (list)]
     (if (zip/end? profile-loc)
-      true
+      (-> {} (assoc :context-errors (not-empty context-errors)
+                    :context-key-errors (not-empty profile-errors)))
       (let [curr-node (zip/node profile-loc)
-            new-stack (update-contexts context-stack profile-loc)
-            error-seq (map (partial search-contexts new-stack)
-                           (keys (dissoc curr-node :context)))]
-        (if (every? true? error-seq)
-          (recur (zip/next profile-loc) new-stack)
-          curr-node)))))
+            popped-stack (pop-contexts context-stack profile-loc)
+            pushed-stack (push-context context-stack profile-loc)]
+        (if (-> pushed-stack peek :context nil?)
+          ;; If latest context is erroneous
+          (let [new-cerrors (update-context-errors popped-stack pushed-stack
+                                                   context-errors)]
+            (recur (zip/next profile-loc)
+                   pushed-stack new-cerrors profile-errors))
+          ;; If latest context is valid => validate map keys
+          (let [new-perrors (update-profile-errors pushed-stack curr-node
+                                                   profile-errors)]
+            (recur (zip/next profile-loc)
+                   pushed-stack context-errors new-perrors)))))))
