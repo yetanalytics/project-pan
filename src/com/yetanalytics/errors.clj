@@ -17,6 +17,13 @@
             [com.yetanalytics.util :as u]
             [xapi-schema.spec :as xs]))
 
+;; Error map reference:
+;; :path = Path of map + spec keywords
+;; :pred = Spec predicate
+;; :val = Value being specced
+;; :via = Path of spec keywords
+;; :in = Path of map keys + array entry numbers
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Syntax spec messages
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -395,17 +402,6 @@
     (if (some? concept-errors) (expound-error-map concept-errors "edge"))
     (if (some? template-errors) (expound-error-map template-errors "edge"))
     (if (some? pattern-errors) (expound-error-map pattern-errors "edge"))
-    (if (some? context-errors) (expound-error context-errors))
-    (if (some? context-key-errors) (expound-error
-
-                                    context-key-errors))))
-
-
-;;;;;;;;;;
-
-;; Error map:
-;; :path = Path of map + spec keywords
-;; :pred = Spec predicate
-;; :val = Value being specced
-;; :via = Path of spec keywords
-;; :in = Path of map keys + array entry numbers
+    ;; Context errors are already in list format
+    (if (some? context-errors) (expound-error-list context-errors))
+    (if (some? context-key-errors) (expound-error-list context-key-errors))))
