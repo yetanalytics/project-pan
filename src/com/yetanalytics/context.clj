@@ -29,8 +29,8 @@
     (slurp "resources/context/profile-context.json")
     "https://w3id.org/xapi/profiles/activity-context"
     (slurp "resources/context/activity-context.json")
-    ;; TODO get other contexts from the Internet; return nil on failure 
-    nil))
+    ;; TODO get other contexts from the Internet; currently throws exception
+    (throw (ex-info "Unable to read from URL" {:url context}))))
 
 (defn get-context
   "Get a raw context, then parse it from JSON to EDN.
@@ -45,6 +45,8 @@
 ;; JSON-LD node objects may be aliased to the following keywords.
 ;; This spec checks if a @context key is an alias to a keyword value.
 ;; See section 6.2: Node Objects in the JSON-LD grammar.
+
+
 (s/def ::keyword
   (fn [k]
     (contains? #{"@context" "@id" "@graph" "@nest" "@type" "@reverse" "@index"}
@@ -120,46 +122,17 @@
         vals-spec (values-spec prefixes)]
     (s/explain-data vals-spec term-defs)))
 
-(s/def ::context-iri-fail (constantly false))
-
 (defn create-context
   [context-iri]
-  (if-let [context (get-context context-iri)]
+  (let [context (get-context context-iri)]
     (if-let [errors (validate-context context)]
       {:context nil :errors errors}
-      {:context context :errors nil})
-    {:context nil :errors (s/explain-data ::context-iri-fail context-iri)}))
-
-; (defn value-spec
-;   "Create a spec that validates a single JSON value in the context."
-;   [prefixes]
-;   (s/or :keyword ::keyword
-;         :prefix ::prefix
-;         :simple-term-def (partial compact-iri? prefixes)
-;         :expanded-term-def (partial context-map? prefixes)))
-
-; (defn context-spec
-;   "Creates a spec that validates an entire context."
-;   [context]
-;   (let [v-spec (-> context collect-prefixes value-spec)]
-;     (s/map-of keyword? v-spec)))
-
-; (defn create-context
-;   "Create a valid context from a @context IRI.
-;   Throws an exception if the context is invalid."
-;   [context-iri]
-;   (let [context (get-context context-iri)
-;         errors (s/explain-data (context-spec context) context)]
-;     (if (every? nil? errors)
-;       context
-;       (throw (ex-info (str "Failure to validate @context " context-iri)
-;                       errors)))))
+      {:context context :errors nil})))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Validate profile against context 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; TODO Get a better solution to the lang map issue? 
 (defn children
   "Zipper function for returning the children at a location in a Profile.
   Returns nil if there are no children at the location."
@@ -167,8 +140,10 @@
   (not-empty
    (reduce-kv (fn [accum k v]
                 (cond
-                  (and (map? v) (not (#{:prefLabel :definition :scopeNote
-                                        :name :description} k)))
+                  (and (map? v)
+                       ;; Exclude language maps or inline @context maps
+                       (not (contains? #{:prefLabel :definition :scopeNote
+                                         :name :description :_context} k)))
                   (conj accum v)
                   (s/valid? (s/coll-of map? :type vector?) v)
                   (concat accum v)
@@ -212,25 +187,26 @@
   Recall that @context may be either a URI string or an array of URIs."
   [context-stack location]
   (let [curr-path (-> location zip/path vec)
-        context-iris (-> location zip/node :_context)]
+        context-val (-> location zip/node :_context)]
     (cond
       ;; @context is URI valued
-      (s/valid? ::ax/iri context-iris)
-      (conj context-stack (assoc (create-context context-iris)
+      (s/valid? ::ax/iri context-val)
+      (conj context-stack (assoc (create-context context-val)
                                  :path curr-path))
       ;; @context is array valued
-      (s/valid? (s/coll-of ::ax/iri :kind vector?) context-iris)
+      (s/valid? ::ax/array-of-iri context-val)
       (concat context-stack (mapv (fn [iri]
                                     (assoc (create-context iri)
                                            :path curr-path))
-                                  context-iris))
-      (nil? context-iris) context-stack)))
-
-#_(defn update-contexts
-    "Update the contexts stack on every node (ie. pop if we are no longer a 
-  child of the latest @contexts, push if we see a new @context)."
-    [context-stack location]
-    (-> context-stack (pop-contexts location) (push-context location)))
+                                  context-val))
+      ;; @context is inline (not allowed by spec, but good for debug)
+      (map? context-val)
+      (let [errors (validate-context context-val)]
+        (if (not (empty? errors))
+          (conj context-stack {:context nil :errors errors :path curr-path})
+          (conj context-stack {:context context-val :errors nil :path curr-path})))
+      ;; No @context key at this location
+      (nil? context-val) context-stack)))
 
 (defn update-context-errors
   "Update the list of context errors if a new erroneous context had been
@@ -257,14 +233,19 @@
   [contexts]
   (s/def ::contexed-key (partial search-contexts contexts)))
 
+(string/starts-with? (name :'blah) ")")
+(s/def ::is-at-context #(= % :_context))
+(s/def ::keyword-key #(-> % name string/starts-with? "_"))
+
 ;; TODO Dissassociate other JSON-LD keywords besides @context
 ;; At this point all @ signs are replaced by underscores
 (defn validate-keys
   [contexts curr-node]
   (let [k-spec (contexted-key-spec contexts)
-        ks-spec (s/def ::contexted-keys (s/coll-of k-spec))]
-    (s/explain-data ks-spec
-                    (keys (dissoc curr-node :_context)))))
+        ctx-spec (s/def ::contexted-map
+                   (s/map-of (s/or :absolute-iri ::contexed-key
+                                   :keyword ::is-at-context) any?))]
+    (s/explain-data ::contexted-map curr-node)))
 
 (defn update-profile-errors
   [contexts curr-node profile-errors]
@@ -278,13 +259,15 @@
   [profile]
   (loop [profile-loc (profile-to-zipper profile)
          context-stack []
-         ;; For contexts themselves that are bad 
+         ;; For contexts themselves that are bad
          context-errors (list)
          ;; When the profile doesn't follow the context 
          profile-errors (list)]
     (if (zip/end? profile-loc)
-      (-> {} (assoc :context-errors (not-empty context-errors)
-                    :context-key-errors (not-empty profile-errors)))
+      (-> {} (assoc :context-errors
+                    (->> context-errors (filter some?) not-empty)
+                    :context-key-errors
+                    (->> profile-errors (filter some?) not-empty)))
       (let [curr-node (zip/node profile-loc)
             popped-stack (pop-contexts context-stack profile-loc)
             pushed-stack (push-context context-stack profile-loc)]

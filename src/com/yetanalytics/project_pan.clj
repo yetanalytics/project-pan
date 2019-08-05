@@ -12,6 +12,7 @@
 ;; TODO Add conversion from Turtle and XML formats
 ;; Currently only supports JSON-LD
 
+;; TODO Catch exceptions thrown on invalid JSON parsing 
 (defn- convert-profile
   "Converts profile, if it is a JSON-LD string, into EDN format. Otherwise 
   keeps it in EDN format. Note that all instances of @ in keywords are
@@ -58,10 +59,10 @@
               :or {ids false relations false contexts false}}]
   (let [profile (convert-profile profile)
         errors (cond-> {:syntax-errors (profile/validate profile)}
-                 (true? ids)
+                 (true? ids) ;; ID duplicate and inScheme errors
                  (assoc :id-errors (id/validate-ids profile)
                         :in-scheme-errors (id/validate-in-schemes profile))
-                 (true? relations)
+                 (true? relations) ;; URI errors
                  (merge
                   (let [cgraph (concept/create-graph (:concepts profile))
                         tgraph (template/create-graph (:concepts profile)
@@ -73,9 +74,8 @@
                      :pattern-errors (pattern/explain-graph pgraph)
                      :pattern-cycle-errors
                      (pattern/explain-graph-cycles pgraph)}))
-                 (true? contexts)
-                 (assoc :context-errors
-                        (context/validate-all-contexts profile)))]
+                 (true? contexts) ;; @context errors
+                 (merge (context/validate-contexts profile)))]
     (if (every? nil? (vals errors))
       (do (println "Success!") nil) ;; Exactly like spec/explain
       (errors/expound-errors errors))))

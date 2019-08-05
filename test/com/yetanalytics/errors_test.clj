@@ -5,6 +5,7 @@
             [expound.alpha :as exp]
             [xapi-schema.spec :as xs]
             [com.yetanalytics.axioms :as ax]
+            [com.yetanalytics.context :as ctx]
             [com.yetanalytics.errors :as e]
             [com.yetanalytics.profile :as p]
             [com.yetanalytics.profiles.author :as ah]
@@ -91,10 +92,13 @@
 
 ;; Make IDs duplicate
 (def bad-profile-2b
-  (assoc-in good-profile-2 [:templates 1 :id]
-            "https://foo.org/template"))
+  (-> good-profile-2
+      (assoc-in [:versions 1 :id] "https://w3id.org/xapi/catch/v1")
+      (assoc-in [:templates 1 :id] "https://foo.org/template")))
 
 ;; Invalidate inScheme values
+
+
 (def bad-profile-2c
   (-> good-profile-2
       (assoc-in [:templates 0 :inScheme] "https://foo.org/invalid")
@@ -203,6 +207,14 @@
     (is (= (with-out-str
              (e/expound-error (id/validate-ids bad-profile-2b) "id"))
            (str "-- Spec failed --------------------\n"
+                "\n"
+                "Duplicate id: https://w3id.org/xapi/catch/v1\n"
+                " with count: 2\n"
+                "\n"
+                "the id value is not unique\n"
+                "\n"
+                "-------------------------\n"
+                "-- Spec failed --------------------\n"
                 "\n"
                 "Duplicate id: https://foo.org/template\n"
                 " with count: 2\n"
@@ -367,3 +379,25 @@
                 "\n"
                 "-------------------------\n"
                 "Detected 1 error\n")))))
+
+#_(e/expound-error-list
+   (:context-errors
+    (ctx/validate-contexts {:id "https://foo.org/profile"
+                            :type "Profile"
+                            :_context {:type "@type"
+                                       :id "@id"
+                                       :prov "http://www.w3.org/ns/prov#"
+                                       :skos "http://www.w3.org/2004/02/skos/core#"
+                                       :profile "https://w3id.org/xapi/profiles/ontology#"
+                                       :Profile "profile:Profile"
+                                       :Verb "xapi:Verb"
+                                       :ActivityType "xapi:ActivityType"
+                                       :AttachmentUsageType "xapi:AttachmentUsageType"}})))
+
+#_(e/expound-error-list
+   (:context-key-errors
+    (ctx/validate-contexts {:id "https://foo.org/profile"
+                            :type "Profile"
+                            :_context "https://w3id.org/xapi/profiles/context"
+                            :foo "Bar"
+                            :baz "Qux"})))

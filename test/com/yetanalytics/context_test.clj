@@ -196,6 +196,8 @@
   (testing "validate-context function"
     (is (nil? (c/validate-context profile-context)))
     (is (nil? (c/validate-context activity-context)))
+    (is (some? (c/validate-context {:prefix "https://foo.org/prefix"
+                                    :gamma {:at/id "prefix2:gamma"}})))
     (is (some? (c/validate-context {:xapi "https://w3id.org/xapi/ontology#"
                                     :Profile "profile:Profile"})))
     (is (some? (c/validate-context {:xapi "https://w3id.org/xapi/ontology#"
@@ -242,7 +244,17 @@
     (is (= (zip/node (c/profile-to-zipper dummy-profile)) dummy-profile))
     (is (= (zip/children (c/profile-to-zipper dummy-profile))
            '({:bar "b1" :baz "b2"} {:one 1} {:two 2} {:three 3})))
-    (is (= '() (zip/children (c/profile-to-zipper ex-activity-def))))))
+    (is (= '() (zip/children (c/profile-to-zipper ex-activity-def)))))
+  (testing "dfs through a single profile"
+    (is (-> {:_context {:prefix "https://foo.org/prefix/"
+                        :alpha {:at/id "prefix:alpha"}
+                        :beta {:at/id "prefix:beta"}}
+             :alpha 116
+             :beta {:_context {:prefix2 "https://foo.org/prefix2"
+                               :gamma {:at/id "prefix2:gamma2"}}
+                    :alpha 9001
+                    :gamma "foo bar"}}
+            c/profile-to-zipper zip/next zip/next zip/end?))))
 
 (deftest subvec?-test
   (testing "subvec? predicate: v1 should be a subvector of v2"
@@ -357,10 +369,50 @@
     (is (= (c/validate-contexts ex-activity-def)
            {:context-errors nil :context-key-errors nil}))
     (is (not= (c/validate-contexts dummy-profile)
-              {:context-errors nil :context-key-errors nil}))))
+              {:context-errors nil :context-key-errors nil}))
+    (is (= (c/validate-contexts
+            {:_context {:prefix "https://foo.org/prefix/"
+                        :alpha {:at/id "prefix:alpha"}
+                        :beta {:at/id "prefix:beta"}}
+             :alpha 116
+             :beta {:_context {:prefix2 "https://foo.org/prefix2/"
+                               :gamma {:at/id "prefix2:gamma2"}}
+                    :alpha 9001
+                    :gamma "foo bar"}})
+           {:context-errors nil :context-key-errors nil}))
+    (is (some? (:context-errrors (c/validate-contexts
+                                  {:_context {:prefix "https://foo.org/prefix/"
+                                              :gamma {:at/id "prefix2:gamma"}}
+                                   :gamma "foo bar"}))))
+    (is (nil? (:context-key-errrors (c/validate-contexts
+                                     {:_context {:prefix "https://foo.org/prefix/"
+                                                 :gamma {:at/id "prefix2:gamma"}}
+                                      :gamma "foo bar"}))))
+    (is (nil? (:context-errors (c/validate-contexts
+                                {:_context {:prefix2 "https://foo.org/prefix2/"
+                                            :gamma {:at/id "prefix2:gamma"}}
+                                 :alpha 9001}))))
+    (is (some? (:context-key-errors (c/validate-contexts
+                                     {:_context {:prefix2 "https://foo.org/prefix2/"
+                                                 :gamma {:at/id "prefix2:gamma"}}
+                                      :alpha 9001}))))
+    (is (= (c/validate-contexts
+            {:_context "https://w3id.org/xapi/profiles/context"
+             :id "https://foo.org/profile"
+             :type "Profile"
+             :concepts [{:id "https://foo.org/activity"
+                         :type "Activity"
+                         :activityDefinition
+                         {:_context "https://w3id.org/xapi/profiles/activity-context"
+                          :name {:en "Name"}
+                          :description {:en "Description"}
+                          :extensions {:_context {:prefix "https://foo.org/prefix/"
+                                                  :alpha "prefix:alpha"}
+                                       :alpha 9001}}}]})
+           {:context-errors nil :context-key-errors nil}))))
 
 (deftest validate-contexts-integration-test
   (testing "integration testing on Will's CATCH profile"
-    (is (= (c/validate-all-contexts
+    (is (= (c/validate-contexts
             (util/convert-json (slurp "resources/sample_profiles/will-profile.json") ""))
            {:context-errors nil :context-key-errors nil}))))

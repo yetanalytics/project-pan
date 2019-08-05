@@ -4,6 +4,7 @@
             [clojure.string :as string]
             [expound.alpha :as exp]
             [com.yetanalytics.axioms :as ax]
+            [com.yetanalytics.context :as ctx]
             [com.yetanalytics.identifiers :as id]
             [com.yetanalytics.graph :as g]
             [com.yetanalytics.objects.concept :as c]
@@ -78,13 +79,20 @@
 (exp/defmsg ::p/pattern-src "should be type: \"Pattern\"")
 (exp/defmsg ::p/pattern-dest "should link to type: \"Pattern\"")
 (exp/defmsg ::p/template-dest "should link to type: \"StatementTemplate\"")
-(exp/defmsg ::p/non-opt-dest "alternate pattern cannot directly contain an optional or zeroOrMore pattern")
+(exp/defmsg ::p/non-opt-dest "alternate pattern cannot contain an optional or zeroOrMore pattern")
 (exp/defmsg ::p/singleton-src "pattern cannot contain multiple links")
 (exp/defmsg ::p/not-singleton-src "pattern can only contain one link")
 (exp/defmsg ::p/primary-pattern "pattern is not primary")
 (exp/defmsg ::p/zero-indegree-src "pattern must not be used elsewhere")
 
 (exp/defmsg ::p/singleton-scc "cyclical reference detected")
+
+;; Context errors
+(exp/defmsg ::ctx/simple-term-def "simple term definition does not have valid prefix")
+(exp/defmsg ::ctx/expanded-term-def "expanded term definition does not have valid prefix")
+
+(exp/defmsg ::ctx/contexed-key "key cannot be expanded into absolute IRI")
+(exp/defmsg ::ctx/is-at-context "key is not @context")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Value display 
@@ -182,7 +190,10 @@
 
 (defn value-str-scc
   "Custom value string for strongly connected component error messages (if a
-  digraph has a cycle). Takes the form:"
+  digraph has a cycle). Takes the form:
+  > Cycle detected in the following nodes:
+  >   <identifier>
+  >   <identifier>"
   [_ _ _ value]
   (str "Cycle detected involving the following nodes:\n  "
        (->> value sort (string/join "\n  "))))
@@ -368,6 +379,33 @@
   (-> error-map group-by-in sort-by-path (expound-error-list error-type)))
 
 (defn expound-errors
-  [{:keys [syntax-errors]}]
+  [{:keys [syntax-errors
+           id-errors
+           in-scheme-errors
+           concept-errors
+           template-errors
+           pattern-errors
+           pattern-cycle-errors
+           context-errors
+           context-key-errors]}]
   (do
-    (if (some? syntax-errors) (expound-error-map syntax-errors "syntax"))))
+    (if (some? syntax-errors) (expound-error-map syntax-errors))
+    (if (some? id-errors) (expound-error id-errors "id"))
+    (if (some? in-scheme-errors) (expound-error in-scheme-errors "in-scheme"))
+    (if (some? concept-errors) (expound-error-map concept-errors "edge"))
+    (if (some? template-errors) (expound-error-map template-errors "edge"))
+    (if (some? pattern-errors) (expound-error-map pattern-errors "edge"))
+    (if (some? context-errors) (expound-error context-errors))
+    (if (some? context-key-errors) (expound-error
+
+                                    context-key-errors))))
+
+
+;;;;;;;;;;
+
+;; Error map:
+;; :path = Path of map + spec keywords
+;; :pred = Spec predicate
+;; :val = Value being specced
+;; :via = Path of spec keywords
+;; :in = Path of map keys + array entry numbers
