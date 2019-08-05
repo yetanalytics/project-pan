@@ -12,7 +12,7 @@ on success (obviously) or an error message on failure.
 
 Arguments may be supplied for different levels of validation strictness, which
 are listed as follows:
-- `(no args)` - Basic validation; check only the types of properties and simple 
+- no args - Basic validation; check only the types of properties and simple 
 syntax of all Profile objects.
 - `:ids` - Validate the correctness of all object and versioning IDs (the id
 and inScheme properties). Validate that all IDs are distinct and that all
@@ -22,15 +22,15 @@ These relations are given by IRIs and include the following:
     - the broader, narrower, related, broadMatch, narrowMatch, relatedMatch and
 exactMatch properties for Verbs, Activity Types and Attachment Usage 
 Types. 
-    - the recommendedActivityTypes property for Activity Extensions 
-    - the recommendedVerbs property for Context and Result Extensions 
-    - Determining Properties, objectStatementRefTemplate property and the
-contextStatementRefTemplate properties for Statement Templates.
-    - sequence, alternates, optional, oneOrMore and zeroOrMore properties for
-Patterns.
-- `:contexts` - Validate that all instances of @context resolve to valid
+    - the `recommendedActivityTypes` property for Activity Extensions 
+    - the `recommendedVerbs` property for Context and Result Extensions 
+    - Determining Properties, `objectStatementRefTemplate` property and the
+    `contextStatementRefTemplate` properties for Statement Templates.
+    - `sequence`, `alternates`, `optional`, `oneOrMore` and `zeroOrMore` 
+    properties for Patterns.
+- `:contexts` - Validate that all instances of `@context` resolve to valid
 JSON-LD contexts and that they allow all properties to expand out to absolute
-IRIs during JSON-LD processing. The @context property is always found in the
+IRIs during JSON-LD processing. The `@context` property is always found in the
 Profile metadata and in Activity Definitions, though they can also be found
 in Extensions for said Activity Definitions.
 
@@ -38,7 +38,7 @@ In addition to these arguments, there is another argument that needs to be
 implemented in a future iteration but currently does not exist.
 - `:external-iris` - Allow the profile to access external links, either by
 executing SPARQL queries on a RDF triple store or by executing HTTP requests.
-This is useful when :relations and :contexts are set to true.
+This is useful when `:relations` and `:contexts` are set to true.
 
 Besides validating whole Profiles, you can also use library methods and specs
 to validate parts of Profiles, such as individual  Concepts, Templates and 
@@ -71,8 +71,8 @@ Patterns).
         - Extensions may also link to external `recommendedActivityTypes` and
         `recommendedVerbs`.
         - Templates and Patterns may link to external objects.
-    - Non-inline `schemas` are given by IRIs that link out to external JSON
-    Schemas.
+    - Non-inline `schema` values are given by IRIs that link out to external
+    JSON Schemas.
     - Except for the two w3id contexts given by the Profile spec, any and all
     `@context` values need to be given by external links.
     - For many of these use cases, we need an RDF triple store to use as a
