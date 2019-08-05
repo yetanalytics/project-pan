@@ -17,6 +17,9 @@
             [com.yetanalytics.util :as u]
             [xapi-schema.spec :as xs]))
 
+;; TODO: Expound can act pretty funny sometimes and we have to use some hacks
+;; to avoid said funniness. Look into creating an in-house error message lib.
+
 ;; Error map reference:
 ;; :path = Path of map + spec keywords
 ;; :pred = Spec predicate
@@ -208,7 +211,12 @@
 (defn custom-printer
   "Returns a printer based on the error-type argument. A nil error-type will
   result in the default Expound printer (except with :print-specs? set to 
-  false)."
+  false). error-types:
+  - id: Duplicate ID errors
+  - in-scheme: InScheme property errors
+  - edge: Concept, Template and Pattern link errors
+  - scc: Pattern cycle errors
+  - no arg: Basic syntax + @context validation"
   [& [error-type]]
   (let [error-type (if (nil? error-type) :else error-type)]
     (case error-type
@@ -370,22 +378,43 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Expounding functions
+;; Note: Expound can act pretty funny when it comes to s/keys and s/coll-of
+;; specs. See Issue #165: Improve grouping of spec errors on Expound's Github.
+;; This is why we need the helper functions expound-error-list and expound-
+;; error-map.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn expound-error [error-map & [error-type]]
+(defn expound-error
+  "Print an Expounded error message using a custom printer. The custom printer
+  is determined using the error-type arg; if not supplied, it prints a default
+  Expound error message (without the Relevant Specs trace)."
+  [error-map & [error-type]]
   (let [print-fn (custom-printer error-type)]
     (print-fn error-map)))
 
 (defn expound-error-list
+  "Sort a list of spec error maps using the value of the :path key."
   [error-list & [error-type]]
   (doseq [error error-list]
     (do (expound-error error error-type) (println))))
 
 (defn expound-error-map
+  "Regroup an error map into a sorted list of error maps.
+  Used to avoid Issue #165 for Expound."
   [error-map & [error-type]]
   (-> error-map group-by-in sort-by-path (expound-error-list error-type)))
 
 (defn expound-errors
+  "Print errors from profile validation using Expound. Available keys:
+  :syntax-errors - Basic syntax validation (always present)
+  :id-errors - Duplicate ID errors 
+  :in-scheme-errors - inScheme property validation
+  :concept-errors - Concept relation/link errors
+  :template-errors - Template relation/link errors
+  :pattern-errors - Pattern relation/link errors
+  :pattern-cycle-errors - Cyclical pattern errors
+  :context-errors - Errors in any @context maps
+  :context-key-errors - Errors in expanding any keys via @context maps"
   [{:keys [syntax-errors
            id-errors
            in-scheme-errors
