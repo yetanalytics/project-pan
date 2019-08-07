@@ -208,6 +208,7 @@
   (str "Cycle detected involving the following nodes:\n  "
        (->> value sort (string/join "\n  "))))
 
+;; TODO Possibly make custom error messages for @context errors?
 (defn custom-printer
   "Returns a printer based on the error-type argument. A nil error-type will
   result in the default Expound printer (except with :print-specs? set to 
@@ -311,6 +312,15 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Error map manipulation functions
+;;
+;; XXX: Expound can act pretty funny when it comes to s/keys and s/coll-of
+;; specs. See Issue #165: Improve grouping of spec errors on Expound's Github.
+;; This is why we need the functions expound-error-list and expound-error-map
+;; and the helper functions in this section.
+;;
+;; TODO: Issue #165 has been marked as a bug so it should be fixed at some
+;; point. When that happens, rework this namespace to rely on Expound's native
+;; error grouping functionality so it doesn't have to do awkward map manips. 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn compare-properties
@@ -378,10 +388,6 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Expounding functions
-;; Note: Expound can act pretty funny when it comes to s/keys and s/coll-of
-;; specs. See Issue #165: Improve grouping of spec errors on Expound's Github.
-;; This is why we need the helper functions expound-error-list and expound-
-;; error-map.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn expound-error

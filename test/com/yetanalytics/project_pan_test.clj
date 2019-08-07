@@ -5,11 +5,23 @@
             [com.yetanalytics.profile :as profile]
             [com.yetanalytics.project-pan :refer :all]))
 
-; ;; Profiles to test
-; (def will-profile (slurp "resources/sample_profiles/will-profile.json"))
-; (def will-profile-red (slurp "resources/sample_profiles/will-profile-reduced.json"))
-; (def dod-profile (slurp "resources/sample_profiles/dod-isd.json"))
-; (def scorm-profile (slurp "resources/sample_profiles/scorm.json"))
+;; Profiles to test
+(def will-profile-raw (slurp "resources/sample_profiles/will-profile-raw.json"))
+(def will-profile-fix (slurp "resources/sample_profiles/will-profile-reduced.json"))
+(def dod-profile (slurp "resources/sample_profiles/dod-isd.json"))
+(def scorm-profile (slurp "resources/sample_profiles/scorm.json"))
+
+;; Raw profile
+(validate-profile will-profile-raw)
+(validate-profile will-profile-raw :ids true)
+(validate-profile will-profile-raw :relations true)
+(validate-profile will-profile-raw :contexts true)
+
+;; Fixed profile
+(validate-profile will-profile-fix)
+(validate-profile will-profile-fix :ids true)
+(validate-profile will-profile-fix :relations true)
+(validate-profile will-profile-fix :contexts true)
 
 ; (pprint/pprint (validate-profile will-profile-red :relations true))
 
