@@ -139,28 +139,30 @@
         (string/replace unformed-str #"(?<=\n)\s+\.\.\.\n" "")]
     (print formed-str)))
 
-(defn value-str-def
-  "Custom value string for syntax validation error messages. Takes the form:
+;; TODO Current default-printer function is quite unhelpful in locating errors.
+;; May look into this again.
+#_(defn value-str-def
+    "Custom value string for syntax validation error messages. Takes the form:
   > Invalid value: <value>
   > At path: profile -> <key1> -> <key2>"
-  [_ form path value]
-  (let [tag (if (-> path peek int?)
-              (-> path pop peek name (string/split #"s") first keyword)
-              (peek path))
-        path-arr (mapv strv path)
-        val-str (if (map? value)
-                  (-> value pr-str (string/replace #"(?<!\\), " ",\n   "))
-                  (pr-str value))]
-    (str tag " " val-str "\n"
-         "  at path: " (string/join " > " path-arr))))
+    [_ form path value]
+    (let [tag (if (-> path peek int?)
+                (-> path pop peek name (string/split #"s") first keyword)
+                (peek path))
+          path-arr (mapv strv path)
+          val-str (if (map? value)
+                    (-> value pr-str (string/replace #"(?<!\\), " ",\n   "))
+                    (pr-str value))]
+      (str tag " " val-str "\n"
+           "  at path: " (string/join " > " path-arr))))
 
 (defn value-str-id
   "Custom value string for duplicate ID error messages. Takes the form:
   > Duplicate id: <identifier>
   >  with count: <int>"
   [_ _ path value]
-  (str "Duplicate id: " (-> path last str) "\n"
-       " with count: " (str value)))
+  (str "Duplicate id: " (-> path last strv) "\n"
+       " with count: " (strv value)))
 
 (defn value-str-ver
   "Custom value string for inScheme error messages. Takes the form:
@@ -171,8 +173,8 @@
   >   <version-id-2>
   >   ..."
   [_ _ _ value]
-  (str "Invalid inScheme: " (-> value :inScheme str) "\n"
-       " at object: " (-> value :id str) "\n"
+  (str "Invalid inScheme: " (-> value :inScheme strv) "\n"
+       " at object: " (-> value :id strv) "\n"
        " profile version ids:\n  "
        (->> value :version-ids sequence sort reverse (string/join "\n  "))))
 
@@ -224,7 +226,7 @@
           ;; Shouldn't happen but just in case
           :else "")]
     (str "Invalid " (-> value :type strv) " identifier:\n"
-         " " (-> value :dest str) "\n"
+         " " (-> value :dest strv) "\n"
          "\n" attrs-list)))
 
 (defn value-str-scc
