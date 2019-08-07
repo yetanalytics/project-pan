@@ -1,7 +1,7 @@
 (ns com.yetanalytics.objects-test.concepts-test.extensions-test.result-test
   (:require [clojure.test :refer :all]
             [clojure.spec.alpha :as s]
-            [com.yetanalytics.util :as util]
+            [com.yetanalytics.graph :as graph]
             [com.yetanalytics.utils :refer :all]
             [com.yetanalytics.objects.concepts.extensions.result
              :as result-extension]))
@@ -110,15 +110,15 @@
 ;; Graph tests
 (deftest edges-with-attrs-test
   (testing "Creating edges from node"
-    (is (= (util/edges-with-attrs {:id "https://foo.org/re"
-                                   :type "ResultExtension"
-                                   :inScheme "https://foo.org/v1"
-                                   :recommendedVerbs
-                                   ["https://foo.org/verb1"
-                                    "https://foo.org/verb2"]})
+    (is (= (graph/edges-with-attrs {:id "https://foo.org/re"
+                                    :type "ResultExtension"
+                                    :inScheme "https://foo.org/v1"
+                                    :recommendedVerbs
+                                    ["https://foo.org/verb1"
+                                     "https://foo.org/verb2"]})
            [["https://foo.org/re" "https://foo.org/verb1" {:type :recommendedVerbs}]
             ["https://foo.org/re" "https://foo.org/verb2" {:type :recommendedVerbs}]]))
-    (is (= (util/edges-with-attrs {:id "https://foo.org/re2"
-                                   :type "ResultExtension"
-                                   :inScheme "https://foo.org/v1"})
+    (is (= (graph/edges-with-attrs {:id "https://foo.org/re2"
+                                    :type "ResultExtension"
+                                    :inScheme "https://foo.org/v1"})
            []))))

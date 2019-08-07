@@ -4,17 +4,38 @@
             [com.yetanalytics.axioms :as ax]
             [com.yetanalytics.utils :refer :all]))
 
-;; RFC 2046 media types tests
+;; String
+(deftest test-string
+  (testing "string spec"
+    (is (s/valid? ::ax/string "foo bar"))
+    (is (s/valid? ::ax/string "F43(#)*@ba 3$0s"))
+    (is (not (s/valid? ::ax/string "")))
+    (is (not (s/valid? ::ax/string 74)))))
 
+;; RFC 2046 media types tests
 (deftest test-media-types
   (testing "RFC 2046 media types"
     (is (s/valid? ::ax/media-type "application/json"))
+    (is (s/valid? ::ax/media-type "audio/mpeg")) ;; MP3
+    (is (s/valid? ::ax/media-type "image/png"))
     (is (s/valid? ::ax/media-type "text/plain"))
+    (is (s/valid? ::ax/media-type "video/mp4"))
     (is (s/valid? ::ax/media-type "video/vnd.youtube.yt"))
     (is (not (s/valid? ::ax/media-type "application")))
     (is (not (s/valid? ::ax/media-type "application/json/ld")))
     (is (not (s/valid? ::ax/media-type "application/this-does-not-exist")))
+    (is (not (s/valid? ::ax/media-type 74)))
     (is (not (s/valid? ::ax/media-type "what the pineapple")))))
+
+;; Language Maps
+;; TODO Language tag spec is broken; fix in xapi-schema
+(deftest test-language-maps
+  (testing "Language maps"
+    (is (s/valid? ::ax/language-map {"en" "Foo Bar"}))
+    (is (s/valid? ::ax/language-map {:en "Foo Bar"}))
+    (is (s/valid? ::ax/language-map {:en ""}))
+    (is (not (s/valid? ::ax/language-map {116 "Foo Bar"})))
+    (is (not (s/valid? ::ax/language-map {"hello bubble" "Foo Bar"})))))
 
 ;; JSONPath tests
 
@@ -203,4 +224,14 @@
     (is (not (s/valid? ::ax/json-schema "{\"$comment\" : 74}")))
     (is (not (s/valid? ::ax/json-schema schema-3))) ; valid only in draft-03
     (is (not (s/valid? ::ax/json-schema schema-4))) ; valid only in draft-03
-    ))
+))
+
+;; TODO Should check that IRIs with non-ASCII chars pass (currently they don't)
+(deftest test-iri
+  (testing "IRIs/IRLs/URIs/URLs"
+    (should-satisfy+ ::ax/iri
+                     "https://foo.org"
+                     "https://foo.org/"
+                     :bad
+                     "foo.org"
+                     "www.foo.org")))

@@ -1,6 +1,7 @@
 (ns com.yetanalytics.objects.concepts.extensions.result
   (:require [clojure.spec.alpha :as s]
             [com.yetanalytics.axioms :as ax]
+            [com.yetanalytics.graph :as graph]
             [com.yetanalytics.util :as util]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -35,7 +36,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Return a vector of edges in the form [src dest {:type kword}]
-(defmethod util/edges-with-attrs "ResultExtension"
+(defmethod graph/edges-with-attrs "ResultExtension"
   [{:keys [id recommendedVerbs]}]
   (if (some? recommendedVerbs)
     (mapv #(vector id % {:type :recommendedVerbs})

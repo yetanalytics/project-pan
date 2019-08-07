@@ -1,7 +1,7 @@
 (ns com.yetanalytics.objects-test.concepts-test.extensions-test.activity-test
   (:require [clojure.test :refer :all]
             [clojure.spec.alpha :as s]
-            [com.yetanalytics.util :as util]
+            [com.yetanalytics.graph :as graph]
             [com.yetanalytics.utils :refer :all]
             [com.yetanalytics.objects.concepts.extensions.activity
              :as activity-extension]))
@@ -127,15 +127,15 @@
 ;; Graph tests
 (deftest edges-with-attrs-test
   (testing "Creating edges from node"
-    (is (= (util/edges-with-attrs {:id "https://foo.org/ae"
-                                   :type "ActivityExtension"
-                                   :inScheme "https://foo.org/v1"
-                                   :recommendedActivityTypes
-                                   ["https://foo.org/at1"
-                                    "https://foo.org/at2"]})
+    (is (= (graph/edges-with-attrs {:id "https://foo.org/ae"
+                                    :type "ActivityExtension"
+                                    :inScheme "https://foo.org/v1"
+                                    :recommendedActivityTypes
+                                    ["https://foo.org/at1"
+                                     "https://foo.org/at2"]})
            [["https://foo.org/ae" "https://foo.org/at1" {:type :recommendedActivityTypes}]
             ["https://foo.org/ae" "https://foo.org/at2" {:type :recommendedActivityTypes}]]))
-    (is (= (util/edges-with-attrs {:id "https://foo.org/ae2"
-                                   :type "ActivityExtension"
-                                   :inScheme "https://foo.org/v1"})
+    (is (= (graph/edges-with-attrs {:id "https://foo.org/ae2"
+                                    :type "ActivityExtension"
+                                    :inScheme "https://foo.org/v1"})
            []))))

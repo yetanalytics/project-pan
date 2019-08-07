@@ -29,8 +29,8 @@
     (slurp "resources/context/profile-context.json")
     "https://w3id.org/xapi/profiles/activity-context"
     (slurp "resources/context/activity-context.json")
-    :else nil ;; TODO get other contexts from the Internet 
-))
+    ;; TODO get other contexts from the Internet; currently throws exception
+    (throw (ex-info "Unable to read from URL" {:url context}))))
 
 (defn get-context
   "Get a raw context, then parse it from JSON to EDN.
@@ -45,6 +45,8 @@
 ;; JSON-LD node objects may be aliased to the following keywords.
 ;; This spec checks if a @context key is an alias to a keyword value.
 ;; See section 6.2: Node Objects in the JSON-LD grammar.
+
+
 (s/def ::keyword
   (fn [k]
     (contains? #{"@context" "@id" "@graph" "@nest" "@type" "@reverse" "@index"}
@@ -72,6 +74,14 @@
                  accum))
              {} context))
 
+(defn dissoc-prefixes
+  "Returns all terms in a context that are not prefixes nor keyword aliases."
+  [context]
+  (reduce-kv (fn [accum k v]
+               (if (or (s/valid? ::keyword v) (s/valid? ::prefix v))
+                 accum
+                 (assoc accum k v))) {} context))
+
 (defn compact-iri?
   "Validates whether this is a compact iri that has a valid prefix."
   [prefixes value]
@@ -84,54 +94,66 @@
   (and (map? value)
        (compact-iri? prefixes (:at/id value))))
 
+(defn simple-term-spec
+  [prefixes]
+  (s/def ::simple-term-def (partial compact-iri? prefixes)))
+
+(defn expanded-term-spec
+  [prefixes]
+  (s/def ::expanded-term-def (partial context-map? prefixes)))
+
 ;; A term definition may either have a string as a value (ie. a simple term
 ;; definition) or a map (ie. an expanded term definition).
 (defn value-spec
-  "Create a spec that validates a single JSON value in the context."
   [prefixes]
-  (s/or :keyword ::keyword
-        :prefix ::prefix
-        :simple-term-def (partial compact-iri? prefixes)
-        :expanded-term-def (partial context-map? prefixes)))
+  (s/def ::value
+    (s/or :simple-term-def (simple-term-spec prefixes)
+          :expanded-term-def (expanded-term-spec prefixes))))
 
-(defn context-spec
-  "Creates a spec that validates an entire context."
+(defn values-spec
+  [prefixes]
+  (let [v-spec (value-spec prefixes)]
+    (s/def ::values (s/map-of any? v-spec))))
+
+(defn validate-context
   [context]
-  (let [v-spec (-> context collect-prefixes value-spec)]
-    (s/map-of keyword? v-spec)))
+  (let [prefixes (collect-prefixes context)
+        term-defs (dissoc-prefixes context)
+        vals-spec (values-spec prefixes)]
+    (s/explain-data vals-spec term-defs)))
 
-;; TODO Handle inline @context values?
 (defn create-context
-  "Create a valid context from a @context IRI.
-  Throws an exception if the context is invalid."
   [context-iri]
-  (let [context (get-context context-iri)
-        errors (s/explain-data (context-spec context) context)]
-    (if (every? nil? errors)
-      context
-      (throw (ex-info (str "Failure to validate @context " context-iri)
-                      errors)))))
+  (let [context (get-context context-iri)]
+    (if-let [errors (validate-context context)]
+      {:context nil :errors errors}
+      {:context context :errors nil})))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Validate profile against context 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(defn children
+  "Zipper function for returning the children at a location in a Profile.
+  Returns nil if there are no children at the location."
+  [node]
+  (not-empty
+   (reduce-kv (fn [accum k v]
+                (cond
+                  (and (map? v)
+                       ;; Exclude language maps or inline @context maps
+                       (not (contains? #{:prefLabel :definition :scopeNote
+                                         :name :description :_context} k)))
+                  (conj accum v)
+                  (s/valid? (s/coll-of map? :type vector?) v)
+                  (concat accum v)
+                  :else accum))
+              (list) node)))
+
 (defn profile-to-zipper
   "Create a zipper from a profile structure."
   [profile]
-  (letfn [(children [node]
-            (reduce-kv
-             (fn [accum k v]
-               (cond ;; TODO Get a better solution to the lang map issue?
-                 (and (map? v)
-                      (not (#{:prefLabel :definition :scopeNote
-                              :name :description} k)))
-                 (conj accum v)
-                 (s/valid? (s/coll-of map? :type vector?) v)
-                 (concat accum v)
-                 :else accum))
-             (list) node))]
-    (zip/zipper map? children nil profile)))
+  (zip/zipper map? children nil profile))
 
 (defn subvec?
   "True if v1 is a subvector of v2, false otherwise."
@@ -165,23 +187,34 @@
   Recall that @context may be either a URI string or an array of URIs."
   [context-stack location]
   (let [curr-path (-> location zip/path vec)
-        context-iris (-> location zip/node :context)]
+        context-val (-> location zip/node :_context)]
     (cond
-      (s/valid? ::ax/iri context-iris)
-      (conj context-stack {:context (create-context context-iris)
-                           :path curr-path})
-      (s/valid? (s/coll-of ::ax/iri :kind vector?) context-iris)
+      ;; @context is URI valued
+      (s/valid? ::ax/iri context-val)
+      (conj context-stack (assoc (create-context context-val)
+                                 :path curr-path))
+      ;; @context is array valued
+      (s/valid? ::ax/array-of-iri context-val)
       (concat context-stack (mapv (fn [iri]
-                                    {:context (create-context iri)
-                                     :path curr-path})
-                                  context-iris))
-      (nil? context-iris) context-stack)))
+                                    (assoc (create-context iri)
+                                           :path curr-path))
+                                  context-val))
+      ;; @context is inline (not allowed by spec, but good for debug)
+      (map? context-val)
+      (let [errors (validate-context context-val)]
+        (if (not (empty? errors))
+          (conj context-stack {:context nil :errors errors :path curr-path})
+          (conj context-stack {:context context-val :errors nil :path curr-path})))
+      ;; No @context key at this location
+      (nil? context-val) context-stack)))
 
-(defn update-contexts
-  "Update the contexts stack on every node (ie. pop if we are no longer a 
-  child of the latest @contexts, push if we see a new @context)."
-  [context-stack location]
-  (-> context-stack (pop-contexts location) (push-context location)))
+(defn update-context-errors
+  "Update the list of context errors if a new erroneous context had been
+  added to the stack."
+  [old-stack new-stack context-errors]
+  (if (not= old-stack new-stack)
+    (conj context-errors (-> new-stack peek :errors))
+    context-errors))
 
 (defn search-contexts
   "Given a key, search in all the contexts in the stack for it. Return true
@@ -190,25 +223,62 @@
   [contexts k]
   (loop [context-stack contexts]
     (if (empty? context-stack)
-      false
+      false ;; We searched through all the contexts
       (let [curr (peek context-stack)]
         (if (-> curr :context (contains? k))
-          true
+          true ;; We found the key at the curr context!
           (recur (pop context-stack)))))))
 
-;; TODO Right now it returns only true or false
-;; Change it so that it returns a sequence of spec errors
-(defn validate-all-contexts
+(defn contexted-key-spec
+  [contexts]
+  (s/def ::contexed-key (partial search-contexts contexts)))
+
+(string/starts-with? (name :'blah) ")")
+(s/def ::is-at-context #(= % :_context))
+(s/def ::keyword-key #(-> % name string/starts-with? "_"))
+
+;; TODO Dissassociate other JSON-LD keywords besides @context
+;; At this point all @ signs are replaced by underscores
+(defn validate-keys
+  [contexts curr-node]
+  (let [k-spec (contexted-key-spec contexts)
+        ctx-spec (s/def ::contexted-map
+                   (s/map-of (s/or :absolute-iri ::contexed-key
+                                   :keyword ::is-at-context) any?))]
+    (s/explain-data ::contexted-map curr-node)))
+
+(defn update-profile-errors
+  [contexts curr-node profile-errors]
+  (let [new-errors (validate-keys contexts curr-node)]
+    (if (some? new-errors)
+      (conj profile-errors new-errors)
+      profile-errors)))
+
+(defn validate-contexts
   "Validate all the contexts in a Profile."
   [profile]
   (loop [profile-loc (profile-to-zipper profile)
-         context-stack []]
+         context-stack []
+         ;; For contexts themselves that are bad
+         context-errors (list)
+         ;; When the profile doesn't follow the context 
+         profile-errors (list)]
     (if (zip/end? profile-loc)
-      true
+      (-> {} (assoc :context-errors
+                    (->> context-errors (filter some?) not-empty)
+                    :context-key-errors
+                    (->> profile-errors (filter some?) not-empty)))
       (let [curr-node (zip/node profile-loc)
-            new-stack (update-contexts context-stack profile-loc)
-            error-seq (map (partial search-contexts new-stack)
-                           (keys (dissoc curr-node :context)))]
-        (if (every? true? error-seq)
-          (recur (zip/next profile-loc) new-stack)
-          curr-node)))))
+            popped-stack (pop-contexts context-stack profile-loc)
+            pushed-stack (push-context context-stack profile-loc)]
+        (if (-> pushed-stack peek :context nil?)
+          ;; If latest context is erroneous
+          (let [new-cerrors (update-context-errors popped-stack pushed-stack
+                                                   context-errors)]
+            (recur (zip/next profile-loc)
+                   pushed-stack new-cerrors profile-errors))
+          ;; If latest context is valid => validate map keys
+          (let [new-perrors (update-profile-errors pushed-stack curr-node
+                                                   profile-errors)]
+            (recur (zip/next profile-loc)
+                   pushed-stack context-errors new-perrors)))))))

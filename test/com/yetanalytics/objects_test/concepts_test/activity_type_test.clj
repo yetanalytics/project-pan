@@ -1,7 +1,7 @@
 (ns com.yetanalytics.objects-test.concepts-test.activity-type-test
   (:require [clojure.test :refer :all]
             [clojure.spec.alpha :as s]
-            [com.yetanalytics.util :as util]
+            [com.yetanalytics.graph :as graph]
             [com.yetanalytics.utils :refer :all]
             [com.yetanalytics.objects.concepts.activity-types
              :as activity-types]))
@@ -114,7 +114,7 @@
 
 (deftest edges-with-attrs-test
   (testing "create edges from node"
-    (is (= (util/edges-with-attrs ex-concept)
+    (is (= (graph/edges-with-attrs ex-concept)
            [["https://foo.org/at" "https://foo.org/at2" {:type :broader}]
             ["https://foo.org/at" "https://foo.org/at3" {:type :broadMatch}]
             ["https://foo.org/at" "https://foo.org/at4" {:type :narrower}]

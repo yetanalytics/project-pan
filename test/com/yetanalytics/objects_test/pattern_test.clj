@@ -2,8 +2,9 @@
   (:require [clojure.test :refer :all]
             [clojure.spec.alpha :as s]
             [clojure.pprint :as pprint]
+            [ubergraph.alg :as alg]
             [ubergraph.core :as uber]
-            [com.yetanalytics.util :as u]
+            [com.yetanalytics.graph :as graph]
             [com.yetanalytics.utils :refer :all]
             [com.yetanalytics.objects.pattern :as pattern]))
 
@@ -29,6 +30,20 @@
                      "false"
                      74
                      nil)))
+
+(deftest is-primary-test
+  (testing "is-primary-true spec"
+    (should-satisfy+ ::pattern/is-primary-true
+                     {:primary true}
+                     :bad
+                     {:primary false}
+                     {}))
+  (testing "is-primary-false spec"
+    (should-satisfy+ ::pattern/is-primary-false
+                     {:primary false}
+                     {}
+                     :bad
+                     {:primary true})))
 
 (deftest alternates-test
   (testing "alternates (A | B) property"
@@ -185,104 +200,134 @@
 
 (deftest node-with-attrs
   (testing "Creating node with attributes"
-    (is (= (u/node-with-attrs {:id "https://foo.org/pattern1"
-                               :type "Pattern"
-                               :primary true
-                               :alternates ["https://foo.org/p1"
-                                            "https://foo.org/p2"]})
+    (is (= (graph/node-with-attrs {:id "https://foo.org/pattern1"
+                                   :type "Pattern"
+                                   :primary true
+                                   :alternates ["https://foo.org/p1"
+                                                "https://foo.org/p2"]})
            ["https://foo.org/pattern1" {:type "Pattern"
                                         :primary true
                                         :property :alternates}]))
-    (is (= (u/node-with-attrs {:id "https://foo.org/pattern1"
-                               :type "Pattern"
-                               :primary false
-                               :optional {:id "https://foo.org/p3"}})
+    (is (= (graph/node-with-attrs {:id "https://foo.org/pattern1"
+                                   :type "Pattern"
+                                   :primary false
+                                   :optional {:id "https://foo.org/p3"}})
            ["https://foo.org/pattern1" {:type "Pattern"
                                         :primary false
                                         :property :optional}]))))
 
 (deftest edge-with-attrs-test
   (testing "Creating vector of edges"
-    (is (= (u/edges-with-attrs {:id "https://foo.org/pattern1"
-                                :type "Pattern"
-                                :alternates ["https://foo.org/p1"
-                                             "https://foo.org/p2"]})
+    (is (= (graph/edges-with-attrs {:id "https://foo.org/pattern1"
+                                    :type "Pattern"
+                                    :alternates ["https://foo.org/p1"
+                                                 "https://foo.org/p2"]})
            [["https://foo.org/pattern1" "https://foo.org/p1" {:type :alternates}]
             ["https://foo.org/pattern1" "https://foo.org/p2" {:type :alternates}]]))
-    (is (= (u/edges-with-attrs {:id "https://foo.org/pattern2"
-                                :type "Pattern"
-                                :sequence ["https://foo.org/p1"
-                                           "https://foo.org/p2"]})
+    (is (= (graph/edges-with-attrs {:id "https://foo.org/pattern2"
+                                    :type "Pattern"
+                                    :sequence ["https://foo.org/p1"
+                                               "https://foo.org/p2"]})
            [["https://foo.org/pattern2" "https://foo.org/p1" {:type :sequence}]
             ["https://foo.org/pattern2" "https://foo.org/p2" {:type :sequence}]]))
-    (is (= (u/edges-with-attrs {:id "https://foo.org/pattern3"
-                                :type "Pattern"
-                                :optional {:id "https://foo.org/p0"}})
+    (is (= (graph/edges-with-attrs {:id "https://foo.org/pattern3"
+                                    :type "Pattern"
+                                    :optional {:id "https://foo.org/p0"}})
            [["https://foo.org/pattern3" "https://foo.org/p0" {:type :optional}]]))
-    (is (= (u/edges-with-attrs {:id "https://foo.org/pattern4"
-                                :type "Pattern"
-                                :oneOrMore {:id "https://foo.org/p0"}})
+    (is (= (graph/edges-with-attrs {:id "https://foo.org/pattern4"
+                                    :type "Pattern"
+                                    :oneOrMore {:id "https://foo.org/p0"}})
            [["https://foo.org/pattern4" "https://foo.org/p0" {:type :oneOrMore}]]))
-    (is (= (u/edges-with-attrs {:id "https://foo.org/pattern5"
-                                :type "Pattern"
-                                :zeroOrMore {:id "https://foo.org/p0"}})
+    (is (= (graph/edges-with-attrs {:id "https://foo.org/pattern5"
+                                    :type "Pattern"
+                                    :zeroOrMore {:id "https://foo.org/p0"}})
            [["https://foo.org/pattern5" "https://foo.org/p0" {:type :zeroOrMore}]]))))
 
 (deftest alternates-test
   (testing "Alternates pattern MUST NOT include optional or zeroOrMore directly."
     (should-satisfy+
      ::pattern/valid-edge
-     {:src-type "Pattern" :dest-type "Pattern"
+     {:src "https://foo.org/p1" :dest "https://foo.org/p2"
+      :src-type "Pattern" :dest-type "Pattern"
       :type :alternates :dest-property :alternates}
-     {:src-type "Pattern" :dest-type "Pattern"
+     {:src "https://foo.org/p1" :dest "https://foo.org/p2"
+      :src-type "Pattern" :dest-type "Pattern"
       :type :alternates :dest-property :sequence}
-     {:src-type "Pattern" :dest-type "Pattern"
+     {:src "https://foo.org/p1" :dest "https://foo.org/p2"
+      :src-type "Pattern" :dest-type "Pattern"
       :type :alternates :dest-property :oneOrMore}
-     {:src-type "Pattern" :dest-type "StatementTemplate"
+     {:src "https://foo.org/p1" :dest "https://foo.org/p2"
+      :src-type "Pattern" :dest-type "StatementTemplate"
       :type :alternates :dest-property nil}
      :bad
-     {:src-type "Pattern" :dest-type "Pattern"
+     {:src "https://foo.org/p1" :dest "https://foo.org/p2"
+      :src-type "Pattern" :dest-type "Pattern"
       :type :alternates :dest-property :optional}
-     {:src-type "Pattern" :dest-type "Pattern"
+     {:src "https://foo.org/p1" :dest "https://foo.org/p2"
+      :src-type "Pattern" :dest-type "Pattern"
       :type :alternates :dest-property :zeroOrMore}
-     {:src-type "Pattern" :dest-type "Verb"
+     {:src "https://foo.org/p1" :dest "https://foo.org/p2"
+      :src-type "Pattern" :dest-type "Verb"
       :type :alternates :dest-property nil})))
+
+(s/explain ::pattern/valid-edge
+           {:src "https://foo.org/p1" :dest "https://foo.org/p2"
+            :src-type "Pattern" :dest-type "Pattern"
+            :type :alternates :dest-property :alternates})
 
 (deftest sequence-test
   (testing "Sequence pattern MUST include at least two members, unless pattern is a primary pattern not used elsewhere that contains one StatementTemplate."
     (should-satisfy+
      ::pattern/valid-edge
-     {:src-type "Pattern" :dest-type "Pattern" :type :sequence
+     {:src "https://foo.org/p1" :dest "https://foo.org/p2"
+      :src-type "Pattern" :dest-type "Pattern" :type :sequence
       :src-indegree 1 :src-outdegree 2 :src-primary false}
-     {:src-type "Pattern" :dest-type "StatementTemplate" :type :sequence
+     {:src "https://foo.org/p1" :dest "https://foo.org/p2"
+      :src-type "Pattern" :dest-type "StatementTemplate" :type :sequence
       :src-indegree 0 :src-outdegree 1 :src-primary true}
      :bad
-     {:src-type "Pattern" :dest-type "Pattern" :type :sequence
+     {:src "https://foo.org/p1" :dest "https://foo.org/p2"
+      :src-type "Pattern" :dest-type "Pattern" :type :sequence
       :src-indegree 0 :src-outdegree 1 :src-primary true}
-     {:src-type "Pattern" :dest-type "StatementTemplate" :type :sequence
+     {:src "https://foo.org/p1" :dest "https://foo.org/p2"
+      :src-type "Pattern" :dest-type "StatementTemplate" :type :sequence
       :src-indegree 1 :src-outdegree 1 :src-primary true}
-     {:src-type "Pattern" :dest-type "StatementTemplate" :type :sequence
+     {:src "https://foo.org/p1" :dest "https://foo.org/p2"
+      :src-type "Pattern" :dest-type "StatementTemplate" :type :sequence
       :src-indegree 0 :src-outdegree 1 :src-primary false})))
 
 (deftest edge-test
   (testing "Optional, oneOrMore, or zeroOrMore pattern edges"
     (should-satisfy+
      ::pattern/valid-edge
-     {:src-type "Pattern" :dest-type "Pattern" :type :optional}
-     {:src-type "Pattern" :dest-type "Pattern" :type :oneOrMore}
-     {:src-type "Pattern" :dest-type "Pattern" :type :zeroOrMore}
-     {:src-type "Pattern" :dest-type "StatementTemplate" :type :optional}
-     {:src-type "Pattern" :dest-type "StatementTemplate" :type :oneOrMore}
-     {:src-type "Pattern" :dest-type "StatementTemplate" :type :zeroOrMore}
-     {:src-type "Pattern" :dest-type "Pattern" :type :optional
+     {:src "https://foo.org/p1" :dest "https://foo.org/p2"
+      :src-type "Pattern" :dest-type "Pattern" :type :optional}
+     {:src "https://foo.org/p1" :dest "https://foo.org/p2"
+      :src-type "Pattern" :dest-type "Pattern" :type :oneOrMore}
+     {:src "https://foo.org/p1" :dest "https://foo.org/p2"
+      :src-type "Pattern" :dest-type "Pattern" :type :zeroOrMore}
+     {:src "https://foo.org/p1" :dest "https://foo.org/p2"
+      :src-type "Pattern" :dest-type "StatementTemplate" :type :optional}
+     {:src "https://foo.org/p1" :dest "https://foo.org/p2"
+      :src-type "Pattern" :dest-type "StatementTemplate" :type :oneOrMore}
+     {:src "https://foo.org/p1" :dest "https://foo.org/p2"
+      :src-type "Pattern" :dest-type "StatementTemplate" :type :zeroOrMore}
+     {:src "https://foo.org/p1" :dest "https://foo.org/p2"
+      :src-type "Pattern" :dest-type "Pattern" :type :optional
       :src-primary true :src-indegree 0 :src-outdegree 1 :dest-property :oneOrMore}
      :bad
-     {:src-type "Pattern" :dest-type "Verb" :type :optional}
-     {:src-type "Pattern" :dest-type "Verb" :type :oneOrMore}
-     {:src-type "Pattern" :dest-type "Verb" :type :zeroOrMore}
-     {:src-type "Pattern" :dest-type nil :type :optional}
-     {:src-type "Pattern" :dest-type nil :type :oneOrMore}
-     {:src-type "Pattern" :dest-type nil :type :zeroOrMore})))
+     {:src "https://foo.org/p1" :dest "https://foo.org/p2"
+      :src-type "Pattern" :dest-type "Verb" :type :optional}
+     {:src "https://foo.org/p1" :dest "https://foo.org/p2"
+      :src-type "Pattern" :dest-type "Verb" :type :oneOrMore}
+     {:src "https://foo.org/p1" :dest "https://foo.org/p2"
+      :src-type "Pattern" :dest-type "Verb" :type :zeroOrMore}
+     {:src "https://foo.org/p1" :dest "https://foo.org/p2"
+      :src-type "Pattern" :dest-type nil :type :optional}
+     {:src "https://foo.org/p1" :dest "https://foo.org/p2"
+      :src-type "Pattern" :dest-type nil :type :oneOrMore}
+     {:src "https://foo.org/p1" :dest "https://foo.org/p2"
+      :src-type "Pattern" :dest-type nil :type :zeroOrMore})))
 
 (def ex-templates
   [{:id "https://foo.org/template1"
@@ -358,8 +403,9 @@
               :dest "https://foo.org/template5" :dest-type "StatementTemplate"
               :dest-property nil :type :zeroOrMore}}))
     (should-satisfy ::pattern/valid-edges (pattern/get-edges pgraph))
-    (should-satisfy ::pattern/acyclic-graph pgraph)
-    (should-satisfy ::pattern/pattern-graph pgraph)))
+    (should-satisfy ::pattern/singleton-sccs (alg/scc pgraph))
+    (is (nil? (pattern/explain-graph pgraph)))
+    (is (nil? (pattern/explain-graph-cycles pgraph)))))
 
 (def cyclic-patterns-1
   [{:id "https://foo.org/pattern-one"
@@ -377,29 +423,16 @@
     :primary true
     :oneOrMore {:id "https://foo.org/pattern-three"}}])
 
-(def cyclic-pgraph-1
-  (let [graph (uber/digraph)
-        ;; Nodes
-        pnodes (mapv (partial u/node-with-attrs) cyclic-patterns-1)
-        ;; Edges
-        pedges (reduce concat (mapv (partial u/edges-with-attrs) cyclic-patterns-1))]
-    (-> graph
-        (uber/add-nodes-with-attrs* pnodes)
-        (uber/add-directed-edges* pedges))))
+(def cyclic-pgraph-1 (pattern/create-graph [] cyclic-patterns-1))
 
-(def cyclic-pgraph-2
-  (let [graph (uber/digraph)
-        ;; Nodes
-        pnodes (mapv (partial u/node-with-attrs) cyclic-patterns-2)
-        ;; Edges
-        pedges (reduce concat (mapv (partial u/edges-with-attrs) cyclic-patterns-2))]
-    (-> graph
-        (uber/add-nodes-with-attrs* pnodes)
-        (uber/add-directed-edges* pedges))))
+(def cyclic-pgraph-2 (pattern/create-graph [] cyclic-patterns-2))
 
 (deftest no-cycles-test
   (testing "MUST not have any cycles in graph"
     ;; No cycles
-    (is (not (s/valid? ::pattern/acyclic-graph cyclic-pgraph-1)))
+    (is (some? (pattern/explain-graph-cycles cyclic-pgraph-1)))
     ;; No self loops
-    (is (not (s/valid? ::pattern/acyclic-graph cyclic-pgraph-2)))))
+    ;; Note: Self loops are NOT caught by explain-graph-cycles, but are
+    ;; caught by the edge validation specs
+    (is (some? (pattern/explain-graph cyclic-pgraph-2)))
+    (is (nil? (pattern/explain-graph-cycles cyclic-pgraph-2)))))

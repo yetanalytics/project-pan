@@ -1,6 +1,7 @@
 (ns com.yetanalytics.objects.concepts.verbs
   (:require [clojure.spec.alpha :as s]
             [com.yetanalytics.axioms :as ax]
+            [com.yetanalytics.graph :as graph]
             [com.yetanalytics.util :as util]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -41,7 +42,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Return a vector of edges in the form [src dest {:type kword}]
-(defmethod util/edges-with-attrs "Verb"
+(defmethod graph/edges-with-attrs "Verb"
   [{:keys [id broader broadMatch narrower narrowMatch related relatedMatch
            exactMatch]}]
   (into [] (filter #(some? (second %))

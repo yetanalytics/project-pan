@@ -2,53 +2,67 @@
   (:require [clojure.test :refer :all]
             [clojure.spec.alpha :as s]
             [ubergraph.core :as uber]
-            [com.yetanalytics.util :as util]
             [com.yetanalytics.utils :refer :all]
             [com.yetanalytics.objects.concept :as concept]))
+
+;; TODO Add test for testing a complete vector of concepts
 
 (deftest valid-relation-test
   (testing "Concepts MUST be of the same type from this Profile version."
     (should-satisfy+
      ::concept/valid-edge
-     {:src-type "ActivityType" :dest-type "ActivityType"
+     {:src "https://foo.org/at1" :dest "https://foo.org/at2"
+      :src-type "ActivityType" :dest-type "ActivityType"
       :src-version "https://foo.org/v1" :dest-version "https://foo.org/v1"
       :type :broader}
-     {:src-type "ActivityType" :dest-type "ActivityType"
+     {:src "https://foo.org/at1" :dest "https://foo.org/at2"
+      :src-type "ActivityType" :dest-type "ActivityType"
       :src-version "https://foo.org/v1" :dest-version "https://foo.org/v1"
       :type :narrower}
-     {:src-type "ActivityType" :dest-type "ActivityType"
+     {:src "https://foo.org/at1" :dest "https://foo.org/at2"
+      :src-type "ActivityType" :dest-type "ActivityType"
       :src-version "https://foo.org/v1" :dest-version "https://foo.org/v1"
       :type :related}
-     {:src-type "AttachmentUsageType" :dest-type "AttachmentUsageType"
+     {:src "https://foo.org/aut1" :dest "https://foo.org/aut2"
+      :src-type "AttachmentUsageType" :dest-type "AttachmentUsageType"
       :src-version "https://foo.org/v1" :dest-version "https://foo.org/v1"
       :type :broader}
-     {:src-type "AttachmentUsageType" :dest-type "AttachmentUsageType"
+     {:src "https://foo.org/aut1" :dest "https://foo.org/aut2"
+      :src-type "AttachmentUsageType" :dest-type "AttachmentUsageType"
       :src-version "https://foo.org/v1" :dest-version "https://foo.org/v1"
       :type :narrower}
-     {:src-type "AttachmentUsageType" :dest-type "AttachmentUsageType"
+     {:src "https://foo.org/aut1" :dest "https://foo.org/aut2"
+      :src-type "AttachmentUsageType" :dest-type "AttachmentUsageType"
       :src-version "https://foo.org/v1" :dest-version "https://foo.org/v1"
       :type :related}
-     {:src-type "Verb" :dest-type "Verb"
+     {:src "https://foo.org/verb1" :dest "https://foo.org/verb2"
+      :src-type "Verb" :dest-type "Verb"
       :src-version "https://foo.org/v1" :dest-version "https://foo.org/v1"
       :type :broader}
-     {:src-type "Verb" :dest-type "Verb"
+     {:src "https://foo.org/verb1" :dest "https://foo.org/verb2"
+      :src-type "Verb" :dest-type "Verb"
       :src-version "https://foo.org/v1" :dest-version "https://foo.org/v1"
       :type :narrower}
-     {:src-type "Verb" :dest-type "Verb"
+     {:src "https://foo.org/verb1" :dest "https://foo.org/verb2"
+      :src-type "Verb" :dest-type "Verb"
       :src-version "https://foo.org/v1" :dest-version "https://foo.org/v1"
       :type :related}
      :bad
-     {:src-type "Activity" :dest-type "ActivityType"
+     {:src "https://foo.org/act" :dest "https://foo.org/at"
+      :src-type "Activity" :dest-type "ActivityType"
       :src-version "https://foo.org/v1" :dest-version "https://foo.org/v1"
       :type :broader}
-     {:src-type "AttachmentUsageType" :dest-type "ActivityType"
+     {:src "https://foo.org/aut" :dest "https://foo.org/at"
+      :src-type "AttachmentUsageType" :dest-type "ActivityType"
       :src-version "https://foo.org/v1" :dest-version "https://foo.org/v1"
       :type :broader}
-     {:src-type "ActivityType" :dest-type "ActivityType"
+     {:src "https://foo.org/at1" :dest "https://foo.org/at2"
+      :src-type "ActivityType" :dest-type "ActivityType"
       :src-version "https://foo.org/v1" :dest-version "https://foo.org/v2"
       :type :broader}
      ;; TODO Let broadMatch be a valid relation
-     {:src-type "ActivityType" :dest-type "ActivityType"
+     {:src "https://foo.org/at1" :dest "https://foo.org/at2"
+      :src-type "ActivityType" :dest-type "ActivityType"
       :src-version "https://foo.org/v1" :dest-version "https://foo.org/v2"
       :type :broadMatch})))
 
@@ -56,18 +70,30 @@
   (testing "Extensions MUST point to appropriate recommended concepts."
     (should-satisfy+
      ::concept/valid-edge
-     {:src-type "ActivityExtension" :dest-type "ActivityType"
+     {:src "https://foo.org/ae" :dest "https://foo.org/at"
+      :src-type "ActivityExtension" :dest-type "ActivityType"
+      :src-version "https://foo.org/v1" :dest-version "https://foo.org/v1"
       :type :recommendedActivityTypes}
-     {:src-type "ContextExtension" :dest-type "Verb"
+     {:src "https://foo.org/ce" :dest "https://foo.org/verb"
+      :src-type "ContextExtension" :dest-type "Verb"
+      :src-version "https://foo.org/v1" :dest-version "https://foo.org/v1"
       :type :recommendedVerbs}
-     {:src-type "ResultExtension" :dest-type "Verb"
+     {:src "https://foo.org/re" :dest "https://foo.org/verb"
+      :src-type "ResultExtension" :dest-type "Verb"
+      :src-version "https://foo.org/v1" :dest-version "https://foo.org/v1"
       :type :recommendedVerbs}
      :bad
-     {:src-type "ActivityExtension" :dest-type "Activity"
+     {:src "https://foo.org/ae" :dest "https://foo.org/act"
+      :src-type "ActivityExtension" :dest-type "Activity"
+      :src-version "https://foo.org/v1" :dest-version "https://foo.org/v1"
       :type :recommendedActivityTypes}
-     {:src-type "ActivityExtension" :dest-type "ActivityType"
+     {:src "https://foo.org/ae" :dest "https://foo.org/at"
+      :src-type "ActivityExtension" :dest-type "ActivityType"
+      :src-version "https://foo.org/v1" :dest-version "https://foo.org/v1"
       :type :recommendedVerbs}
-     {:src-type "ActivityExtension" :dest-type "Verb"
+     {:src "https://foo.org/ae" :dest "https://foo.org/verb"
+      :src-type "ActivityExtension" :dest-type "Verb"
+      :src-version "https://foo.org/v1" :dest-version "https://foo.org/v1"
       :type :recommendedVerbs})))
 
 ;; TODO Add graph integration tests
@@ -127,4 +153,4 @@
              {:src "https://foo.org/aut2" :src-type "AttachmentUsageType" :src-version "https://foo.org/v1"
               :dest "https://foo.org/aut1" :dest-type "AttachmentUsageType" :dest-version "https://foo.org/v1"
               :type :narrower}}))
-    (should-satisfy ::concept/concept-graph cgraph)))
+    (is (nil? (concept/explain-graph cgraph)))))

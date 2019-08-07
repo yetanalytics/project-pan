@@ -1,6 +1,7 @@
 (ns com.yetanalytics.objects.concepts.extensions.activity
   (:require [clojure.spec.alpha :as s]
             [com.yetanalytics.axioms :as ax]
+            [com.yetanalytics.graph :as graph]
             [com.yetanalytics.util :as util]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -36,7 +37,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Return a vector of edges in the form [src dest {:type kword}]
-(defmethod util/edges-with-attrs "ActivityExtension"
+(defmethod graph/edges-with-attrs "ActivityExtension"
   [{:keys [id recommendedActivityTypes]}]
   (if (some? recommendedActivityTypes)
     (mapv #(vector id % {:type :recommendedActivityTypes})

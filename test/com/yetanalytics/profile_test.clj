@@ -16,12 +16,12 @@
 
 (deftest context-test
   (testing "context property"
-    (is (s/valid? ::profile/context "https://w3id.org/xapi/profiles/context"))
-    (is (s/valid? ::profile/context ["https://w3id.org/xapi/profiles/context"]))
-    (is (s/valid? ::profile/context ["https://w3id.org/xapi/profiles/context"
-                                     "https://w3id.org/xapi/some/other/context"]))
-    (is (not (s/valid? ::profile/context ["https://w3id.org/incorrect/context"])))
-    (is (not (s/valid? ::profile/context [])))))
+    (is (s/valid? ::profile/_context "https://w3id.org/xapi/profiles/context"))
+    (is (s/valid? ::profile/_context ["https://w3id.org/xapi/profiles/context"]))
+    (is (s/valid? ::profile/_context ["https://w3id.org/xapi/profiles/context"
+                                      "https://w3id.org/xapi/some/other/context"]))
+    (is (not (s/valid? ::profile/_context ["https://w3id.org/incorrect/context"])))
+    (is (not (s/valid? ::profile/_context [])))))
 
 (deftest type-test
   (testing "type property"
@@ -57,7 +57,7 @@
                   {:versions
                    [{:id "https://w3id.org/xapi/catch/v1"
                      :generatedAtTime "2017-12-22T22:30:00-07:00"}]
-                   :context "https://w3id.org/xapi/profiles/context"
+                   :_context "https://w3id.org/xapi/profiles/context"
                    :author {:url "https://www.yetanalytics.io"
                             :type "Organization"
                             :name "Yet Analytics"}
@@ -65,147 +65,5 @@
                    :id "https://w3id.org/xapi/catch"
                    :definition {"en" "The profile for the trinity education application CATCH"}
                    :conformsTo "https://w3id.org/xapi/profiles#1.0"
-                   :prefLabel {"en" "Catch"}}))))
-
-(deftest normalize-profile-test
-  (testing "normalize-profile function"
-    (is (= (profile/normalize-profile {:id "https://w3id.org/xapi/catch"})
-           {:id "https://w3id.org/xapi/catch"
-            :versions [] :concepts [] :templates [] :patterns []}))
-    (is (= (profile/normalize-profile
-            {:id "https://foo.org"
-             :versions [{:id "https://foo.org/v1"}]
-             :concepts [{:id "https://foo.org/verb"}]
-             :templates [{:id "https://foo.org/template"}]
-             :patterns [{:id "https://foo.org/patterns"}]})
-           {:id "https://foo.org"
-            :versions [{:id "https://foo.org/v1"}]
-            :concepts [{:id "https://foo.org/verb"}]
-            :templates [{:id "https://foo.org/template"}]
-            :patterns [{:id "https://foo.org/patterns"}]}))))
-
-;; Test IDs
-
-
-(deftest validate-ids-test
-  (testing "profile ID MUST be distinct from version IDs"
-    (is (nil? (profile/validate-ids
-               {:id "https://w3id.org/xapi/catch"
-                :versions [{:id "https://w3id.org/xapi/catch/v2"}
-                           {:id "https://w3id.org/xapi/catch/v1"}]})))
-    (is (some? (profile/validate-ids
-                {:id "https://w3id.org/xapi/catch"
-                 :versions [{:id "https://w3id.org/xapi/catch"}
-                            {:id "https://w3id.org/xapi/catch/v1"}]}))))
-  (testing "Every Profile version ID MUST be distinct"
-    (is (some? (profile/validate-ids
-                {:id "https://w3id.org/xapi/catch"
-                 :versions [{:id "https://w3id.org/xapi/catch/v1"}
-                            {:id "https://w3id.org/xapi/catch/v1"}]}))))
-  (testing "Concept IDs MUST be distinct"
-    (is (nil? (profile/validate-ids
-               {:id "https://w3id.org/xapi/catch"
-                :concepts [{:id "https://w3id.org/xapi/catch/verb#1"
-                            :type "Verb"}
-                           {:id "https://w3id.org/xapi/catch/verb#2"
-                            :type "Verb"}]})))
-    (is (some? (profile/validate-ids
-                {:id "https://w3id.org/xapi/catch"
-                 :concepts [{:id "https://w3id.org/xapi/catch/verb#duplicate"
-                             :type "Verb"}
-                            {:id "https://w3id.org/xapi/catch/verb#duplicate"
-                             :type "Verb"}]}))))
-  (testing "Statement Template IDs MUST be distinct"
-    (is (nil? (profile/validate-ids
-               {:id "https://w3id.org/xapi/catch"
-                :templates [{:id "https://w3id.org/xapi/catch/template#1"
-                             :type "StatementTemplate"}
-                            {:id "https://w3id.org/xapi/catch/template#2"
-                             :type "StatementTemplate"}]})))
-    (is (some? (profile/validate-ids
-                {:id "https://w3id.org/xapi/catch"
-                 :templates [{:id "https://w3id.org/xapi/catch/template#dup"
-                              :type "StatementTemplate"}
-                             {:id "https://w3id.org/xapi/catch/template#dup"
-                              :type "StatementTemplate"}]}))))
-  (testing "Pattern IDs MUST be distinct"
-    (is (nil? (profile/validate-ids
-               {:id "https://w3id.org/xapi/catch"
-                :patterns [{:id "https://w3id.org/xapi/catch/pattern#1"
-                            :type "Pattern"}
-                           {:id "https://w3id.org/xapi/catch/pattern#2"
-                            :type "Pattern"}]})))
-    (is (some? (profile/validate-ids
-                {:id "https://w3id.org/xapi/catch"
-                 :patterns [{:id "https://w3id.org/xapi/catch/pattern#dup"
-                             :type "Pattern"}
-                            {:id "https://w3id.org/xapi/catch/pattern#dup"
-                             :type "Pattern"}]})))))
-
-(deftest in-scheme-test
-  (testing "object inScheme MUST be a valid Profile version"
-    (is (empty? (profile/validate-in-schemes
-                 {:versions [{:id "https://w3id.org/catch/v1"}
-                             {:id "https://w3id.org/catch/v2"}]
-                  :concepts [{:id "https://w3id.org/catch/some-verb"
-                              :inScheme "https://w3id.org/catch/v1"}]
-                  :templates [{:id "https://w3id.org/catch/some-template"
-                               :inScheme "https://w3id.org/catch/v1"}]
-                  :patterns [{:id "https://w3id.org/catch/some-pattern"
-                              :inScheme "https://w3id.org/catch/v2"}]})))
-    (is (some? (profile/validate-in-schemes
-                {:versions [{:id "https://w3id.org/catch/v1"}
-                            {:id "https://w3id.org/catch/v2"}]
-                 :concepts [{:id "https://w3id.org/catch/some-verb"
-                             :inScheme "https://w3id.org/catch/v3"}]
-                 :templates [] :patterns []})))
-    (is (some? (profile/validate-in-schemes
-                {:versions [{:id "https://w3id.org/catch/v1"}
-                            {:id "https://w3id.org/catch/v2"}]
-                 :templates [{:id "https://w3id.org/catch/some-template"
-                              :inScheme "https://w3id.org/catch/v3"}]
-                 :concepts [] :patterns []})))
-    (is (some? (profile/validate-in-schemes
-                {:versions [{:id "https://w3id.org/catch/v1"}
-                            {:id "https://w3id.org/catch/v2"}]
-                 :patterns [{:id "https://w3id.org/catch/some-pattern"
-                             :inScheme "https://w3id.org/catch/v3"}]
-                 :concepts [] :templates []})))))
-
-(deftest validate-all-ids-test
-  (testing "validate-all-ids function"
-    (is (empty? (profile/validate-all-ids
-                 {:id "https://w3id.org/xapi/catch"
-                  :versions [{:id "https://w3id.org/catch/v1"}
-                             {:id "https://w3id.org/catch/v2"}]
-                  :concepts [{:id "https://w3id.org/catch/some-verb"
-                              :inScheme "https://w3id.org/catch/v1"}]
-                  :templates [{:id "https://w3id.org/catch/some-template"
-                               :inScheme "https://w3id.org/catch/v1"}]
-                  :patterns [{:id "https://w3id.org/catch/some-pattern"
-                              :inScheme "https://w3id.org/catch/v2"}]})))))
-
-;; Graph testing
-(deftest validate-iris
-  (is (empty? (profile/validate-iris
-               {:concepts [{:id "https://foo.org/verb1"
-                            :broader ["https://foo.org/verb2"]}
-                           {:id "https://foo.org/verb2"}]
-                :templates [{:id "https://foo.org/template"
-                             :verb "https://foo.org/verb1"}]
-                :patterns [{:id "https://foo.org/pattern"
-                            :optional "https://foo.org/template"}]})))
-  (is (try (profile/validate-iris {:concepts [{:id "https://foo.org/dup"}
-                                              {:id "https://foo.org/dup"}]})
-           (catch Exception e true))))
-
-(def will-profile
-  (util/convert-json (slurp "resources/sample_profiles/will-profile-reduced.json") ""))
-
-(deftest profile-integration-test
-  (testing "performing intergration testing using Will's CATCH profile"
-    (is (nil? (profile/validate will-profile)))
-    (is (empty? (profile/validate-all-ids will-profile)))
-    (is (empty? (profile/validate-in-schemes will-profile)))
-    (is (empty? (profile/validate-iris will-profile)))
-    (is (empty? (profile/validate-context will-profile)))))
+                   :prefLabel {"en"
+                               "Catch"}}))))

@@ -1,7 +1,7 @@
 (ns com.yetanalytics.objects-test.concepts-test.attachment-usage-type-test
   (:require [clojure.test :refer :all]
             [clojure.spec.alpha :as s]
-            [com.yetanalytics.util :as util]
+            [com.yetanalytics.graph :as graph]
             [com.yetanalytics.utils :refer :all]
             [com.yetanalytics.objects.concepts.attachment-usage-types
              :as attachment-usage-types]))
@@ -115,7 +115,7 @@
 
 (deftest edges-with-attrs-test
   (testing "create edges from node"
-    (is (= (util/edges-with-attrs ex-concept)
+    (is (= (graph/edges-with-attrs ex-concept)
            [["https://foo.org/aut" "https://foo.org/aut2" {:type :broader}]
             ["https://foo.org/aut" "https://foo.org/aut3" {:type :broadMatch}]
             ["https://foo.org/aut" "https://foo.org/aut4" {:type :narrower}]

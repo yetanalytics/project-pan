@@ -1,8 +1,8 @@
 (ns com.yetanalytics.objects.template
   (:require [clojure.spec.alpha :as s]
             [ubergraph.core :as uber]
-            [com.yetanalytics.util :as util]
             [com.yetanalytics.axioms :as ax]
+            [com.yetanalytics.graph :as graph]
             [com.yetanalytics.util :as util]
             [com.yetanalytics.objects.templates.rules :as rules]))
 
@@ -68,7 +68,7 @@
 
 ;; From a single StatementTemplate, return a 1D vector of edge vectors of 
 ;; form [src dest {:type type-kword}]
-(defmethod util/edges-with-attrs "StatementTemplate"
+(defmethod graph/edges-with-attrs "StatementTemplate"
   [{:keys [id
            verb
            objectActivityType
@@ -99,106 +99,160 @@
                     (map #(vector id % {:type :contextStatementRefTemplate})
                          contextStatementRefTemplate)))))
 
-;; Create a template graph from its constitutent concepts and templates
-(defn create-graph [concepts templates]
+(defn create-graph
+  "Create a template graph from its constituent concepts and templates.
+  Returns a digraph with connections between templates to concepts (and each
+  other)."
+  [concepts templates]
   (let [tgraph (uber/digraph)
         ;; Nodes
-        cnodes (mapv (partial util/node-with-attrs) concepts)
-        tnodes (mapv (partial util/node-with-attrs) templates)
+        cnodes (mapv (partial graph/node-with-attrs) concepts)
+        tnodes (mapv (partial graph/node-with-attrs) templates)
         ;; Edges
-        tedges (util/collect-edges
-                (mapv (partial util/edges-with-attrs) templates))]
+        tedges (graph/collect-edges
+                (mapv (partial graph/edges-with-attrs) templates))]
     (-> tgraph
         (uber/add-nodes-with-attrs* cnodes)
         (uber/add-nodes-with-attrs* tnodes)
         (uber/add-directed-edges* tedges))))
 
-;; Dissassociate a graph into its edges, in the form of attribute maps
 (defn get-edges
+  "Return a sequence of edge maps, with the following keys:
+  - src: source node ID
+  - dest: destination node ID
+  - src-type: source node 'type' property
+  - dest-type: destination node 'type' property
+  - src-version: source node 'inScheme' property
+  - dest-version: destination node 'inScheme property
+  - type: corresponding property in the source node (ie. the Determining
+  Property or Statement Ref Template type)"
   [tgraph]
   (let [edges (uber/edges tgraph)]
-    (mapv (fn [edge]
-            (let [src (uber/src edge) dest (uber/dest edge)]
-              {:src src
-               :src-type (uber/attr tgraph src :type)
-               :src-version (uber/attr tgraph src :inScheme)
-               :dest dest
-               :dest-type (uber/attr tgraph dest :type)
-               :dest-version (uber/attr tgraph dest :inScheme)
-               :type (uber/attr tgraph edge :type)}))
-          edges)))
+    (map (fn [edge]
+           (let [src (uber/src edge) dest (uber/dest edge)]
+             {:src src
+              :src-type (uber/attr tgraph src :type)
+              :src-version (uber/attr tgraph src :inScheme)
+              :dest dest
+              :dest-type (uber/attr tgraph dest :type)
+              :dest-version (uber/attr tgraph dest :inScheme)
+              :type (uber/attr tgraph edge :type)}))
+         edges)))
 
-;; Validate edges
+;; Edge property specs
 
-(defmulti valid-edge? #(:type %))
+;; Is the source a Statement Template?
+(s/def ::template-src
+  (fn [{:keys [src-type]}]
+    (contains? #{"StatementTemplate"} src-type)))
+
+;; Is the destination not nil?
+(s/def ::valid-dest
+  (fn [{:keys [dest-type dest-version]}]
+    (and (some? dest-type) (some? dest-version))))
+
+;; Is the destination a Verb?
+(s/def ::verb-dest
+  (fn [{:keys [dest-type]}]
+    (contains? #{"Verb"} dest-type)))
+
+;; Is the destination an Activity Type?
+(s/def ::at-dest
+  (fn [{:keys [dest-type]}]
+    (contains? #{"ActivityType"} dest-type)))
+
+;; Is the destination an Attachment Usage Type?
+(s/def ::aut-dest
+  (fn [{:keys [dest-type]}]
+    (contains? #{"AttachmentUsageType"} dest-type)))
+
+;; Is the destination another Statement Template?
+(s/def ::template-dest
+  (fn [{:keys [dest-type]}]
+    (contains? #{"StatementTemplate"} dest-type)))
+
+;; Are both the source and destination in the same version?
+(s/def ::same-version
+  (fn [{:keys [src-version dest-version]}]
+    (= src-version dest-version)))
+
+;; Edge validation multimethod
+
+(defmulti valid-edge? util/type-dispatch)
 
 ;; verb MUST point to a Verb Concept
-(defmethod valid-edge? :verb [{:keys [src-type dest-type]}]
-  (and (#{"StatementTemplate"} src-type)
-       (#{"Verb"} dest-type)))
+(defmethod valid-edge? :verb [_]
+  (s/and ::template-src
+         ::valid-dest
+         ::graph/not-self-loop
+         ::verb-dest))
 
 ;; objectActivityType MUST point to an object ActivityType
-(defmethod valid-edge? :objectActivityType [{:keys [src-type dest-type]}]
-  (and (#{"StatementTemplate"} src-type)
-       (#{"ActivityType"} dest-type)))
+(defmethod valid-edge? :objectActivityType [_]
+  (s/and ::template-src
+         ::valid-dest
+         ::graph/not-self-loop
+         ::at-dest))
 
 ;; contextGroupingActivityType MUST point to grouping ActivityTypes
-(defmethod valid-edge? :contextGroupingActivityType
-  [{:keys [src-type dest-type]}]
-  (and (#{"StatementTemplate"} src-type)
-       (#{"ActivityType"} dest-type)))
+(defmethod valid-edge? :contextGroupingActivityType [_]
+  (s/and ::template-src
+         ::valid-dest
+         ::graph/not-self-loop
+         ::at-dest))
 
 ;; contextParentActivityType MUST point to parent ActivityTypes
-(defmethod valid-edge? :contextParentActivityType
-  [{:keys [src-type dest-type]}]
-  (and (#{"StatementTemplate"} src-type)
-       (#{"ActivityType"} dest-type)))
+(defmethod valid-edge? :contextParentActivityType [_]
+  (s/and ::template-src
+         ::valid-dest
+         ::graph/not-self-loop
+         ::at-dest))
 
 ;; contextOtherActivityType MUST point to other ActivityTypes
-(defmethod valid-edge? :contextOtherActivityType
-  [{:keys [src-type dest-type]}]
-  (and (#{"StatementTemplate"} src-type)
-       (#{"ActivityType"} dest-type)))
+(defmethod valid-edge? :contextOtherActivityType [_]
+  (s/and ::template-src
+         ::valid-dest
+         ::graph/not-self-loop
+         ::at-dest))
 
 ;; contextCategoryActivityType MUST point to category ActivityTypes
-(defmethod valid-edge? :contextCategoryActivityType
-  [{:keys [src-type dest-type]}]
-  (and (#{"StatementTemplate"} src-type)
-       (#{"ActivityType"} dest-type)))
+(defmethod valid-edge? :contextCategoryActivityType [_]
+  (s/and ::template-src
+         ::valid-dest
+         ::graph/not-self-loop
+         ::at-dest))
 
 ;; attachmentUsageType MUST point to AttachmentUsageType Concepts
-(defmethod valid-edge? :attachmentUsageType
-  [{:keys [src-type dest-type]}]
-  (and (#{"StatementTemplate"} src-type)
-       (#{"AttachmentUsageType"} dest-type)))
+(defmethod valid-edge? :attachmentUsageType [_]
+  (s/and ::template-src
+         ::valid-dest
+         ::graph/not-self-loop
+         ::aut-dest))
 
 ;; objectStatementRefTemplate MUST point to Statement Templates from this
 ;; profile version
-(defmethod valid-edge? :objectStatementRefTemplate
-  [{:keys [src-type dest-type src-version dest-version]}]
-  (and (#{"StatementTemplate"} src-type)
-       (#{"StatementTemplate"} dest-type)
-       (= src-version dest-version)))
+(defmethod valid-edge? :contextStatementRefTemplate [_]
+  (s/and ::template-src
+         ::valid-dest
+         ::template-dest
+         ::same-version))
 
 ;; contextStatementRefTemplate MUST point to Statement Templates from this
-;; profile version
-(defmethod valid-edge? :contextStatementRefTemplate
-  [{:keys [src-type dest-type src-version dest-version]}]
-  (and (#{"StatementTemplate"} src-type)
-       (#{"StatementTemplate"} dest-type)
-       (= src-version dest-version)))
+;; profile version 
+(defmethod valid-edge? :objectStatementRefTemplate [_]
+  (s/and ::template-src
+         ::valid-dest
+         ::template-dest
+         ::same-version))
 
-;; If the source object is a Statement Template, then it did not satisfy any
-;; of the other properties so we return false.
-(defmethod valid-edge? :default [_] false)
+;; Validate a single edge
+(s/def ::valid-edge (s/multi-spec valid-edge? util/type-dispatch))
 
-(s/def ::valid-edge valid-edge?)
-#_(s/def ::valid-edge
-    (s/and (s/valid? ::type src-type)
-           (some? dest-type)
-           (s/or :verb (s/and))))
 
+;; Validate all the edges
 (s/def ::valid-edges (s/coll-of ::valid-edge))
+
+;; Putting it all together
 
 (s/def ::template-graph
   (fn [tgraph] (s/valid? ::valid-edges (get-edges tgraph))))
@@ -206,10 +260,4 @@
 (defn explain-graph [tgraph]
   (s/explain-data ::valid-edges (get-edges tgraph)))
 
-;; TODO Fix stuff in the rules
-
-(defn explain
-  [problem]
-  (let [src (-> problem :val :src)
-        dest (-> problem :val :dest)])
-  (str "Invalid edge between "))
+;; TODO Validate links that are external to this Profile
