@@ -2,7 +2,7 @@
   (:require [clojure.spec.alpha :as s]
             [com.yetanalytics.axioms :as ax]
             [com.yetanalytics.graph :as graph]
-            [com.yetanalytics.util :as util]))
+            [com.yetanalytics.util :as u]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Activity Type
@@ -22,11 +22,11 @@
 (s/def ::relatedMatch ::ax/array-of-iri)
 (s/def ::exactMatch ::ax/array-of-iri)
 
-(s/def ::related-only-deprecated
-  (fn [atype]
-    (if (contains? atype :related)
-      (true? (:deprecated atype))
-      true)))
+#_(s/def ::related-only-deprecated
+    (fn [atype]
+      (if (contains? atype :related)
+        (true? (:deprecated atype))
+        true)))
 
 (s/def ::activity-type
   (s/and
@@ -34,7 +34,7 @@
     :req-un [::id ::type ::inScheme ::prefLabel ::definition]
     :opt-un [::deprecated ::broader ::broadMatch ::narrower
              ::narrowMatch ::related ::relatedMatch ::exactMatch])
-   ::related-only-deprecated))
+   ::u/related-only-deprecated))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; in-profile validation+ helpers

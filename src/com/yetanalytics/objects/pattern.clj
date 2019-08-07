@@ -66,10 +66,12 @@
          ::pattern-clause
          ::is-primary-false))
 
+(defmulti pattern? #(:primary %))
+(defmethod pattern? true [_] ::primary-pattern)
+(defmethod pattern? :default [_] ::non-primary-pattern)
+
 ;; Spec for a generic pattern.
-(s/def ::pattern
-  (s/or :non-primary ::non-primary-pattern
-        :primary ::primary-pattern))
+(s/def ::pattern (s/multi-spec pattern? #(:primary %)))
 
 ;; Spec for a vector of patterns.
 (s/def ::patterns

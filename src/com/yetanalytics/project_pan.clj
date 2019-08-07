@@ -44,16 +44,24 @@
                         :in-scheme-errors (id/validate-in-schemes profile))
                  (true? relations) ;; URI errors
                  (merge
-                  (let [cgraph (concept/create-graph (:concepts profile))
+                  (let [;; Graphs
+                        cgraph (concept/create-graph (:concepts profile))
                         tgraph (template/create-graph (:concepts profile)
                                                       (:templates profile))
                         pgraph (pattern/create-graph (:templates profile)
-                                                     (:patterns profile))]
-                    {:concept-errors (concept/explain-graph cgraph)
-                     :template-errors (template/explain-graph tgraph)
-                     :pattern-errors (pattern/explain-graph pgraph)
-                     :pattern-cycle-errors
-                     (pattern/explain-graph-cycles pgraph)}))
+                                                     (:patterns profile))
+                        ;; Errors
+                        cerrors (concept/explain-graph cgraph)
+                        terrors (template/explain-graph tgraph)
+                        perrors (pattern/explain-graph pgraph)
+                        pc-errors (if (nil? perrors)
+                                    (pattern/explain-graph-cycles pgraph)
+                                    nil)]
+                    {:concept-errors cerrors
+                     :template-errors terrors
+                     :pattern-errors perrors
+                     :pattern-cycle-errors pc-errors}))
+                 ()
                  (true? contexts) ;; @context errors
                  (merge (context/validate-contexts profile)))]
     (if (every? nil? (vals errors))

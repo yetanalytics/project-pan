@@ -22,19 +22,7 @@
 ;; Concepts 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; (s/def ::concept
-;   (s/or :verb     ::v/verb
-;         :activity ::a/activity
-;         :activity-type ::at/activity-type
-;         :attachment-usage-type ::a-ut/attachment-usage-type
-;         :activity-extension ::ae/extension
-;         :context-extension ::ce/extension
-;         :result-extension  ::re/extension
-;         :activity-profile ::activity-p/document-resource
-;         :agent-profile    ::agent-p/document-resource
-;         :state            ::state/document-resource))
-
-(defmulti concept? #(:type %))
+(defmulti concept? util/type-dispatch)
 
 (defmethod concept? "Verb" [_] ::v/verb)
 (defmethod concept? "Activity" [_] ::a/activity)

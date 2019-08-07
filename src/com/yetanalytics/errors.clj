@@ -92,8 +92,8 @@
 (exp/defmsg ::p/pattern-dest "should link to type: \"Pattern\"")
 (exp/defmsg ::p/template-dest "should link to type: \"StatementTemplate\"")
 (exp/defmsg ::p/non-opt-dest "alternate pattern cannot contain an optional or zeroOrMore pattern")
-(exp/defmsg ::p/singleton-src "pattern cannot contain multiple links")
-(exp/defmsg ::p/not-singleton-src "pattern can only contain one link")
+(exp/defmsg ::p/singleton-src "primary sequence pattern has multiple links")
+(exp/defmsg ::p/not-singleton-src "sequence pattern must have at least two links")
 (exp/defmsg ::p/primary-pattern "pattern is not primary")
 (exp/defmsg ::p/zero-indegree-src "pattern must not be used elsewhere")
 

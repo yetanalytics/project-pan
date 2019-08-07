@@ -170,6 +170,12 @@
                    :prefLabel {"en" "view rubric"}
                    :definition {"en" "This is a pattern for someone looking at a rubric"}
                    :optional {:id "https://w3id.org/xapi/catch/templates#view-rubric"}}))
+    (is (not (s/valid? ::pattern/pattern
+                       {:id "https://w3id.org/xapi/catch/patterns#cross-linguistic-connections-completion"
+                        :type "Pattern"
+                        :inScheme "https://w3id.org/xapi/catch/v1"
+                        :prefLabel {:en "complete Two-Way Sheltered Instruction"}
+                        :oneOrMore ["https://w3id.org/xapi/catch/patterns#f3-2-01-completion"]})))
     ; Remove properties that are optional in non-primary patterns
     (is (s/valid? ::pattern/pattern
                   {:id "https://w3id.org/xapi/minimal/pattern"
