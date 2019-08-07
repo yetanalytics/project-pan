@@ -13,15 +13,15 @@
 
 ;; Raw profile
 (validate-profile will-profile-raw)
-(validate-profile will-profile-raw :ids true)
-(validate-profile will-profile-raw :relations true)
-(validate-profile will-profile-raw :contexts true)
+; (validate-profile will-profile-raw :ids true)
+; (validate-profile will-profile-raw :relations true)
+; (validate-profile will-profile-raw :contexts true)
 
 ;; Fixed profile
-(validate-profile will-profile-fix)
-(validate-profile will-profile-fix :ids true)
-(validate-profile will-profile-fix :relations true)
-(validate-profile will-profile-fix :contexts true)
+; (validate-profile will-profile-fix)
+; (validate-profile will-profile-fix :ids true)
+; (validate-profile will-profile-fix :relations true)
+; (validate-profile will-profile-fix :contexts true)
 
 ; (pprint/pprint (validate-profile will-profile-red :relations true))
 

@@ -3,6 +3,8 @@
             [clojure.core.match :as m]
             [clojure.string :as string]
             [expound.alpha :as exp]
+            [expound.problems :as exp-prob]
+            [expound.printer :as exp-print]
             [com.yetanalytics.axioms :as ax]
             [com.yetanalytics.context :as ctx]
             [com.yetanalytics.identifiers :as id]
@@ -112,18 +114,45 @@
   "Short for 'stringify-value.' Like str or pr-str, but makes special cases
   for nils and keywords."
   [value]
-  (if (nil? value)
-    "nil"
-    (if (keyword? value)
-      (name value)
-      ;; Use strv to get keep quotes around strings, str to remove them
-      (pr-str value))))
+  (cond
+    (nil? value) "nil"
+    (= value :_context) "@context"
+    (keyword? value) (name value)
+    :else (pr-str value)))
 
 (defn pluralize
   "Make the word plural based off of a count if needed, by adding a plural s
   at the end."
   [word cnt]
   (if (< 1 cnt) (str word "s") word))
+
+;; Needed to get around Issue #110 in Expound
+(defn default-printer
+  "Return a default printer with :show-valid-values? and :print-specs? both
+  preset to false. Also truncate lines that only contain elipses."
+  [explain-data]
+  (let [unformed-str
+        (with-out-str ;; Pretty hacky, but it works
+          ((exp/custom-printer {:show-valid-values? false
+                                :print-specs? false}) explain-data))
+        formed-str
+        (string/replace unformed-str #"(?<=\n)\s+\.\.\.\n" "")]
+    (print formed-str)))
+
+(defn value-str-def
+  "Custom value string for syntax validation error messages. Takes the form:
+  > Invalid value: <value>
+  > At path: profile -> <key1> -> <key2>"
+  [_ form path value]
+  (let [tag (if (-> path peek int?)
+              (-> path pop peek name (string/split #"s") first keyword)
+              (peek path))
+        path-arr (mapv strv path)
+        val-str (if (map? value)
+                  (-> value pr-str (string/replace #"(?<!\\), " ",\n   "))
+                  (pr-str value))]
+    (str tag " " val-str "\n"
+         "  at path: " (string/join " > " path-arr))))
 
 (defn value-str-id
   "Custom value string for duplicate ID error messages. Takes the form:
@@ -229,7 +258,9 @@
       (exp/custom-printer {:value-str-fn value-str-edge :print-specs? false})
       "scc"
       (exp/custom-printer {:value-str-fn value-str-scc :print-specs? false})
-      :else (exp/custom-printer {:print-specs? false}))))
+      :else
+      default-printer
+      #_(exp/custom-printer {:value-str-fn value-str-def :print-specs? false}))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Property ordering in error messages 

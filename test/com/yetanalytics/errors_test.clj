@@ -202,6 +202,8 @@
                 (mapv #(-> % ::s/problems first :via last)))
            [::id/in-scheme ::id/in-scheme]))))
 
+(e/expound-error (p/validate bad-profile-1d))
+
 (deftest expound-test
   (testing "error/expound-errors error messages"
     (is (= (with-out-str
