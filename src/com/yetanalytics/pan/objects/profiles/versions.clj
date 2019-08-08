@@ -1,7 +1,7 @@
-(ns com.yetanalytics.objects.profiles.versions
+(ns com.yetanalytics.pan.objects.profiles.versions
   (:require [clojure.spec.alpha :as s]
-            [com.yetanalytics.axioms :as ax]
-            [com.yetanalytics.util :as util]))
+            [com.yetanalytics.pan.axioms :as ax]
+            [com.yetanalytics.pan.util :as util]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Versions 

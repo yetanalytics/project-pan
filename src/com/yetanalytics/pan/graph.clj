@@ -1,8 +1,8 @@
-(ns com.yetanalytics.graph
+(ns com.yetanalytics.pan.graph
   (:require [clojure.spec.alpha :as s]
             [ubergraph.core :as uber]
-            [com.yetanalytics.identifiers :as id]
-            [com.yetanalytics.util :as u]))
+            [com.yetanalytics.pan.identifiers :as id]
+            [com.yetanalytics.pan.util :as u]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Graph functions

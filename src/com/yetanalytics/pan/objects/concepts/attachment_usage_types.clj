@@ -1,8 +1,8 @@
-(ns com.yetanalytics.objects.concepts.attachment-usage-types
+(ns com.yetanalytics.pan.objects.concepts.attachment-usage-types
   (:require [clojure.spec.alpha :as s]
-            [com.yetanalytics.axioms :as ax]
-            [com.yetanalytics.graph :as graph]
-            [com.yetanalytics.util :as u]))
+            [com.yetanalytics.pan.axioms :as ax]
+            [com.yetanalytics.pan.graph :as graph]
+            [com.yetanalytics.pan.util :as u]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Attachment Usage Type

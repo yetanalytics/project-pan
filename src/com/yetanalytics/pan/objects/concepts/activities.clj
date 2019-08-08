@@ -1,12 +1,12 @@
-(ns com.yetanalytics.objects.concepts.activities
+(ns com.yetanalytics.pan.objects.concepts.activities
   (:require [clojure.spec.alpha :as s]
             [clojure.set :refer [rename-keys]]
             [clojure.walk :refer [stringify-keys]]
             [camel-snake-kebab.core :as csk]
             [xapi-schema.spec]
-            [com.yetanalytics.axioms :as ax]
-            [com.yetanalytics.graph :as graph]
-            [com.yetanalytics.util :as util]))
+            [com.yetanalytics.pan.axioms :as ax]
+            [com.yetanalytics.pan.graph :as graph]
+            [com.yetanalytics.pan.util :as util]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Activity

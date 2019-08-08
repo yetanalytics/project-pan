@@ -1,6 +1,6 @@
-(ns com.yetanalytics.objects.profiles.author
+(ns com.yetanalytics.pan.objects.profiles.author
   (:require [clojure.spec.alpha :as s]
-            [com.yetanalytics.axioms :as ax]))
+            [com.yetanalytics.pan.axioms :as ax]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Author

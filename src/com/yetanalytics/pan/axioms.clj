@@ -1,4 +1,4 @@
-(ns com.yetanalytics.axioms
+(ns com.yetanalytics.pan.axioms
   (:require [clojure.edn :as edn]
             [clojure.string :as string]
             [clojure.spec.alpha :as s]

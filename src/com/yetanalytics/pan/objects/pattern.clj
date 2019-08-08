@@ -1,10 +1,10 @@
-(ns com.yetanalytics.objects.pattern
+(ns com.yetanalytics.pan.objects.pattern
   (:require [clojure.spec.alpha :as s]
             [ubergraph.core :as uber]
             [ubergraph.alg :as alg]
-            [com.yetanalytics.axioms :as ax]
-            [com.yetanalytics.graph :as graph]
-            [com.yetanalytics.util :as util]))
+            [com.yetanalytics.pan.axioms :as ax]
+            [com.yetanalytics.pan.graph :as graph]
+            [com.yetanalytics.pan.util :as util]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Patterns 

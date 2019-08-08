@@ -1,21 +1,21 @@
-(ns com.yetanalytics.objects.concept
+(ns com.yetanalytics.pan.objects.concept
   (:require [clojure.spec.alpha :as s]
             [ubergraph.core :as uber]
-            [com.yetanalytics.graph :as graph]
-            [com.yetanalytics.util :as util]
-            [com.yetanalytics.objects.concepts.verbs :as v]
-            [com.yetanalytics.objects.concepts.activities :as a]
-            [com.yetanalytics.objects.concepts.activity-types :as at]
-            [com.yetanalytics.objects.concepts.extensions.result :as re]
-            [com.yetanalytics.objects.concepts.extensions.context :as ce]
-            [com.yetanalytics.objects.concepts.extensions.activity :as ae]
-            [com.yetanalytics.objects.concepts.attachment-usage-types
+            [com.yetanalytics.pan.graph :as graph]
+            [com.yetanalytics.pan.util :as util]
+            [com.yetanalytics.pan.objects.concepts.verbs :as v]
+            [com.yetanalytics.pan.objects.concepts.activities :as a]
+            [com.yetanalytics.pan.objects.concepts.activity-types :as at]
+            [com.yetanalytics.pan.objects.concepts.extensions.result :as re]
+            [com.yetanalytics.pan.objects.concepts.extensions.context :as ce]
+            [com.yetanalytics.pan.objects.concepts.extensions.activity :as ae]
+            [com.yetanalytics.pan.objects.concepts.attachment-usage-types
              :as a-ut]
-            [com.yetanalytics.objects.concepts.document-resources.state
+            [com.yetanalytics.pan.objects.concepts.document-resources.state
              :as s-pr]
-            [com.yetanalytics.objects.concepts.document-resources.agent-profile
+            [com.yetanalytics.pan.objects.concepts.document-resources.agent-profile
              :as ag-pr]
-            [com.yetanalytics.objects.concepts.document-resources.activity-profile
+            [com.yetanalytics.pan.objects.concepts.document-resources.activity-profile
              :as act-pr]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

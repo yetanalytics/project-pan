@@ -1,10 +1,10 @@
-(ns com.yetanalytics.util
+(ns com.yetanalytics.pan.util
   (:require [clojure.spec.alpha :as s]
             [clojure.string :as string]
             [camel-snake-kebab.core :as kebab]
             [cheshire.core :as cheshire]
             [ubergraph.core :as uber]
-            [com.yetanalytics.axioms :as ax]))
+            [com.yetanalytics.pan.axioms :as ax]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Generic functions and specs 

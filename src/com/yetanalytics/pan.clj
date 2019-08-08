@@ -1,13 +1,13 @@
-(ns com.yetanalytics.project-pan
+(ns com.yetanalytics.pan
   (:require [clojure.spec.alpha :as s]
-            [com.yetanalytics.objects.profile :as profile]
-            [com.yetanalytics.objects.concept :as concept]
-            [com.yetanalytics.objects.template :as template]
-            [com.yetanalytics.objects.pattern :as pattern]
-            [com.yetanalytics.identifiers :as id]
-            [com.yetanalytics.context :as context]
-            [com.yetanalytics.errors :as errors]
-            [com.yetanalytics.util :as util]))
+            [com.yetanalyitics.pan.objects.profile :as profile]
+            [com.yetanalyitics.pan.objects.concept :as concept]
+            [com.yetanalyitics.pan.objects.template :as template]
+            [com.yetanalyitics.pan.objects.pattern :as pattern]
+            [com.yetanalyitics.pan.identifiers :as id]
+            [com.yetanalyitics.pan.context :as context]
+            [com.yetanalyitics.pan.errors :as errors]
+            [com.yetanalyitics.pan.util :as util]))
 
 ;; TODO Add conversion from Turtle and XML formats
 ;; Currently only supports JSON-LD

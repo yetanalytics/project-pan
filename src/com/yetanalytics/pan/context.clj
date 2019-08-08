@@ -1,11 +1,11 @@
-(ns com.yetanalytics.context
+(ns com.yetanalytics.pan.context
   (:require [clojure.spec.alpha :as s]
             [clojure.string :as string]
             [clojure.walk :as w]
             [clojure.zip :as zip]
             [cheshire.core :as cheshire]
-            [com.yetanalytics.axioms :as ax]
-            [com.yetanalytics.util :as util]))
+            [com.yetanalytics.pan.axioms :as ax]
+            [com.yetanalytics.pan.util :as util]))
 
 ;; This library takes a Profile (which is simply a JSON-LD file) and does a
 ;; recursive depth-first search in order to ensure that all properties can be

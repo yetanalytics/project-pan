@@ -1,7 +1,7 @@
-(ns com.yetanalytics.identifiers
+(ns com.yetanalytics.pan.identifiers
   (:require [clojure.spec.alpha :as s]
-            [com.yetanalytics.axioms :as ax]
-            [com.yetanalytics.util :as u]))
+            [com.yetanalytics.pan.axioms :as ax]
+            [com.yetanalytics.pan.util :as u]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Utils 

@@ -1,10 +1,10 @@
-(ns com.yetanalytics.objects.template
+(ns com.yetanalytics.pan.objects.template
   (:require [clojure.spec.alpha :as s]
             [ubergraph.core :as uber]
-            [com.yetanalytics.axioms :as ax]
-            [com.yetanalytics.graph :as graph]
-            [com.yetanalytics.util :as util]
-            [com.yetanalytics.objects.templates.rules :as rules]))
+            [com.yetanalytics.pan.axioms :as ax]
+            [com.yetanalytics.pan.graph :as graph]
+            [com.yetanalytics.pan.util :as util]
+            [com.yetanalytics.pan.objects.templates.rules :as rules]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Statement Template

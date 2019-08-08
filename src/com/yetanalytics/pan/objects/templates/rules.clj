@@ -1,6 +1,6 @@
-(ns com.yetanalytics.objects.templates.rules
+(ns com.yetanalytics.pan.objects.templates.rules
   (:require [clojure.spec.alpha :as s]
-            [com.yetanalytics.axioms :as ax]))
+            [com.yetanalytics.pan.axioms :as ax]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Rules 
