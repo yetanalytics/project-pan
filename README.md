@@ -12,8 +12,8 @@ on success (obviously) or an error message on failure.
 
 Arguments may be supplied for different levels of validation strictness, which
 are listed as follows:
-- no args - Basic validation; check only the types of properties and simple 
-syntax of all Profile objects.
+- `:syntax` - Basic validation; check only the types of properties and simple 
+syntax of all Profile objects. Set to `true` by default.
 - `:ids` - Validate the correctness of all object and versioning IDs (the id
 and inScheme properties). Validate that all IDs are distinct and that all
 inScheme values correspond to valid Profile version IDs.
