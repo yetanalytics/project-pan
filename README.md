@@ -6,7 +6,7 @@ specification: https://github.com/adlnet/xapi-profiles
 ## Usage
 
 To use the library to validate a whole Profile, call `validate-profile` in
-the core namespace. This method takes in an entire Profile (either as a
+the `pan` namespace. This method takes in an entire Profile (either as a
 JSON-LD string or an EDN data structure) and prints either a success message
 on success (obviously) or an error message on failure.
 
@@ -60,7 +60,7 @@ Patterns).
     - Statement Templates
     - Patterns
 - In-profile identifier links
-- at-context validation
+- `@context` validation
 
 ## TODO
 
@@ -92,7 +92,6 @@ Patterns).
 - Handle non-JSON-LD Profiles (eg. XML, Turtle).
 - More graceful exception handling.
 - Any bugs that need to be fixed (natch).
-- Demo of the completed product
 
 ## License
 
