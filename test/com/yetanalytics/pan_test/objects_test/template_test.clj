@@ -3,7 +3,7 @@
             [clojure.spec.alpha :as s]
             [ubergraph.core :as uber]
             [com.yetanalytics.graph :as graph]
-            [com.yetanalytics.utils :refer :all]
+            [com.yetanalytics.test-utils.clj :refer :all]
             [com.yetanalytics.objects.template :as template]))
 
 (deftest id-test

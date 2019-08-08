@@ -5,7 +5,7 @@
             [ubergraph.alg :as alg]
             [ubergraph.core :as uber]
             [com.yetanalytics.graph :as graph]
-            [com.yetanalytics.utils :refer :all]
+            [com.yetanalytics.test-utils.clj :refer :all]
             [com.yetanalytics.objects.pattern :as pattern]))
 
 (deftest id-test

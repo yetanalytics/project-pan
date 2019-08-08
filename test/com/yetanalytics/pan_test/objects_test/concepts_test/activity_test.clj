@@ -1,7 +1,7 @@
 (ns com.yetanalytics.objects-test.concepts-test.activity-test
   (:require [clojure.test :refer :all]
             [clojure.spec.alpha :as s]
-            [com.yetanalytics.utils :refer :all]
+            [com.yetanalytics.test-utils.clj :refer :all]
             [com.yetanalytics.objects.concepts.activities :as activities]))
 
 (deftest type-test

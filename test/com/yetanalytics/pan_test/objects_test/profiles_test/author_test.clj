@@ -1,7 +1,7 @@
 (ns com.yetanalytics.objects-test.profiles-test.author-test
   (:require [clojure.test :refer :all]
             [clojure.spec.alpha :as s]
-            [com.yetanalytics.utils :refer :all]
+            [com.yetanalytics.test-utils.clj :refer :all]
             [com.yetanalytics.objects.profiles.author :as author]))
 
 (deftest type-test

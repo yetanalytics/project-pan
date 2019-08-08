@@ -2,7 +2,7 @@
   (:require [clojure.test :refer :all]
             [clojure.spec.alpha :as s]
             [com.yetanalytics.util :as util]
-            [com.yetanalytics.utils :refer :all]
+            [com.yetanalytics.test-utils.clj :refer :all]
             [com.yetanalytics.objects.profile :as profile]
             [com.yetanalytics.objects.profiles.versions :as versions]))
 

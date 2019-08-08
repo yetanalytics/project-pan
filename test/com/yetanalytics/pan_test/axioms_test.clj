@@ -2,7 +2,7 @@
   (:require [clojure.test :refer :all]
             [clojure.spec.alpha :as s]
             [com.yetanalytics.axioms :as ax]
-            [com.yetanalytics.utils :refer :all]))
+            [com.yetanalytics.test-utils.clj :refer :all]))
 
 ;; String
 (deftest test-string
