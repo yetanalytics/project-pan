@@ -50,6 +50,7 @@ Patterns).
 
 - Axiom specs:
     - Basic types: booleans and strings
+    - Identifiers (IRIs/IRLs/URIs/URLs)
     - Timestamps
     - JSONPath strings
     - JSON Schema (but only supports draft-07)
