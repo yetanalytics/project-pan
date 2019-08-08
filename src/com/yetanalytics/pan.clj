@@ -76,4 +76,6 @@
       (if (every? nil? (vals errors))
         (do (println "Success!") nil) ;; Exactly like spec/explain
         (errors/expound-errors errors))
-      (not-empty errors))))
+      (if (->> errors vals (every? nil?))
+        nil ;; Exactly like spec/explain-data
+        errors))))

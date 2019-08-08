@@ -232,12 +232,25 @@
   (s/def ::contexed-key (partial search-contexts contexts)))
 
 ;; Cannot use set as predicate, or else Expound overrides custom error msg.
-;; TODO Add other keywords (see ::keyword spec) to the predicate 
-;; Currently just keeping it at @context to demonstrate @context validation
-;; with the cmi5 profile.
-(s/def ::is-at-context #(or (= % :_context)))
+;; List of keywords taken from Section 1.7 of the JSON-LD spec.
+(s/def ::is-at-context #(or (= % :_context) ;; Only one that's recognized
+                            (= % :_id)
+                            (= % :_type)
+                            (= % :_base)
+                            (= % :_container)
+                            (= % :_graph)
+                            (= % :_index)
+                            (= % :_language)
+                            (= % :_list)
+                            (= % :_nest)
+                            (= % :_none)
+                            (= % :_prefix)
+                            (= % :_reverse)
+                            (= % :_set)
+                            (= % :_value)
+                            (= % :_version)
+                            (= % :_vocab)))
 
-;; TODO Dissassociate other JSON-LD keywords besides @context
 ;; At this point all @ signs are replaced by underscores
 (defn validate-keys
   [contexts curr-node]
