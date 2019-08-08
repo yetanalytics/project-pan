@@ -1,9 +1,9 @@
-(ns com.yetanalytics.objects-test.concepts-test.extensions-test.result-test
+(ns com.yetanalytics.pan-test.objects-test.concepts-test.extensions-test.result-test
   (:require [clojure.test :refer :all]
             [clojure.spec.alpha :as s]
-            [com.yetanalytics.graph :as graph]
+            [com.yetanalytics.pan.graph :as graph]
             [com.yetanalytics.test-utils.clj :refer :all]
-            [com.yetanalytics.objects.concepts.extensions.result
+            [com.yetanalytics.pan.objects.concepts.extensions.result
              :as result-extension]))
 
 (deftest type-test

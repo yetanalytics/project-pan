@@ -1,17 +1,17 @@
-(ns com.yetanalytics.errors-test
+(ns com.yetanalytics.pan-test.errors-test
   (:require [clojure.test :refer :all]
             [clojure.spec.alpha :as s]
             [clojure.pprint :as pprint]
             [expound.alpha :as exp]
             [xapi-schema.spec :as xs]
-            [com.yetanalytics.axioms :as ax]
-            [com.yetanalytics.context :as ctx]
-            [com.yetanalytics.errors :as e]
-            [com.yetanalytics.objects.profile :as p]
-            [com.yetanalytics.objects.profiles.author :as ah]
-            [com.yetanalytics.objects.template :as t]
-            [com.yetanalytics.objects.pattern :as pt]
-            [com.yetanalytics.identifiers :as id]))
+            [com.yetanalytics.pan.axioms :as ax]
+            [com.yetanalytics.pan.context :as ctx]
+            [com.yetanalytics.pan.errors :as e]
+            [com.yetanalytics.pan.objects.profile :as p]
+            [com.yetanalytics.pan.objects.profiles.author :as ah]
+            [com.yetanalytics.pan.objects.template :as t]
+            [com.yetanalytics.pan.objects.pattern :as pt]
+            [com.yetanalytics.pan.identifiers :as id]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Sample Profiles

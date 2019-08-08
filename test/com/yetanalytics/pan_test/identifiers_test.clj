@@ -1,7 +1,7 @@
-(ns com.yetanalytics.identifiers-test
+(ns com.yetanalytics.pan-test.identifiers-test
   (:require [clojure.test :refer :all]
             [clojure.spec.alpha :as s]
-            [com.yetanalytics.identifiers :as id]))
+            [com.yetanalytics.pan.identifiers :as id]))
 
 ;; Data that we will be using of our tests
 

@@ -1,7 +1,7 @@
-(ns com.yetanalytics.axioms-test
+(ns com.yetanalytics.pan-test.axioms-test
   (:require [clojure.test :refer :all]
             [clojure.spec.alpha :as s]
-            [com.yetanalytics.axioms :as ax]
+            [com.yetanalytics.pan.axioms :as ax]
             [com.yetanalytics.test-utils.clj :refer :all]))
 
 ;; String

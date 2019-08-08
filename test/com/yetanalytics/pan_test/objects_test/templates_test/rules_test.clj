@@ -1,8 +1,8 @@
-(ns com.yetanalytics.objects-test.templates-test.rules-test
+(ns com.yetanalytics.pan-test.objects-test.templates-test.rules-test
   (:require [clojure.test :refer :all]
             [clojure.spec.alpha :as s]
             [com.yetanalytics.test-utils.clj :refer :all]
-            [com.yetanalytics.objects.templates.rules :as rules]))
+            [com.yetanalytics.pan.objects.templates.rules :as rules]))
 
 (deftest location-test
   (testing "location property"

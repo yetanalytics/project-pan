@@ -1,8 +1,8 @@
-(ns com.yetanalytics.objects-test.concepts-test.document-resources-test.activity-profile-test
+(ns com.yetanalytics.pan-test.objects-test.concepts-test.document-resources-test.activity-profile-test
   (:require [clojure.test :refer :all]
             [clojure.spec.alpha :as s]
             [com.yetanalytics.test-utils.clj :refer :all]
-            [com.yetanalytics.objects.concepts.document-resources.activity-profile
+            [com.yetanalytics.pan.objects.concepts.document-resources.activity-profile
              :as activity-profile]))
 
 (deftest type-test

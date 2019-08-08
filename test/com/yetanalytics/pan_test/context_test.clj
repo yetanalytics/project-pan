@@ -1,9 +1,9 @@
-(ns com.yetanalytics.context-test
+(ns com.yetanalytics.pan-test.context-test
   (:require [clojure.test :refer :all]
             [clojure.spec.alpha :as s]
             [clojure.zip :as zip]
-            [com.yetanalytics.context :as c]
-            [com.yetanalytics.util :as util]
+            [com.yetanalytics.pan.context :as c]
+            [com.yetanalytics.pan.util :as util]
             [com.yetanalytics.test-utils.clj :refer :all]))
 
 (def profile-context

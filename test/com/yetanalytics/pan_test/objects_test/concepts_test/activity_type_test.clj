@@ -1,9 +1,9 @@
-(ns com.yetanalytics.objects-test.concepts-test.activity-type-test
+(ns com.yetanalytics.pan-test.objects-test.concepts-test.activity-type-test
   (:require [clojure.test :refer :all]
             [clojure.spec.alpha :as s]
-            [com.yetanalytics.graph :as graph]
+            [com.yetanalytics.pan.graph :as graph]
             [com.yetanalytics.test-utils.clj :refer :all]
-            [com.yetanalytics.objects.concepts.activity-types
+            [com.yetanalytics.pan.objects.concepts.activity-types
              :as activity-types]))
 
 (deftest type-test

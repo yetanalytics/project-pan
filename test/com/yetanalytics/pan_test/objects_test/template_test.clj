@@ -1,10 +1,10 @@
-(ns com.yetanalytics.objects-test.template-test
+(ns com.yetanalytics.pan-test.objects-test.template-test
   (:require [clojure.test :refer :all]
             [clojure.spec.alpha :as s]
             [ubergraph.core :as uber]
-            [com.yetanalytics.graph :as graph]
+            [com.yetanalytics.pan.graph :as graph]
             [com.yetanalytics.test-utils.clj :refer :all]
-            [com.yetanalytics.objects.template :as template]))
+            [com.yetanalytics.pan.objects.template :as template]))
 
 (deftest id-test
   (testing "id property"

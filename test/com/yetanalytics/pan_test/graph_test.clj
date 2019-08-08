@@ -1,7 +1,7 @@
-(ns com.yetanalytics.graph-test
+(ns com.yetanalytics.pan-test.graph-test
   (:require [clojure.test :refer :all]
             [clojure.spec.alpha :as s]
-            [com.yetanalytics.graph :as graph]))
+            [com.yetanalytics.pan.graph :as graph]))
 
 #_(deftest validate-iris
     (testing "graph creation and evaluation"

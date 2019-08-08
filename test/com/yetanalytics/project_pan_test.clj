@@ -1,7 +1,7 @@
 (ns com.yetanalytics.project-pan-test
   (:require [clojure.pprint :as pprint]
             [clojure.test :refer :all]
-            [com.yetanalytics.project-pan :refer :all]))
+            [com.yetanalytics.pan :refer :all]))
 
 ;; XXX This is a demo suite
 

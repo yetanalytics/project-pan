@@ -1,9 +1,9 @@
-(ns com.yetanalytics.objects-test.concepts-test.verb-test
+(ns com.yetanalytics.pan-test.objects-test.concepts-test.verb-test
   (:require [clojure.test :refer :all]
             [clojure.spec.alpha :as s]
-            [com.yetanalytics.graph :as graph]
+            [com.yetanalytics.pan.graph :as graph]
             [com.yetanalytics.test-utils.clj :refer :all]
-            [com.yetanalytics.objects.concepts.verbs :as verbs]))
+            [com.yetanalytics.pan.objects.concepts.verbs :as verbs]))
 
 (deftest type-test
   (testing "type property"

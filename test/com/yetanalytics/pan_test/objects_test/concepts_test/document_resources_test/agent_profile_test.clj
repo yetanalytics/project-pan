@@ -1,8 +1,8 @@
-(ns com.yetanalytics.objects-test.concepts-test.document-resources-test.agent-profile-test
+(ns com.yetanalytics.pan-test.objects-test.concepts-test.document-resources-test.agent-profile-test
   (:require [clojure.test :refer :all]
             [clojure.spec.alpha :as s]
             [com.yetanalytics.test-utils.clj :refer :all]
-            [com.yetanalytics.objects.concepts.document-resources.agent-profile
+            [com.yetanalytics.pan.objects.concepts.document-resources.agent-profile
              :as agent-profile]))
 
 (deftest type-test
