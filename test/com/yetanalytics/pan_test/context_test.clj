@@ -4,7 +4,7 @@
             [clojure.zip :as zip]
             [com.yetanalytics.pan.context :as c]
             [com.yetanalytics.pan.util :as util]
-            [com.yetanalytics.test-utils.clj :refer :all]))
+            [com.yetanalytics.test-utils :refer :all]))
 
 (def profile-context
   (c/get-context "https://w3id.org/xapi/profiles/context"))

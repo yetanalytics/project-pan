@@ -1,4 +1,4 @@
-(ns com.yetanalytics.utils
+(ns com.yetanalytics.test-utils
   (:require [clojure.test :refer [deftest is testing] :include-macros true]
             [clojure.spec.alpha :as s :include-macros true]))
 

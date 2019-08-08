@@ -2,7 +2,7 @@
   (:require [clojure.test :refer :all]
             [clojure.spec.alpha :as s]
             [ubergraph.core :as uber]
-            [com.yetanalytics.test-utils.clj :refer :all]
+            [com.yetanalytics.test-utils :refer :all]
             [com.yetanalytics.pan.objects.concept :as concept]))
 
 ;; TODO Add test for testing a complete vector of concepts

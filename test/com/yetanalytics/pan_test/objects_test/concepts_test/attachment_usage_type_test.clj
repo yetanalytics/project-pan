@@ -2,7 +2,7 @@
   (:require [clojure.test :refer :all]
             [clojure.spec.alpha :as s]
             [com.yetanalytics.pan.graph :as graph]
-            [com.yetanalytics.test-utils.clj :refer :all]
+            [com.yetanalytics.test-utils :refer :all]
             [com.yetanalytics.pan.objects.concepts.attachment-usage-types
              :as attachment-usage-types]))
 

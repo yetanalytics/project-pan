@@ -2,7 +2,7 @@
   (:require [clojure.test :refer :all]
             [clojure.spec.alpha :as s]
             ;; Not to be confused with util.clj in src
-            [com.yetanalytics.test-utils.clj :refer :all]
+            [com.yetanalytics.test-utils :refer :all]
             [com.yetanalytics.pan.util :as u]))
 
 ;; TODO Normalize profile test
