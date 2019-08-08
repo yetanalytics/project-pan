@@ -33,6 +33,8 @@ JSON-LD contexts and that they allow all properties to expand out to absolute
 IRIs during JSON-LD processing. The `@context` property is always found in the
 Profile metadata and in Activity Definitions, though they can also be found
 in Extensions for said Activity Definitions.
+- `:print-errs` - Print validation errors out if true; otherwise return spec
+error data (or nil, if the profile is valid) without printing. True by default. 
 
 In addition to these arguments, there is another argument that needs to be
 implemented in a future iteration but currently does not exist.

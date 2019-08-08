@@ -33,10 +33,17 @@
     IRIs using @context. 
     :external-iris - Allow the profile to access external links (HAS YET TO BE
     IMPLEMENTED).
+    :print-errs - Print errors if true; return spec error data only if false.
+    True by default.
   More information can be found in the README."
   ;; TODO: Implement :external-iris
-  [profile & {:keys [syntax ids relations contexts]
-              :or {syntax true ids false relations false contexts false}}]
+  [profile & {:keys [syntax ids relations contexts external-iris print-errs]
+              :or {syntax true
+                   ids false
+                   relations false
+                   contexts false
+                   external-iris false
+                   print-errs true}}]
   (let [profile (convert-profile profile)
         errors (cond-> {}
                  (true? syntax)
@@ -65,6 +72,8 @@
                      :pattern-cycle-errors pc-errors}))
                  (true? contexts) ;; @context errors
                  (merge (context/validate-contexts profile)))]
-    (if (every? nil? (vals errors))
-      (do (println "Success!") nil) ;; Exactly like spec/explain
-      (errors/expound-errors errors))))
+    (if print-errs
+      (if (every? nil? (vals errors))
+        (do (println "Success!") nil) ;; Exactly like spec/explain
+        (errors/expound-errors errors))
+      (not-empty errors))))
