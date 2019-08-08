@@ -1,4 +1,4 @@
-(ns com.yetanalytics.project-pan-test
+(ns com.yetanalytics.pan-test
   (:require [clojure.pprint :as pprint]
             [clojure.test :refer :all]
             [com.yetanalytics.pan :refer :all]))
