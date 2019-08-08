@@ -1,4 +1,4 @@
-(ns com.yetanalytics.profiles.versions
+(ns com.yetanalytics.objects.profiles.versions
   (:require [clojure.spec.alpha :as s]
             [com.yetanalytics.axioms :as ax]
             [com.yetanalytics.util :as util]))

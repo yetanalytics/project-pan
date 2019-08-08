@@ -1,4 +1,4 @@
-(ns com.yetanalytics.profiles.author
+(ns com.yetanalytics.objects.profiles.author
   (:require [clojure.spec.alpha :as s]
             [com.yetanalytics.axioms :as ax]))
 

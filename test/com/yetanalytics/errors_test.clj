@@ -7,8 +7,8 @@
             [com.yetanalytics.axioms :as ax]
             [com.yetanalytics.context :as ctx]
             [com.yetanalytics.errors :as e]
-            [com.yetanalytics.profile :as p]
-            [com.yetanalytics.profiles.author :as ah]
+            [com.yetanalytics.objects.profile :as p]
+            [com.yetanalytics.objects.profiles.author :as ah]
             [com.yetanalytics.objects.template :as t]
             [com.yetanalytics.objects.pattern :as pt]
             [com.yetanalytics.identifiers :as id]))

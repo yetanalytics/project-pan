@@ -1,12 +1,6 @@
 (ns com.yetanalytics.project-pan-test
   (:require [clojure.pprint :as pprint]
             [clojure.test :refer :all]
-            [clojure.spec.alpha :as s]
-            [com.yetanalytics.util :as u]
-            [com.yetanalytics.profile :as profile]
-            [com.yetanalytics.objects.concept :as c]
-            [com.yetanalytics.objects.template :as t]
-            [com.yetanalytics.objects.pattern :as p]
             [com.yetanalytics.project-pan :refer :all]))
 
 ;; XXX This is a demo suite

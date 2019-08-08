@@ -1,11 +1,11 @@
-(ns com.yetanalytics.profile
+(ns com.yetanalytics.objects.profile
   (:require [clojure.spec.alpha :as s]
             [ubergraph.core :as uber]
             [ubergraph.alg :as alg]
             [com.yetanalytics.axioms :as ax]
             [com.yetanalytics.context :as context]
-            [com.yetanalytics.profiles.versions :as versions]
-            [com.yetanalytics.profiles.author :as author]
+            [com.yetanalytics.objects.profiles.versions :as versions]
+            [com.yetanalytics.objects.profiles.author :as author]
             [com.yetanalytics.objects.concept :as concept]
             [com.yetanalytics.objects.template :as template]
             [com.yetanalytics.objects.pattern :as pattern]

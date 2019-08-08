@@ -1,6 +1,6 @@
 (ns com.yetanalytics.project-pan
   (:require [clojure.spec.alpha :as s]
-            [com.yetanalytics.profile :as profile]
+            [com.yetanalytics.objects.profile :as profile]
             [com.yetanalytics.objects.concept :as concept]
             [com.yetanalytics.objects.template :as template]
             [com.yetanalytics.objects.pattern :as pattern]

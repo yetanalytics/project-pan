@@ -1,10 +1,10 @@
-(ns com.yetanalytics.profile-test
+(ns com.yetanalytics.objects-test.profile-test
   (:require [clojure.test :refer :all]
             [clojure.spec.alpha :as s]
             [com.yetanalytics.util :as util]
             [com.yetanalytics.utils :refer :all]
-            [com.yetanalytics.profile :as profile]
-            [com.yetanalytics.profiles.versions :as versions]))
+            [com.yetanalytics.objects.profile :as profile]
+            [com.yetanalytics.objects.profiles.versions :as versions]))
 
 (deftest id-test
   (testing "profile ID"
