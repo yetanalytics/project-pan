@@ -84,23 +84,6 @@
                    :prefLabel {"en" "Check in"}
                    :definition {"en" "An activity in which the learner reports progression."}}))))
 
-(deftest related-only-deprecated-test
-  (testing "related MUST only be used on deprecated concepts"
-    (is (s/valid? ::activity-types/related-only-deprecated
-                  {:id "https://foo.org/activity-type"
-                   :type "ActivityType"
-                   :deprecated true
-                   :related ["https://foo.org/other-activity-type"]}))
-    (is (not (s/valid? ::activity-types/related-only-deprecated
-                       {:id "https://foo.org/activity-type"
-                        :type "ActivityType"
-                        :deprecated false
-                        :related ["https://foo.org/other-activity-type"]})))
-    (is (not (s/valid? ::activity-types/related-only-deprecated
-                       {:id "https://foo.org/activity-type"
-                        :type "ActivityType"
-                        :related ["https://foo.org/other-activity-type"]})))))
-
 (def ex-concept {:id "https://foo.org/at"
                  :type "ActivityType"
                  :inScheme "https://foo.org/v1"

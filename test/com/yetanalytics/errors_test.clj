@@ -197,12 +197,10 @@
            [::t/template ::ax/uri]))
     (is (= (->> bad-profile-2b id/validate-ids e/group-by-in e/sort-by-path
                 (mapv #(-> % ::s/problems first :via last)))
-           [::id/one-count]))
+           [::id/one-count ::id/one-count]))
     (is (= (->> bad-profile-2c id/validate-in-schemes e/group-by-in e/sort-by-path
                 (mapv #(-> % ::s/problems first :via last)))
            [::id/in-scheme ::id/in-scheme]))))
-
-(e/expound-error (p/validate bad-profile-1d))
 
 (deftest expound-test
   (testing "error/expound-errors error messages"
@@ -247,14 +245,14 @@
              (e/expound-error (id/validate-ids bad-profile-2b) "id"))
            (str "-- Spec failed --------------------\n"
                 "\n"
-                "Duplicate id: https://w3id.org/xapi/catch/v1\n"
+                "Duplicate id: \"https://w3id.org/xapi/catch/v1\"\n"
                 " with count: 2\n"
                 "\n"
                 "the id value is not unique\n"
                 "\n"
                 "-- Spec failed --------------------\n"
                 "\n"
-                "Duplicate id: https://foo.org/template\n"
+                "Duplicate id: \"https://foo.org/template\"\n"
                 " with count: 2\n"
                 "\n"
                 "the id value is not unique\n"
@@ -265,8 +263,8 @@
              (e/expound-error (id/validate-in-schemes bad-profile-2c) "in-scheme"))
            (str "-- Spec failed --------------------\n"
                 "\n"
-                "Invalid inScheme: https://foo.org/invalid\n"
-                " at object: https://foo.org/template\n"
+                "Invalid inScheme: \"https://foo.org/invalid\"\n"
+                " at object: \"https://foo.org/template\"\n"
                 " profile version ids:\n"
                 "  https://w3id.org/xapi/catch/v2\n"
                 "  https://w3id.org/xapi/catch/v1\n"
@@ -275,8 +273,8 @@
                 "\n"
                 "-- Spec failed --------------------\n"
                 "\n"
-                "Invalid inScheme: https://foo.org/also-invalid\n"
-                " at object: https://foo.org/template2\n"
+                "Invalid inScheme: \"https://foo.org/also-invalid\"\n"
+                " at object: \"https://foo.org/template2\"\n"
                 " profile version ids:\n"
                 "  https://w3id.org/xapi/catch/v2\n"
                 "  https://w3id.org/xapi/catch/v1\n"
@@ -290,7 +288,7 @@
            (str "-- Spec failed --------------------\n"
                 "\n"
                 "Invalid verb identifier:\n"
-                " https://foo.org/dead-verb\n"
+                " \"https://foo.org/dead-verb\"\n"
                 "\n"
                 " at object:\n"
                 "  {:id \"https://foo.org/template\",\n"
@@ -312,7 +310,7 @@
                 "-- Spec failed --------------------\n"
                 "\n"
                 "Invalid attachmentUsageType identifier:\n"
-                " https://foo.org/dead-aut1\n"
+                " \"https://foo.org/dead-aut1\"\n"
                 "\n"
                 " at object:\n"
                 "  {:id \"https://foo.org/template\",\n"
@@ -336,7 +334,7 @@
            (str "-- Spec failed --------------------\n"
                 "\n"
                 "Invalid verb identifier:\n"
-                " https://foo.org/template2\n"
+                " \"https://foo.org/template2\"\n"
                 "\n"
                 " at object:\n"
                 "  {:id \"https://foo.org/template\",\n"
@@ -358,7 +356,7 @@
                 "-- Spec failed --------------------\n"
                 "\n"
                 "Invalid attachmentUsageType identifier:\n"
-                " https://foo.org/template\n"
+                " \"https://foo.org/template\"\n"
                 "\n"
                 " at object:\n"
                 "  {:id \"https://foo.org/template\",\n"
@@ -396,7 +394,7 @@
            (str "-- Spec failed --------------------\n"
                 "\n"
                 "Invalid oneOrMore identifier:\n"
-                " https://foo.org/pattern-three\n"
+                " \"https://foo.org/pattern-three\"\n"
                 "\n"
                 " at object:\n"
                 "  {:id \"https://foo.org/pattern-three\",\n"
@@ -501,7 +499,7 @@
                 "\n"
                 "or\n"
                 "\n"
-                "key is not @context\n"
+                "key is not JSON-LD keyword\n"
                 "\n"
                 "-- Spec failed --------------------\n"
                 "\n"
@@ -516,7 +514,7 @@
                 "\n"
                 "or\n"
                 "\n"
-                "key is not @context\n"
+                "key is not JSON-LD keyword\n"
                 "\n"
                 "-------------------------\n"
                 "Detected 2 errors\n"

@@ -81,6 +81,13 @@ Patterns).
     - IRI and IRL specs do not validate non-ASCII chars (thus defeating the
     whole point); see Issue #64 in xapi-schema.
     - Language map specs are incorrect; see Issue #67 in xapi-schema
+- Improve error messages
+    - Currently the default error message printer doesn't give good information
+    on which particular object the error occured.
+    - There is a branch of Expound (yetanalytics/expound) that is working on
+    fixing its grouping error: https://github.com/yetanalytics/expound
+    - We may move away from Expound and create our own in-house error messaging
+    library (especially since Expound has a ton of dependencies).
 - Log errors to somewhere instead of printing them out. 
 - Handle non-JSON-LD Profiles (eg. XML, Turtle).
 - More graceful exception handling.

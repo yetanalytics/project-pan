@@ -45,8 +45,6 @@
 ;; JSON-LD node objects may be aliased to the following keywords.
 ;; This spec checks if a @context key is an alias to a keyword value.
 ;; See section 6.2: Node Objects in the JSON-LD grammar.
-
-
 (s/def ::keyword
   (fn [k]
     (contains? #{"@context" "@id" "@graph" "@nest" "@type" "@reverse" "@index"}
@@ -233,9 +231,11 @@
   [contexts]
   (s/def ::contexed-key (partial search-contexts contexts)))
 
-(string/starts-with? (name :'blah) ")")
-(s/def ::is-at-context #(= % :_context))
-(s/def ::keyword-key #(-> % name string/starts-with? "_"))
+;; Cannot use set as predicate, or else Expound overrides custom error msg.
+;; TODO Add other keywords (see ::keyword spec) to the predicate 
+;; Currently just keeping it at @context to demonstrate @context validation
+;; with the cmi5 profile.
+(s/def ::is-at-context #(or (= % :_context)))
 
 ;; TODO Dissassociate other JSON-LD keywords besides @context
 ;; At this point all @ signs are replaced by underscores

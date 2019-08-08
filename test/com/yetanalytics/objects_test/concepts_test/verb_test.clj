@@ -74,23 +74,6 @@
                         "http://activitystrea.ms/schema/1.0/article")
     (should-not-satisfy ::verbs/exactMatch [])))
 
-(deftest related-only-deprecated-test
-  (testing "related MUST only be used on deprecated concepts"
-    (is (s/valid? ::verbs/related-only-deprecated
-                  {:id "https://foo.org/verb"
-                   :type "Verb"
-                   :deprecated true
-                   :related ["https://foo.org/other-verb"]}))
-    (is (not (s/valid? ::verbs/related-only-deprecated
-                       {:id "https://foo.org/verb"
-                        :type "Verb"
-                        :deprecated false
-                        :related ["https://foo.org/other-verb"]})))
-    (is (not (s/valid? ::verbs/related-only-deprecated
-                       {:id "https://foo.org/verb"
-                        :type "Verb"
-                        :related ["https://foo.org/other-verb"]})))))
-
 (deftest verb-test
   (testing "Verb concept"
     (is (s/valid? ::verbs/verb
@@ -98,7 +81,16 @@
                    :type "Verb"
                    :inScheme "https://w3id.org/xapi/catch/v1"
                    :prefLabel {"en" "presented"}
-                   :definition {"en" "leading a discussion at an advocacy event"}}))))
+                   :definition {"en" "leading a discussion at an advocacy event"}}))
+    ;; Related ONLY on deprecated
+    (is (not (s/valid? ::verbs/verb
+                       {:id "https://foo.org/verb"
+                        :type "Verb"
+                        :inScheme "https://w3id.org/xapi/catch/v1"
+                        :prefLabel {:en "foo"}
+                        :definition {:en "some def"}
+                        :deprecated false
+                        :related ["https://foo.org/other-verb"]})))))
 
 (def ex-concept {:id "https://foo.org/verb"
                  :type "Verb"

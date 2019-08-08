@@ -9,8 +9,6 @@
 (def profile-context
   (c/get-context "https://w3id.org/xapi/profiles/context"))
 
-#_(:profile profile-context)
-
 (def activity-context
   (c/get-context "https://w3id.org/xapi/profiles/activity-context"))
 
@@ -162,7 +160,7 @@
                 "skos:prefLabel")
                ::s/problems second :via last) ::c/expanded-term-def))))
 
-(defn values-spec-test
+(deftest values-spec-test
   (testing "values-spec spec creation function"
     (is (s/valid? (c/values-spec {:xapi "https://w3id.org/xapi/ontology#"})
                   {:type {:at/id "xapi:type" :at/type "@id"}
@@ -192,7 +190,7 @@
                          :definition {:at/id "skos:definition"
                                       :at/container "@language"}})))))
 
-(defn validate-context
+(deftest validate-context-test
   (testing "validate-context function"
     (is (nil? (c/validate-context profile-context)))
     (is (nil? (c/validate-context activity-context)))
@@ -208,26 +206,15 @@
 
 (deftest create-context-test
   (testing "create-context function"
-    (is (nil? (:context (c/create-context "https://non-existent"))))
-    (is (= (-> "https://non-existent" c/create-context :errors ::s/problems first :val)
-           "https://non-existent"))
+    (is (= (try (:context (c/create-context "https://non-existent"))
+                (catch Exception e (str e)))
+           "clojure.lang.ExceptionInfo: Unable to read from URL {:url \"https://non-existent\"}"))
     (is (some? (:context (c/create-context "https://w3id.org/xapi/profiles/context"))))
     (is (some? (:context (c/create-context "https://w3id.org/xapi/profiles/activity-context"))))))
-
-; (deftest context-spec-test
-;   (testing "context-spec spec creation function"
-;     (is (s/valid? (c/context-spec profile-context) profile-context))
-;     (is (s/valid? (c/context-spec activity-context) activity-context))))
-
-; (deftest create-context-test
-;   (testing "create-context function"
-;     (is (some? (c/create-context "https://w3id.org/xapi/profiles/context")))
-;     (is (some? (c/create-context "https://w3id.org/xapi/profiles/activity-context")))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Validating profile against context tests
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 
 (def dummy-profile {:foo {:bar "b1" :baz "b2"}
                     :nums [{:one 1} {:two 2} {:three 3}]
@@ -244,7 +231,8 @@
     (is (= (zip/node (c/profile-to-zipper dummy-profile)) dummy-profile))
     (is (= (zip/children (c/profile-to-zipper dummy-profile))
            '({:bar "b1" :baz "b2"} {:one 1} {:two 2} {:three 3})))
-    (is (= '() (zip/children (c/profile-to-zipper ex-activity-def)))))
+    ;; Returns nil if there are no children
+    (is (= nil (zip/children (c/profile-to-zipper ex-activity-def)))))
   (testing "dfs through a single profile"
     (is (-> {:_context {:prefix "https://foo.org/prefix/"
                         :alpha {:at/id "prefix:alpha"}
@@ -328,6 +316,7 @@
   (is (= (c/update-context-errors [] [{:path [] :context nil :errors {:a 1 :b 2}}] '())
          '({:a 1 :b 2}))))
 
+;; FIXME method is deprecated
 #_(deftest update-contexts-test
     (testing "update-contexts function"
       (is (= [{:path [] :context activity-context :errors nil}]
@@ -380,14 +369,14 @@
                     :alpha 9001
                     :gamma "foo bar"}})
            {:context-errors nil :context-key-errors nil}))
-    (is (some? (:context-errrors (c/validate-contexts
-                                  {:_context {:prefix "https://foo.org/prefix/"
-                                              :gamma {:at/id "prefix2:gamma"}}
-                                   :gamma "foo bar"}))))
-    (is (nil? (:context-key-errrors (c/validate-contexts
-                                     {:_context {:prefix "https://foo.org/prefix/"
-                                                 :gamma {:at/id "prefix2:gamma"}}
-                                      :gamma "foo bar"}))))
+    (is (some? (:context-errors (c/validate-contexts
+                                 {:_context {:prefix "https://foo.org/prefix/"
+                                             :gamma {:at/id "prefix2:gamma"}}
+                                  :gamma "foo bar"}))))
+    (is (nil? (:context-key-errors (c/validate-contexts
+                                    {:_context {:prefix "https://foo.org/prefix/"
+                                                :gamma {:at/id "prefix2:gamma"}}
+                                     :gamma "foo bar"}))))
     (is (nil? (:context-errors (c/validate-contexts
                                 {:_context {:prefix2 "https://foo.org/prefix2/"
                                             :gamma {:at/id "prefix2:gamma"}}

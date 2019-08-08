@@ -104,7 +104,7 @@
 (exp/defmsg ::ctx/expanded-term-def "expanded term definition does not have valid prefix")
 
 (exp/defmsg ::ctx/contexed-key "key cannot be expanded into absolute IRI")
-(exp/defmsg ::ctx/is-at-context "key is not @context")
+(exp/defmsg ::ctx/is-at-context "key is not JSON-LD keyword")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Value display 
@@ -116,7 +116,7 @@
   [value]
   (cond
     (nil? value) "nil"
-    (= value :_context) "@context"
+    (= value :_context) "@context" ;; TODO Add similar for other JSON-LD keys
     (keyword? value) (name value)
     :else (pr-str value)))
 
