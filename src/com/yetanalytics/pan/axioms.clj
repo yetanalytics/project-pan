@@ -1,14 +1,19 @@
 (ns com.yetanalytics.pan.axioms
   (:require [clojure.edn :as edn]
+            [clojure.java.io :as io]
             [clojure.string :as string]
             [clojure.spec.alpha :as s]
             [clojure.spec.gen.alpha :as sgen]
+            [json-schema.core :as js]
             [xapi-schema.spec :as xs]
             [xapi-schema.spec.regex :as xsr]
-            [json-schema.core :as js]))
+            [com.yetanalytics.pan.resources.media-types :as mt]
+            [com.yetanalytics.pan.resources.regex :as regex]))
 
 ;; Booleans
 ;; (Useless wrapper, but exists for consistency)
+
+
 (s/def ::boolean boolean?)
 
 ;; Arbitrary strings
@@ -38,7 +43,7 @@
 ;; https://www.iana.org/assignments/media-types/media-types.xml
 ;; Currently only the five discrete top-level media type values are supported:
 ;; application, audio, image, text and video.
-(def media-types (edn/read-string (slurp "resources/media_types.edn")))
+(def media-types (-> "media_types.edn" io/resource slurp edn/read-string))
 
 (s/def ::media-type
   (s/and ::string
@@ -74,7 +79,7 @@
   (try (do (js/validate schema json) true)
        (catch Exception e false)))
 
-(def meta-schema (slurp "resources/json/schema-07.json"))
+(def meta-schema (-> "json/schema-07.json" io/resource slurp))
 
 (s/def ::json-schema
   (s/and ::string (partial schema-validate meta-schema)))
