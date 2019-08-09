@@ -6,9 +6,7 @@
             [clojure.spec.gen.alpha :as sgen]
             [json-schema.core :as js]
             [xapi-schema.spec :as xs]
-            [xapi-schema.spec.regex :as xsr]
-            [com.yetanalytics.pan.resources.media-types :as mt]
-            [com.yetanalytics.pan.resources.regex :as regex]))
+            [xapi-schema.spec.regex :as xsr]))
 
 ;; Booleans
 ;; (Useless wrapper, but exists for consistency)
