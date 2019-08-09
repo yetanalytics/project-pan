@@ -7,6 +7,7 @@
 (def will-profile-raw (slurp "resources/sample_profiles/will-profile-raw.json"))
 (def will-profile-fix (slurp "resources/sample_profiles/will-profile-reduced.json"))
 (def cmi-profile-raw (slurp "resources/sample_profiles/cmi5.json"))
+(def cmi-profile-fix (slurp "resources/sample_profiles/cmi5-fixed.json"))
 
 ; ;; Raw profile
 (deftest will-raw-test
@@ -48,4 +49,16 @@
     (is (not= (with-out-str (validate-profile cmi-profile-raw :syntax false :relations true))
               "Success!\n"))
     (is (= (with-out-str (validate-profile cmi-profile-raw :syntax false :contexts true))
+           "Success!\n"))))
+
+;; Fixed profile
+(deftest cmi-fixed-test
+  (testing "Tests on the cmi5 profile after it has been fixed"
+    (is (= (with-out-str (validate-profile cmi-profile-fix))
+           "Success!\n"))
+    (is (= (with-out-str (validate-profile cmi-profile-fix :syntax false :ids true))
+           "Success!\n"))
+    (is (not= (with-out-str (validate-profile cmi-profile-fix :syntax false :relations true))
+              "Success!\n"))
+    (is (= (with-out-str (validate-profile cmi-profile-fix :syntax false :contexts true))
            "Success!\n"))))
