@@ -233,7 +233,7 @@
 
 ;; Cannot use set as predicate, or else Expound overrides custom error msg.
 ;; List of keywords taken from Section 1.7 of the JSON-LD spec.
-(s/def ::is-at-context #(or (= % :_context) ;; Only one that's recognized
+(s/def ::is-at-context #(or (= % :_context)
                             (= % :_id)
                             (= % :_type)
                             (= % :_base)
