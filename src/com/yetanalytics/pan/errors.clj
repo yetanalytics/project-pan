@@ -114,11 +114,26 @@
   "Short for 'stringify-value.' Like str or pr-str, but makes special cases
   for nils and keywords."
   [value]
-  (cond
-    (nil? value) "nil"
-    (= value :_context) "@context" ;; TODO Add similar for other JSON-LD keys
-    (keyword? value) (name value)
-    :else (pr-str value)))
+  (case value
+    nil "nil"
+    :_context   "@context"
+    :_id        "@id"
+    :_type      "@type"
+    :_base      "@base"
+    :_container "@container"
+    :_graph     "@graph"
+    :_index     "@index"
+    :_language  "@language"
+    :_list      "@list"
+    :_nest      "@nest"
+    :_none      "@none"
+    :_prefix    "@prefix"
+    :_reverse   "@reverse"
+    :_set       "@set"
+    :_value     "@value"
+    :_version   "@version"
+    :_vocab     "@vocab"
+    (if (keyword? value) (name value) (pr-str value))))
 
 (defn pluralize
   "Make the word plural based off of a count if needed, by adding a plural s

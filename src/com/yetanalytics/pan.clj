@@ -12,46 +12,48 @@
 ;; TODO Add conversion from Turtle and XML formats
 ;; Currently only supports JSON-LD
 
-;; TODO Catch exceptions thrown on invalid JSON parsing 
 (defn- convert-profile
-  "Converts profile, if it is a JSON-LD string, into EDN format. Otherwise 
-  keeps it in EDN format. Note that all instances of @ in keywords are
-  replaced by underscores."
+  "Converts profile, if it is a JSON-LD string, into EDN format. Otherwise keeps it in EDN format.
+   - Note that all instances of @ in keywords are replaced by '_'"
   [profile]
   (if (string? profile)
-    (util/convert-json profile "_")
+    (try (util/convert-json profile "_")
+         (catch Exception e (ex-info "JSON parsing error! " (ex-data e))))
     profile))
 
 (defn validate-profile
   "Validate a profile from the top down. Takes in a Profile and either prints
-  an error or a success message. Takes in the following arguments: 
-    :syntax - Basic syntax validation only. True by default.
-    :ids - Validate object and versioning IDs.
-    :relations - Validate IRI-given relations between Concepts, Statement
-    Templates and Patterns 
-    :contexts - Validate @context values and that all keys expand to absolute
-    IRIs using @context. 
-    :external-iris - Allow the profile to access external links (HAS YET TO BE
-    IMPLEMENTED).
-    :print-errs - Print errors if true; return spec error data only if false.
-    True by default.
+  an error or a success message.
+
+  Supports multiple levels of validation based on the following boolean arguments:
+
+   - Default On:
+     - `:print-errs?`    - Print errors if true; return spec error data only if false.
+     - `:syntax?`        - Basic syntax validation only.
+
+   - Default Off:
+     - `:ids?`           - Validate object and versioning IDs.
+     - `:relations?`     - Validate IRI-given relations between Concepts, Statement Templates and Patterns.
+     - `:contexts?`      - Validate @context values and that all keys expand to absolute IRIs using @context.
+     - `:external-iris?` - Allow the profile to access external links (HAS YET TO BE IMPLEMENTED).
+
   More information can be found in the README."
   ;; TODO: Implement :external-iris
-  [profile & {:keys [syntax ids relations contexts external-iris print-errs]
-              :or {syntax true
-                   ids false
-                   relations false
-                   contexts false
-                   external-iris false
-                   print-errs true}}]
+  [profile & {:keys [syntax? ids? relations? contexts? external-iris? print-errs?]
+              :or {syntax? true
+                   ids? false
+                   relations? false
+                   contexts? false
+                   external-iris? false
+                   print-errs? true}}]
   (let [profile (convert-profile profile)
         errors (cond-> {}
-                 (true? syntax)
+                 (true? syntax?)
                  (assoc :syntax-errors (profile/validate profile))
-                 (true? ids) ;; ID duplicate and inScheme errors
+                 (true? ids?) ;; ID duplicate and inScheme errors
                  (assoc :id-errors (id/validate-ids profile)
                         :in-scheme-errors (id/validate-in-schemes profile))
-                 (true? relations) ;; URI errors
+                 (true? relations?) ;; URI errors
                  (merge
                   (let [;; Graphs
                         cgraph (concept/create-graph (:concepts profile))
@@ -70,9 +72,9 @@
                      :template-errors terrors
                      :pattern-errors perrors
                      :pattern-cycle-errors pc-errors}))
-                 (true? contexts) ;; @context errors
+                 (true? contexts?) ;; @context errors
                  (merge (context/validate-contexts profile)))]
-    (if print-errs
+    (if print-errs?
       (if (every? nil? (vals errors))
         (do (println "Success!") nil) ;; Exactly like spec/explain
         (errors/expound-errors errors))
