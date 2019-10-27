@@ -81,9 +81,11 @@
        (catch Exception e false)))
 
 ;; TODO: dynamic var for json schema version
-;; prev version (-> "json/schema-07.json" io/resource slurp)
 
-(def meta-schema (-> "json/schema-08.json" io/resource slurp))
+(def meta-schema
+  (-> "json/schema-07.json" io/resource slurp)
+  ;; FIXME: test newest schema
+  #_(-> "json/schema-08.json" io/resource slurp))
 
 (s/def ::json-schema
   (s/and ::string (partial schema-validate meta-schema)))
