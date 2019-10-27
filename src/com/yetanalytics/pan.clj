@@ -23,17 +23,20 @@
 
 (defn validate-profile
   "Validate a profile from the top down. Takes in a Profile and either prints
-  an error or a success message. Takes in the following arguments: 
-    :syntax - Basic syntax validation only. True by default.
-    :ids - Validate object and versioning IDs.
-    :relations - Validate IRI-given relations between Concepts, Statement
-    Templates and Patterns 
-    :contexts - Validate @context values and that all keys expand to absolute
-    IRIs using @context. 
-    :external-iris - Allow the profile to access external links (HAS YET TO BE
-    IMPLEMENTED).
-    :print-errs - Print errors if true; return spec error data only if false.
-    True by default.
+  an error or a success message.
+
+  Supports multiple levels of validation based on the following boolean arguments:
+
+   - Default On:
+     - `:print-errs?`    - Print errors if true; return spec error data only if false.
+     - `:syntax?`        - Basic syntax validation only.
+
+   - Default Off:
+     - `:ids?`           - Validate object and versioning IDs.
+     - `:relations?`     - Validate IRI-given relations between Concepts, Statement Templates and Patterns.
+     - `:contexts?`      - Validate @context values and that all keys expand to absolute IRIs using @context.
+     - `:external-iris?` - Allow the profile to access external links (HAS YET TO BE IMPLEMENTED).
+
   More information can be found in the README."
   ;; TODO: Implement :external-iris
   [profile & {:keys [syntax ids relations contexts external-iris print-errs]
