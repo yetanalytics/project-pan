@@ -39,21 +39,21 @@
 
   More information can be found in the README."
   ;; TODO: Implement :external-iris
-  [profile & {:keys [syntax ids relations contexts external-iris print-errs]
-              :or {syntax true
-                   ids false
-                   relations false
-                   contexts false
-                   external-iris false
-                   print-errs true}}]
+  [profile & {:keys [syntax? ids? relations? contexts? external-iris? print-errs?]
+              :or {syntax? true
+                   ids? false
+                   relations? false
+                   contexts? false
+                   external-iris? false
+                   print-errs? true}}]
   (let [profile (convert-profile profile)
         errors (cond-> {}
-                 (true? syntax)
+                 (true? syntax?)
                  (assoc :syntax-errors (profile/validate profile))
-                 (true? ids) ;; ID duplicate and inScheme errors
+                 (true? ids?) ;; ID duplicate and inScheme errors
                  (assoc :id-errors (id/validate-ids profile)
                         :in-scheme-errors (id/validate-in-schemes profile))
-                 (true? relations) ;; URI errors
+                 (true? relations?) ;; URI errors
                  (merge
                   (let [;; Graphs
                         cgraph (concept/create-graph (:concepts profile))
@@ -72,9 +72,9 @@
                      :template-errors terrors
                      :pattern-errors perrors
                      :pattern-cycle-errors pc-errors}))
-                 (true? contexts) ;; @context errors
+                 (true? contexts?) ;; @context errors
                  (merge (context/validate-contexts profile)))]
-    (if print-errs
+    (if print-errs?
       (if (every? nil? (vals errors))
         (do (println "Success!") nil) ;; Exactly like spec/explain
         (errors/expound-errors errors))
