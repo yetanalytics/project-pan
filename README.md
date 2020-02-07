@@ -12,7 +12,7 @@ on success (obviously) or an error message on failure.
 
 Arguments may be supplied for different levels of validation strictness, which
 are listed as follows:
-- `:syntax` - Basic validation; check only the types of properties and simple 
+- `:syntax` - Basic validation; check only the types of properties and simple
 syntax of all Profile objects. Set to `true` by default.
 - `:ids` - Validate the correctness of all object and versioning IDs (the id
 and inScheme properties). Validate that all IDs are distinct and that all
@@ -20,13 +20,13 @@ inScheme values correspond to valid Profile version IDs.
 - `:relations` - Validate that all relations between Profile objects are valid.
 These relations are given by IRIs and include the following:
     - the broader, narrower, related, broadMatch, narrowMatch, relatedMatch and
-exactMatch properties for Verbs, Activity Types and Attachment Usage 
-Types. 
-    - the `recommendedActivityTypes` property for Activity Extensions 
-    - the `recommendedVerbs` property for Context and Result Extensions 
+exactMatch properties for Verbs, Activity Types and Attachment Usage
+Types.
+    - the `recommendedActivityTypes` property for Activity Extensions
+    - the `recommendedVerbs` property for Context and Result Extensions
     - Determining Properties, `objectStatementRefTemplate` property and the
     `contextStatementRefTemplate` properties for Statement Templates.
-    - `sequence`, `alternates`, `optional`, `oneOrMore` and `zeroOrMore` 
+    - `sequence`, `alternates`, `optional`, `oneOrMore` and `zeroOrMore`
     properties for Patterns.
 - `:contexts` - Validate that all instances of `@context` resolve to valid
 JSON-LD contexts and that they allow all properties to expand out to absolute
@@ -34,7 +34,7 @@ IRIs during JSON-LD processing. The `@context` property is always found in the
 Profile metadata and in Activity Definitions, though they can also be found
 in Extensions for said Activity Definitions.
 - `:print-errs` - Print validation errors out if true; otherwise return spec
-error data (or nil, if the profile is valid) without printing. True by default. 
+error data (or nil, if the profile is valid) without printing. True by default.
 
 In addition to these arguments, there is another argument that needs to be
 implemented in a future iteration but currently does not exist.
@@ -43,7 +43,7 @@ executing SPARQL queries on a RDF triple store or by executing HTTP requests.
 This is useful when `:relations` and `:contexts` are set to true.
 
 Besides validating whole Profiles, you can also use library methods and specs
-to validate parts of Profiles, such as individual  Concepts, Templates and 
+to validate parts of Profiles, such as individual  Concepts, Templates and
 Patterns).
 
 ## Done
@@ -91,13 +91,13 @@ Patterns).
     fixing its grouping error: https://github.com/yetanalytics/expound
     - We may move away from Expound and create our own in-house error messaging
     library (especially since Expound has a ton of dependencies).
-- Log errors to somewhere instead of printing them out. 
+- Log errors to somewhere instead of printing them out.
 - Handle non-JSON-LD Profiles (eg. XML, Turtle).
 - More graceful exception handling.
 - Any bugs that need to be fixed (natch).
 
 ## License
 
-Copyright © 2019 Yet Analtyics
+Copyright © 2020 Yet Analtyics
 
-Distributed under the Eclipse Public License version 1.0.
+Project Pan is licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE) for the full license text
