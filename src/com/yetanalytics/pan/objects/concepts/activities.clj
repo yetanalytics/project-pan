@@ -30,7 +30,12 @@
   [kmap]
   (as-> kmap m
     (if-some [kmap-name (:name m)] (update m :name stringify-keys) m)
-    (if-some [kmap-desc (:description m)] (update m :description stringify-keys) m)))
+    (if-some [kmap-desc (:description m)] (update m :description stringify-keys) m)
+    (if-some [kmap-scale (:scale m)] (update m :scale stringify-keys) m)
+    (if-some [kmap-scale (:choices m)] (update m :choices stringify-keys) m)
+    (if-some [kmap-scale (:source m)] (update m :source stringify-keys) m)
+    (if-some [kmap-scale (:target m)] (update m :target stringify-keys) m)
+    (if-some [kmap-scale (:steps m)] (update m :steps stringify-keys) m)))
 
 ;; Need to use this function instead of s/merge because of restrict-keys in
 ;; xapi-schema function.
