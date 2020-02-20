@@ -27,9 +27,10 @@
 
 ;; Turn language map keys back into strings
 (defn stringify-lang-keys
-  [kmap] (-> kmap
-             (update :name stringify-keys)
-             (update :description stringify-keys)))
+  [kmap]
+  (as-> kmap m
+    (if-some [kmap-name (:name m)] (update m :name stringify-keys) m)
+    (if-some [kmap-desc (:description m)] (update m :description stringify-keys) m)))
 
 ;; Need to use this function instead of s/merge because of restrict-keys in
 ;; xapi-schema function.
