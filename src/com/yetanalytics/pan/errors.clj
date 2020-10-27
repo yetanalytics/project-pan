@@ -107,7 +107,7 @@
 (exp/defmsg ::ctx/is-at-context "key is not JSON-LD keyword")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Value display 
+;; Value display
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn strv
@@ -152,7 +152,7 @@
                                 :print-specs? false}) explain-data))
         formed-str
         (string/replace unformed-str #"(?<=\n)\s+\.\.\.\n" "")]
-    (print formed-str)))
+    formed-str))
 
 ;; TODO Current default-printer function is quite unhelpful in locating errors.
 ;; May look into this again.
@@ -257,7 +257,7 @@
 ;; TODO Possibly make custom error messages for @context errors?
 (defn custom-printer
   "Returns a printer based on the error-type argument. A nil error-type will
-  result in the default Expound printer (except with :print-specs? set to 
+  result in the default Expound printer (except with :print-specs? set to
   false). error-types:
   - id: Duplicate ID errors
   - in-scheme: InScheme property errors
@@ -280,7 +280,7 @@
       #_(exp/custom-printer {:value-str-fn value-str-def :print-specs? false}))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Property ordering in error messages 
+;; Property ordering in error messages
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (def property-order
@@ -368,12 +368,12 @@
 ;;
 ;; TODO: Issue #165 has been marked as a bug so it should be fixed at some
 ;; point. When that happens, rework this namespace to rely on Expound's native
-;; error grouping functionality so it doesn't have to do awkward map manips. 
+;; error grouping functionality so it doesn't have to do awkward map manips.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn compare-properties
-  "Get the order of two properties based on how it was listed in the xAPI 
-  Profile spec. Properties not listed in the property-order map will be pushed 
+  "Get the order of two properties based on how it was listed in the xAPI
+  Profile spec. Properties not listed in the property-order map will be pushed
   to the end of the error list and sorted alphabetically.
   - neg number: prop1 comes before prop2
   - pos number: prop1 comes after prop2
@@ -442,26 +442,38 @@
   "Print an Expounded error message using a custom printer. The custom printer
   is determined using the error-type arg; if not supplied, it prints a default
   Expound error message (without the Relevant Specs trace)."
-  [error-map & [error-type]]
+  [error-map & {:keys [error-type silent]}]
   (let [print-fn (custom-printer error-type)]
     (print-fn error-map)))
 
 (defn expound-error-list
   "Sort a list of spec error maps using the value of the :path key."
-  [error-list & [error-type]]
-  (doseq [error error-list]
-    (do (expound-error error error-type) (println))))
+  [error-list & {:keys [error-type silent]}]
+  ;;(clojure.pprint/pprint error-list)
+  #_(doseq [error error-list]
+    (clojure.pprint/pprint error))
+  (into [] (map (fn [error]
+                  (let [error-text (expound-error error
+                                                  :error-type error-type
+                                                  :silent silent)]
+                    (if-not silent (println error-text))
+                    error-text))
+                error-list)))
 
 (defn expound-error-map
   "Regroup an error map into a sorted list of error maps.
   Used to avoid Issue #165 for Expound."
-  [error-map & [error-type]]
-  (-> error-map group-by-in sort-by-path (expound-error-list error-type)))
+  [error-map & {:keys [error-type silent]}]
+  (-> error-map
+      group-by-in
+      sort-by-path
+      (expound-error-list :error-type error-type
+                          :silent silent)))
 
 (defn expound-errors
   "Print errors from profile validation using Expound. Available keys:
   :syntax-errors - Basic syntax validation (always present)
-  :id-errors - Duplicate ID errors 
+  :id-errors - Duplicate ID errors
   :in-scheme-errors - inScheme property validation
   :concept-errors - Concept relation/link errors
   :template-errors - Template relation/link errors
@@ -477,14 +489,20 @@
            pattern-errors
            pattern-cycle-errors
            context-errors
-           context-key-errors]}]
+           context-key-errors
+           silent]}]
   (do
     (if (some? syntax-errors) (expound-error-map syntax-errors))
-    (if (some? id-errors) (expound-error id-errors "id"))
-    (if (some? in-scheme-errors) (expound-error in-scheme-errors "in-scheme"))
-    (if (some? concept-errors) (expound-error-map concept-errors "edge"))
-    (if (some? template-errors) (expound-error-map template-errors "edge"))
-    (if (some? pattern-errors) (expound-error-map pattern-errors "edge"))
+    (if (some? id-errors) (expound-error id-errors
+                                         :error-type "id"))
+    (if (some? in-scheme-errors) (expound-error in-scheme-errors
+                                                :error-type "in-scheme"))
+    (if (some? concept-errors) (expound-error-map concept-errors
+                                                  :error-type "edge"))
+    (if (some? template-errors) (expound-error-map template-errors
+                                                   :error-type "edge"))
+    (if (some? pattern-errors) (expound-error-map pattern-errors
+                                                  :error-type "edge"))
     ;; Context errors are already in list format
     (if (some? context-errors) (expound-error-list context-errors))
     (if (some? context-key-errors) (expound-error-list context-key-errors))))
