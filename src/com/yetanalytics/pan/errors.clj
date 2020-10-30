@@ -450,11 +450,17 @@
   "Sort a list of spec error maps using the value of the :path key."
   [error-list & {:keys [error-type silent]}]
   (into [] (map (fn [error]
+
                   (let [error-text (expound-error error
                                                   :error-type error-type
-                                                  :silent silent)]
+                                                  :silent silent)
+                        error-path (-> error
+                                       ::s/problems
+                                       first
+                                       :path)]
                     (if-not silent (println error-text))
-                    error-text))
+                    {:path error-path
+                     :text error-text}))
                 error-list)))
 
 (defn expound-error-map
@@ -488,26 +494,34 @@
            context-errors
            context-key-errors
            silent]}]
-  (do
-    (if (some? syntax-errors) (expound-error-map syntax-errors
-                                                 :silent silent))
-    (if (some? id-errors) (expound-error id-errors
-                                         :error-type "id"
-                                         :silent silent))
-    (if (some? in-scheme-errors) (expound-error in-scheme-errors
-                                                :error-type "in-scheme"
-                                                :silent silent))
-    (if (some? concept-errors) (expound-error-map concept-errors
+  (merge
+   (if (some? syntax-errors) {:syntax-errors (expound-error-map
+                                              syntax-errors
+                                              :silent silent)})
+   (if (some? id-errors) {:syntax-errors (expound-error
+                                          id-errors
+                                          :error-type "id"
+                                          :silent silent)})
+   (if (some? in-scheme-errors) {:in-scheme-errors (expound-error
+                                                    in-scheme-errors
+                                                    :error-type "in-scheme"
+                                                    :silent silent)})
+   (if (some? concept-errors) {:concept-errors (expound-error-map
+                                                concept-errors
+                                                :error-type "edge"
+                                                :silent silent)})
+   (if (some? template-errors) {:template-errors (expound-error-map
+                                                  template-errors
                                                   :error-type "edge"
-                                                  :silent silent))
-    (if (some? template-errors) (expound-error-map template-errors
-                                                   :error-type "edge"
-                                                   :silent silent))
-    (if (some? pattern-errors) (expound-error-map pattern-errors
-                                                  :error-type "edge"
-                                                  :silent silent))
+                                                  :silent silent)})
+   (if (some? pattern-errors) {:pattern-errors (expound-error-map
+                                                pattern-errors
+                                                :error-type "edge"
+                                                :silent silent)})
     ;; Context errors are already in list format
-    (if (some? context-errors) (expound-error-list context-errors
-                                                   :silent silent))
-    (if (some? context-key-errors) (expound-error-list context-key-errors
-                                                       :silent silent))))
+   (if (some? context-errors) {:context-errors (expound-error-list
+                                                context-errors
+                                                :silent silent)})
+   (if (some? context-key-errors) {:context-key-errors (expound-error-list
+                                                        context-key-errors
+                                                        :silent silent)})))
