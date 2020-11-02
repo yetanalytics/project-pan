@@ -202,6 +202,30 @@
                 (mapv #(-> % ::s/problems first :via last)))
            [::id/in-scheme ::id/in-scheme]))))
 
+(comment
+  (require '[com.yetanalytics.pan.errors :as e])
+  (require '[com.yetanalytics.pan.objects.profile :as p])
+  (def good-profile-1
+    {:id "https://w3id.org/xapi/catch"
+     :type "Profile"
+     :prefLabel {"en" "Catch"}
+     :definition {"en" "The profile for the trinity education application CATCH"}
+     :_context "https://w3id.org/xapi/profiles/context"
+     :versions [{:id "https://w3id.org/xapi/catch/v1"
+                 :generatedAtTime "2017-12-22T22:30:00-07:00"}]
+     :author {:url "https://www.yetanalytics.io"
+              :type "Organization"
+              :name "Yet Analytics"}
+     :conformsTo "https://w3id.org/xapi/profiles#1.0"})
+  (def bad-profile-1b (assoc good-profile-1
+                             :id "not an id"
+                             :type "FooBar"))
+  (let [errormsg (with-out-str (e/expound-error-map (p/validate bad-profile-1b)))]
+    (println "here is the output")
+    (println errormsg))
+  )
+
+
 (deftest expound-test
   (testing "error/expound-errors error messages"
     (is (= (with-out-str
@@ -242,7 +266,7 @@
                 "\n"
                 "")))
     (is (= (with-out-str
-             (e/expound-error (id/validate-ids bad-profile-2b) "id"))
+             (e/expound-error (id/validate-ids bad-profile-2b) :error-type "id"))
            (str "-- Spec failed --------------------\n"
                 "\n"
                 "Duplicate id: \"https://w3id.org/xapi/catch/v1\"\n"
@@ -260,7 +284,7 @@
                 "-------------------------\n"
                 "Detected 2 errors\n")))
     (is (= (with-out-str
-             (e/expound-error (id/validate-in-schemes bad-profile-2c) "in-scheme"))
+             (e/expound-error (id/validate-in-schemes bad-profile-2c) :error-type "in-scheme"))
            (str "-- Spec failed --------------------\n"
                 "\n"
                 "Invalid inScheme: \"https://foo.org/invalid\"\n"
@@ -284,7 +308,7 @@
                 "-------------------------\n"
                 "Detected 2 errors\n")))
     (is (= (with-out-str
-             (e/expound-error-map (t/explain-graph (t/create-graph [] (:templates bad-profile-2d))) "edge"))
+             (e/expound-error-map (t/explain-graph (t/create-graph [] (:templates bad-profile-2d))) :error-type "edge"))
            (str "-- Spec failed --------------------\n"
                 "\n"
                 "Invalid verb identifier:\n"
@@ -306,7 +330,6 @@
                 "\n"
                 "-------------------------\n"
                 "Detected 1 error\n"
-                "\n"
                 "-- Spec failed --------------------\n"
                 "\n"
                 "Invalid attachmentUsageType identifier:\n"
@@ -327,10 +350,9 @@
                 "linked concept or template does not exist\n"
                 "\n"
                 "-------------------------\n"
-                "Detected 1 error\n"
-                "\n")))
+                "Detected 1 error\n")))
     (is (= (with-out-str
-             (e/expound-error-map (t/explain-graph (t/create-graph [] (:templates bad-profile-2e))) "edge"))
+             (e/expound-error-map (t/explain-graph (t/create-graph [] (:templates bad-profile-2e))) :error-type "edge"))
            (str "-- Spec failed --------------------\n"
                 "\n"
                 "Invalid verb identifier:\n"
@@ -352,7 +374,6 @@
                 "\n"
                 "-------------------------\n"
                 "Detected 1 error\n"
-                "\n"
                 "-- Spec failed --------------------\n"
                 "\n"
                 "Invalid attachmentUsageType identifier:\n"
@@ -373,11 +394,10 @@
                 "object cannot refer to itself\n"
                 "\n"
                 "-------------------------\n"
-                "Detected 1 error\n"
-                "\n")))
+                "Detected 1 error\n")))
     (is (= (with-out-str
              (e/expound-error
-              (pt/explain-graph-cycles (pt/create-graph (:templates bad-profile-2f) (:patterns bad-profile-2f))) "scc"))
+              (pt/explain-graph-cycles (pt/create-graph (:templates bad-profile-2f) (:patterns bad-profile-2f))) :error-type "scc"))
            (str "-- Spec failed --------------------\n"
                 "\n"
                 "Cycle detected involving the following nodes:\n"
@@ -390,7 +410,7 @@
                 "Detected 1 error\n")))
     (is (= (with-out-str
              (e/expound-error
-              (pt/explain-graph (pt/create-graph (:templates bad-profile-2g) (:patterns bad-profile-2g))) "edge"))
+              (pt/explain-graph (pt/create-graph (:templates bad-profile-2g) (:patterns bad-profile-2g))) :error-type "edge"))
            (str "-- Spec failed --------------------\n"
                 "\n"
                 "Invalid oneOrMore identifier:\n"

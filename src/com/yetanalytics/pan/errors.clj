@@ -458,7 +458,8 @@
                                        ::s/problems
                                        first
                                        :path)]
-                    (if-not silent (println error-text))
+                    (if (and error-text (not silent))
+                      (println error-text))
                     {:path error-path
                      :text error-text}))
                 error-list)))
