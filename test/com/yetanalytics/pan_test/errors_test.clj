@@ -202,30 +202,6 @@
                 (mapv #(-> % ::s/problems first :via last)))
            [::id/in-scheme ::id/in-scheme]))))
 
-(comment
-  (require '[com.yetanalytics.pan.errors :as e])
-  (require '[com.yetanalytics.pan.objects.profile :as p])
-  (def good-profile-1
-    {:id "https://w3id.org/xapi/catch"
-     :type "Profile"
-     :prefLabel {"en" "Catch"}
-     :definition {"en" "The profile for the trinity education application CATCH"}
-     :_context "https://w3id.org/xapi/profiles/context"
-     :versions [{:id "https://w3id.org/xapi/catch/v1"
-                 :generatedAtTime "2017-12-22T22:30:00-07:00"}]
-     :author {:url "https://www.yetanalytics.io"
-              :type "Organization"
-              :name "Yet Analytics"}
-     :conformsTo "https://w3id.org/xapi/profiles#1.0"})
-  (def bad-profile-1b (assoc good-profile-1
-                             :id "not an id"
-                             :type "FooBar"))
-  (let [errormsg (with-out-str (e/expound-error-map (p/validate bad-profile-1b)))]
-    (println "here is the output")
-    (println errormsg))
-  )
-
-
 (deftest expound-test
   (testing "error/expound-errors error messages"
     (is (= (with-out-str
