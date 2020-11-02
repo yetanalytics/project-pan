@@ -449,20 +449,19 @@
 (defn expound-error-list
   "Sort a list of spec error maps using the value of the :path key."
   [error-list & {:keys [error-type silent]}]
-  (into [] (map (fn [error]
-
-                  (let [error-text (expound-error error
-                                                  :error-type error-type
-                                                  :silent silent)
-                        error-path (-> error
-                                       ::s/problems
-                                       first
-                                       :path)]
-                    (if (and error-text (not silent))
-                      (println error-text))
-                    {:path error-path
-                     :text error-text}))
-                error-list)))
+  (mapv (fn [error]
+          (let [error-text (expound-error error
+                                          :error-type error-type
+                                          :silent silent)
+                error-path (-> error
+                               ::s/problems
+                               first
+                               :path)]
+            (if (and error-text (not silent))
+              (println error-text))
+            {:path error-path
+             :text error-text}))
+        error-list))
 
 (defn expound-error-map
   "Regroup an error map into a sorted list of error maps.
