@@ -1,8 +1,7 @@
 (ns com.yetanalytics.pan-test.util_test
-  (:require [clojure.test :refer :all]
+  (:require [clojure.test :refer [deftest is testing]]
             [clojure.spec.alpha :as s]
-            ;; Not to be confused with util.clj in src
-            [com.yetanalytics.test-utils :refer :all]
+            ;; Not to be confused with test-utils in test dir
             [com.yetanalytics.pan.util :as u]))
 
 ;; TODO Normalize profile test

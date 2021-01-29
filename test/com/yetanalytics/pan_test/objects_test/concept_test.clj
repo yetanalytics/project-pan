@@ -1,8 +1,7 @@
 (ns com.yetanalytics.pan-test.objects-test.concept-test
-  (:require [clojure.test :refer :all]
-            [clojure.spec.alpha :as s]
+  (:require [clojure.test :refer [deftest is testing]]
             [ubergraph.core :as uber]
-            [com.yetanalytics.test-utils :refer :all]
+            [com.yetanalytics.test-utils :refer [should-satisfy+]]
             [com.yetanalytics.pan.objects.concept :as concept]))
 
 ;; TODO Add test for testing a complete vector of concepts

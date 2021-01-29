@@ -1,8 +1,8 @@
 (ns com.yetanalytics.pan-test.axioms-test
-  (:require [clojure.test :refer :all]
+  (:require [clojure.test :refer [deftest is testing]]
             [clojure.spec.alpha :as s]
             [com.yetanalytics.pan.axioms :as ax]
-            [com.yetanalytics.test-utils :refer :all]))
+            [com.yetanalytics.test-utils :refer [should-satisfy+]]))
 
 ;; String
 (deftest test-string

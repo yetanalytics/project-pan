@@ -1,7 +1,6 @@
 (ns com.yetanalytics.pan-test
-  (:require [clojure.pprint :as pprint]
-            [clojure.test :refer :all]
-            [com.yetanalytics.pan :refer :all]))
+  (:require [clojure.test :refer [deftest is testing]]
+            [com.yetanalytics.pan :refer [validate-profile]]))
 
 ;; Profiles to test
 (def will-profile-raw (slurp "resources/sample_profiles/will-profile-raw.json"))

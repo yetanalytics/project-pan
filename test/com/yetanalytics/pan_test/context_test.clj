@@ -1,10 +1,10 @@
 (ns com.yetanalytics.pan-test.context-test
-  (:require [clojure.test :refer :all]
+  (:require [clojure.test :refer [deftest is testing]]
             [clojure.spec.alpha :as s]
             [clojure.zip :as zip]
             [com.yetanalytics.pan.context :as c]
             [com.yetanalytics.pan.util :as util]
-            [com.yetanalytics.test-utils :refer :all]))
+            [com.yetanalytics.test-utils :refer [should-satisfy+]]))
 
 (def profile-context
   (c/get-context "https://w3id.org/xapi/profiles/context"))

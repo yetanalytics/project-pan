@@ -1,11 +1,11 @@
 (ns com.yetanalytics.pan-test.objects-test.pattern-test
-  (:require [clojure.test :refer :all]
+  (:require [clojure.test :refer [deftest is testing]]
             [clojure.spec.alpha :as s]
-            [clojure.pprint :as pprint]
             [ubergraph.alg :as alg]
             [ubergraph.core :as uber]
             [com.yetanalytics.pan.graph :as graph]
-            [com.yetanalytics.test-utils :refer :all]
+            [com.yetanalytics.test-utils
+             :refer [should-satisfy should-satisfy+ should-not-satisfy]]
             [com.yetanalytics.pan.objects.pattern :as pattern]))
 
 (deftest id-test

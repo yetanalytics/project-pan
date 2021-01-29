@@ -1,5 +1,5 @@
 (ns com.yetanalytics.test-utils
-  (:require [clojure.test :refer [deftest is testing] :include-macros true]
+  (:require [clojure.test :refer [is] :include-macros true]
             [clojure.spec.alpha :as s :include-macros true]))
 
 ;; This is a copy-paste of the xapi-schema.support.spec namespace defined in

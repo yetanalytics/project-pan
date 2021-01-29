@@ -1,9 +1,6 @@
 (ns com.yetanalytics.pan-test.errors-test
-  (:require [clojure.test :refer :all]
+  (:require [clojure.test :refer [deftest is testing]]
             [clojure.spec.alpha :as s]
-            [clojure.pprint :as pprint]
-            [expound.alpha :as exp]
-            [xapi-schema.spec :as xs]
             [com.yetanalytics.pan.axioms :as ax]
             [com.yetanalytics.pan.context :as ctx]
             [com.yetanalytics.pan.errors :as e]

@@ -1,8 +1,9 @@
 (ns com.yetanalytics.pan-test.objects-test.concepts-test.attachment-usage-type-test
-  (:require [clojure.test :refer :all]
+  (:require [clojure.test :refer [deftest is testing]]
             [clojure.spec.alpha :as s]
             [com.yetanalytics.pan.graph :as graph]
-            [com.yetanalytics.test-utils :refer :all]
+            [com.yetanalytics.test-utils
+             :refer [should-satisfy should-satisfy+ should-not-satisfy]]
             [com.yetanalytics.pan.objects.concepts.attachment-usage-types
              :as attachment-usage-types]))
 

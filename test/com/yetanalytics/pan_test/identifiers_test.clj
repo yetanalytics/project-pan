@@ -1,5 +1,5 @@
 (ns com.yetanalytics.pan-test.identifiers-test
-  (:require [clojure.test :refer :all]
+  (:require [clojure.test :refer [deftest is testing]]
             [clojure.spec.alpha :as s]
             [com.yetanalytics.pan.identifiers :as id]))
 

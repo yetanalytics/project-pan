@@ -1,7 +1,8 @@
 (ns com.yetanalytics.pan-test.objects-test.concepts-test.activity-test
-  (:require [clojure.test :refer :all]
+  (:require [clojure.test :refer [deftest is testing]]
             [clojure.spec.alpha :as s]
-            [com.yetanalytics.test-utils :refer :all]
+            [com.yetanalytics.test-utils
+             :refer [should-satisfy should-satisfy+ should-not-satisfy]]
             [com.yetanalytics.pan.objects.concepts.activities :as activities]))
 
 (deftest type-test
