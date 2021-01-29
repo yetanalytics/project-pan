@@ -1,9 +1,7 @@
 (ns com.yetanalytics.pan.context
   (:require [clojure.spec.alpha :as s]
             [clojure.string :as string]
-            [clojure.walk :as w]
             [clojure.zip :as zip]
-            [cheshire.core :as cheshire]
             [com.yetanalytics.pan.axioms :as ax]
             [com.yetanalytics.pan.util :as util]))
 
