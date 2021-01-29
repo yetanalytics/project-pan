@@ -1,6 +1,5 @@
 (ns com.yetanalytics.pan.objects.concept
   (:require [clojure.spec.alpha :as s]
-            [ubergraph.core :as uber]
             [com.yetanalytics.pan.graph :as graph]
             [com.yetanalytics.pan.util :as util]
             [com.yetanalytics.pan.objects.concepts.verbs :as v]
@@ -48,15 +47,15 @@
 ;; Graph creation functions
 
 (defn create-graph
-  "Create a ubergraph digraph out of the vector of concepts"
+  "Create a digraph out of the vector of concepts"
   [concepts]
-  (let [cgraph (uber/digraph)
+  (let [cgraph (graph/new-digraph)
         cnodes (mapv (partial graph/node-with-attrs) concepts)
         cedges (graph/collect-edges
                 (mapv (partial graph/edges-with-attrs) concepts))]
     (-> cgraph
-        (uber/add-nodes-with-attrs* cnodes)
-        (uber/add-directed-edges* cedges))))
+        (graph/add-nodes cnodes)
+        (graph/add-edges cedges))))
 
 (defn get-edges
   "Returns a sequence of edge maps, with the following keys:
@@ -69,17 +68,17 @@
   - type: the property corresponding to this edge (eg. broader, narrower,
   related, etc.)"
   [cgraph]
-  (let [edges (uber/edges cgraph)]
-    (map (fn [edge]
-           (let [src (uber/src edge) dest (uber/dest edge)]
-             {:src src
-              :src-type (uber/attr cgraph src :type)
-              :src-version (uber/attr cgraph src :inScheme)
-              :dest dest
-              :dest-type (uber/attr cgraph dest :type)
-              :dest-version (uber/attr cgraph dest :inScheme)
-              :type (uber/attr cgraph edge :type)}))
-         edges)))
+  (map (fn [edge]
+         (let [src (graph/src edge)
+               dest (graph/dest edge)]
+           {:src src
+            :src-type (graph/attr cgraph src :type)
+            :src-version (graph/attr cgraph src :inScheme)
+            :dest dest
+            :dest-type (graph/attr cgraph dest :type)
+            :dest-version (graph/attr cgraph dest :inScheme)
+            :type (graph/attr cgraph edge :type)}))
+       (graph/edges cgraph)))
 
 ;; Edge property specs
 

@@ -1,6 +1,5 @@
 (ns com.yetanalytics.pan.objects.template
   (:require [clojure.spec.alpha :as s]
-            [ubergraph.core :as uber]
             [com.yetanalytics.pan.axioms :as ax]
             [com.yetanalytics.pan.graph :as graph]
             [com.yetanalytics.pan.util :as util]
@@ -104,7 +103,7 @@
   Returns a digraph with connections between templates to concepts (and each
   other)."
   [concepts templates]
-  (let [tgraph (uber/digraph)
+  (let [tgraph (graph/new-digraph)
         ;; Nodes
         cnodes (mapv (partial graph/node-with-attrs) concepts)
         tnodes (mapv (partial graph/node-with-attrs) templates)
@@ -112,9 +111,9 @@
         tedges (graph/collect-edges
                 (mapv (partial graph/edges-with-attrs) templates))]
     (-> tgraph
-        (uber/add-nodes-with-attrs* cnodes)
-        (uber/add-nodes-with-attrs* tnodes)
-        (uber/add-directed-edges* tedges))))
+        (graph/add-nodes cnodes)
+        (graph/add-nodes tnodes)
+        (graph/add-edges tedges))))
 
 (defn get-edges
   "Return a sequence of edge maps, with the following keys:
@@ -127,17 +126,17 @@
   - type: corresponding property in the source node (ie. the Determining
   Property or Statement Ref Template type)"
   [tgraph]
-  (let [edges (uber/edges tgraph)]
-    (map (fn [edge]
-           (let [src (uber/src edge) dest (uber/dest edge)]
-             {:src src
-              :src-type (uber/attr tgraph src :type)
-              :src-version (uber/attr tgraph src :inScheme)
-              :dest dest
-              :dest-type (uber/attr tgraph dest :type)
-              :dest-version (uber/attr tgraph dest :inScheme)
-              :type (uber/attr tgraph edge :type)}))
-         edges)))
+  (map (fn [edge]
+         (let [src (graph/src edge)
+               dest (graph/dest edge)]
+           {:src src
+            :src-type (graph/attr tgraph src :type)
+            :src-version (graph/attr tgraph src :inScheme)
+            :dest dest
+            :dest-type (graph/attr tgraph dest :type)
+            :dest-version (graph/attr tgraph dest :inScheme)
+            :type (graph/attr tgraph edge :type)}))
+       (graph/edges tgraph)))
 
 ;; Edge property specs
 

@@ -3,11 +3,11 @@
          org.clojure/core.match {:mvn/version "0.3.0"}
          cheshire/cheshire      {:mvn/version "5.8.1"}
          luposlip/json-schema   {:mvn/version "0.1.6"}
-         ubergraph/ubergraph    {:mvn/version "0.5.3"}
+         aysylu/loom            {:mvn/version "1.0.2"}
          expound/expound        {:mvn/version "0.7.2"} 
-         com.yetanalytics/xapi-schema ;; Latest commit: 6/2/20
+         com.yetanalytics/xapi-schema ;; Latest commit: 1/29/21
          {:git/url "https://github.com/yetanalytics/xapi-schema"
-          :sha     "01834cf51144c77d2ffe2d7ffb727f9289405350"}}
+          :sha     "0e552227e74913d1b35dfa648407b9a9ac4b6b00"}}
  :aliases
  {:test
   {:extra-paths ["test"]

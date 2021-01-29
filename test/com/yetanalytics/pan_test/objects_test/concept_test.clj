@@ -1,6 +1,7 @@
 (ns com.yetanalytics.pan-test.objects-test.concept-test
   (:require [clojure.test :refer [deftest is testing]]
-            [ubergraph.core :as uber]
+            [loom.attr]
+            [com.yetanalytics.pan.graph :as graph]
             [com.yetanalytics.test-utils :refer [should-satisfy+]]
             [com.yetanalytics.pan.objects.concept :as concept]))
 
@@ -127,14 +128,13 @@
 
 (deftest graph-test
   (testing "Graph properties"
-    (is (= 6 (count (uber/nodes cgraph))))
-    (is (= 6 (count (uber/edges cgraph))))
-    (is (= (set (uber/nodes cgraph))
-           #{"https://foo.org/verb1" "https://foo.org/verb2"
+    (is (= 6 (count (graph/nodes cgraph))))
+    (is (= 6 (count (graph/edges cgraph))))
+    (is (= #{"https://foo.org/verb1" "https://foo.org/verb2"
              "https://foo.org/at1" "https://foo.org/at2"
-             "https://foo.org/aut1" "https://foo.org/aut2"}))
-    (is (= (set (concept/get-edges cgraph))
-           #{{:src "https://foo.org/verb1" :src-type "Verb" :src-version "https://foo.org/v1"
+             "https://foo.org/aut1" "https://foo.org/aut2"}
+           (set (graph/nodes cgraph))))
+    (is (= #{{:src "https://foo.org/verb1" :src-type "Verb" :src-version "https://foo.org/v1"
               :dest "https://foo.org/verb2" :dest-type "Verb" :dest-version "https://foo.org/v1"
               :type :broader}
              {:src "https://foo.org/verb2" :src-type "Verb" :src-version "https://foo.org/v1"
@@ -151,5 +151,11 @@
               :type :broader}
              {:src "https://foo.org/aut2" :src-type "AttachmentUsageType" :src-version "https://foo.org/v1"
               :dest "https://foo.org/aut1" :dest-type "AttachmentUsageType" :dest-version "https://foo.org/v1"
-              :type :narrower}}))
+              :type :narrower}}
+           (set (concept/get-edges cgraph))))
     (is (nil? (concept/explain-graph cgraph)))))
+
+(loom.attr/attr cgraph
+                ["https://foo.org/aut2"
+                 {:type "AttachmentUsageType", :inScheme "https://foo.org/v1"}]
+                :inScheme)

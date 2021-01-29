@@ -1,7 +1,5 @@
 (ns com.yetanalytics.pan.objects.pattern
   (:require [clojure.spec.alpha :as s]
-            [ubergraph.core :as uber]
-            [ubergraph.alg :as alg]
             [com.yetanalytics.pan.axioms :as ax]
             [com.yetanalytics.pan.graph :as graph]
             [com.yetanalytics.pan.util :as util]))
@@ -112,10 +110,6 @@
 
 (defmethod get-pattern-edges :default [_] nil)
 
-;; Return a vector of pattern edges in the form [src dest {:type kword}] 
-(defmethod graph/edges-with-attrs "Pattern" [pattern]
-  (get-pattern-edges pattern))
-
 ;; Return a vector of nodes of the form [id attribute-map]
 (defmethod graph/node-with-attrs "Pattern" [pattern]
   (let [id (:id pattern)
@@ -124,10 +118,14 @@
                :property (first (dispatch-on-pattern pattern))}]
     (vector id attrs)))
 
+;; Return a vector of pattern edges in the form [src dest {:type kword}] 
+(defmethod graph/edges-with-attrs "Pattern" [pattern]
+  (get-pattern-edges pattern))
+
 (defn create-graph
   "Create a graph of links between Patterns and other Patterns and Templates."
   [templates patterns]
-  (let [pgraph (uber/digraph)
+  (let [pgraph (graph/new-digraph)
         ;; Nodes
         tnodes (mapv (partial graph/node-with-attrs) templates)
         pnodes (mapv (partial graph/node-with-attrs) patterns)
@@ -135,9 +133,9 @@
         pedges (graph/collect-edges
                 (mapv (partial graph/edges-with-attrs) patterns))]
     (-> pgraph
-        (uber/add-nodes-with-attrs* tnodes)
-        (uber/add-nodes-with-attrs* pnodes)
-        (uber/add-directed-edges* pedges))))
+        (graph/add-nodes tnodes)
+        (graph/add-nodes pnodes)
+        (graph/add-edges pedges))))
 
 (defn get-edges
   "Return a sequence of edges in the form of maps, with the following keys:
@@ -152,19 +150,19 @@
   alternates, etc.); nil if the destination is a Template
   - type: the regex property of this edge (sequence, alternates, etc.)"
   [pgraph]
-  (let [edges (uber/edges pgraph)]
-    (map (fn [edge]
-           (let [src (uber/src edge) dest (uber/dest edge)]
-             {:src src
-              :src-type (uber/attr pgraph src :type)
-              :src-primary (uber/attr pgraph src :primary)
-              :src-indegree (uber/in-degree pgraph src)
-              :src-outdegree (uber/out-degree pgraph src)
-              :dest dest
-              :dest-type (uber/attr pgraph dest :type)
-              :dest-property (uber/attr pgraph dest :property)
-              :type (uber/attr pgraph edge :type)}))
-         edges)))
+  (map (fn [edge]
+         (let [src (graph/src edge)
+               dest (graph/dest edge)]
+           {:src src
+            :src-type (graph/attr pgraph src :type)
+            :src-primary (graph/attr pgraph src :primary)
+            :src-indegree (graph/in-degree pgraph src)
+            :src-outdegree (graph/out-degree pgraph src)
+            :dest dest
+            :dest-type (graph/attr pgraph dest :type)
+            :dest-property (graph/attr pgraph dest :property)
+            :type (graph/attr pgraph edge :type)}))
+       (graph/edges pgraph)))
 
 ;; Edge property specs
 
@@ -282,16 +280,16 @@
 ;; 1. All strongly connected components (subgraphs where all nodes can be
 ;; reached from any other node in the subgraph) must be singletons. (Imagine
 ;; a SCC of two nodes - there must be a cycle present; induct from there.)
-;; We find our SCCs using Kosaraju's Algorithm (which is what Ubergraph uses
-;; in alg/scc), which has a time complexity of O(V+E); we then validate that 
-;; they all only have one member node.
+;; We find our SCCs using Kosaraju's Algorithm (which is what Loom uses in
+;; alg/scc), which has a time complexity of O(V+E); we then validate that they
+;; all only have one member node.
 ;;
 ;; 2. No self-loops exist. This condition is not caught by Kosaraju's Algorithm
 ;; (and thus not by our SCC specs) but is caught by our edge validation.
 ;;
-;; Note that Ubergraph has a built-in function for DAG determination (which
-;; does correctly identify self-loops), but we use this algorithm to make our 
-;; spec errors cleaner.
+;; Note that Loom has a built-in function for DAG determination (which does
+;; correctly identify self-loops), but we use this algorithm to make our spec
+;; errors cleaner.
 
 ;; Check that one SCC is a singleton
 ;; (Technically we can do this with s/cat, but this allows us to return the
@@ -312,6 +310,6 @@
 
 ;; Cycle validation
 (defn explain-graph-cycles [pgraph]
-  (s/explain-data ::singleton-sccs (alg/scc pgraph)))
+  (s/explain-data ::singleton-sccs (graph/scc pgraph)))
 
 ;; TODO: MAY re-use Statement Templates and Patterns from other Profiles

@@ -1,7 +1,6 @@
 (ns com.yetanalytics.pan-test.objects-test.template-test
   (:require [clojure.test :refer [deftest is testing]]
             [clojure.spec.alpha :as s]
-            [ubergraph.core :as uber]
             [com.yetanalytics.pan.graph :as graph]
             [com.yetanalytics.test-utils
              :refer [should-satisfy should-satisfy+ should-not-satisfy]]
@@ -294,10 +293,10 @@
 
 (deftest graph-test
   (testing "graph properties"
-    (is (= 5 (count (uber/nodes tgraph))))
-    (is (= 5 (count (uber/edges tgraph))))
+    (is (= 5 (count (graph/nodes tgraph))))
+    (is (= 5 (count (graph/edges tgraph))))
     (is (= 5 (count (template/get-edges tgraph))))
-    (is (= (set (uber/nodes tgraph))
+    (is (= (set (graph/nodes tgraph))
            #{"https://foo.org/template1" "https://foo.org/template2"
              "https://foo.org/verb" "https://foo.org/activity-type"
              "https://foo.org/attachmentUsageType"}))

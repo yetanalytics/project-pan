@@ -1,8 +1,6 @@
 (ns com.yetanalytics.pan-test.objects-test.pattern-test
   (:require [clojure.test :refer [deftest is testing]]
             [clojure.spec.alpha :as s]
-            [ubergraph.alg :as alg]
-            [ubergraph.core :as uber]
             [com.yetanalytics.pan.graph :as graph]
             [com.yetanalytics.test-utils
              :refer [should-satisfy should-satisfy+ should-not-satisfy]]
@@ -249,7 +247,7 @@
                                     :zeroOrMore {:id "https://foo.org/p0"}})
            [["https://foo.org/pattern5" "https://foo.org/p0" {:type :zeroOrMore}]]))))
 
-(deftest alternates-test
+(deftest alternates-test-2
   (testing "Alternates pattern MUST NOT include optional or zeroOrMore directly."
     (should-satisfy+
      ::pattern/valid-edge
@@ -281,7 +279,7 @@
             :src-type "Pattern" :dest-type "Pattern"
             :type :alternates :dest-property :alternates})
 
-(deftest sequence-test
+(deftest sequence-test-2
   (testing "Sequence pattern MUST include at least two members, unless pattern is a primary pattern not used elsewhere that contains one StatementTemplate."
     (should-satisfy+
      ::pattern/valid-edge
@@ -370,10 +368,10 @@
 
 (deftest graph-test
   (testing "Pattern graph should satisfy various properties"
-    (is (= 10 (count (uber/nodes pgraph))))
-    (is (= 7 (count (uber/edges pgraph))))
+    (is (= 10 (count (graph/nodes pgraph))))
+    (is (= 7 (count (graph/edges pgraph))))
     (is (= 7 (count (pattern/get-edges pgraph))))
-    (is (= (set (uber/nodes pgraph))
+    (is (= (set (graph/nodes pgraph))
            #{"https://foo.org/pattern1" "https://foo.org/pattern2"
              "https://foo.org/pattern3" "https://foo.org/pattern4"
              "https://foo.org/pattern5" "https://foo.org/template1"
@@ -409,7 +407,7 @@
               :dest "https://foo.org/template5" :dest-type "StatementTemplate"
               :dest-property nil :type :zeroOrMore}}))
     (should-satisfy ::pattern/valid-edges (pattern/get-edges pgraph))
-    (should-satisfy ::pattern/singleton-sccs (alg/scc pgraph))
+    (should-satisfy ::pattern/singleton-sccs (graph/scc pgraph))
     (is (nil? (pattern/explain-graph pgraph)))
     (is (nil? (pattern/explain-graph-cycles pgraph)))))
 
