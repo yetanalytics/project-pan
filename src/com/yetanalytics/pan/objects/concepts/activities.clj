@@ -1,12 +1,9 @@
 (ns com.yetanalytics.pan.objects.concepts.activities
   (:require [clojure.spec.alpha :as s]
-            [clojure.set :refer [rename-keys]]
             [clojure.walk :refer [stringify-keys]]
-            [camel-snake-kebab.core :as csk]
             [xapi-schema.spec]
             [com.yetanalytics.pan.axioms :as ax]
-            [com.yetanalytics.pan.graph :as graph]
-            [com.yetanalytics.pan.util :as util]))
+            [com.yetanalytics.pan.graph :as graph]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Activity
@@ -29,13 +26,13 @@
 (defn stringify-lang-keys
   [kmap]
   (as-> kmap m
-    (if-some [kmap-name (:name m)] (update m :name stringify-keys) m)
-    (if-some [kmap-desc (:description m)] (update m :description stringify-keys) m)
-    (if-some [kmap-scale (:scale m)] (update m :scale stringify-keys) m)
-    (if-some [kmap-scale (:choices m)] (update m :choices stringify-keys) m)
-    (if-some [kmap-scale (:source m)] (update m :source stringify-keys) m)
-    (if-some [kmap-scale (:target m)] (update m :target stringify-keys) m)
-    (if-some [kmap-scale (:steps m)] (update m :steps stringify-keys) m)))
+    (if-some [_ (:name m)] (update m :name stringify-keys) m)
+    (if-some [_ (:description m)] (update m :description stringify-keys) m)
+    (if-some [_ (:scale m)] (update m :scale stringify-keys) m)
+    (if-some [_ (:choices m)] (update m :choices stringify-keys) m)
+    (if-some [_ (:source m)] (update m :source stringify-keys) m)
+    (if-some [_ (:target m)] (update m :target stringify-keys) m)
+    (if-some [_ (:steps m)] (update m :steps stringify-keys) m)))
 
 ;; Need to use this function instead of s/merge because of restrict-keys in
 ;; xapi-schema function.

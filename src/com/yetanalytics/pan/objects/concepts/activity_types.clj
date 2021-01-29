@@ -22,12 +22,6 @@
 (s/def ::relatedMatch ::ax/array-of-iri)
 (s/def ::exactMatch ::ax/array-of-iri)
 
-#_(s/def ::related-only-deprecated
-    (fn [atype]
-      (if (contains? atype :related)
-        (true? (:deprecated atype))
-        true)))
-
 (s/def ::activity-type
   (s/and
    (s/keys

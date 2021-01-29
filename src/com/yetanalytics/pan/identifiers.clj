@@ -1,7 +1,5 @@
 (ns com.yetanalytics.pan.identifiers
-  (:require [clojure.spec.alpha :as s]
-            [com.yetanalytics.pan.axioms :as ax]
-            [com.yetanalytics.pan.util :as u]))
+  (:require [clojure.spec.alpha :as s]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Utils 
@@ -41,9 +39,9 @@
   (s/map-of any? ::one-count))
 
 (defn validate-ids
-  "Validate that all ID values in a Profile are distinct.
-  Returns nil on success, or spec error data on failure."
-  [{:keys [id versions concepts templates patterns] :as profile}]
+  "Takes a Profile and validates that all ID values in it are distinct.
+   Returns nil on success, or spec error data on failure."
+  [{:keys [id versions concepts templates patterns]}]
   (let [ids (concat
              [id] (only-ids-multiple [versions concepts templates patterns]))
         counts (count-ids ids)]
@@ -63,9 +61,9 @@
 (s/def ::in-schemes (s/coll-of ::in-scheme))
 
 (defn validate-in-schemes
-  "Validate all object inSchemes, which MUST be valid version IDs.
-  Returns nil on success, or spec error data on failure."
-  [{:keys [versions concepts templates patterns] :as profile}]
+  "Takes a Profile and validates all object inSchemes, which MUST be valid
+   version IDs. Returns nil on success, or spec error data on failure."
+  [{:keys [versions concepts templates patterns]}]
   (let [version-ids (set (only-ids versions))
         all-objects (concat concepts templates patterns)
         vid-objects (mapv #(assoc % :version-ids version-ids) all-objects)]

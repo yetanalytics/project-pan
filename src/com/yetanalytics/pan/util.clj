@@ -1,10 +1,7 @@
 (ns com.yetanalytics.pan.util
   (:require [clojure.spec.alpha :as s]
             [clojure.string :as string]
-            [camel-snake-kebab.core :as kebab]
-            [cheshire.core :as cheshire]
-            [ubergraph.core :as uber]
-            [com.yetanalytics.pan.axioms :as ax]))
+            [cheshire.core :as cheshire]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Generic functions and specs 

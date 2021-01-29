@@ -1,15 +1,11 @@
 (ns com.yetanalytics.pan.objects.profile
   (:require [clojure.spec.alpha :as s]
-            [ubergraph.core :as uber]
-            [ubergraph.alg :as alg]
             [com.yetanalytics.pan.axioms :as ax]
-            [com.yetanalytics.pan.context :as context]
             [com.yetanalytics.pan.objects.profiles.versions :as versions]
             [com.yetanalytics.pan.objects.profiles.author :as author]
             [com.yetanalytics.pan.objects.concept :as concept]
             [com.yetanalytics.pan.objects.template :as template]
-            [com.yetanalytics.pan.objects.pattern :as pattern]
-            [com.yetanalytics.pan.util :as util]))
+            [com.yetanalytics.pan.objects.pattern :as pattern]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Profile metadata
