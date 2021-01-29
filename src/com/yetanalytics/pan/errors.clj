@@ -1,10 +1,8 @@
 (ns com.yetanalytics.pan.errors
   (:require [clojure.spec.alpha :as s]
-            [clojure.core.match :as m]
+            [clojure.core.match :as m] ; TODO add cljs.match
             [clojure.string :as string]
             [expound.alpha :as exp]
-            [expound.problems :as exp-prob]
-            [expound.printer :as exp-print]
             [com.yetanalytics.pan.axioms :as ax]
             [com.yetanalytics.pan.context :as ctx]
             [com.yetanalytics.pan.identifiers :as id]
@@ -16,8 +14,7 @@
             [com.yetanalytics.pan.objects.concepts.extensions.context :as ce]
             [com.yetanalytics.pan.objects.concepts.extensions.result :as re]
             [com.yetanalytics.pan.objects.concepts.activities :as act]
-            [com.yetanalytics.pan.util :as u]
-            [xapi-schema.spec :as xs]))
+            [com.yetanalytics.pan.util :as u]))
 
 ;; TODO: Expound can act pretty funny sometimes and we have to use some hacks
 ;; to avoid said funniness. Look into creating an in-house error message lib.
@@ -193,6 +190,7 @@
        " profile version ids:\n  "
        (->> value :version-ids sequence sort reverse (string/join "\n  "))))
 
+#_{:clj-kondo/ignore [:unresolved-symbol]} ; kondo doesn't recognize core.match
 (defn value-str-edge
   "Custom value string for IRI link error messages. Takes the form:
   > Invalid <property> identifier:
@@ -205,38 +203,42 @@
   (let [attrs-list
         (m/match [value]
           ;; Patterns
-          [{:src-primary _ :src-indegree _ :src-outdegree _ :dest-property _}]
+          [{:src-primary   src-primary
+            :src-indegree  src-indegree
+            :src-outdegree src-outdegree
+            :dest-property dest-property}]
           (str " at object:\n"
                "  {:id " (-> value :src strv) ",\n"
                "   :type " (-> value :src-type strv) ",\n"
-               "   :primary " (-> value :src-primary strv) ",\n"
+               "   :primary " (strv src-primary) ",\n"
                "   ...}\n"
                "\n"
                " linked object:\n"
                "   {:id " (-> value :dest strv) ",\n"
                "    :type " (-> value :dest-type strv) ",\n"
-               "    :" (-> value :dest-property strv) " ...,\n"
+               "    :" (strv dest-property) " ...,\n"
                "    ...}\n"
                "\n"
                ;; Add text that says:
                ;; "pattern is used # time(s) in the profile
                ;; and links out to # other object(s)."
-               " pattern is used " (-> value :src-indegree strv) " "
-               (pluralize "time" (-> value :src-indegree)) " in the profile\n"
-               " and links out to " (-> value :src-outdegree strv) " other "
-               (pluralize "object" (-> value :src-outdegree)) ".")
+               " pattern is used " (strv src-indegree) " "
+               (pluralize "time" src-indegree) " in the profile\n"
+               " and links out to " (strv src-outdegree) " other "
+               (pluralize "object" src-outdegree) ".")
           ;; Concepts and Templates
-          [{:src-version _ :dest-version _}]
+          [{:src-version  src-version
+            :dest-version dest-version}]
           (str " at object:\n"
                "  {:id " (-> value :src strv) ",\n"
                "   :type " (-> value :src-type strv) ",\n"
-               "   :inScheme " (-> value :src-version strv) ",\n"
+               "   :inScheme " (strv src-version) ",\n"
                "   ...}\n"
                "\n"
                " linked object:\n"
                "  {:id " (-> value :dest strv) ",\n"
                "   :type " (-> value :dest-type strv) ",\n"
-               "   :inScheme " (-> value :dest-version strv) ",\n"
+               "   :inScheme " (strv dest-version) ",\n"
                "   ...}")
           ;; Shouldn't happen but just in case
           :else "")]
