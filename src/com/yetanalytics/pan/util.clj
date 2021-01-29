@@ -1,7 +1,7 @@
 (ns com.yetanalytics.pan.util
   (:require [clojure.spec.alpha :as s]
             [clojure.string :as string]
-            [cheshire.core :as cheshire]))
+            [clojure.data.json :as json]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Generic functions and specs 
@@ -61,6 +61,6 @@
 (defn convert-json
   "Convert a JSON string into an edn data structure.
   Second argument should be what string the @ char should be replaced by."
-  [json at-replacement]
-  (cheshire/parse-string
-   json #(-> % (replace-at at-replacement) keyword)))
+  [json-str at-replacement]
+  (letfn [(key-fn [k] (-> k (replace-at at-replacement) keyword))]
+    (json/read-str json-str :key-fn key-fn)))
