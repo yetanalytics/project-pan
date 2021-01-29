@@ -12,3 +12,8 @@ pom.xml.asc
 .hgignore
 .hg/
 *.DS_Store
+
+# VSCode
+.calva
+.clj-kondo
+.lsp
