@@ -1,7 +1,16 @@
 (ns com.yetanalytics.pan.util
+  #?(:cljs (:refer-clojure :exclude [slurp]))
   (:require [clojure.spec.alpha :as s]
             [clojure.string :as string]
-            [clojure.data.json :as json]))
+            #?(:clj [clojure.data.json :as json]
+               :cljs [clojure.walk :as w])))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; File IO 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; Approach taken from https://gist.github.com/noprompt/9086232
+#?(:cljs (defmacro slurp [file] (slurp file)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Generic functions and specs 
@@ -58,9 +67,24 @@
   keywords)."
   [s replacement] (string/replace s #"@" replacement))
 
+#?(:clj
+   (defn- convert-json-java
+     [json-str at-replacement]
+     (letfn [(key-fn [k] (-> k (replace-at at-replacement) keyword))]
+       (json/read-str json-str :key-fn key-fn))))
+
+#?(:cljs
+   (defn- convert-json-js
+     [json-str at-replacement]
+     (letfn [(key-fn [k] (-> k (replace-at at-replacement) keyword))
+             (kv-fn [acc k v] (assoc acc (key-fn k) v))
+             (map-fn [x] (if (map? x) (reduce-kv kv-fn {} x) x))
+             (tree-fn [m] (w/postwalk map-fn m))]
+       (->> json-str (.parse js/JSON) js->clj tree-fn))))
+
 (defn convert-json
   "Convert a JSON string into an edn data structure.
   Second argument should be what string the @ char should be replaced by."
   [json-str at-replacement]
-  (letfn [(key-fn [k] (-> k (replace-at at-replacement) keyword))]
-    (json/read-str json-str :key-fn key-fn)))
+  #?(:clj (convert-json-java json-str at-replacement)
+     :cljs (convert-json-js json-str at-replacement)))
