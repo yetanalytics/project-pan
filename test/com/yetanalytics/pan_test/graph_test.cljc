@@ -21,4 +21,6 @@
     (is (= 1 (graph/in-degree ex-graph "bar")))
     (is (= 1 (graph/out-degree ex-graph "foo")))
     (is (= 0 (graph/out-degree ex-graph "bar")))
-    (is (= [["foo"] ["bar"]] (graph/scc ex-graph)))))
+    (is (= [["foo"] ["bar"]] (graph/scc ex-graph)))
+    (is (= [["bar" "foo"]]
+           (graph/scc (graph/add-edges ex-graph [["bar" "foo"]]))))))

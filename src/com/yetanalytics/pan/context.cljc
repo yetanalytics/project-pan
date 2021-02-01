@@ -24,9 +24,9 @@
   [context]
   (case context
     "https://w3id.org/xapi/profiles/context"
-    (slurp "resources/context/profile-context.json")
+    (util/read-resource "context/profile-context.json")
     "https://w3id.org/xapi/profiles/activity-context"
-    (slurp "resources/context/activity-context.json")
+    (util/read-resource "context/activity-context.json")
     ;; TODO get other contexts from the Internet; currently throws exception
     (throw (ex-info "Unable to read from URL" {:url context}))))
 
@@ -49,7 +49,10 @@
                k)))
 
 ;; Regular expressions
-(def gen-delims-regex #".*(?:\:|\/|\?|\#|\[|\]|\@)$")
+;; Note: Forward slash is not escaped in JS regex
+(def gen-delims-regex
+  #?(:clj #".*(?:\:|\/|\?|\#|\[|\]|\@)$"
+     :cljs #".*(?:\:|/|\?|\#|\[|\]|\@)$"))
 (def prefix-regex #"(.*\:)")
 
 ;; JSON-LD 1.1 prefixes may be a simple term definition that ends in a URI
@@ -198,7 +201,7 @@
       ;; @context is inline (not allowed by spec, but good for debug)
       (map? context-val)
       (let [errors (validate-context context-val)]
-        (if (not (empty? errors))
+        (if (not-empty errors)
           (conj context-stack {:context nil :errors errors :path curr-path})
           (conj context-stack {:context context-val :errors nil :path curr-path})))
       ;; No @context key at this location

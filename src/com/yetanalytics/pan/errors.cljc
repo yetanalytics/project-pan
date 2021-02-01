@@ -1,6 +1,7 @@
 (ns com.yetanalytics.pan.errors
-  (:require [clojure.spec.alpha :as s]
-            [clojure.core.match :as m] ; TODO add cljs.match
+  (:require #?(:clj [clojure.core.match :as m]
+               :cljs [cljs.core.match :as m])
+            [clojure.spec.alpha :as s]
             [clojure.string :as string]
             [expound.alpha :as exp]
             [com.yetanalytics.pan.axioms :as ax]

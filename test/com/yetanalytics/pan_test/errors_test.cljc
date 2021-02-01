@@ -180,7 +180,7 @@
            [[] [:id] [:type] [:conformsTo] [:prefLabel 1] [:definition 0]
             [:author :type] [:author :name] [:author :url]
             [:versions :id] [:versions :generatedAtTime]]))
-    (is (= (->> bad-profile-2a p/validate e/group-by-in e/sort-by-path
+    #_(is (= (->> bad-profile-2a p/validate e/group-by-in e/sort-by-path
                 (mapv #(-> % ::s/problems first :path)))))))
 
 (deftest spec-test

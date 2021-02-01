@@ -154,8 +154,3 @@
               :type :narrower}}
            (set (concept/get-edges cgraph))))
     (is (nil? (concept/explain-graph cgraph)))))
-
-(loom.attr/attr cgraph
-                ["https://foo.org/aut2"
-                 {:type "AttachmentUsageType", :inScheme "https://foo.org/v1"}]
-                :inScheme)

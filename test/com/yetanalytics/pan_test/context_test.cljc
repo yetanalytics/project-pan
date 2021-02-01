@@ -206,9 +206,9 @@
 
 (deftest create-context-test
   (testing "create-context function"
-    (is (= (try (:context (c/create-context "https://non-existent"))
-                (catch Exception e (str e)))
-           "clojure.lang.ExceptionInfo: Unable to read from URL {:url \"https://non-existent\"}"))
+    #?(:clj (is (= (try (:context (c/create-context "https://non-existent"))
+                        (catch Exception e (str e)))
+                   "clojure.lang.ExceptionInfo: Unable to read from URL {:url \"https://non-existent\"}")))
     (is (some? (:context (c/create-context "https://w3id.org/xapi/profiles/context"))))
     (is (some? (:context (c/create-context "https://w3id.org/xapi/profiles/activity-context"))))))
 
@@ -402,6 +402,8 @@
 
 (deftest validate-contexts-integration-test
   (testing "integration testing on Will's CATCH profile"
-    (is (= (c/validate-contexts
-            (util/convert-json (slurp "resources/sample_profiles/will-profile.json") ""))
+    (is (= (-> "sample_profiles/will-profile.json"
+               util/read-resource
+               (util/convert-json "")
+               c/validate-contexts)
            {:context-errors nil :context-key-errors nil}))))

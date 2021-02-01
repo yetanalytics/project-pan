@@ -49,6 +49,8 @@
     (is (s/valid? ::ax/json-path "$['store\\|$io'] | $.foo.bar"))
     (is (not (s/valid? ::ax/json-path "what the pineapple")))))
 
+(s/explain ::ax/json-path "$['store\\|$io'] | $.foo.bar")
+
 ;; Test in bulk
 (deftest test-jsonpath-dot
   (testing "JSONPath strings with dot child notation"
@@ -159,7 +161,6 @@
 
 ;; JSON Schema tests
 
-
 (def schema-1 "{\"$schema\" : \"https://foo.org/\",
                 \"$comment\" : \"stan loona\"}")
 
@@ -222,9 +223,9 @@
     (is (not (s/valid? ::ax/json-schema "{\"$schema\" : \" not a uri \"}")))
     (is (not (s/valid? ::ax/json-schema "{\"$schema\" : \"alsoNotURI\"}")))
     (is (not (s/valid? ::ax/json-schema "{\"$comment\" : 74}")))
-    (is (not (s/valid? ::ax/json-schema schema-3))) ; valid only in draft-03
-    (is (not (s/valid? ::ax/json-schema schema-4))) ; valid only in draft-03
-))
+    ; next two are valid only in draft-03
+    (is (not (s/valid? ::ax/json-schema schema-3))) 
+    (is (not (s/valid? ::ax/json-schema schema-4)))))
 
 ;; TODO Should check that IRIs with non-ASCII chars pass (currently they don't)
 (deftest test-iri

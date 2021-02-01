@@ -71,6 +71,8 @@
           g
           edges))
 
+(-> (loom.graph/digraph) (loom.graph/add-edges ["foo" "bar"] ["bar" "foo"]))
+
 (defn src
   "Return the source node of a directed edge."
   [edge]
@@ -96,11 +98,33 @@
   [g node]
   (loom.graph/out-degree g node))
 
+;; Need to manually rewrite transpose and scc function due to bug in Loom lib
+
+(defn- transpose [{in :in adj :adj :as g}] (assoc g :adj in :in adj))
+
+(defn- scc* ;; Copy-paste of code from loom.alg namespace
+  [g]
+  (let [gt (transpose g)]
+    (loop [stack (reverse (loom.alg/post-traverse g))
+           seen  #{}
+           cc    (transient [])]
+      (if (empty? stack)
+        (persistent! cc)
+        (if (seen (first stack))
+          (recur (rest stack) seen cc)
+          (let [[c seen]
+                (loom.alg/post-traverse gt (first stack)
+                                        :seen seen
+                                        :return-seen true)]
+            (recur (rest stack)
+                   seen
+                   (conj! cc c))))))))
+
 (defn scc
   "Return the strongly-connected components of a digraph as a vector of
    vectors. Uses Kosaraju's algorithm."
   [g]
-  (loom.alg/scc g))
+  (scc* g))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Graph specs 

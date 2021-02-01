@@ -2,14 +2,11 @@
   (:require [clojure.spec.alpha :as s]
             [clojure.string :as string]
             [xapi-schema.spec.regex :as xsr]
+            [com.yetanalytics.pan.util :as u]
             #?(:clj [json-schema.core :as jschema]
-               :cljs [jsonschema]))
-  #?(:clj
-     (:require [com.yetanalytics.pan.util
-                :refer [read-json-res read-edn-res]])
-     :cljs
-     (:require-macros [com.yetanalytics.pan.util
-                       :refer [read-json-res read-edn-res]])))
+               :cljs [jsonschema])
+            #?(:clj [clojure.edn :as edn]
+               :cljs [cljs.reader :as edn])))
 
 ;; Booleans
 ;; (Useless wrapper, but exists for consistency)
@@ -42,12 +39,13 @@
 ;; https://www.iana.org/assignments/media-types/media-types.xml
 ;; Currently only the five discrete top-level media type values are supported:
 ;; application, audio, image, text and video.
-(def media-types (read-edn-res "media_types.edn"))
+(def media-types (-> "media_types.edn" u/read-resource edn/read-string))
 
 (s/def ::media-type
   (s/and ::string
          (fn [mt]
-           (let [substrs (string/split mt #"\/" 2)]
+           (let [regexp  #?(:clj #"\/" :cljs #"/")
+                 substrs (string/split mt regexp 2)]
              (contains? (get media-types (first substrs)) (second substrs))))))
 
 ;; JSONPath strings
@@ -63,29 +61,37 @@
 (def JSONPathRegEx #"\$((((\.\.?)([^\[\]\.,\s]+|(?=\[)))|(\[\s*(('([^,']|(\\\,)|(\\\'))+'(,\s*('([^,']|(\\\,)|(\\\'))+'))*\s*)|\*)\s*\]))(\[((\d*(,\s*(\d*))*)|\*)\])?)*")
 (def JSONPathSplitRegEx #"\s*\|\s*(?!([^\[]*\]))")
 
+; Need to filter out nils caused by JavaScript regexes
 (s/def ::json-path
   (s/and ::string
          (fn [paths]
            (every? some?
                    (map (partial re-matches JSONPathRegEx)
-                        (#(string/split % JSONPathSplitRegEx) paths))))))
+                        (filterv some? ; Filter out nils from JS regexes
+                                 (string/split paths JSONPathSplitRegEx)))))))
 
 ;; JSON Schema
 ;; Example: "{\"type\":\"array\", \"uniqueItems\":true}"
 
 (defn schema-validate [json-schema json]
   #?(:clj
-     (try ((jschema/validate json-schema json) true)
+     (try (let [_ (jschema/validate json-schema json)] true)
           (catch Exception _ false))
      :cljs
-     (.validate jsonschema json json-schema)))
+     (try (let [vres (.validate jsonschema
+                                (.parse js/JSON json)
+                                (.parse js/JSON json-schema))]
+            (. vres -valid))
+          (catch js/Error _ false))
+     (.validate jsonschema
+                (.parse js/JSON json)
+                (.parse js/JSON json-schema))))
 
 ;; TODO: dynamic var for json schema version
 ;; TODO: test newest schema: version 08
-(def meta-schema (read-json-res "json/schema-07.json"))
+(def meta-schema (u/read-resource "json/schema-07.json"))
 
-(s/def ::json-schema
-  (s/and ::string (partial schema-validate meta-schema)))
+(s/def ::json-schema (s/and ::string (partial schema-validate meta-schema)))
 
 ;; IRIs/IRLs/URIs/URLs
 ;; Example: "https://yetanalytics.io"

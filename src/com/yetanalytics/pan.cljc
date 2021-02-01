@@ -1,6 +1,5 @@
 (ns com.yetanalytics.pan
-  (:require [clojure.spec.alpha :as s]
-            [com.yetanalytics.pan.objects.profile :as profile]
+  (:require [com.yetanalytics.pan.objects.profile :as profile]
             [com.yetanalytics.pan.objects.concept :as concept]
             [com.yetanalytics.pan.objects.template :as template]
             [com.yetanalytics.pan.objects.pattern :as pattern]
@@ -18,7 +17,9 @@
   [profile]
   (if (string? profile)
     (try (util/convert-json profile "_")
-         (catch Exception e (ex-info "JSON parsing error! " (ex-data e))))
+         (catch #?(:clj Exception :cljs js/Error) 
+                e 
+           (ex-info "JSON parsing error! " (ex-data e))))
     profile))
 
 (defn validate-profile

@@ -1,12 +1,17 @@
 (ns com.yetanalytics.pan-test
   (:require [clojure.test :refer [deftest is testing]]
-            [com.yetanalytics.pan :refer [validate-profile]]))
+            [com.yetanalytics.pan :refer [validate-profile]]
+            [com.yetanalytics.pan.util :as util]))
 
 ;; Profiles to test
-(def will-profile-raw (slurp "resources/sample_profiles/will-profile-raw.json"))
-(def will-profile-fix (slurp "resources/sample_profiles/will-profile-reduced.json"))
-(def cmi-profile-raw (slurp "resources/sample_profiles/cmi5.json"))
-(def cmi-profile-fix (slurp "resources/sample_profiles/cmi5-fixed.json"))
+(def will-profile-raw
+  (util/read-resource "sample_profiles/will-profile-raw.json"))
+(def will-profile-fix
+  (util/read-resource "sample_profiles/will-profile-reduced.json"))
+(def cmi-profile-raw
+  (util/read-resource "sample_profiles/cmi5.json"))
+(def cmi-profile-fix
+  (util/read-resource "sample_profiles/cmi5-fixed.json"))
 
 ; ;; Raw profile
 (deftest will-raw-test

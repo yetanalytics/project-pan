@@ -274,7 +274,7 @@
       :src-type "Pattern" :dest-type "Verb"
       :type :alternates :dest-property nil})))
 
-(s/explain ::pattern/valid-edge
+#_(s/explain ::pattern/valid-edge
            {:src "https://foo.org/p1" :dest "https://foo.org/p2"
             :src-type "Pattern" :dest-type "Pattern"
             :type :alternates :dest-property :alternates})
