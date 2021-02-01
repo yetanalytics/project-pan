@@ -1,17 +1,18 @@
 (ns com.yetanalytics.pan.axioms
-  (:require [clojure.edn :as edn]
-            [clojure.java.io :as io]
+  (:require [clojure.spec.alpha :as s]
             [clojure.string :as string]
-            [clojure.spec.alpha :as s]
-            [clojure.spec.gen.alpha :as sgen]
-            [json-schema.core :as js]
-            [xapi-schema.spec :as xs]
-            [xapi-schema.spec.regex :as xsr]))
+            [xapi-schema.spec.regex :as xsr]
+            #?(:clj [json-schema.core :as jschema]
+               :cljs [jsonschema]))
+  #?(:clj
+     (:require [com.yetanalytics.pan.util
+                :refer [read-json-res read-edn-res]])
+     :cljs
+     (:require-macros [com.yetanalytics.pan.util
+                       :refer [read-json-res read-edn-res]])))
 
 ;; Booleans
 ;; (Useless wrapper, but exists for consistency)
-
-
 (s/def ::boolean boolean?)
 
 ;; Arbitrary strings
@@ -28,7 +29,7 @@
 ;; TODO Should revise language maps such that keys like :foo are not counted
 (s/def ::language-tag
   (fn [t] (or (and (keyword? t) (->> t name (re-matches xsr/LanguageTagRegEx)))
-              (and (string? t) (not (empty? t))
+              (and (string? t) (not-empty t)
                    (re-matches xsr/LanguageTagRegEx t)))))
 
 (s/def ::language-map
@@ -41,7 +42,7 @@
 ;; https://www.iana.org/assignments/media-types/media-types.xml
 ;; Currently only the five discrete top-level media type values are supported:
 ;; application, audio, image, text and video.
-(def media-types (-> "media_types.edn" io/resource slurp edn/read-string))
+(def media-types (read-edn-res "media_types.edn"))
 
 (s/def ::media-type
   (s/and ::string
@@ -57,7 +58,7 @@
 ;; cases. The main exception is with the pipe character '|', which, if placed
 ;; before the '$' character separates two JSONPath strings (unless escaped).
 ;; See: regexr.com/4fk7v
-;;
+
 ;; JSONPath regexes
 (def JSONPathRegEx #"\$((((\.\.?)([^\[\]\.,\s]+|(?=\[)))|(\[\s*(('([^,']|(\\\,)|(\\\'))+'(,\s*('([^,']|(\\\,)|(\\\'))+'))*\s*)|\*)\s*\]))(\[((\d*(,\s*(\d*))*)|\*)\])?)*")
 (def JSONPathSplitRegEx #"\s*\|\s*(?!([^\[]*\]))")
@@ -71,28 +72,24 @@
 
 ;; JSON Schema
 ;; Example: "{\"type\":\"array\", \"uniqueItems\":true}"
-;; 
 
-;; FIXME: add additional json schema draft versions as needed from https://json-schema.org/specification-links.html
-;; - add to resources/json
-
-(defn schema-validate [schema json]
-  (try (do (js/validate schema json) true)
-       (catch Exception e false)))
+(defn schema-validate [json-schema json]
+  #?(:clj
+     (try ((jschema/validate json-schema json) true)
+          (catch Exception _ false))
+     :cljs
+     (.validate jsonschema json json-schema)))
 
 ;; TODO: dynamic var for json schema version
-
-(def meta-schema
-  (-> "json/schema-07.json" io/resource slurp)
-  ;; FIXME: test newest schema
-  #_(-> "json/schema-08.json" io/resource slurp))
+;; TODO: test newest schema: version 08
+(def meta-schema (read-json-res "json/schema-07.json"))
 
 (s/def ::json-schema
   (s/and ::string (partial schema-validate meta-schema)))
 
 ;; IRIs/IRLs/URIs/URLs
 ;; Example: "https://yetanalytics.io"
-;;
+
 ;; TODO We are currently using the xapi-schema specs as substitutes for the
 ;; real thing (currently they do not correctly differentiate between IRIs,
 ;; which accept non-ASCII chars, and URIs, which do not).

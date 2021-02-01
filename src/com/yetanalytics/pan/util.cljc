@@ -1,16 +1,43 @@
 (ns com.yetanalytics.pan.util
-  #?(:cljs (:refer-clojure :exclude [slurp]))
-  (:require [clojure.spec.alpha :as s]
-            [clojure.string :as string]
-            #?(:clj [clojure.data.json :as json]
-               :cljs [clojure.walk :as w])))
+  #?(:clj
+     (:require [clojure.spec.alpha :as s]
+               [clojure.string :as string]
+               [clojure.data.json :as json]
+               [clojure.java.io :as io]
+               [clojure.edn :as edn])
+     ;; (:refer-clojure :exclude [slurp])
+     :cljs
+     (:require [clojure.spec.alpha :as s]
+               [clojure.string :as string]
+               [clojure.walk :as w])))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; File IO 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; Approach taken from https://gist.github.com/noprompt/9086232
-#?(:cljs (defmacro slurp [file] (slurp file)))
+;; Approach taken from:
+;; - https://gist.github.com/noprompt/9086232
+;; - https://github.com/yetanalytics/xapi-schema/blob/master/test/xapi_schema/support/data.cljc
+
+#?(:clj
+   (defmacro read-file
+     "Read a file and return a string."
+     [file]
+     (slurp file)))
+
+#?(:clj
+   (defmacro read-json-res
+     "Read a JSON file in the \"resources\" dir. Returns string."
+     [path]
+     (with-open [f (-> path io/resource io/reader)]
+       (-> f slurp))))
+
+#?(:clj
+   (defmacro read-edn-res
+     "Read an EN file in the \"resource\" directory. Returns EDN."
+     [path]
+     (with-open [f (-> path io/resource io/reader)]
+       (-> f java.io.PushbackReader. edn/read))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Generic functions and specs 
