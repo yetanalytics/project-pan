@@ -179,8 +179,6 @@
             [:author :type] [:author :name] [:author :url]
             [:versions :id] [:versions :generatedAtTime]]
            (->> bad-profile-1d p/validate e/group-by-in e/sort-by-path
-                (mapv #(-> % ::s/problems first :path)))))
-    #_(is (= (->> bad-profile-2a p/validate e/group-by-in e/sort-by-path
                 (mapv #(-> % ::s/problems first :path)))))))
 
 (deftest spec-test
