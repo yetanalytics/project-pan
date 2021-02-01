@@ -20,10 +20,10 @@
 ;; Regex properties
 ;; MUST include at least two members in alternates
 (s/def ::alternates (s/coll-of ::ax/iri :type vector? :min-count 2))
-(s/def ::optional (s/keys :req-un [::id]))
-(s/def ::oneOrMore (s/keys :req-un [::id]))
+(s/def ::optional ::ax/iri)
+(s/def ::oneOrMore ::ax/iri)
 (s/def ::sequence (s/coll-of ::ax/iri :type vector? :min-count 1))
-(s/def ::zeroOrMore (s/keys :req-un [::id]))
+(s/def ::zeroOrMore ::ax/iri)
 
 ;; Check if 'primary' property is true or false
 (s/def ::is-primary-true (fn [p] (:primary p)))
@@ -100,20 +100,19 @@
   (mapv #(vector id % {:type :sequence}) (:sequence pattern)))
 
 (defmethod get-pattern-edges '(:optional) [{:keys [id optional]}]
-  (vector (vector id (:id optional) {:type :optional})))
+  (vector (vector id optional {:type :optional})))
 
 (defmethod get-pattern-edges '(:oneOrMore) [{:keys [id oneOrMore]}]
-  (vector (vector id (:id oneOrMore) {:type :oneOrMore})))
+  (vector (vector id oneOrMore {:type :oneOrMore})))
 
 (defmethod get-pattern-edges '(:zeroOrMore) [{:keys [id zeroOrMore]}]
-  (vector (vector id (:id zeroOrMore) {:type :zeroOrMore})))
+  (vector (vector id zeroOrMore {:type :zeroOrMore})))
 
 (defmethod get-pattern-edges :default [_] nil)
 
 ;; Return a vector of nodes of the form [id attribute-map]
-(defmethod graph/node-with-attrs "Pattern" [pattern]
-  (let [id (:id pattern)
-        attrs {:type "Pattern"
+(defmethod graph/node-with-attrs "Pattern" [{id :id :as pattern}]
+  (let [attrs {:type "Pattern"
                :primary (get pattern :primary false)
                :property (first (dispatch-on-pattern pattern))}]
     (vector id attrs)))

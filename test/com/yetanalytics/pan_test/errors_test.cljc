@@ -119,11 +119,11 @@
          [{:id "https://foo.org/pattern-one"
            :type "Pattern"
            :primary true
-           :oneOrMore {:id "https://foo.org/pattern-two"}}
+           :oneOrMore "https://foo.org/pattern-two"}
           {:id "https://foo.org/pattern-two"
            :type "Pattern"
            :primary true
-           :oneOrMore {:id "https://foo.org/pattern-one"}}]))
+           :oneOrMore "https://foo.org/pattern-one"}]))
 
 ;; Let's add patterns! But our pattern refers to itself
 (def bad-profile-2g
@@ -131,7 +131,7 @@
          [{:id "https://foo.org/pattern-three"
            :type "Pattern"
            :primary true
-           :oneOrMore {:id "https://foo.org/pattern-three"}}]))
+           :oneOrMore "https://foo.org/pattern-three"}]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Tests

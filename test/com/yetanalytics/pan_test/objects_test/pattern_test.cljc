@@ -67,11 +67,11 @@
 (deftest optional-test
   (testing "optional (A?) property"
     (should-satisfy ::pattern/optional
-                    {:id "https://w3id.org/xapi/catch/templates#view-rubric"})
+                    "https://w3id.org/xapi/catch/templates#view-rubric")
+    (should-not-satisfy ::pattern/optional
+                        {:id "https://w3id.org/xapi/catch/templates#view-rubric"})
     (should-not-satisfy ::pattern/optional
                         {:foo "https://w3id.org/xapi/catch/templates#view-rubric"})
-    (should-not-satisfy ::pattern/optional
-                        "https://w3id.org/xapi/catch/templates#view-rubric")
     (should-not-satisfy ::pattern/optional
                         ["https://w3id.org/xapi/catch/templates#view-rubric"])
     (should-not-satisfy ::pattern/optional "")))
@@ -79,11 +79,11 @@
 (deftest one-or-more-test
   (testing "oneOrMore (A+) property"
     (should-satisfy ::pattern/oneOrMore
-                    {:id "https://w3id.org/xapi/catch/patterns#f1-2-01-scored"})
+                    "https://w3id.org/xapi/catch/patterns#f1-2-01-scored")
+    (should-not-satisfy ::pattern/oneOrMore
+                        {:id "https://w3id.org/xapi/catch/patterns#f1-2-01-scored"})
     (should-not-satisfy ::pattern/oneOrMore
                         {:foo "https://w3id.org/xapi/catch/patterns#f1-2-01-scored"})
-    (should-not-satisfy ::pattern/oneOrMore
-                        "https://w3id.org/xapi/catch/patterns#f1-2-01-scored")
     (should-not-satisfy ::pattern/oneOrMore
                         ["https://w3id.org/xapi/catch/patterns#f1-2-01-scored"])
     (should-not-satisfy ::pattern/oneOrMore "")))
@@ -91,11 +91,11 @@
 (deftest zero-or-more-test
   (testing "zeroOrMore (A*) property"
     (should-satisfy ::pattern/zeroOrMore
-                    {:id "https://w3id.org/xapi/catch/patterns#system-updates-status-incomplete"})
+                        "https://w3id.org/xapi/catch/patterns#system-updates-status-incomplete")
+    (should-not-satisfy ::pattern/zeroOrMore
+                        {:id "https://w3id.org/xapi/catch/patterns#system-updates-status-incomplete"})
     (should-not-satisfy ::pattern/zeroOrMore
                         {:foo "https://w3id.org/xapi/catch/patterns#system-updates-status-incomplete"})
-    (should-not-satisfy ::pattern/zeroOrMore
-                        "https://w3id.org/xapi/catch/patterns#system-updates-status-incomplete")
     (should-not-satisfy ::pattern/zeroOrMore
                         ["https://w3id.org/xapi/catch/patterns#system-updates-status-incomplete"])
     (should-not-satisfy ::pattern/zeroOrMore "")))
@@ -157,7 +157,7 @@
                         :type "Pattern"
                         :primary true
                         :inScheme "https://w3id.org/xapi/catch/v1"
-                        :optional {:id "https://w3id.org/xapi/catch/templates#view-rubric"}})))))
+                        :optional "https://w3id.org/xapi/catch/templates#view-rubric"})))))
 
 (deftest non-primary-pattern-test
   (testing "non-primary pattern"
@@ -167,7 +167,7 @@
                    :inScheme "https://w3id.org/xapi/catch/v1"
                    :prefLabel {"en" "view rubric"}
                    :definition {"en" "This is a pattern for someone looking at a rubric"}
-                   :optional {:id "https://w3id.org/xapi/catch/templates#view-rubric"}}))
+                   :optional "https://w3id.org/xapi/catch/templates#view-rubric"}))
     (is (not (s/valid? ::pattern/pattern
                        {:id "https://w3id.org/xapi/catch/patterns#cross-linguistic-connections-completion"
                         :type "Pattern"
@@ -179,14 +179,14 @@
                   {:id "https://w3id.org/xapi/minimal/pattern"
                    :type "Pattern"
                    :inScheme "https://w3id.org/xapi/catch/v1"
-                   :optional {:id "https://w3id.org/xapi/catch/templates#view-rubric"}}))
+                   :optional "https://w3id.org/xapi/catch/templates#view-rubric"}))
     ; Add the "primary" property (set to false)
     (is (s/valid? ::pattern/pattern
                   {:id "https://w3id.org/xapi/minimal/pattern"
                    :type "Pattern"
                    :primary false
                    :inScheme "https://w3id.org/xapi/catch/v1"
-                   :optional {:id "https://w3id.org/xapi/catch/templates#view-rubric"}}))
+                   :optional "https://w3id.org/xapi/catch/templates#view-rubric"}))
     ; Pattern require one regex rule
     (is (not (s/valid? ::pattern/pattern
                        {:id "https://w3id.org/xapi/minimal/pattern"
@@ -197,8 +197,8 @@
                        {:id "https://w3id.org/xapi/minimal/pattern"
                         :type "Pattern"
                         :inScheme "https://w3id.org/xapi/catch/v1"
-                        :optional {:id "https://w3id.org/xapi/catch/templates#one"}
-                        :zeroOrMore {:id "https://w3id.org/xapi/catch/templates#two"}})))))
+                        :optional "https://w3id.org/xapi/catch/templates#one"
+                        :zeroOrMore "https://w3id.org/xapi/catch/templates#two"})))))
 
 ;; Graph tests
 
@@ -215,7 +215,7 @@
     (is (= (graph/node-with-attrs {:id "https://foo.org/pattern1"
                                    :type "Pattern"
                                    :primary false
-                                   :optional {:id "https://foo.org/p3"}})
+                                   :optional "https://foo.org/p3"})
            ["https://foo.org/pattern1" {:type "Pattern"
                                         :primary false
                                         :property :optional}]))))
@@ -236,15 +236,15 @@
             ["https://foo.org/pattern2" "https://foo.org/p2" {:type :sequence}]]))
     (is (= (graph/edges-with-attrs {:id "https://foo.org/pattern3"
                                     :type "Pattern"
-                                    :optional {:id "https://foo.org/p0"}})
+                                    :optional "https://foo.org/p0"})
            [["https://foo.org/pattern3" "https://foo.org/p0" {:type :optional}]]))
     (is (= (graph/edges-with-attrs {:id "https://foo.org/pattern4"
                                     :type "Pattern"
-                                    :oneOrMore {:id "https://foo.org/p0"}})
+                                    :oneOrMore "https://foo.org/p0"})
            [["https://foo.org/pattern4" "https://foo.org/p0" {:type :oneOrMore}]]))
     (is (= (graph/edges-with-attrs {:id "https://foo.org/pattern5"
                                     :type "Pattern"
-                                    :zeroOrMore {:id "https://foo.org/p0"}})
+                                    :zeroOrMore "https://foo.org/p0"})
            [["https://foo.org/pattern5" "https://foo.org/p0" {:type :zeroOrMore}]]))))
 
 (deftest alternates-test-2
@@ -356,13 +356,13 @@
                "https://foo.org/template2"]}
    {:id "https://foo.org/pattern3" :type "Pattern"
     :inScheme "https://foo.org/v1" :primary true
-    :optional {:id "https://foo.org/template3"}}
+    :optional "https://foo.org/template3"}
    {:id "https://foo.org/pattern4" :type "Pattern"
     :inScheme "https://foo.org/v1" :primary true
-    :oneOrMore {:id "https://foo.org/template4"}}
+    :oneOrMore "https://foo.org/template4"}
    {:id "https://foo.org/pattern5" :type "Pattern"
     :inScheme "https://foo.org/v1" :primary true
-    :zeroOrMore {:id "https://foo.org/template5"}}])
+    :zeroOrMore "https://foo.org/template5"}])
 
 (def pgraph (pattern/create-graph ex-templates ex-patterns))
 
@@ -415,17 +415,17 @@
   [{:id "https://foo.org/pattern-one"
     :type "Pattern"
     :primary true
-    :oneOrMore {:id "https://foo.org/pattern-two"}}
+    :oneOrMore "https://foo.org/pattern-two"}
    {:id "https://foo.org/pattern-two"
     :type "Pattern"
     :primary true
-    :oneOrMore {:id "https://foo.org/pattern-one"}}])
+    :oneOrMore "https://foo.org/pattern-one"}])
 
 (def cyclic-patterns-2
   [{:id "https://foo.org/pattern-three"
     :type "Pattern"
     :primary true
-    :oneOrMore {:id "https://foo.org/pattern-three"}}])
+    :oneOrMore "https://foo.org/pattern-three"}])
 
 (def cyclic-pgraph-1 (pattern/create-graph [] cyclic-patterns-1))
 

@@ -3892,9 +3892,7 @@
       "definition": {
         "en": "This is a pattern for someone looking at a rubric"
       },
-      "optional": {
-        "id": "https://w3id.org/xapi/catch/templates#view-rubric"
-      }
+      "optional": "https://w3id.org/xapi/catch/templates#view-rubric"
     },
     {
       "id": "https://w3id.org/xapi/catch/patterns#reflection",
@@ -3906,9 +3904,7 @@
       "definition": {
         "en": "This is a pattern for someone writing a reflection"
       },
-      "optional": {
-        "id": "https://w3id.org/xapi/catch/templates#wrote-reflection"
-      }
+      "optional": "https://w3id.org/xapi/catch/templates#wrote-reflection"
     },
     {
       "id": "https://w3id.org/xapi/catch/patterns#upload-or-design-lesson-plan",
@@ -3966,9 +3962,7 @@
       "definition": {
         "en": "matches if there is an incomplete activity or a succssful activity.  Needed to allow for multiple attemps and a definite conclusion."
       },
-      "zeroOrMore": {
-        "id": "https://w3id.org/xapi/catch/patterns#system-updates-status-incomplete"
-      }
+      "zeroOrMore": "https://w3id.org/xapi/catch/patterns#system-updates-status-incomplete"
     },
     {
       "id": "https://w3id.org/xapi/catch/patterns#mentor-scores-activity",
@@ -4083,9 +4077,7 @@
       "definition": {
         "en": "one or more submission of a schedule for scoring"
       },
-      "oneOrMore": {
-        "id": "https://w3id.org/xapi/catch/patterns#f1-1-03-scored"
-      }
+      "oneOrMore": "https://w3id.org/xapi/catch/patterns#f1-1-03-scored"
     },
     {
       "id": "https://w3id.org/xapi/catch/patterns#f1-1-03-completion",
@@ -4182,9 +4174,7 @@
       "definition": {
         "en": "one or more submission of advocacy event evidence for scoring"
       },
-      "oneOrMore": {
-        "id": "https://w3id.org/xapi/catch/patterns#f1-1-04-scored"
-      }
+      "oneOrMore": "https://w3id.org/xapi/catch/patterns#f1-1-04-scored"
     },
     {
       "id": "https://w3id.org/xapi/catch/patterns#f1-1-04-completion",
@@ -4263,9 +4253,7 @@
       "definition": {
         "en": "one or more submission of lesson plan 1 for scoring"
       },
-      "oneOrMore": {
-        "id": "https://w3id.org/xapi/catch/patterns#f1-2-01-scored"
-      }
+      "oneOrMore": "https://w3id.org/xapi/catch/patterns#f1-2-01-scored"
     },
     {
       "id": "https://w3id.org/xapi/catch/patterns#f1-2-01-completion",
@@ -4331,9 +4319,7 @@
       "definition": {
         "en": "one or more submission of lesson plan 2 for scoring"
       },
-      "oneOrMore": {
-        "id": "https://w3id.org/xapi/catch/patterns#f1-2-02-scored"
-      }
+      "oneOrMore": "https://w3id.org/xapi/catch/patterns#f1-2-02-scored"
     },
     {
       "id": "https://w3id.org/xapi/catch/patterns#f1-2-02-completion",
@@ -4399,9 +4385,7 @@
       "definition": {
         "en": "one or more submission of lesson plan 3 for scoring"
       },
-      "oneOrMore": {
-        "id": "https://w3id.org/xapi/catch/patterns#f1-2-03-scored"
-      }
+      "oneOrMore": "https://w3id.org/xapi/catch/patterns#f1-2-03-scored"
     },
     {
       "id": "https://w3id.org/xapi/catch/patterns#f1-2-03-completion",
@@ -4480,9 +4464,7 @@
       "definition": {
         "en": "one or more submission of a lesson plan for scoring"
       },
-      "oneOrMore": {
-        "id": "https://w3id.org/xapi/catch/patterns#f3-2-01-scored"
-      }
+      "oneOrMore": "https://w3id.org/xapi/catch/patterns#f3-2-01-scored"
     },
     {
       "id": "https://w3id.org/xapi/catch/patterns#f3-2-01-completion",
@@ -4509,9 +4491,7 @@
       "prefLabel": {
         "en": "complete Two-Way Sheltered Instruction"
       },
-      "oneOrMore": {
-        "id": "https://w3id.org/xapi/catch/patterns#f3-2-01-completion"
-      }
+      "oneOrMore": "https://w3id.org/xapi/catch/patterns#f3-2-01-completion"
     },
     {
       "id": "https://w3id.org/xapi/catch/patterns#m3-2-01-iteration",
@@ -4559,9 +4539,7 @@
       "definition": {
         "en": "one or more submission of a lesson plan and resources for scoring"
       },
-      "oneOrMore": {
-        "id": "https://w3id.org/xapi/catch/patterns#m3-2-01-scored"
-      }
+      "oneOrMore": "https://w3id.org/xapi/catch/patterns#m3-2-01-scored"
     },
     {
       "id": "https://w3id.org/xapi/catch/patterns#m3-2-01-completion",
@@ -4627,9 +4605,7 @@
       "definition": {
         "en": "one or more submission of a lesson plan and resources for scoring"
       },
-      "oneOrMore": {
-        "id": "https://w3id.org/xapi/catch/patterns#m3-3-01-scored"
-      }
+      "oneOrMore": "https://w3id.org/xapi/catch/patterns#m3-3-01-scored"
     },
     {
       "id": "https://w3id.org/xapi/catch/patterns#m3-3-01-completion",
@@ -4735,9 +4711,7 @@
       "definition": {
         "en": "providing or uploading a survey and maybe survey results"
       },
-      "oneOrMore": {
-        "id": "https://w3id.org/xapi/catch/patterns#upload-or-provide-survey-evidence"
-      }
+      "oneOrMore": "https://w3id.org/xapi/catch/patterns#upload-or-provide-survey-evidence"
     },
     {
       "id": "https://w3id.org/xapi/catch/patterns#submit-survey-maybe-result",
@@ -4749,9 +4723,7 @@
       "definition": {
         "en": "submitting a survey and maybe survey results"
       },
-      "oneOrMore": {
-        "id": "https://w3id.org/xapi/catch/templates#f2-1-02"
-      }
+      "oneOrMore": "https://w3id.org/xapi/catch/templates#f2-1-02"
     },
     {
       "id": "https://w3id.org/xapi/catch/patterns#f2-1-02-completion",
@@ -4818,9 +4790,7 @@
       "definition": {
         "en": "one or more submission of a lesson plan for scoring"
       },
-      "oneOrMore": {
-        "id": "https://w3id.org/xapi/catch/patterns#m2-1-01-scored"
-      }
+      "oneOrMore": "https://w3id.org/xapi/catch/patterns#m2-1-01-scored"
     },
     {
       "id": "https://w3id.org/xapi/catch/patterns#m2-1-01-completion",
@@ -4860,9 +4830,7 @@
       "prefLabel": {
         "en": "complete Dual Language Education Environment"
       },
-      "oneOrMore": {
-        "id": "https://w3id.org/xapi/catch/patterns#cultural-awareness-completion"
-      }
+      "oneOrMore": "https://w3id.org/xapi/catch/patterns#cultural-awareness-completion"
     },
     {
       "id": "https://w3id.org/xapi/catch/patterns#upload-or-provide-communication-with-family-evidence",
@@ -4958,9 +4926,7 @@
       "definition": {
         "en": "one or more submission of a lesson plan and resources for scoring"
       },
-      "oneOrMore": {
-        "id": "https://w3id.org/xapi/catch/patterns#m1-2-01-scored"
-      }
+      "oneOrMore": "https://w3id.org/xapi/catch/patterns#m1-2-01-scored"
     },
     {
       "id": "https://w3id.org/xapi/catch/patterns#m1-2-01-completion",
