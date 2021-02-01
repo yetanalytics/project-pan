@@ -111,15 +111,15 @@
 ;; Graph tests
 (deftest edges-with-attrs-test
   (testing "Creating edges from node"
-    (is (= (graph/edges-with-attrs {:id "https://foo.org/re"
+    (is (= [["https://foo.org/re" "https://foo.org/verb1" {:type :recommendedVerbs}]
+            ["https://foo.org/re" "https://foo.org/verb2" {:type :recommendedVerbs}]]
+           (graph/edges-with-attrs {:id "https://foo.org/re"
                                     :type "ResultExtension"
                                     :inScheme "https://foo.org/v1"
                                     :recommendedVerbs
                                     ["https://foo.org/verb1"
-                                     "https://foo.org/verb2"]})
-           [["https://foo.org/re" "https://foo.org/verb1" {:type :recommendedVerbs}]
-            ["https://foo.org/re" "https://foo.org/verb2" {:type :recommendedVerbs}]]))
-    (is (= (graph/edges-with-attrs {:id "https://foo.org/re2"
+                                     "https://foo.org/verb2"]})))
+    (is (= []
+           (graph/edges-with-attrs {:id "https://foo.org/re2"
                                     :type "ResultExtension"
-                                    :inScheme "https://foo.org/v1"})
-           []))))
+                                    :inScheme "https://foo.org/v1"})))))

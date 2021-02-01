@@ -16,14 +16,14 @@
 ; ;; Raw profile
 (deftest will-raw-test
   (testing "Tests on Will's CATCH profile, unfixed"
-    (is (not= (with-out-str (validate-profile will-profile-raw))
-              "Success!\n"))
-    (is (not= (with-out-str (validate-profile will-profile-raw :syntax? false :ids? true))
-              "Success!\n"))
-    (is (not= (with-out-str (validate-profile will-profile-raw :syntax? false :relations? true))
-              "Success!\n"))
-    (is (= (with-out-str (validate-profile will-profile-raw :syntax? false :contexts? true))
-           "Success!\n"))
+    (is (not= "Success!\n"
+              (with-out-str (validate-profile will-profile-raw))))
+    (is (not= "Success!\n"
+              (with-out-str (validate-profile will-profile-raw :syntax? false :ids? true))))
+    (is (not= "Success!\n"
+              (with-out-str (validate-profile will-profile-raw :syntax? false :relations? true))))
+    (is (= "Success!\n"
+           (with-out-str (validate-profile will-profile-raw :syntax? false :contexts? true))))
     ;; Testing print-errs being off
     (is (some? (validate-profile will-profile-raw :print-errs? false)))
     (is (contains? (validate-profile will-profile-raw :print-errs? false)
@@ -34,35 +34,35 @@
 ;; Fixed profile
 (deftest will-fix-test
   (testing "Tests on Will's CATCH profile, fixed"
-    (is (= (with-out-str (validate-profile will-profile-fix))
-           "Success!\n"))
-    (is (= (with-out-str (validate-profile will-profile-fix :ids? true))
-           "Success!\n"))
-    (is (= (with-out-str (validate-profile will-profile-fix :relations? true))
-           "Success!\n"))
-    (is (= (with-out-str (validate-profile will-profile-fix :contexts? true))
-           "Success!\n"))))
+    (is (= "Success!\n"
+           (with-out-str (validate-profile will-profile-fix))))
+    (is (= "Success!\n"
+           (with-out-str (validate-profile will-profile-fix :ids? true))))
+    (is (= "Success!\n"
+           (with-out-str (validate-profile will-profile-fix :relations? true))))
+    (is (= "Success!\n"
+           (with-out-str (validate-profile will-profile-fix :contexts? true))))))
 
 ;; Raw profile
 (deftest cmi-profile-test
   (testing "Tests on the cmi5 profile"
-    (is (not= (with-out-str (validate-profile cmi-profile-raw))
-              "Success!\n"))
-    (is (not= (with-out-str (validate-profile cmi-profile-raw :syntax? false :ids? true))
-              "Success!\n"))
-    (is (not= (with-out-str (validate-profile cmi-profile-raw :syntax? false :relations? true))
-              "Success!\n"))
-    (is (= (with-out-str (validate-profile cmi-profile-raw :syntax? false :contexts? true))
-           "Success!\n"))))
+    (is (not= "Success!\n"
+              (with-out-str (validate-profile cmi-profile-raw))))
+    (is (not= "Success!\n"
+              (with-out-str (validate-profile cmi-profile-raw :syntax? false :ids? true))))
+    (is (not= "Success!\n"
+              (with-out-str (validate-profile cmi-profile-raw :syntax? false :relations? true))))
+    (is (= "Success!\n"
+           (with-out-str (validate-profile cmi-profile-raw :syntax? false :contexts? true))))))
 
 ;; Fixed profile
 (deftest cmi-fixed-test
   (testing "Tests on the cmi5 profile after it has been fixed"
-    (is (= (with-out-str (validate-profile cmi-profile-fix))
-           "Success!\n"))
-    (is (= (with-out-str (validate-profile cmi-profile-fix :syntax? false :ids? true))
-           "Success!\n"))
-    (is (not= (with-out-str (validate-profile cmi-profile-fix :syntax? false :relations? true))
-              "Success!\n"))
-    (is (= (with-out-str (validate-profile cmi-profile-fix :syntax? false :contexts? true))
-           "Success!\n"))))
+    (is (= "Success!\n"
+           (with-out-str (validate-profile cmi-profile-fix))))
+    (is (= "Success!\n"
+           (with-out-str (validate-profile cmi-profile-fix :syntax? false :ids? true))))
+    (is (not= "Success!\n"
+              (with-out-str (validate-profile cmi-profile-fix :syntax? false :relations? true))))
+    (is (= "Success!\n"
+           (with-out-str (validate-profile cmi-profile-fix :syntax? false :contexts? true))))))

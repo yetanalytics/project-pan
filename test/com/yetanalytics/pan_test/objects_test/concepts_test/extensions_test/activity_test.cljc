@@ -128,15 +128,14 @@
 ;; Graph tests
 (deftest edges-with-attrs-test
   (testing "Creating edges from node"
-    (is (= (graph/edges-with-attrs {:id "https://foo.org/ae"
-                                    :type "ActivityExtension"
-                                    :inScheme "https://foo.org/v1"
-                                    :recommendedActivityTypes
-                                    ["https://foo.org/at1"
-                                     "https://foo.org/at2"]})
-           [["https://foo.org/ae" "https://foo.org/at1" {:type :recommendedActivityTypes}]
-            ["https://foo.org/ae" "https://foo.org/at2" {:type :recommendedActivityTypes}]]))
-    (is (= (graph/edges-with-attrs {:id "https://foo.org/ae2"
-                                    :type "ActivityExtension"
-                                    :inScheme "https://foo.org/v1"})
-           []))))
+    (is (= [["https://foo.org/ae" "https://foo.org/at1" {:type :recommendedActivityTypes}]
+            ["https://foo.org/ae" "https://foo.org/at2" {:type :recommendedActivityTypes}]]
+           (graph/edges-with-attrs {:id                       "https://foo.org/ae"
+                                    :type                     "ActivityExtension"
+                                    :inScheme                 "https://foo.org/v1"
+                                    :recommendedActivityTypes ["https://foo.org/at1"
+                                                               "https://foo.org/at2"]})))
+    (is (= []
+           (graph/edges-with-attrs {:id       "https://foo.org/ae2"
+                                    :type     "ActivityExtension"
+                                    :inScheme "https://foo.org/v1"})))))

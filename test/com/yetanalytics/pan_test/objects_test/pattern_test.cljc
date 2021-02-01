@@ -204,48 +204,48 @@
 
 (deftest node-with-attrs
   (testing "Creating node with attributes"
-    (is (= (graph/node-with-attrs {:id "https://foo.org/pattern1"
+    (is (= ["https://foo.org/pattern1" {:type "Pattern"
+                                        :primary true
+                                        :property :alternates}]
+           (graph/node-with-attrs {:id "https://foo.org/pattern1"
                                    :type "Pattern"
                                    :primary true
                                    :alternates ["https://foo.org/p1"
-                                                "https://foo.org/p2"]})
-           ["https://foo.org/pattern1" {:type "Pattern"
-                                        :primary true
-                                        :property :alternates}]))
-    (is (= (graph/node-with-attrs {:id "https://foo.org/pattern1"
+                                                "https://foo.org/p2"]})))
+    (is (= ["https://foo.org/pattern1" {:type "Pattern"
+                                        :primary false
+                                        :property :optional}]
+           (graph/node-with-attrs {:id "https://foo.org/pattern1"
                                    :type "Pattern"
                                    :primary false
-                                   :optional "https://foo.org/p3"})
-           ["https://foo.org/pattern1" {:type "Pattern"
-                                        :primary false
-                                        :property :optional}]))))
+                                   :optional "https://foo.org/p3"})))))
 
 (deftest edge-with-attrs-test
   (testing "Creating vector of edges"
-    (is (= (graph/edges-with-attrs {:id "https://foo.org/pattern1"
+    (is (= [["https://foo.org/pattern1" "https://foo.org/p1" {:type :alternates}]
+            ["https://foo.org/pattern1" "https://foo.org/p2" {:type :alternates}]]
+           (graph/edges-with-attrs {:id "https://foo.org/pattern1"
                                     :type "Pattern"
                                     :alternates ["https://foo.org/p1"
-                                                 "https://foo.org/p2"]})
-           [["https://foo.org/pattern1" "https://foo.org/p1" {:type :alternates}]
-            ["https://foo.org/pattern1" "https://foo.org/p2" {:type :alternates}]]))
-    (is (= (graph/edges-with-attrs {:id "https://foo.org/pattern2"
+                                                 "https://foo.org/p2"]})))
+    (is (= [["https://foo.org/pattern2" "https://foo.org/p1" {:type :sequence}]
+            ["https://foo.org/pattern2" "https://foo.org/p2" {:type :sequence}]]
+           (graph/edges-with-attrs {:id "https://foo.org/pattern2"
                                     :type "Pattern"
                                     :sequence ["https://foo.org/p1"
-                                               "https://foo.org/p2"]})
-           [["https://foo.org/pattern2" "https://foo.org/p1" {:type :sequence}]
-            ["https://foo.org/pattern2" "https://foo.org/p2" {:type :sequence}]]))
-    (is (= (graph/edges-with-attrs {:id "https://foo.org/pattern3"
+                                               "https://foo.org/p2"]})))
+    (is (= [["https://foo.org/pattern3" "https://foo.org/p0" {:type :optional}]]
+           (graph/edges-with-attrs {:id "https://foo.org/pattern3"
                                     :type "Pattern"
-                                    :optional "https://foo.org/p0"})
-           [["https://foo.org/pattern3" "https://foo.org/p0" {:type :optional}]]))
-    (is (= (graph/edges-with-attrs {:id "https://foo.org/pattern4"
+                                    :optional "https://foo.org/p0"})))
+    (is (= [["https://foo.org/pattern4" "https://foo.org/p0" {:type :oneOrMore}]]
+           (graph/edges-with-attrs {:id "https://foo.org/pattern4"
                                     :type "Pattern"
-                                    :oneOrMore "https://foo.org/p0"})
-           [["https://foo.org/pattern4" "https://foo.org/p0" {:type :oneOrMore}]]))
-    (is (= (graph/edges-with-attrs {:id "https://foo.org/pattern5"
-                                    :type "Pattern"
-                                    :zeroOrMore "https://foo.org/p0"})
-           [["https://foo.org/pattern5" "https://foo.org/p0" {:type :zeroOrMore}]]))))
+                                    :oneOrMore "https://foo.org/p0"})))
+    (is (= [["https://foo.org/pattern5" "https://foo.org/p0" {:type :zeroOrMore}]]
+           (graph/edges-with-attrs {:id         "https://foo.org/pattern5"
+                                    :type       "Pattern"
+                                    :zeroOrMore "https://foo.org/p0"})))))
 
 (deftest alternates-test-2
   (testing "Alternates pattern MUST NOT include optional or zeroOrMore directly."
@@ -371,14 +371,13 @@
     (is (= 10 (count (graph/nodes pgraph))))
     (is (= 7 (count (graph/edges pgraph))))
     (is (= 7 (count (pattern/get-edges pgraph))))
-    (is (= (set (graph/nodes pgraph))
-           #{"https://foo.org/pattern1" "https://foo.org/pattern2"
+    (is (= #{"https://foo.org/pattern1" "https://foo.org/pattern2"
              "https://foo.org/pattern3" "https://foo.org/pattern4"
              "https://foo.org/pattern5" "https://foo.org/template1"
              "https://foo.org/template2" "https://foo.org/template3"
-             "https://foo.org/template4" "https://foo.org/template5"}))
-    (is (= (set (pattern/get-edges pgraph))
-           #{{:src "https://foo.org/pattern1" :src-type "Pattern"
+             "https://foo.org/template4" "https://foo.org/template5"}
+           (set (graph/nodes pgraph))))
+    (is (= #{{:src "https://foo.org/pattern1" :src-type "Pattern"
               :src-primary true :src-indegree 0 :src-outdegree 2
               :dest "https://foo.org/pattern2" :dest-type "Pattern"
               :dest-property :sequence :type :alternates}
@@ -405,7 +404,8 @@
              {:src "https://foo.org/pattern5" :src-type "Pattern"
               :src-primary true :src-indegree 0 :src-outdegree 1
               :dest "https://foo.org/template5" :dest-type "StatementTemplate"
-              :dest-property nil :type :zeroOrMore}}))
+              :dest-property nil :type :zeroOrMore}}
+           (set (pattern/get-edges pgraph))))
     (should-satisfy ::pattern/valid-edges (pattern/get-edges pgraph))
     (should-satisfy ::pattern/singleton-sccs (graph/scc pgraph))
     (is (nil? (pattern/explain-graph pgraph)))

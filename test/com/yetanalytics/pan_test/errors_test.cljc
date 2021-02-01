@@ -151,14 +151,14 @@
     (is (neg? (e/compare-properties :aaah :aarg)))
     (is (zero? (e/compare-properties :same :same)))
     (is (zero? (e/compare-properties :id :id)))
-    (is (= (sort e/compare-properties
-                 '(:prefLabel :definition :inScheme :id :deprecated :type))
-           '(:id :type :inScheme :prefLabel :definition :deprecated)))))
+    (is (= '(:id :type :inScheme :prefLabel :definition :deprecated)
+           (sort e/compare-properties
+                 '(:prefLabel :definition :inScheme :id :deprecated :type))))))
 
 (deftest compare-arrs-test
   (testing "compare-arrs function"
-    (is (= (sort '([:z] [:a :b] [:a])) '([:a] [:z] [:a :b])))
-    (is (= (sort e/compare-arrs '([:z] [:a :b] [:a])) '([:a] [:a :b] [:z])))
+    (is (= '([:a] [:z] [:a :b]) (sort '([:z] [:a :b] [:a]))))
+    (is (= '([:a] [:a :b] [:z]) (sort e/compare-arrs '([:z] [:a :b] [:a]))))
     (is (neg? (e/compare-arrs [:author] [:template])))
     (is (neg? (e/compare-arrs [:author] [:author :url])))
     (is (neg? (e/compare-arrs [:author] [:template :id])))
@@ -175,35 +175,33 @@
            (-> bad-profile-1c p/validate e/group-by-in e/sort-by-path first ::s/problems first :path)))
     (is (= [:author :url]
            (-> bad-profile-1c p/validate e/group-by-in e/sort-by-path second ::s/problems first :path)))
-    (is (= (->> bad-profile-1d p/validate e/group-by-in e/sort-by-path
-                (mapv #(-> % ::s/problems first :path)))
-           [[] [:id] [:type] [:conformsTo] [:prefLabel 1] [:definition 0]
+    (is (= [[] [:id] [:type] [:conformsTo] [:prefLabel 1] [:definition 0]
             [:author :type] [:author :name] [:author :url]
-            [:versions :id] [:versions :generatedAtTime]]))
+            [:versions :id] [:versions :generatedAtTime]]
+           (->> bad-profile-1d p/validate e/group-by-in e/sort-by-path
+                (mapv #(-> % ::s/problems first :path)))))
     #_(is (= (->> bad-profile-2a p/validate e/group-by-in e/sort-by-path
                 (mapv #(-> % ::s/problems first :path)))))))
 
 (deftest spec-test
   (testing "ensure that correct specs are returned in problem maps"
-    (is (= (->> bad-profile-1d p/validate e/group-by-in e/sort-by-path
-                (mapv #(-> % ::s/problems first :via last)))
-           [::p/profile ::ax/iri ::p/type ::ax/uri ::ax/lang-map-string ::ax/language-tag
-            ::ah/type ::ax/string ::ax/url ::ax/iri ::ax/timestamp]))
-    (is (= (->> bad-profile-2a p/validate e/group-by-in e/sort-by-path
-                (mapv #(-> % ::s/problems first :via last)))
-           [::t/template ::ax/uri]))
-    (is (= (->> bad-profile-2b id/validate-ids e/group-by-in e/sort-by-path
-                (mapv #(-> % ::s/problems first :via last)))
-           [::id/one-count ::id/one-count]))
-    (is (= (->> bad-profile-2c id/validate-in-schemes e/group-by-in e/sort-by-path
-                (mapv #(-> % ::s/problems first :via last)))
-           [::id/in-scheme ::id/in-scheme]))))
+    (is (= [::p/profile ::ax/iri ::p/type ::ax/uri ::ax/lang-map-string ::ax/language-tag
+            ::ah/type ::ax/string ::ax/url ::ax/iri ::ax/timestamp]
+           (->> bad-profile-1d p/validate e/group-by-in e/sort-by-path
+                (mapv #(-> % ::s/problems first :via last)))))
+    (is (= [::t/template ::ax/uri]
+           (->> bad-profile-2a p/validate e/group-by-in e/sort-by-path
+                (mapv #(-> % ::s/problems first :via last)))))
+    (is (= [::id/one-count ::id/one-count]
+           (->> bad-profile-2b id/validate-ids e/group-by-in e/sort-by-path
+                (mapv #(-> % ::s/problems first :via last)))))
+    (is (= [::id/in-scheme ::id/in-scheme]
+           (->> bad-profile-2c id/validate-in-schemes e/group-by-in e/sort-by-path
+                (mapv #(-> % ::s/problems first :via last)))))))
 
 (deftest expound-test
   (testing "error/expound-errors error messages"
-    (is (= (with-out-str
-             (e/expound-error-map (p/validate bad-profile-1b)))
-           (str "-- Spec failed --------------------\n"
+    (is (= (str "-- Spec failed --------------------\n"
                 "\n"
                 "  {:id \"not an id\",\n"
                 "       ^^^^^^^^^^^\n"
@@ -237,10 +235,10 @@
                 "-------------------------\n"
                 "Detected 1 error\n"
                 "\n"
-                "")))
-    (is (= (with-out-str
-             (e/expound-error (id/validate-ids bad-profile-2b) :error-type "id"))
-           (str "-- Spec failed --------------------\n"
+                "")
+           (with-out-str
+             (e/expound-error-map (p/validate bad-profile-1b)))))
+    (is (= (str "-- Spec failed --------------------\n"
                 "\n"
                 "Duplicate id: \"https://w3id.org/xapi/catch/v1\"\n"
                 " with count: 2\n"
@@ -255,10 +253,10 @@
                 "the id value is not unique\n"
                 "\n"
                 "-------------------------\n"
-                "Detected 2 errors\n")))
-    (is (= (with-out-str
-             (e/expound-error (id/validate-in-schemes bad-profile-2c) :error-type "in-scheme"))
-           (str "-- Spec failed --------------------\n"
+                "Detected 2 errors\n")
+           (with-out-str
+             (e/expound-error (id/validate-ids bad-profile-2b) :error-type "id"))))
+    (is (= (str "-- Spec failed --------------------\n"
                 "\n"
                 "Invalid inScheme: \"https://foo.org/invalid\"\n"
                 " at object: \"https://foo.org/template\"\n"
@@ -279,10 +277,10 @@
                 "the inScheme value is not a valid version ID\n"
                 "\n"
                 "-------------------------\n"
-                "Detected 2 errors\n")))
-    (is (= (with-out-str
-             (e/expound-error-map (t/explain-graph (t/create-graph [] (:templates bad-profile-2d))) :error-type "edge"))
-           (str "-- Spec failed --------------------\n"
+                "Detected 2 errors\n")
+           (with-out-str
+             (e/expound-error (id/validate-in-schemes bad-profile-2c) :error-type "in-scheme"))))
+    (is (= (str "-- Spec failed --------------------\n"
                 "\n"
                 "Invalid verb identifier:\n"
                 " \"https://foo.org/dead-verb\"\n"
@@ -323,10 +321,10 @@
                 "linked concept or template does not exist\n"
                 "\n"
                 "-------------------------\n"
-                "Detected 1 error\n")))
-    (is (= (with-out-str
-             (e/expound-error-map (t/explain-graph (t/create-graph [] (:templates bad-profile-2e))) :error-type "edge"))
-           (str "-- Spec failed --------------------\n"
+                "Detected 1 error\n")
+          (with-out-str
+            (e/expound-error-map (t/explain-graph (t/create-graph [] (:templates bad-profile-2d))) :error-type "edge"))))
+    (is (= (str "-- Spec failed --------------------\n"
                 "\n"
                 "Invalid verb identifier:\n"
                 " \"https://foo.org/template2\"\n"
@@ -367,11 +365,10 @@
                 "object cannot refer to itself\n"
                 "\n"
                 "-------------------------\n"
-                "Detected 1 error\n")))
-    (is (= (with-out-str
-             (e/expound-error
-              (pt/explain-graph-cycles (pt/create-graph (:templates bad-profile-2f) (:patterns bad-profile-2f))) :error-type "scc"))
-           (str "-- Spec failed --------------------\n"
+                "Detected 1 error\n")
+           (with-out-str
+             (e/expound-error-map (t/explain-graph (t/create-graph [] (:templates bad-profile-2e))) :error-type "edge"))))
+    (is (= (str "-- Spec failed --------------------\n"
                 "\n"
                 "Cycle detected involving the following nodes:\n"
                 "  https://foo.org/pattern-one\n"
@@ -380,11 +377,11 @@
                 "cyclical reference detected\n"
                 "\n"
                 "-------------------------\n"
-                "Detected 1 error\n")))
-    (is (= (with-out-str
+                "Detected 1 error\n")
+           (with-out-str
              (e/expound-error
-              (pt/explain-graph (pt/create-graph (:templates bad-profile-2g) (:patterns bad-profile-2g))) :error-type "edge"))
-           (str "-- Spec failed --------------------\n"
+              (pt/explain-graph-cycles (pt/create-graph (:templates bad-profile-2f) (:patterns bad-profile-2f))) :error-type "scc"))))
+    (is (= (str "-- Spec failed --------------------\n"
                 "\n"
                 "Invalid oneOrMore identifier:\n"
                 " \"https://foo.org/pattern-three\"\n"
@@ -407,25 +404,14 @@
                 "object cannot refer to itself\n"
                 "\n"
                 "-------------------------\n"
-                "Detected 1 error\n")))))
+                "Detected 1 error\n")
+           (with-out-str
+             (e/expound-error
+              (pt/explain-graph (pt/create-graph (:templates bad-profile-2g) (:patterns bad-profile-2g))) :error-type "edge"))))))
 
 (deftest context-error-msg-tests
   (testing "@context-related error messages"
-    (is (= (with-out-str
-             (e/expound-error-list
-              (:context-errors
-               (ctx/validate-contexts {:id "https://foo.org/profile"
-                                       :type "Profile"
-                                       :_context {:type "@type"
-                                                  :id "@id"
-                                                  :prov "http://www.w3.org/ns/prov#"
-                                                  :skos "http://www.w3.org/2004/02/skos/core#"
-                                                  :profile "https://w3id.org/xapi/profiles/ontology#"
-                                                  :Profile "profile:Profile"
-                                                  :Verb "xapi:Verb"
-                                                  :ActivityType "xapi:ActivityType"
-                                                  :AttachmentUsageType "xapi:AttachmentUsageType"}}))))
-           (str
+    (is (= (str
             "-- Spec failed --------------------\n"
             "\n"
             "  {:Profile ...,\n"
@@ -470,16 +456,22 @@
             "\n"
             "-------------------------\n"
             "Detected 3 errors\n"
-            "\n")))
-    (is (= (with-out-str
+            "\n")
+           (with-out-str
              (e/expound-error-list
-              (:context-key-errors
-               (ctx/validate-contexts {:id "https://foo.org/profile"
-                                       :type "Profile"
-                                       :_context "https://w3id.org/xapi/profiles/context"
-                                       :foo "Bar"
-                                       :baz "Qux"}))))
-           (str "-- Spec failed --------------------\n"
+              (:context-errors
+               (ctx/validate-contexts {:id       "https://foo.org/profile"
+                                       :type     "Profile"
+                                       :_context {:type                "@type"
+                                                  :id                  "@id"
+                                                  :prov                "http://www.w3.org/ns/prov#"
+                                                  :skos                "http://www.w3.org/2004/02/skos/core#"
+                                                  :profile             "https://w3id.org/xapi/profiles/ontology#"
+                                                  :Profile             "profile:Profile"
+                                                  :Verb                "xapi:Verb"
+                                                  :ActivityType        "xapi:ActivityType"
+                                                  :AttachmentUsageType "xapi:AttachmentUsageType"}}))))))
+    (is (= (str "-- Spec failed --------------------\n"
                 "\n"
                 "  {:id ...,\n"
                 "   :type ...,\n"
@@ -511,4 +503,12 @@
                 "\n"
                 "-------------------------\n"
                 "Detected 2 errors\n"
-                "\n")))))
+                "\n")
+           (with-out-str
+             (e/expound-error-list
+              (:context-key-errors
+               (ctx/validate-contexts {:id       "https://foo.org/profile"
+                                       :type     "Profile"
+                                       :_context "https://w3id.org/xapi/profiles/context"
+                                       :foo      "Bar"
+                                       :baz      "Qux"}))))))))

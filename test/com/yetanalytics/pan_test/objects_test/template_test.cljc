@@ -190,8 +190,7 @@
 
 (deftest edge-with-attrs-test
   (testing "Creating list of edges"
-    (is (= (graph/edges-with-attrs template-ex)
-           [["https://foo.org/template" "https://foo.org/verb" {:type :verb}]
+    (is (= [["https://foo.org/template" "https://foo.org/verb" {:type :verb}]
             ["https://foo.org/template" "https://foo.org/oat" {:type :objectActivityType}]
             ["https://foo.org/template" "https://foo.org/cgat1" {:type :contextGroupingActivityType}]
             ["https://foo.org/template" "https://foo.org/cgat2" {:type :contextGroupingActivityType}]
@@ -204,7 +203,8 @@
             ["https://foo.org/template" "https://foo.org/aut1" {:type :attachmentUsageType}]
             ["https://foo.org/template" "https://foo.org/aut2" {:type :attachmentUsageType}]
             ["https://foo.org/template" "https://foo.org/csrt1" {:type :contextStatementRefTemplate}]
-            ["https://foo.org/template" "https://foo.org/csrt2" {:type :contextStatementRefTemplate}]]))))
+            ["https://foo.org/template" "https://foo.org/csrt2" {:type :contextStatementRefTemplate}]]
+           (graph/edges-with-attrs template-ex)))))
 
 (deftest valid-edge-test
   (testing "Valid edge properties"
@@ -296,12 +296,11 @@
     (is (= 5 (count (graph/nodes tgraph))))
     (is (= 5 (count (graph/edges tgraph))))
     (is (= 5 (count (template/get-edges tgraph))))
-    (is (= (set (graph/nodes tgraph))
-           #{"https://foo.org/template1" "https://foo.org/template2"
+    (is (= #{"https://foo.org/template1" "https://foo.org/template2"
              "https://foo.org/verb" "https://foo.org/activity-type"
-             "https://foo.org/attachmentUsageType"}))
-    (is (= (set (template/get-edges tgraph))
-           #{{:src "https://foo.org/template1" :src-type "StatementTemplate" :src-version "https://foo.org/v1"
+             "https://foo.org/attachmentUsageType"}
+           (set (graph/nodes tgraph))))
+    (is (= #{{:src "https://foo.org/template1" :src-type "StatementTemplate" :src-version "https://foo.org/v1"
               :dest "https://foo.org/verb" :dest-type "Verb" :dest-version "https://foo.org/v1"
               :type :verb}
              {:src "https://foo.org/template1" :src-type "StatementTemplate" :src-version "https://foo.org/v1"
@@ -315,6 +314,7 @@
               :type :contextStatementRefTemplate}
              {:src "https://foo.org/template2" :src-type "StatementTemplate" :src-version "https://foo.org/v1"
               :dest "https://foo.org/template1" :dest-type "StatementTemplate" :dest-version "https://foo.org/v1"
-              :type :objectStatementRefTemplate}}))
+              :type :objectStatementRefTemplate}}
+           (set (template/get-edges tgraph))))
     (should-satisfy ::template/template-graph tgraph)
     (is (nil? (template/explain-graph tgraph)))))

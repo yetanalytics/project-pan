@@ -106,11 +106,11 @@
 
 (deftest edges-with-attrs-test
   (testing "create edges from node"
-    (is (= (graph/edges-with-attrs ex-concept)
-           [["https://foo.org/verb" "https://foo.org/verb2" {:type :broader}]
+    (is (= [["https://foo.org/verb" "https://foo.org/verb2" {:type :broader}]
             ["https://foo.org/verb" "https://foo.org/verb3" {:type :broadMatch}]
             ["https://foo.org/verb" "https://foo.org/verb4" {:type :narrower}]
             ["https://foo.org/verb" "https://foo.org/verb5" {:type :narrowMatch}]
             ["https://foo.org/verb" "https://foo.org/verb6" {:type :related}]
             ["https://foo.org/verb" "https://foo.org/verb7" {:type :relatedMatch}]
-            ["https://foo.org/verb" "https://foo.org/verb8" {:type :exactMatch}]]))))
+            ["https://foo.org/verb" "https://foo.org/verb8" {:type :exactMatch}]]
+           (graph/edges-with-attrs ex-concept)))))

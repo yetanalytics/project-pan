@@ -20,8 +20,7 @@
 (deftest get-context-test
   (testing "get-context function: Get @context and convert from JSON to EDN."
     (is (map? profile-context))
-    (is (= activity-context
-           {:xapi "https://w3id.org/xapi/ontology#"
+    (is (= {:xapi "https://w3id.org/xapi/ontology#"
             :type {:at/id "xapi:type" :at/type "@id"}
             :name {:at/id "xapi:name" :at/container "@language"}
             :description {:at/id "xapi:description" :at/container "@language"}
@@ -35,7 +34,8 @@
             :source {:at/id "xapi:source" :at/container "@list"}
             :target {:at/id "xapi:target" :at/container "@list"}
             :steps {:at/id "xapi:steps" :at/container "@list"}
-            :id {:at/id "xapi:interactionId"}}))))
+            :id {:at/id "xapi:interactionId"}}
+           activity-context))))
 
 (deftest prefix-spec-test
   (testing "prefix spec"
@@ -56,21 +56,20 @@
 
 (deftest collect-prefixes-test
   (testing "collect-prefixes function: get all prefixes from a context"
-    (is (= (c/collect-prefixes profile-context)
-           {:prov "http://www.w3.org/ns/prov#"
+    (is (= {:prov "http://www.w3.org/ns/prov#"
             :skos "http://www.w3.org/2004/02/skos/core#"
             :xapi "https://w3id.org/xapi/ontology#"
             :profile "https://w3id.org/xapi/profiles/ontology#"
             :dcterms "http://purl.org/dc/terms/"
             :schemaorg "http://schema.org/"
-            :rdfs "http://www.w3.org/2000/01/rdf-schema#"}))
-    (is (= (c/collect-prefixes activity-context)
-           {:xapi "https://w3id.org/xapi/ontology#"}))))
+            :rdfs "http://www.w3.org/2000/01/rdf-schema#"}
+           (c/collect-prefixes profile-context)))
+    (is (= {:xapi "https://w3id.org/xapi/ontology#"}
+           (c/collect-prefixes activity-context)))))
 
 (deftest dissoc-prefixes-test
   (testing "dissoc-prefixes function: get all that are NOT prefixes or kwords"
-    (is (= (c/dissoc-prefixes activity-context)
-           {:type {:at/id "xapi:type" :at/type "@id"}
+    (is (= {:type {:at/id "xapi:type" :at/type "@id"}
             :name {:at/id "xapi:name" :at/container "@language"}
             :description {:at/id "xapi:description" :at/container "@language"}
             :moreInfo {:at/id "xapi:moreInfo" :at/type "@id"}
@@ -83,7 +82,8 @@
             :source {:at/id "xapi:source" :at/container "@list"}
             :target {:at/id "xapi:target" :at/container "@list"}
             :steps {:at/id "xapi:steps" :at/container "@list"}
-            :id {:at/id "xapi:interactionId"}}))
+            :id {:at/id "xapi:interactionId"}}
+           (c/dissoc-prefixes activity-context)))
     (is (not (contains? (c/dissoc-prefixes profile-context)
                         :type)))
     (is (not (contains? (c/dissoc-prefixes profile-context)
@@ -119,11 +119,11 @@
                   "xapi:Verb"))
     (is (not (s/valid? (c/simple-term-spec {:xapi "https://w3id.org/xapi/ontology#"})
                        "skos:prefLabel")))
-    (is (= (-> (s/explain-data
+    (is (= [::c/simple-term-def]
+           (-> (s/explain-data
                 (c/simple-term-spec {:xapi "https://w3id.org/xapi/ontology#"})
                 "skos:prefLabel")
-               ::s/problems first :via)
-           [::c/simple-term-def]))))
+               ::s/problems first :via)))))
 
 (deftest expanded-term-spec-test
   (testing "expanded term definition spec creation"
@@ -133,11 +133,11 @@
     (is (not (s/valid? (c/expanded-term-spec
                         {:xapi "https://w3id.org/xapi/ontology#"})
                        {:at/type "@id" :at/id "dcterms:conformsTo"})))
-    (is (= (-> (s/explain-data (c/expanded-term-spec
+    (is (= [::c/expanded-term-def]
+           (-> (s/explain-data (c/expanded-term-spec
                                 {:xapi "https://w3id.org/xapi/ontology#"})
                                {:at/type "@id" :at/id "dcterms:conformsTo"})
-               ::s/problems first :via)
-           [::c/expanded-term-def]))))
+               ::s/problems first :via)))))
 
 (deftest value-spec-test
   (testing "value-spec spec creation function"
@@ -151,14 +151,16 @@
                        "skos:prefLabel")))
     (is (not (s/valid? (c/value-spec {:xapi "https://w3id.org/xapi/ontology#"})
                        {:at/type "@id" :at/id "dcterms:conformsTo"})))
-    (is (= (-> (s/explain-data
+    (is (= ::c/simple-term-def
+           (-> (s/explain-data
                 (c/value-spec {:xapi "https://w3id.org/xapi/ontology#"})
                 "skos:prefLabel")
-               ::s/problems first :via last) ::c/simple-term-def))
-    (is (= (-> (s/explain-data
+               ::s/problems first :via last)))
+    (is (= ::c/expanded-term-def
+           (-> (s/explain-data
                 (c/value-spec {:xapi "https://w3id.org/xapi/ontology#"})
                 "skos:prefLabel")
-               ::s/problems second :via last) ::c/expanded-term-def))))
+               ::s/problems second :via last)))))
 
 (deftest values-spec-test
   (testing "values-spec spec creation function"
@@ -170,12 +172,13 @@
                                     :at/container "@language"}
                         :definition {:at/id "skos:definition"
                                      :at/container "@language"}})))
-    (is (= (-> (s/explain-data (c/values-spec {:xapi "https://w3id.org/xapi/ontology#"})
+    (is (= 4
+           (-> (s/explain-data (c/values-spec {:xapi "https://w3id.org/xapi/ontology#"})
                                {:prefLabel {:at/id "skos:prefLabel"
                                             :at/container "@language"}
                                 :definition {:at/id "skos:definition"
                                              :at/container "@language"}})
-               ::s/problems count) 4))
+               ::s/problems count)))
     ;; Test that rebinding ::context/values will work
     (is (and (not (s/valid?
                    (c/values-spec {:xapi "https://w3id.org/xapi/ontology#"})
@@ -206,9 +209,9 @@
 
 (deftest create-context-test
   (testing "create-context function"
-    #?(:clj (is (= (try (:context (c/create-context "https://non-existent"))
-                        (catch Exception e (str e)))
-                   "clojure.lang.ExceptionInfo: Unable to read from URL {:url \"https://non-existent\"}")))
+    #?(:clj (is (= "clojure.lang.ExceptionInfo: Unable to read from URL {:url \"https://non-existent\"}"
+                   (try (:context (c/create-context "https://non-existent"))
+                        (catch Exception e (str e))))))
     (is (some? (:context (c/create-context "https://w3id.org/xapi/profiles/context"))))
     (is (some? (:context (c/create-context "https://w3id.org/xapi/profiles/activity-context"))))))
 
@@ -228,9 +231,9 @@
 
 (deftest profile-to-zipper-test
   (testing "profile-to-zipper function"
-    (is (= (zip/node (c/profile-to-zipper dummy-profile)) dummy-profile))
-    (is (= (zip/children (c/profile-to-zipper dummy-profile))
-           '({:bar "b1" :baz "b2"} {:one 1} {:two 2} {:three 3})))
+    (is (= dummy-profile (zip/node (c/profile-to-zipper dummy-profile))))
+    (is (= '({:bar "b1" :baz "b2"} {:one 1} {:two 2} {:three 3})
+           (zip/children (c/profile-to-zipper dummy-profile))))
     ;; Returns nil if there are no children
     (is (= nil (zip/children (c/profile-to-zipper ex-activity-def)))))
   (testing "dfs through a single profile"
@@ -312,29 +315,10 @@
                             "https://w3id.org/xapi/profiles/context"]}))))))
 
 (deftest update-context-errors-test
-  (is (= (c/update-context-errors [] [] '({:a 1 :b 2})) '({:a 1 :b 2})))
-  (is (= (c/update-context-errors [] [{:path [] :context nil :errors {:a 1 :b 2}}] '())
-         '({:a 1 :b 2}))))
-
-;; FIXME method is deprecated
-#_(deftest update-contexts-test
-    (testing "update-contexts function"
-      (is (= [{:path [] :context activity-context :errors nil}]
-             (c/update-contexts [] (c/profile-to-zipper dummy-profile))))
-      (is (= [{:path [] :context activity-context :errors nil}]
-             (-> []
-                 (c/push-context (-> dummy-profile c/profile-to-zipper))
-                 (c/push-context (-> dummy-profile c/profile-to-zipper zip/next))
-                 (c/push-context (-> dummy-profile c/profile-to-zipper zip/next
-                                     zip/next))
-                 (c/push-context (-> dummy-profile c/profile-to-zipper zip/next
-                                     zip/next zip/next))
-                 (c/push-context (-> dummy-profile c/profile-to-zipper zip/next
-                                     zip/next zip/next zip/next))
-                 (c/push-context (-> dummy-profile c/profile-to-zipper zip/next
-                                     zip/next zip/next zip/next zip/next))
-                 (c/push-context (-> dummy-profile c/profile-to-zipper zip/next
-                                     zip/next zip/next zip/next zip/next zip/next)))))))
+  (testing "update-context-errors function"
+    (is (= '({:a 1 :b 2}) (c/update-context-errors [] [] '({:a 1 :b 2}))))
+    (is (= '({:a 1 :b 2})
+           (c/update-context-errors [] [{:path [] :context nil :errors {:a 1 :b 2}}] '())))))
 
 (deftest search-contexts-test
   (testing "search-contexts function"
@@ -355,11 +339,12 @@
 
 (deftest validate-contexts-test
   (testing "validate-contexts function"
-    (is (= (c/validate-contexts ex-activity-def)
-           {:context-errors nil :context-key-errors nil}))
-    (is (not= (c/validate-contexts dummy-profile)
-              {:context-errors nil :context-key-errors nil}))
-    (is (= (c/validate-contexts
+    (is (= {:context-errors nil :context-key-errors nil}
+           (c/validate-contexts ex-activity-def)))
+    (is (not= {:context-errors nil :context-key-errors nil}
+              (c/validate-contexts dummy-profile)))
+    (is (= {:context-errors nil :context-key-errors nil}
+           (c/validate-contexts
             {:_context {:prefix "https://foo.org/prefix/"
                         :alpha {:at/id "prefix:alpha"}
                         :beta {:at/id "prefix:beta"}}
@@ -367,8 +352,7 @@
              :beta {:_context {:prefix2 "https://foo.org/prefix2/"
                                :gamma {:at/id "prefix2:gamma2"}}
                     :alpha 9001
-                    :gamma "foo bar"}})
-           {:context-errors nil :context-key-errors nil}))
+                    :gamma "foo bar"}})))
     (is (some? (:context-errors (c/validate-contexts
                                  {:_context {:prefix "https://foo.org/prefix/"
                                              :gamma {:at/id "prefix2:gamma"}}
@@ -385,7 +369,8 @@
                                      {:_context {:prefix2 "https://foo.org/prefix2/"
                                                  :gamma {:at/id "prefix2:gamma"}}
                                       :alpha 9001}))))
-    (is (= (c/validate-contexts
+    (is (= {:context-errors nil :context-key-errors nil}
+           (c/validate-contexts
             {:_context "https://w3id.org/xapi/profiles/context"
              :id "https://foo.org/profile"
              :type "Profile"
@@ -397,13 +382,12 @@
                           :description {:en "Description"}
                           :extensions {:_context {:prefix "https://foo.org/prefix/"
                                                   :alpha "prefix:alpha"}
-                                       :alpha 9001}}}]})
-           {:context-errors nil :context-key-errors nil}))))
+                                       :alpha 9001}}}]})))))
 
 (deftest validate-contexts-integration-test
   (testing "integration testing on Will's CATCH profile"
-    (is (= (-> "sample_profiles/will-profile.json"
+    (is (= {:context-errors nil :context-key-errors nil}
+           (-> "sample_profiles/will-profile.json"
                util/read-resource
                (util/convert-json "")
-               c/validate-contexts)
-           {:context-errors nil :context-key-errors nil}))))
+               c/validate-contexts)))))

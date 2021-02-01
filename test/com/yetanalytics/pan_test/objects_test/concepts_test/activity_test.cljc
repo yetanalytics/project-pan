@@ -26,15 +26,15 @@
 
 (deftest stringify-lang-keys-test
   (testing "turning keys in the name and description language maps into strings"
-    (is (= (activities/stringify-lang-keys
+    (is (= {:_context "https://w3id.org/xapi/profiles/activity-context"
+            :name {"en" "Blah"}
+            :description {"en" "Blah Blah Blah"}
+            :type "https://w3id.org/xapi/catch/activitytypes/blah"}
+           (activities/stringify-lang-keys
             {:_context "https://w3id.org/xapi/profiles/activity-context"
              :name {:en "Blah"}
              :description {:en "Blah Blah Blah"}
-             :type "https://w3id.org/xapi/catch/activitytypes/blah"})
-           {:_context "https://w3id.org/xapi/profiles/activity-context"
-            :name {"en" "Blah"}
-            :description {"en" "Blah Blah Blah"}
-            :type "https://w3id.org/xapi/catch/activitytypes/blah"}))))
+             :type "https://w3id.org/xapi/catch/activitytypes/blah"})))))
 
 (deftest activity-definition
   (testing "activityDefinition property"
