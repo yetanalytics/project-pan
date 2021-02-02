@@ -2,11 +2,14 @@
   (:require [clojure.spec.alpha :as s]
             [clojure.string :as string]
             [xapi-schema.spec.regex :as xsr]
-            [com.yetanalytics.pan.util :as u]
             #?(:clj [json-schema.core :as jschema]
-               :cljs [jsonschema])
-            #?(:clj [clojure.edn :as edn]
-               :cljs [cljs.reader :as edn])))
+               :cljs [jsonschema]))
+  #?(:clj (:require
+           [com.yetanalytics.pan.utils.resources
+            :refer [read-resource read-edn-resource]])
+     :cljs (:require-macros
+            [com.yetanalytics.pan.utils.resources
+             :refer [read-resource read-edn-resource]])))
 
 ;; Booleans
 ;; (Useless wrapper, but exists for consistency)
@@ -39,7 +42,7 @@
 ;; https://www.iana.org/assignments/media-types/media-types.xml
 ;; Currently only the five discrete top-level media type values are supported:
 ;; application, audio, image, text and video.
-(def media-types (-> "media_types.edn" u/read-resource edn/read-string))
+(def media-types (read-edn-resource "media_types.edn"))
 
 (s/def ::media-type
   (s/and ::string
@@ -87,7 +90,7 @@
 
 ;; TODO: dynamic var for json schema version
 ;; TODO: test newest schema: version 08
-(def meta-schema (u/read-resource "json/schema-07.json"))
+(def meta-schema (read-resource "json/schema-07.json"))
 
 (s/def ::json-schema (s/and ::string (partial validate-schema meta-schema)))
 

@@ -2,8 +2,11 @@
   (:require [clojure.spec.alpha :as s]
             [clojure.string :as string]
             [clojure.zip :as zip]
-            [com.yetanalytics.pan.axioms :as ax]
-            [com.yetanalytics.pan.util :as util]))
+            [com.yetanalytics.pan.axioms :as ax])
+  #?(:clj (:require [com.yetanalytics.pan.utils.resources
+                     :refer [read-json-resource]])
+     :cljs (:require-macros [com.yetanalytics.pan.utils.resources
+                             :refer [read-json-resource]])))
 
 ;; This library takes a Profile (which is simply a JSON-LD file) and does a
 ;; recursive depth-first search in order to ensure that all properties can be
@@ -18,15 +21,22 @@
 ;; Parse context 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn get-raw-context
-  "If a @context is one of two contexts given by the profile spec, call them
-  from local resources."
+(def profile-context
+  (read-json-resource "context/profile-context.json" "at/"))
+
+(def activity-context
+  (read-json-resource "context/activity-context.json" "at/"))
+
+(defn- get-context*
+  "Get a context and parse it from JSON to EDN.
+   If a @context is one of two contexts given by the profile spec, call them
+   from local resources."
   [context]
   (case context
     "https://w3id.org/xapi/profiles/context"
-    (util/read-resource "context/profile-context.json")
+    profile-context
     "https://w3id.org/xapi/profiles/activity-context"
-    (util/read-resource "context/activity-context.json")
+    activity-context
     ;; TODO get other contexts from the Internet; currently throws exception
     (throw (ex-info "Unable to read from URL" {:url context}))))
 
@@ -34,7 +44,7 @@
   "Get a raw context, then parse it from JSON to EDN.
   Return the JSON object given by the @context key"
   [context-uri]
-  (-> context-uri get-raw-context (util/convert-json "at/") :at/context))
+  (-> context-uri get-context* :at/context))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Validate context 

@@ -3,8 +3,11 @@
             [clojure.spec.alpha :as s]
             [clojure.zip :as zip]
             [com.yetanalytics.pan.context :as c]
-            [com.yetanalytics.pan.util :as util]
-            [com.yetanalytics.test-utils :refer [should-satisfy+]]))
+            [com.yetanalytics.test-utils :refer [should-satisfy+]])
+  #?(:clj (:require [com.yetanalytics.pan.utils.resources
+                     :refer [read-json-resource]])
+     :cljs (:require-macros [com.yetanalytics.pan.utils.resources
+                             :refer [read-json-resource]])))
 
 (def profile-context
   (c/get-context "https://w3id.org/xapi/profiles/context"))
@@ -384,10 +387,10 @@
                                                   :alpha "prefix:alpha"}
                                        :alpha 9001}}}]})))))
 
+(def catch-profile
+  (read-json-resource "sample_profiles/will-profile.json" ""))
+
 (deftest validate-contexts-integration-test
   (testing "integration testing on Will's CATCH profile"
     (is (= {:context-errors nil :context-key-errors nil}
-           (-> "sample_profiles/will-profile.json"
-               util/read-resource
-               (util/convert-json "")
-               c/validate-contexts)))))
+           (c/validate-contexts catch-profile)))))
