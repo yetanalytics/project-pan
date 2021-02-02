@@ -11,16 +11,19 @@
 ;; https://github.com/yetanalytics/xapi-schema/blob/master/test/xapi_schema/support/data.cljc
 
 (defmacro read-resource
-  "Read a file from the \"resources\" directory during compilation.
+  "Read a file from \"resources/\" during compilation. Returns a string.
    NOTE: The resulting string must be assigned to a def, or else it will nil
    out for some mysterious reason."
   [path]
   (-> path resource slurp))
 
 (defmacro read-edn-resource
+  "Read a file from \"resources/\" during compilation. Returns EDN."
   [path]
   (-> path resource slurp edn/read-string))
 
 (defmacro read-json-resource
+  "Read a file from \"resources/\" during compilation. Returns JSON.
+   `at-replacement` is what replaces the \"@\" symbol during JSON parsing."
   [path at-replacement]
   (-> path resource slurp (json/convert-json at-replacement)))
