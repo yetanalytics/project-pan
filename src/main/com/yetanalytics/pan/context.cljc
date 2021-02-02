@@ -228,7 +228,7 @@
           true ;; We found the key at the curr context!
           (recur (pop context-stack)))))))
 
-(defn contexted-key-spec
+(defn- contexted-key-spec
   [contexts]
   (s/def ::contexed-key (partial search-contexts contexts)))
 
@@ -255,10 +255,10 @@
 ;; At this point all @ signs are replaced by underscores
 (defn validate-keys
   [contexts curr-node]
-  (let [k-spec (contexted-key-spec contexts)
-        ctx-spec (s/def ::contexted-map
-                   (s/map-of (s/or :absolute-iri ::contexed-key
-                                   :keyword ::is-at-context) any?))]
+  (let [_ (contexted-key-spec contexts)
+        _ (s/def ::contexted-map (s/map-of (s/or :absolute-iri ::contexed-key
+                                                 :keyword ::is-at-context)
+                                           any?))]
     (s/explain-data ::contexted-map curr-node)))
 
 (defn update-profile-errors

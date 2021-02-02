@@ -197,6 +197,33 @@
            (->> bad-profile-2c id/validate-in-schemes e/group-by-in e/sort-by-path
                 (mapv #(-> % ::s/problems first :via last)))))))
 
+(deftest expound-test-silent
+  (testing "error/expound-errors error messages with 'silent' set to true"
+    (is (= ""
+           (with-out-str
+             (e/expound-error-map (p/validate bad-profile-1b)
+                                  :silent true))))
+    (is (= ""
+           (with-out-str
+             (e/expound-error (id/validate-ids bad-profile-2b)
+                              :error-type "id"
+                              :silent true))))
+    (is (= ""
+           (with-out-str
+             (e/expound-error (id/validate-in-schemes bad-profile-2c)
+                              :error-type "in-scheme"
+                              :silent true))))
+    (is (= ""
+           (with-out-str
+             (e/expound-error-list
+              (:context-key-errors
+               (ctx/validate-contexts {:id       "https://foo.org/profile"
+                                       :type     "Profile"
+                                       :_context "https://w3id.org/xapi/profiles/context"
+                                       :foo      "Bar"
+                                       :baz      "Qux"}))
+              :silent true))))))
+
 (deftest expound-test
   (testing "error/expound-errors error messages"
     (is (= (str "-- Spec failed --------------------\n"
@@ -253,7 +280,8 @@
                 "-------------------------\n"
                 "Detected 2 errors\n")
            (with-out-str
-             (e/expound-error (id/validate-ids bad-profile-2b) :error-type "id"))))
+             (e/expound-error (id/validate-ids bad-profile-2b)
+                              :error-type "id"))))
     (is (= (str "-- Spec failed --------------------\n"
                 "\n"
                 "Invalid inScheme: \"https://foo.org/invalid\"\n"
@@ -277,7 +305,8 @@
                 "-------------------------\n"
                 "Detected 2 errors\n")
            (with-out-str
-             (e/expound-error (id/validate-in-schemes bad-profile-2c) :error-type "in-scheme"))))
+             (e/expound-error (id/validate-in-schemes bad-profile-2c)
+                              :error-type "in-scheme"))))
     (is (= (str "-- Spec failed --------------------\n"
                 "\n"
                 "Invalid verb identifier:\n"
@@ -321,7 +350,9 @@
                 "-------------------------\n"
                 "Detected 1 error\n")
           (with-out-str
-            (e/expound-error-map (t/explain-graph (t/create-graph [] (:templates bad-profile-2d))) :error-type "edge"))))
+            (e/expound-error-map (t/explain-graph
+                                  (t/create-graph [] (:templates bad-profile-2d)))
+                                 :error-type "edge"))))
     (is (= (str "-- Spec failed --------------------\n"
                 "\n"
                 "Invalid verb identifier:\n"
@@ -365,7 +396,9 @@
                 "-------------------------\n"
                 "Detected 1 error\n")
            (with-out-str
-             (e/expound-error-map (t/explain-graph (t/create-graph [] (:templates bad-profile-2e))) :error-type "edge"))))
+             (e/expound-error-map (t/explain-graph
+                                   (t/create-graph [] (:templates bad-profile-2e)))
+                                  :error-type "edge"))))
     (is (= (str "-- Spec failed --------------------\n"
                 "\n"
                 "Cycle detected involving the following nodes:\n"
@@ -377,8 +410,10 @@
                 "-------------------------\n"
                 "Detected 1 error\n")
            (with-out-str
-             (e/expound-error
-              (pt/explain-graph-cycles (pt/create-graph (:templates bad-profile-2f) (:patterns bad-profile-2f))) :error-type "scc"))))
+             (e/expound-error (pt/explain-graph-cycles
+                               (pt/create-graph (:templates bad-profile-2f)
+                                                (:patterns bad-profile-2f)))
+                              :error-type "cycle"))))
     (is (= (str "-- Spec failed --------------------\n"
                 "\n"
                 "Invalid oneOrMore identifier:\n"
@@ -404,8 +439,10 @@
                 "-------------------------\n"
                 "Detected 1 error\n")
            (with-out-str
-             (e/expound-error
-              (pt/explain-graph (pt/create-graph (:templates bad-profile-2g) (:patterns bad-profile-2g))) :error-type "edge"))))))
+             (e/expound-error (pt/explain-graph
+                               (pt/create-graph (:templates bad-profile-2g)
+                                                (:patterns bad-profile-2g)))
+                              :error-type "edge"))))))
 
 (deftest context-error-msg-tests
   (testing "@context-related error messages"
@@ -458,17 +495,18 @@
            (with-out-str
              (e/expound-error-list
               (:context-errors
-               (ctx/validate-contexts {:id       "https://foo.org/profile"
-                                       :type     "Profile"
-                                       :_context {:type                "@type"
-                                                  :id                  "@id"
-                                                  :prov                "http://www.w3.org/ns/prov#"
-                                                  :skos                "http://www.w3.org/2004/02/skos/core#"
-                                                  :profile             "https://w3id.org/xapi/profiles/ontology#"
-                                                  :Profile             "profile:Profile"
-                                                  :Verb                "xapi:Verb"
-                                                  :ActivityType        "xapi:ActivityType"
-                                                  :AttachmentUsageType "xapi:AttachmentUsageType"}}))))))
+               (ctx/validate-contexts
+                {:id       "https://foo.org/profile"
+                 :type     "Profile"
+                 :_context {:type                "@type"
+                            :id                  "@id"
+                            :prov                "http://www.w3.org/ns/prov#"
+                            :skos                "http://www.w3.org/2004/02/skos/core#"
+                            :profile             "https://w3id.org/xapi/profiles/ontology#"
+                            :Profile             "profile:Profile"
+                            :Verb                "xapi:Verb"
+                            :ActivityType        "xapi:ActivityType"
+                            :AttachmentUsageType "xapi:AttachmentUsageType"}}))))))
     (is (= (str "-- Spec failed --------------------\n"
                 "\n"
                 "  {:id ...,\n"
@@ -505,8 +543,9 @@
            (with-out-str
              (e/expound-error-list
               (:context-key-errors
-               (ctx/validate-contexts {:id       "https://foo.org/profile"
-                                       :type     "Profile"
-                                       :_context "https://w3id.org/xapi/profiles/context"
-                                       :foo      "Bar"
-                                       :baz      "Qux"}))))))))
+               (ctx/validate-contexts
+                {:id       "https://foo.org/profile"
+                 :type     "Profile"
+                 :_context "https://w3id.org/xapi/profiles/context"
+                 :foo      "Bar"
+                 :baz      "Qux"}))))))))

@@ -137,7 +137,7 @@
   "Make the word plural based off of a count if needed, by adding a plural s
   at the end."
   [word cnt]
-  (if (< 1 cnt) (str word "s") word))
+  (if (not= 1 cnt) (str word "s") word))
 
 ;; Needed to get around Issue #110 in Expound
 (defn default-printer
@@ -265,7 +265,7 @@
   - id: Duplicate ID errors
   - in-scheme: InScheme property errors
   - edge: Concept, Template and Pattern link errors
-  - scc: Pattern cycle errors
+  - cycle: Pattern cycle errors
   - no arg: Basic syntax + @context validation"
   [& [error-type]]
   (let [error-type (if (nil? error-type) :else error-type)]
@@ -276,7 +276,7 @@
       (exp/custom-printer {:value-str-fn value-str-ver :print-specs? false})
       "edge"
       (exp/custom-printer {:value-str-fn value-str-edge :print-specs? false})
-      "scc"
+      "cycle"
       (exp/custom-printer {:value-str-fn value-str-scc :print-specs? false})
       :else
       default-printer
@@ -308,13 +308,13 @@
    :name  15
    :url   16
    ;; Concept properties
-   :broader 17
-   :broadMatch 18
-   :narrower 19
-   :narrowMatch 20
-   :related 21
+   :broader      17
+   :broadMatch   18
+   :narrower     19
+   :narrowMatch  20
+   :related      21
    :relatedMatch 22
-   :exactMatch 23
+   :exactMatch   23
    ;; Extension and Resource properties
    :recommendedActivityTypes  24
    :recommendedVerbs          25
@@ -422,7 +422,7 @@
   [error-map]
   (let [{problems ::s/problems spec ::s/spec value ::s/value} error-map
         problems-map (group-by :in problems)]
-    (reduce-kv (fn [err-list k v]
+    (reduce-kv (fn [err-list _ v]
                  (conj err-list (assoc {}
                                        ::s/problems (if (vector? v)
                                                       (sequence v) (list v))
@@ -446,8 +446,9 @@
   is determined using the error-type arg; if not supplied, it prints a default
   Expound error message (without the Relevant Specs trace)."
   [error-map & {:keys [error-type silent]}]
-  (let [print-fn (custom-printer error-type)]
-    (print-fn error-map)))
+  (when (not silent)
+    (let [print-fn (custom-printer error-type)]
+      (print-fn error-map))))
 
 (defn expound-error-list
   "Sort a list of spec error maps using the value of the :path key."
@@ -460,7 +461,7 @@
                                ::s/problems
                                first
                                :path)]
-            (if (and error-text (not silent))
+            (when error-text
               (println error-text))
             {:path error-path
              :text error-text}))
@@ -497,34 +498,38 @@
            context-errors
            context-key-errors
            silent]}]
-  (merge
-   (if (some? syntax-errors) {:syntax-errors (expound-error-map
-                                              syntax-errors
-                                              :silent silent)})
-   (if (some? id-errors) {:syntax-errors (expound-error
-                                          id-errors
-                                          :error-type "id"
-                                          :silent silent)})
-   (if (some? in-scheme-errors) {:in-scheme-errors (expound-error
-                                                    in-scheme-errors
-                                                    :error-type "in-scheme"
-                                                    :silent silent)})
-   (if (some? concept-errors) {:concept-errors (expound-error-map
-                                                concept-errors
-                                                :error-type "edge"
-                                                :silent silent)})
-   (if (some? template-errors) {:template-errors (expound-error-map
-                                                  template-errors
-                                                  :error-type "edge"
-                                                  :silent silent)})
-   (if (some? pattern-errors) {:pattern-errors (expound-error-map
-                                                pattern-errors
-                                                :error-type "edge"
-                                                :silent silent)})
+  (cond-> {}
+    (some? syntax-errors)
+    (assoc :syntax-errors (expound-error-map syntax-errors
+                                             :silent silent))
+    (some? id-errors)
+    (assoc :id-errors (expound-error id-errors
+                                     :error-type "id"
+                                     :silent silent))
+    (some? in-scheme-errors)
+    (assoc :in-scheme-errors (expound-error in-scheme-errors
+                                            :error-type "in-scheme"
+                                            :silent silent))
+    (some? concept-errors)
+    (assoc :concept-errors (expound-error-map concept-errors
+                                              :error-type "edge"
+                                              :silent silent))
+    (some? template-errors)
+    (assoc :template-errors (expound-error-map template-errors
+                                               :error-type "edge"
+                                               :silent silent))
+    (some? pattern-errors)
+    (assoc :pattern-errors (expound-error-map pattern-errors
+                                              :error-type "edge"
+                                              :silent silent))
+    (some? pattern-cycle-errors)
+    (assoc :pattern-cycle-errors (expound-error pattern-cycle-errors
+                                                :error-type "cycle"
+                                                :silent silent))
     ;; Context errors are already in list format
-   (if (some? context-errors) {:context-errors (expound-error-list
-                                                context-errors
-                                                :silent silent)})
-   (if (some? context-key-errors) {:context-key-errors (expound-error-list
-                                                        context-key-errors
-                                                        :silent silent)})))
+    (some? context-errors)
+    (assoc :context-errors (expound-error-list context-errors
+                                               :silent silent))
+    (some? context-key-errors)
+    (assoc :context-key-errors (expound-error-list context-key-errors
+                                                   :silent silent))))
