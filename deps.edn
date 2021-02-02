@@ -1,27 +1,27 @@
-{:paths ["resources" "src"]
+{:paths ["resources" "src/main"]
  :deps  {org.clojure/clojure    {:mvn/version "RELEASE"}
-         org.clojure/core.match {:mvn/version "0.3.0"} ; good
-         org.clojure/data.json  {:mvn/version "1.0.0"} ; add npm version
-         luposlip/json-schema   {:mvn/version "0.1.6"} ; add npm version
-         aysylu/loom            {:mvn/version "1.0.2"} ; good
-         expound/expound        {:mvn/version "0.7.2"} ; good
-         cider/piggieback       {:mvn/version "0.5.2"} ; move to dev alias
+         org.clojure/core.match {:mvn/version "0.3.0"}
+         org.clojure/data.json  {:mvn/version "1.0.0"}
+         luposlip/json-schema   {:mvn/version "0.1.6"}
+         aysylu/loom            {:mvn/version "1.0.2"}
+         expound/expound        {:mvn/version "0.7.2"}
+         cider/piggieback       {:mvn/version "0.5.2"}
          com.yetanalytics/xapi-schema ;; Latest commit: 1/29/21
          {:git/url "https://github.com/yetanalytics/xapi-schema"
           :sha     "0e552227e74913d1b35dfa648407b9a9ac4b6b00"}}
  :aliases
  {:test
-  {:extra-paths ["test"]
+  {:extra-paths ["src/test"]
    :extra-deps  {org.clojure/test.check {:mvn/version "RELEASE"}}}
   :runner-clj
   {:extra-deps {com.cognitect/test-runner ;; Latest commit: 9/30/20
                 {:git/url "https://github.com/cognitect-labs/test-runner"
                  :sha     "b6b3193fcc42659d7e46ecd1884a228993441182"}}
    :main-opts  ["-m" "cognitect.test-runner"
-                "-d" "test"]}
+                "-d" "src/test"]}
   :runner-cljs
   {:extra-deps {olical/cljs-test-runner {:mvn/version "3.8.0"}}
    :main-opts ["-m" "cljs-test-runner.main"
-               "-d" "test"
+               "-d" "src/test"
                "-c" "build.edn"]}}
  :mvn/repos {"jitpack" {:url "https://jitpack.io"}}}

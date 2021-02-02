@@ -82,10 +82,7 @@
                                 (.parse js/JSON json)
                                 (.parse js/JSON json-schema))]
             (. vres -valid))
-          (catch js/Error _ false))
-     (.validate jsonschema
-                (.parse js/JSON json)
-                (.parse js/JSON json-schema))))
+          (catch js/Error _ false))))
 
 ;; TODO: dynamic var for json schema version
 ;; TODO: test newest schema: version 08
