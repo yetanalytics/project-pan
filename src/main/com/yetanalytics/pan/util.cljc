@@ -2,7 +2,8 @@
   #?(:clj
      (:require [clojure.spec.alpha :as s]
                [clojure.string :as string]
-               [clojure.data.json :as json])
+               [clojure.data.json :as json]
+               [clojure.java.io :as io])
      :cljs
      (:require [clojure.spec.alpha :as s]
                [clojure.string :as string]
@@ -19,12 +20,11 @@
 (defn read-resource
   "Read a file in the \"resources\" dir, returning a string."
   [path]
-  (let [path' (str "resources/" path)]
-    #?(:clj (slurp path')
-       :cljs (.readFileSync fs path' "utf8"))))
+  #?(:clj (slurp (io/resource path))
+     :cljs (.readFileSync fs (str "resources/" path) "utf8")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Generic functions and specs 
+;; Generic functions and specs
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn normalize-nil
