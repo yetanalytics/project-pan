@@ -12,3 +12,15 @@ pom.xml.asc
 .hgignore
 .hg/
 *.DS_Store
+
+# VSCode
+.calva
+.clj-kondo
+.lsp
+
+# ClojureScript
+.cljs_node_repl/
+cljs-test-runner-out/
+node_modules/
+package-lock.json
+package.json
