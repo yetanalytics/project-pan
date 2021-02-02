@@ -8,7 +8,8 @@
      (:require [clojure.spec.alpha :as s]
                [clojure.string :as string]
                [clojure.walk :as w]
-               [fs])))
+               [fs]
+               [__dirname])))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; File IO 
@@ -21,13 +22,13 @@
   "Read a file in the \"resources\" dir, returning a string."
   [path]
   #?(:clj (slurp (io/resource path))
-     :cljs (.readFileSync fs (str "resources/" path) "utf8")))
+     :cljs (.readFileSync fs (str (js* "__dirname") "/resources/" path) "utf8")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Generic functions and specs
+;; Generic functions and specs 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn normalize-nil
+ (defn normalize-nil
   "Turn a nil array into an empty array"
   [value]
   (if (nil? value) [] value))
