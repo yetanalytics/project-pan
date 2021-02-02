@@ -71,8 +71,6 @@
           g
           edges))
 
-(-> (loom.graph/digraph) (loom.graph/add-edges ["foo" "bar"] ["bar" "foo"]))
-
 (defn src
   "Return the source node of a directed edge."
   [edge]
@@ -98,7 +96,7 @@
   [g node]
   (loom.graph/out-degree g node))
 
-;; Need to manually rewrite transpose and scc function due to bug in Loom lib
+;; Need to manually rewrite transpose and scc function due to Issue #131 in Loom
 
 (defn- transpose [{in :in adj :adj :as g}] (assoc g :adj in :in adj))
 
