@@ -49,8 +49,6 @@
     (is (s/valid? ::ax/json-path "$['store\\|$io'] | $.foo.bar"))
     (is (not (s/valid? ::ax/json-path "what the pineapple")))))
 
-(s/explain ::ax/json-path "$['store\\|$io'] | $.foo.bar")
-
 ;; Test in bulk
 (deftest test-jsonpath-dot
   (testing "JSONPath strings with dot child notation"
