@@ -73,9 +73,10 @@
 ;; JSON Schema
 ;; Example: "{\"type\":\"array\", \"uniqueItems\":true}"
 
-(defn schema-validate [json-schema json]
+(defn- validate-schema [json-schema json]
   #?(:clj
-     (try (let [_ (jschema/validate json-schema json)] true)
+     (try (let [vres (jschema/validate json-schema json)]
+            (some? vres))
           (catch Exception _ false))
      :cljs
      (try (let [vres (.validate jsonschema
@@ -88,7 +89,7 @@
 ;; TODO: test newest schema: version 08
 (def meta-schema (u/read-resource "json/schema-07.json"))
 
-(s/def ::json-schema (s/and ::string (partial schema-validate meta-schema)))
+(s/def ::json-schema (s/and ::string (partial validate-schema meta-schema)))
 
 ;; IRIs/IRLs/URIs/URLs
 ;; Example: "https://yetanalytics.io"
