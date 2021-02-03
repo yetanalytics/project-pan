@@ -29,4 +29,4 @@
   ([path]
    (-> path resource slurp json/convert-json))
   ([path at-replacement]
-   (-> path resource slurp (json/convert-json :at-replacement at-replacement))))
+   (-> path resource slurp (json/convert-json at-replacement))))

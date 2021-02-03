@@ -16,7 +16,7 @@
    - Note that all instances of @ in keywords are replaced by '_'"
   [profile]
   (if (string? profile)
-    (try (json/convert-json profile :at-replacement "_")
+    (try (json/convert-json profile "_")
          (catch #?(:clj Exception :cljs js/Error) 
                 e 
            (ex-info "JSON parsing error! " (ex-data e))))
