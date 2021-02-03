@@ -15,7 +15,7 @@
             [com.yetanalytics.pan.objects.concepts.extensions.context :as ce]
             [com.yetanalytics.pan.objects.concepts.extensions.result :as re]
             [com.yetanalytics.pan.objects.concepts.activities :as act]
-            [com.yetanalytics.pan.util :as u]))
+            [com.yetanalytics.pan.utils.spec :as u]))
 
 ;; TODO: Expound can act pretty funny sometimes and we have to use some hacks
 ;; to avoid said funniness. Look into creating an in-house error message lib.

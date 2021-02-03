@@ -1,7 +1,7 @@
 (ns com.yetanalytics.pan.objects.concept
   (:require [clojure.spec.alpha :as s]
             [com.yetanalytics.pan.graph :as graph]
-            [com.yetanalytics.pan.util :as util]
+            [com.yetanalytics.pan.utils.spec :as util]
             [com.yetanalytics.pan.objects.concepts.verbs :as v]
             [com.yetanalytics.pan.objects.concepts.activities :as a]
             [com.yetanalytics.pan.objects.concepts.activity-types :as at]

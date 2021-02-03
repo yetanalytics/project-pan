@@ -1,15 +1,8 @@
-(ns com.yetanalytics.pan-test.util_test
+(ns com.yetanalytics.pan-test.utils-test.spec-test
   (:require [clojure.test :refer [deftest is testing]]
             [clojure.spec.alpha :as s]
             ;; Not to be confused with test-utils in test dir
-            [com.yetanalytics.pan.util :as u]))
-
-(deftest read-resource-test
-  (testing "testing that read-resource returns strings on valid files"
-    (is (string? (u/read-resource "media_types.edn")))
-    (is (string? (u/read-resource "context/activity-context.json")))
-    (is (string? (u/read-resource "json/schema-07.json")))
-    (is (string? (u/read-resource "sample_profiles/will-profile.json")))))
+            [com.yetanalytics.pan.utils.spec :as u]))
 
 ;; TODO Normalize profile test
 

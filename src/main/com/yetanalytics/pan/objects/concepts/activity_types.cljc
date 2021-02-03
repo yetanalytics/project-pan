@@ -2,7 +2,7 @@
   (:require [clojure.spec.alpha :as s]
             [com.yetanalytics.pan.axioms :as ax]
             [com.yetanalytics.pan.graph :as graph]
-            [com.yetanalytics.pan.util :as u]))
+            [com.yetanalytics.pan.utils.spec :as u]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Activity Type
