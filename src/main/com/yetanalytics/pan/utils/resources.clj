@@ -24,6 +24,9 @@
 
 (defmacro read-json-resource
   "Read a file from \"resources/\" during compilation. Returns JSON.
-   `at-replacement` is what replaces the \"@\" symbol during JSON parsing."
-  [path at-replacement]
-  (-> path resource slurp (json/convert-json at-replacement)))
+   Optional at-replacement arg is what replaces the \"@\" symbol during JSON
+   parsing. Removes spaces in keywords."
+  ([path]
+   (-> path resource slurp json/convert-json))
+  ([path at-replacement]
+   (-> path resource slurp (json/convert-json :at-replacement at-replacement))))

@@ -29,7 +29,7 @@
   (testing "read-edn-resource function"
     (is (associative? res-5))))
 
-(def res-6 (read-json-resource "json/schema-07.json" ""))
+(def res-6 (read-json-resource "json/schema-07.json"))
 (def res-7 (read-json-resource "context/activity-context.json" "at/"))
 (def res-8 (read-json-resource "sample_profiles/will-profile.json" "_"))
 
