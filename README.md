@@ -12,12 +12,12 @@ on success (obviously) or an error message on failure.
 
 Arguments may be supplied for different levels of validation strictness, which
 are listed as follows:
-- `:syntax` - Basic validation; check only the types of properties and simple
+- `:syntax?` - Basic validation; check only the types of properties and simple
 syntax of all Profile objects. Set to `true` by default.
-- `:ids` - Validate the correctness of all object and versioning IDs (the id
+- `:ids?` - Validate the correctness of all object and versioning IDs (the id
 and inScheme properties). Validate that all IDs are distinct and that all
 inScheme values correspond to valid Profile version IDs.
-- `:relations` - Validate that all relations between Profile objects are valid.
+- `:relations?` - Validate that all relations between Profile objects are valid.
 These relations are given by IRIs and include the following:
     - the broader, narrower, related, broadMatch, narrowMatch, relatedMatch and
 exactMatch properties for Verbs, Activity Types and Attachment Usage
@@ -28,19 +28,19 @@ Types.
     `contextStatementRefTemplate` properties for Statement Templates.
     - `sequence`, `alternates`, `optional`, `oneOrMore` and `zeroOrMore`
     properties for Patterns.
-- `:contexts` - Validate that all instances of `@context` resolve to valid
+- `:contexts?` - Validate that all instances of `@context` resolve to valid
 JSON-LD contexts and that they allow all properties to expand out to absolute
 IRIs during JSON-LD processing. The `@context` property is always found in the
 Profile metadata and in Activity Definitions, though they can also be found
 in Extensions for said Activity Definitions.
-- `:print-errs` - Print validation errors out if true; otherwise return spec
+- `:print-errs?` - Print validation errors out if true; otherwise return spec
 error data (or nil, if the profile is valid) without printing. True by default.
 
 In addition to these arguments, there is another argument that needs to be
 implemented in a future iteration but currently does not exist.
-- `:external-iris` - Allow the profile to access external links, either by
+- `:external-iris?` - Allow the profile to access external links, either by
 executing SPARQL queries on a RDF triple store or by executing HTTP requests.
-This is useful when `:relations` and `:contexts` are set to true.
+This is useful when `:relations?` and `:contexts?` are set to true.
 
 Besides validating whole Profiles, you can also use library methods and specs
 to validate parts of Profiles, such as individual  Concepts, Templates and
