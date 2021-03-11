@@ -54,7 +54,7 @@
 ;; This spec checks if a @context key is an alias to a keyword value.
 ;; See section 6.2: Node Objects in the JSON-LD grammar.
 (s/def ::keyword
-  (fn [k]
+  (fn context-keyword? [k]
     (contains? #{"@context" "@id" "@graph" "@nest" "@type" "@reverse" "@index"}
                k)))
 
@@ -63,6 +63,7 @@
 (def gen-delims-regex
   #?(:clj #".*(?:\:|\/|\?|\#|\[|\]|\@)$"
      :cljs #".*(?:\:|/|\?|\#|\[|\]|\@)$"))
+
 (def prefix-regex #"(.*\:)")
 
 ;; JSON-LD 1.1 prefixes may be a simple term definition that ends in a URI
@@ -78,10 +79,9 @@
   "Returns all the prefixes in a context."
   [context]
   (reduce-kv (fn [accum k v]
-               (if (s/valid? ::prefix v)
-                 (assoc accum k v)
-                 accum))
-             {} context))
+               (if (s/valid? ::prefix v) (assoc accum k v) accum))
+             {}
+             context))
 
 (defn dissoc-prefixes
   "Returns all terms in a context that are not prefixes nor keyword aliases."
@@ -89,7 +89,9 @@
   (reduce-kv (fn [accum k v]
                (if (or (s/valid? ::keyword v) (s/valid? ::prefix v))
                  accum
-                 (assoc accum k v))) {} context))
+                 (assoc accum k v)))
+             {}
+             context))
 
 (defn compact-iri?
   "Validates whether this is a compact iri that has a valid prefix."
@@ -116,7 +118,7 @@
 (defn value-spec
   [prefixes]
   (s/def ::value
-    (s/or :simple-term-def (simple-term-spec prefixes)
+    (s/or :simple-term-def   (simple-term-spec prefixes)
           :expanded-term-def (expanded-term-spec prefixes))))
 
 (defn values-spec
@@ -135,7 +137,7 @@
   [context-iri]
   (let [context (get-context context-iri)]
     (if-let [errors (validate-context context)]
-      {:context nil :errors errors}
+      {:context nil     :errors errors}
       {:context context :errors nil})))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -157,7 +159,8 @@
                   (s/valid? (s/coll-of map? :type vector?) v)
                   (concat accum v)
                   :else accum))
-              (list) node)))
+              (list)
+              node)))
 
 (defn profile-to-zipper
   "Create a zipper from a profile structure."
@@ -174,8 +177,7 @@
   "Pop the last-added context if the path is not located at the current
   location nor a parent of the current location."
   [context-stack location]
-  (if-not (subvec? (-> context-stack peek :path)
-                   (vec (zip/path location)))
+  (if-not (subvec? (-> context-stack peek :path) (-> location zip/path vec))
     (pop context-stack)
     context-stack))
 
@@ -195,7 +197,7 @@
   "If there exists a @context key at the current node, add it to the stack.
   Recall that @context may be either a URI string or an array of URIs."
   [context-stack location]
-  (let [curr-path (-> location zip/path vec)
+  (let [curr-path   (-> location zip/path vec)
         context-val (-> location zip/node :_context)]
     (cond
       ;; @context is URI valued
@@ -212,8 +214,12 @@
       (map? context-val)
       (let [errors (validate-context context-val)]
         (if (not-empty errors)
-          (conj context-stack {:context nil :errors errors :path curr-path})
-          (conj context-stack {:context context-val :errors nil :path curr-path})))
+          (conj context-stack {:context nil
+                               :errors  errors
+                               :path    curr-path})
+          (conj context-stack {:context context-val
+                               :errors  nil
+                               :path    curr-path})))
       ;; No @context key at this location
       (nil? context-val) context-stack)))
 
@@ -281,28 +287,33 @@
 (defn validate-contexts
   "Validate all the contexts in a Profile."
   [profile]
-  (loop [profile-loc (profile-to-zipper profile)
-         context-stack []
+  (loop [profile-loc    (profile-to-zipper profile)
+         context-stack  []
          ;; For contexts themselves that are bad
          context-errors (list)
          ;; When the profile doesn't follow the context 
          profile-errors (list)]
-    (if (zip/end? profile-loc)
-      (-> {} (assoc :context-errors
-                    (->> context-errors (filter some?) not-empty)
-                    :context-key-errors
-                    (->> profile-errors (filter some?) not-empty)))
-      (let [curr-node (zip/node profile-loc)
+    (if-not (zip/end? profile-loc)
+      (let [curr-node    (zip/node profile-loc)
             popped-stack (pop-contexts context-stack profile-loc)
             pushed-stack (push-context context-stack profile-loc)]
         (if (-> pushed-stack peek :context nil?)
           ;; If latest context is erroneous
-          (let [new-cerrors (update-context-errors popped-stack pushed-stack
+          (let [new-cerrors (update-context-errors popped-stack
+                                                   pushed-stack
                                                    context-errors)]
             (recur (zip/next profile-loc)
                    pushed-stack new-cerrors profile-errors))
           ;; If latest context is valid => validate map keys
-          (let [new-perrors (update-profile-errors pushed-stack curr-node
+          (let [new-perrors (update-profile-errors pushed-stack
+                                                   curr-node
                                                    profile-errors)]
             (recur (zip/next profile-loc)
-                   pushed-stack context-errors new-perrors)))))))
+                   pushed-stack
+                   context-errors
+                   new-perrors))))
+      (-> {}
+          (assoc :context-errors
+                 (->> context-errors (filter some?) not-empty)
+                 :context-key-errors
+                 (->> profile-errors (filter some?) not-empty))))))
