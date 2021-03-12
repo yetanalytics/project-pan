@@ -287,11 +287,7 @@
          context-errors (list)
          ;; When the profile doesn't follow the context 
          profile-errors (list)]
-    (if (zip/end? profile-loc)
-      (-> {} (assoc :context-errors
-                    (->> context-errors (filter some?) not-empty)
-                    :context-key-errors
-                    (->> profile-errors (filter some?) not-empty)))
+    (if-not (zip/end? profile-loc)
       (let [curr-node (zip/node profile-loc)
             popped-stack (pop-contexts context-stack profile-loc)
             pushed-stack (push-context context-stack profile-loc)]
@@ -305,4 +301,27 @@
           (let [new-perrors (update-profile-errors pushed-stack curr-node
                                                    profile-errors)]
             (recur (zip/next profile-loc)
-                   pushed-stack context-errors new-perrors)))))))
+                   pushed-stack context-errors new-perrors))))
+      (let [context-err-seq (filter some? context-errors)
+            profile-err-seq (filter some? profile-errors)
+            ;; Quick and dirty smooshing of seqs of problems
+            ;; Properties like `:in` no longer accurately reflect err data
+            context-err-map (reduce (fn [acc {probs ::s/problems
+                                              value ::s/value}]
+                                      (-> acc
+                                          (update ::s/problems concat probs)
+                                          (update ::s/value conj value)))
+                                    {::s/problems '()
+                                     ::s/spec     ::values
+                                     ::s/value    #{}}
+                                    context-err-seq)
+            profile-err-map (reduce (fn [acc {probs ::s/problems}]
+                                      (update acc ::s/problems concat probs))
+                                    {::s/problems '()
+                                     ::s/spec     ::contexted-map
+                                     ::s/value    profile}
+                                    profile-err-seq)]
+        {:context-errors
+         (when (not-empty context-err-seq) context-err-map)
+         :context-key-errors
+         (when (not-empty profile-err-seq) profile-err-map)}))))

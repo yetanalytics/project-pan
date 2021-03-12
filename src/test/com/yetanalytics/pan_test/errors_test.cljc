@@ -201,8 +201,8 @@
   (testing "error/expound-errors error messages with 'silent' set to true"
     (is (= ""
            (with-out-str
-             (e/expound-error-map (p/validate bad-profile-1b)
-                                  :silent true))))
+             (e/expound-error (p/validate bad-profile-1b)
+                              :silent true))))
     (is (= ""
            (with-out-str
              (e/expound-error (id/validate-ids bad-profile-2b)
@@ -262,7 +262,7 @@
                 "\n"
                 "")
            (with-out-str
-             (e/expound-error-map (p/validate bad-profile-1b)))))
+             (e/expound-error (p/validate bad-profile-1b)))))
     (is (= (str "-- Spec failed --------------------\n"
                 "\n"
                 "Duplicate id: \"https://w3id.org/xapi/catch/v1\"\n"
@@ -350,9 +350,9 @@
                 "-------------------------\n"
                 "Detected 1 error\n")
           (with-out-str
-            (e/expound-error-map (t/explain-graph
-                                  (t/create-graph [] (:templates bad-profile-2d)))
-                                 :error-type "edge"))))
+            (e/expound-error (t/explain-graph
+                              (t/create-graph [] (:templates bad-profile-2d)))
+                             :error-type "edge"))))
     (is (= (str "-- Spec failed --------------------\n"
                 "\n"
                 "Invalid verb identifier:\n"
@@ -396,7 +396,7 @@
                 "-------------------------\n"
                 "Detected 1 error\n")
            (with-out-str
-             (e/expound-error-map (t/explain-graph
+             (e/expound-error (t/explain-graph
                                    (t/create-graph [] (:templates bad-profile-2e)))
                                   :error-type "edge"))))
     (is (= (str "-- Spec failed --------------------\n"
@@ -493,7 +493,7 @@
             "Detected 3 errors\n"
             "\n")
            (with-out-str
-             (e/expound-error-list
+             (e/expound-error
               (:context-errors
                (ctx/validate-contexts
                 {:id       "https://foo.org/profile"
@@ -506,7 +506,14 @@
                             :Profile             "profile:Profile"
                             :Verb                "xapi:Verb"
                             :ActivityType        "xapi:ActivityType"
-                            :AttachmentUsageType "xapi:AttachmentUsageType"}}))))))
+                            :AttachmentUsageType "xapi:AttachmentUsageType"}
+                 :concepts [{:id       "https://foo.org/activity/1"
+                             :type     "Activity"
+                             :_context {:type    "@type"
+                                        :id      "@id"
+                                        :prov    "http://www.w3.org/ns/prov#"
+                                        :skos    "http://www.w3.org/2004/02/skos/core#"
+                                        :Profile "profile:Profile"}}]}))))))
     (is (= (str "-- Spec failed --------------------\n"
                 "\n"
                 "  {:id ...,\n"
@@ -541,11 +548,15 @@
                 "Detected 2 errors\n"
                 "\n")
            (with-out-str
-             (e/expound-error-list
+             (e/expound-error
               (:context-key-errors
                (ctx/validate-contexts
                 {:id       "https://foo.org/profile"
                  :type     "Profile"
                  :_context "https://w3id.org/xapi/profiles/context"
                  :foo      "Bar"
-                 :baz      "Qux"}))))))))
+                 :baz      "Qux"
+                 :concepts [{:id       "https://foo.org/activity/1"
+                             :type     "Activity"
+                             :_context "https://w3id.org/xapi/profiles/activity-context"
+                             :hello    "World"}]}))))))))

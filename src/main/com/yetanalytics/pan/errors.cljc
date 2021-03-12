@@ -279,7 +279,8 @@
       "cycle"
       (exp/custom-printer {:value-str-fn value-str-scc :print-specs? false})
       :else
-      default-printer
+      #_default-printer
+      (exp/custom-printer {:show-valid-values? false :print-specs? false})
       #_(exp/custom-printer {:value-str-fn value-str-def :print-specs? false}))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -450,7 +451,7 @@
     (let [print-fn (custom-printer error-type)]
       (print-fn error-map))))
 
-(defn expound-error-list
+#_(defn expound-error-list
   "Sort a list of spec error maps using the value of the :path key."
   [error-list & {:keys [error-type silent]}]
   (mapv (fn [error]
@@ -467,7 +468,11 @@
              :text error-text}))
         error-list))
 
-(defn expound-error-map
+(defn expound-error-list
+  [error-list & {:keys [error-type silent]}]
+  (doseq [err error-list] (expound-error err error-type silent)))
+
+#_(defn expound-error-map
   "Regroup an error map into a sorted list of error maps.
   Used to avoid Issue #165 for Expound."
   [error-map & {:keys [error-type silent]}]
@@ -500,8 +505,8 @@
            silent]}]
   (cond-> {}
     (some? syntax-errors)
-    (assoc :syntax-errors (expound-error-map syntax-errors
-                                             :silent silent))
+    (assoc :syntax-errors (expound-error syntax-errors
+                                        :silent silent))
     (some? id-errors)
     (assoc :id-errors (expound-error id-errors
                                      :error-type "id"
@@ -511,25 +516,25 @@
                                             :error-type "in-scheme"
                                             :silent silent))
     (some? concept-errors)
-    (assoc :concept-errors (expound-error-map concept-errors
-                                              :error-type "edge"
-                                              :silent silent))
+    (assoc :concept-errors (expound-error concept-errors
+                                          :error-type "edge"
+                                          :silent silent))
     (some? template-errors)
-    (assoc :template-errors (expound-error-map template-errors
-                                               :error-type "edge"
-                                               :silent silent))
+    (assoc :template-errors (expound-error template-errors
+                                           :error-type "edge"
+                                           :silent silent))
     (some? pattern-errors)
-    (assoc :pattern-errors (expound-error-map pattern-errors
-                                              :error-type "edge"
-                                              :silent silent))
+    (assoc :pattern-errors (expound-error pattern-errors
+                                          :error-type "edge"
+                                          :silent silent))
     (some? pattern-cycle-errors)
     (assoc :pattern-cycle-errors (expound-error pattern-cycle-errors
                                                 :error-type "cycle"
                                                 :silent silent))
     ;; Context errors are already in list format
     (some? context-errors)
-    (assoc :context-errors (expound-error-list context-errors
+    (assoc :context-errors (expound-error context-errors
                                                :silent silent))
     (some? context-key-errors)
-    (assoc :context-key-errors (expound-error-list context-key-errors
+    (assoc :context-key-errors (expound-error context-key-errors
                                                    :silent silent))))
