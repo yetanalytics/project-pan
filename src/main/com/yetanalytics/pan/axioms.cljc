@@ -17,7 +17,10 @@
 
 ;; Arbitrary strings
 ;; By the xAPI-Profile specification, they cannot be empty (except Lang Maps)
-(s/def ::string (s/and string? (complement empty?)))
+(defn- non-empty-string? [s]
+  (and (string? s) (not-empty s)))
+
+(s/def ::string non-empty-string?)
 (s/def ::lang-map-string string?) ;; Language maps only
 
 ;; Timestamps
@@ -28,9 +31,11 @@
 ;; Example: {"en" "Hello World"} or {:en "Hello World"}
 ;; TODO Should revise language maps such that keys like :foo are not counted
 (s/def ::language-tag
-  (fn [t] (or (and (keyword? t) (->> t name (re-matches xsr/LanguageTagRegEx)))
-              (and (string? t) (not-empty t)
-                   (re-matches xsr/LanguageTagRegEx t)))))
+  (fn language-tag? [t]
+    (or (and (keyword? t)
+             (re-matches xsr/LanguageTagRegEx (name t)))
+        (and (non-empty-string? t)
+             (re-matches xsr/LanguageTagRegEx t)))))
 
 (s/def ::language-map
   (s/map-of ::language-tag ::lang-map-string :min-count 1))
@@ -44,12 +49,12 @@
 ;; application, audio, image, text and video.
 (def media-types (read-edn-resource "media_types.edn"))
 
-(s/def ::media-type
-  (s/and ::string
-         (fn [mt]
-           (let [regexp  #?(:clj #"\/" :cljs #"/")
-                 substrs (string/split mt regexp 2)]
-             (contains? (get media-types (first substrs)) (second substrs))))))
+(defn- media-type? [s]
+  (let [regexp  #?(:clj #"\/" :cljs #"/")
+        substrs (string/split s regexp 2)]
+    (contains? (get media-types (first substrs)) (second substrs))))
+
+(s/def ::media-type (s/and ::string media-type?))
 
 ;; JSONPath strings
 ;; Example: "$.store.book"
@@ -64,14 +69,14 @@
 (def JSONPathRegEx #"\$((((\.\.?)([^\[\]\.,\s]+|(?=\[)))|(\[\s*(('([^,']|(\\\,)|(\\\'))+'(,\s*('([^,']|(\\\,)|(\\\'))+'))*\s*)|\*)\s*\]))(\[((\d*(,\s*(\d*))*)|\*)\])?)*")
 (def JSONPathSplitRegEx #"\s*\|\s*(?!([^\[]*\]))")
 
-; Need to filter out nils caused by JavaScript regexes
+(defn- json-path? [paths]
+  (every? some?
+          (map (partial re-matches JSONPathRegEx)
+               (filterv some? ; Filter out nils from JS regexes
+                        (string/split paths JSONPathSplitRegEx)))))
+
 (s/def ::json-path
-  (s/and ::string
-         (fn [paths]
-           (every? some?
-                   (map (partial re-matches JSONPathRegEx)
-                        (filterv some? ; Filter out nils from JS regexes
-                                 (string/split paths JSONPathSplitRegEx)))))))
+  (s/and ::string json-path?))
 
 ;; JSON Schema
 ;; Example: "{\"type\":\"array\", \"uniqueItems\":true}"
@@ -90,9 +95,9 @@
 
 ;; TODO: dynamic var for json schema version
 ;; TODO: test newest schema: version 08
-(def meta-schema (read-resource "json/schema-07.json"))
+(def meta-schema-7 (read-resource "json/schema-07.json"))
 
-(s/def ::json-schema (s/and ::string (partial validate-schema meta-schema)))
+(s/def ::json-schema (s/and ::string (partial validate-schema meta-schema-7)))
 
 ;; IRIs/IRLs/URIs/URLs
 ;; Example: "https://yetanalytics.io"

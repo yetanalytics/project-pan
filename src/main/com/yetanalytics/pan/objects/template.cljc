@@ -35,7 +35,7 @@
 ;; A StatementTemplate MUST NOT have both objectStatementRefTemplate and
 ;; objectActivityType at the same time.
 (s/def ::type-or-reference
-  (fn [st]
+  (fn type-or-ref? [st]
     (let [otype? (contains? st :objectActivityType)
           otemp? (contains? st :objectStatementRefTemplate)]
       (not (and otype? otemp?)))))
@@ -142,37 +142,37 @@
 
 ;; Is the source a Statement Template?
 (s/def ::template-src
-  (fn [{:keys [src-type]}]
+  (fn template-src? [{:keys [src-type]}]
     (contains? #{"StatementTemplate"} src-type)))
 
 ;; Is the destination not nil?
 (s/def ::valid-dest
-  (fn [{:keys [dest-type dest-version]}]
+  (fn valid-dest? [{:keys [dest-type dest-version]}]
     (and (some? dest-type) (some? dest-version))))
 
 ;; Is the destination a Verb?
 (s/def ::verb-dest
-  (fn [{:keys [dest-type]}]
+  (fn verb-dest? [{:keys [dest-type]}]
     (contains? #{"Verb"} dest-type)))
 
 ;; Is the destination an Activity Type?
 (s/def ::at-dest
-  (fn [{:keys [dest-type]}]
+  (fn at-dest? [{:keys [dest-type]}]
     (contains? #{"ActivityType"} dest-type)))
 
 ;; Is the destination an Attachment Usage Type?
 (s/def ::aut-dest
-  (fn [{:keys [dest-type]}]
+  (fn aut-dest? [{:keys [dest-type]}]
     (contains? #{"AttachmentUsageType"} dest-type)))
 
 ;; Is the destination another Statement Template?
 (s/def ::template-dest
-  (fn [{:keys [dest-type]}]
+  (fn template-dest? [{:keys [dest-type]}]
     (contains? #{"StatementTemplate"} dest-type)))
 
 ;; Are both the source and destination in the same version?
 (s/def ::same-version
-  (fn [{:keys [src-version dest-version]}]
+  (fn same-version? [{:keys [src-version dest-version]}]
     (= src-version dest-version)))
 
 ;; Edge validation multimethod
@@ -254,7 +254,8 @@
 ;; Putting it all together
 
 (s/def ::template-graph
-  (fn [tgraph] (s/valid? ::valid-edges (get-edges tgraph))))
+  (fn template-graph? [tgraph]
+    (s/valid? ::valid-edges (get-edges tgraph))))
 
 (defn explain-graph [tgraph]
   (s/explain-data ::valid-edges (get-edges tgraph)))

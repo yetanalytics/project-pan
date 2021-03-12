@@ -84,47 +84,47 @@
 
 ;; Is the destination not nil?
 (s/def ::valid-dest
-  (fn [{:keys [dest-type dest-version]}]
+  (fn valid-dest? [{:keys [dest-type dest-version]}]
     (and (some? dest-type) (some? dest-version))))
 
 ;; Is the source an Activity Type, Attachment Usage Type, or a Verb?
 (s/def ::relatable-src
-  (fn [{:keys [src-type]}]
+  (fn relatable-src? [{:keys [src-type]}]
     (contains? #{"ActivityType" "AttachmentUsageType" "Verb"} src-type)))
 
 ;; Is the destination an Activity Type, Attachment Usage Type, or a Verb?
 (s/def ::relatable-dest
-  (fn [{:keys [dest-type]}]
+  (fn relatable-dest? [{:keys [dest-type]}]
     (contains? #{"ActivityType" "AttachmentUsageType" "Verb"} dest-type)))
 
 ;; Is the source an Activity Extension?
 (s/def ::aext-src
-  (fn [{:keys [src-type]}]
+  (fn aext-src? [{:keys [src-type]}]
     (contains? #{"ActivityExtension"} src-type)))
 
 ;; Is the source a Context or Result Extension?
 (s/def ::crext-src
-  (fn [{:keys [src-type]}]
+  (fn crext-src? [{:keys [src-type]}]
     (contains? #{"ContextExtension" "ResultExtension"} src-type)))
 
 ;; Is the destination an Activity Type?
 (s/def ::at-dest
-  (fn [{:keys [dest-type]}]
+  (fn  at-dest? [{:keys [dest-type]}]
     (contains? #{"ActivityType"} dest-type)))
 
 ;; Is the destination a Verb?
 (s/def ::verb-dest
-  (fn [{:keys [dest-type]}]
+  (fn verb-dest? [{:keys [dest-type]}]
     (contains? #{"Verb"} dest-type)))
 
 ;; Are both the source and destination the same type of Concept?
 (s/def ::same-concept
-  (fn [{:keys [src-type dest-type]}]
+  (fn same-concept? [{:keys [src-type dest-type]}]
     (= src-type dest-type)))
 
 ;; Are both the source and destination of the same version?
 (s/def ::same-version
-  (fn [{:keys [src-version dest-version]}]
+  (fn same-version? [{:keys [src-version dest-version]}]
     (= src-version dest-version)))
 
 ;; Edge validation multimethod 
@@ -179,7 +179,8 @@
 (s/def ::valid-edges (s/coll-of ::valid-edge))
 
 (s/def ::concept-graph
-  (fn [cgraph] (s/valid? ::valid-edges (get-edges cgraph))))
+  (fn concept-graph? [cgraph]
+    (s/valid? ::valid-edges (get-edges cgraph))))
 
 (defn explain-graph [cgraph]
   (s/explain-data ::valid-edges (get-edges cgraph)))

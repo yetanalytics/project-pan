@@ -26,8 +26,8 @@
 (s/def ::zeroOrMore ::ax/iri)
 
 ;; Check if 'primary' property is true or false
-(s/def ::is-primary-true (fn [p] (:primary p)))
-(s/def ::is-primary-false (fn [p] (not (:primary p))))
+(s/def ::is-primary-true (fn is-primary? [p] (:primary p)))
+(s/def ::is-primary-false (fn is-not-primary? [p] (not (:primary p))))
 
 ;; A Pattern MUST contain exactly one of 'sequence', 'alternates', 'optional',
 ;; 'oneOrMore' or 'zeroOrMore'.
@@ -91,13 +91,13 @@
 
 (defmulti get-pattern-edges dispatch-on-pattern)
 
-(defmethod get-pattern-edges '(:alternates) [{:keys [id alternates]}]
-  (mapv #(vector id % {:type :alternates}) alternates))
-
 ;; Use non-terse destructuring syntax because "sequence" is already a Clojure
 ;; core function
 (defmethod get-pattern-edges '(:sequence) [{:keys [id] :as pattern}]
   (mapv #(vector id % {:type :sequence}) (:sequence pattern)))
+
+(defmethod get-pattern-edges '(:alternates) [{:keys [id alternates]}]
+  (mapv #(vector id % {:type :alternates}) alternates))
 
 (defmethod get-pattern-edges '(:optional) [{:keys [id optional]}]
   (vector (vector id optional {:type :optional})))
@@ -167,51 +167,52 @@
 
 ;; Is the destination not nil?
 (s/def ::valid-dest
-  (fn [{:keys [dest-type]}]
+  (fn valid-dest? [{:keys [dest-type]}]
     (some? dest-type)))
 
 ;; Is the source a Pattern?
 (s/def ::pattern-src
-  (fn [{:keys [src-type]}] (contains? #{"Pattern"} src-type)))
+  (fn pattern-src? [{:keys [src-type]}]
+    (contains? #{"Pattern"} src-type)))
 
 ;; Is the destination a Pattern?
 (s/def ::pattern-dest
-  (fn [{:keys [dest-type]}]
+  (fn pattern-dest? [{:keys [dest-type]}]
     (contains? #{"Pattern"} dest-type)))
 
 ;; Is the destination a Template?
 (s/def ::template-dest
-  (fn [{:keys [dest-type]}]
+  (fn template-dest? [{:keys [dest-type]}]
     (contains? #{"StatementTemplate"} dest-type)))
 
 ;; Unique to alternates patterns
 
 ;; Is the destination not 'optional' or 'zeroOrMore'?
 (s/def ::non-opt-dest
-  (fn [{:keys [dest-property]}]
+  (fn non-opt-dest? [{:keys [dest-property]}]
     (not (contains? #{:optional :zeroOrMore} dest-property))))
 
 ;; Unique to sequence patterns
 
 ;; Does the source only have one outgoing connection?
 (s/def ::singleton-src
-  (fn [{:keys [src-outdegree]}]
+  (fn singleton-src? [{:keys [src-outdegree]}]
     (= 1 src-outdegree)))
 
 ;; Does the source have two or more outgoing connections?
 (s/def ::not-singleton-src
-  (fn [{:keys [src-outdegree]}]
+  (fn not-singleton-src? [{:keys [src-outdegree]}]
     (<= 2 src-outdegree)))
 
 ;; Is the source node a primary Pattern?
 (s/def ::primary-src
-  (fn [{:keys [src-primary]}]
+  (fn primary-src? [{:keys [src-primary]}]
     (true? src-primary)))
 
 ;; Does the source node have zero incoming connections? In other words, is it
 ;; used nowhere else in the Profile?
 (s/def ::zero-indegree-src
-  (fn [{:keys [src-indegree]}]
+  (fn zero-indegree-src? [{:keys [src-indegree]}]
     (= 0 src-indegree)))
 
 ;; Edge validation multimethod
@@ -300,8 +301,9 @@
 (s/def ::singleton-sccs (s/coll-of ::singleton-scc :kind vector?))
 
 (s/def ::pattern-graph
-  (fn [pgraph] (and (s/valid? ::valid-edges (get-edges pgraph))
-                    (s/valid? ::acyclic-graph pgraph))))
+  (fn pattern-graph? [pgraph]
+    (and (s/valid? ::valid-edges (get-edges pgraph))
+         (s/valid? ::acyclic-graph pgraph))))
 
 ;; Edge validation
 (defn explain-graph [pgraph]
