@@ -110,13 +110,6 @@
                                    :expanded-term-def ::expanded-term-def)))
     (s/explain-data ::jsonld-context context)))
 
-(defn create-context
-  [context-iri]
-  (let [context (get-context context-iri)]
-    (if-let [errors (validate-context context)]
-      {:context nil :errors errors}
-      {:context context :errors nil})))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Validate profile against context 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -177,25 +170,29 @@
   [context-stack location]
   (let [curr-path (-> location zip/path vec)
         context-val (-> location zip/node :_context)]
-    (cond
-      ;; @context is URI valued
-      (s/valid? ::ax/iri context-val)
-      (conj context-stack (assoc (create-context context-val)
-                                 :path curr-path))
-      ;; @context is array valued
-      (s/valid? ::ax/array-of-iri context-val)
-      (concat context-stack (mapv (fn [iri]
-                                    (assoc (create-context iri)
-                                           :path curr-path))
-                                  context-val))
-      ;; @context is inline (not allowed by spec, but good for debug)
-      (map? context-val)
-      (let [errors (validate-context context-val)]
-        (if (not-empty errors)
-          (conj context-stack {:context nil :errors errors :path curr-path})
-          (conj context-stack {:context context-val :errors nil :path curr-path})))
-      ;; No @context key at this location
-      (nil? context-val) context-stack)))
+    (letfn [(push-context*
+              [context-stack context]
+              (if-let [errors (validate-context context)]
+                (conj context-stack {:context nil
+                                     :errors  errors
+                                     :path    curr-path})
+                (conj context-stack {:context context
+                                     :errors  nil
+                                     :path    curr-path})))]
+      (cond
+        ;; @context is URI valued
+        (s/valid? ::ax/iri context-val)
+        (push-context* context-stack (get-context context-val))
+        ;; @context is array valued
+        (s/valid? ::ax/array-of-iri context-val)
+        (reduce push-context* context-stack (map get-context context-val))
+        ;; @context is inline (not allowed by spec, but good for debug)
+        (map? context-val)
+        (push-context* context-stack context-val)
+        ;; No @context key at this location
+        :else
+        (do (assert (nil? context-val)) ; FIXME - more permanent chekc
+            context-stack)))))
 
 (defn update-context-errors
   "Update the list of context errors if a new erroneous context had been

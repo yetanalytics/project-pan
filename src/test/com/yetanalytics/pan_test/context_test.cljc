@@ -114,14 +114,6 @@
                   ::s/problems
                   count)))))
 
-(deftest create-context-test
-  (testing "create-context function"
-    #?(:clj (is (= "clojure.lang.ExceptionInfo: Unable to read from URL {:url \"https://non-existent\"}"
-                   (try (:context (c/create-context "https://non-existent"))
-                        (catch Exception e (str e))))))
-    (is (some? (:context (c/create-context "https://w3id.org/xapi/profiles/context"))))
-    (is (some? (:context (c/create-context "https://w3id.org/xapi/profiles/activity-context"))))))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Validating profile against context tests
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
