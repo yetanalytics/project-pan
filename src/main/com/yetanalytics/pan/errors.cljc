@@ -140,7 +140,7 @@
   (if (not= 1 cnt) (str word "s") word))
 
 ;; Needed to get around Issue #110 in Expound
-(defn- default-printer
+(defn default-printer
   "Return a default printer with :show-valid-values? and :print-specs? both
   preset to false. Also truncate lines that only contain elipses."
   [explain-data]
@@ -156,8 +156,8 @@
 ;; May look into this again.
 #_(defn value-str-def
     "Custom value string for syntax validation error messages. Takes the form:
-  > Invalid value: <value>
-  > At path: profile -> <key1> -> <key2>"
+  | Invalid value: <value>
+  | At path: profile -> <key1> -> <key2>"
     [_ form path value]
     (let [tag (if (-> path peek int?)
                 (-> path pop peek name (string/split #"s") first keyword)
@@ -171,20 +171,20 @@
 
 (defn value-str-id
   "Custom value string for duplicate ID error messages. Takes the form:
-  > Duplicate id: <identifier>
-  >  with count: <int>"
+   | Duplicate id: <identifier>
+   |  with count: <int>"
   [_ _ path value]
   (str "Duplicate id: " (-> path last strv) "\n"
-       " with count: " (strv value)))
+       " with count:  " (strv value)))
 
 (defn value-str-ver
   "Custom value string for inScheme error messages. Takes the form:
-  > Invalid inScheme: <in-scheme>
-  >  at object: <identifier>
-  >  profile version ids:
-  >   <version-id-1>
-  >   <version-id-2>
-  >   ..."
+   | Invalid inScheme: <in-scheme>
+   |  at object: <identifier>
+   |  profile version ids:
+   |   <version-id-1>
+   |   <version-id-2>
+   |   ..."
   [_ _ _ value]
   (str "Invalid inScheme: " (-> value :inScheme strv) "\n"
        " at object: " (-> value :id strv) "\n"
@@ -194,12 +194,12 @@
 #_{:clj-kondo/ignore [:unresolved-symbol]} ; kondo doesn't recognize core.match
 (defn value-str-edge
   "Custom value string for IRI link error messages. Takes the form:
-  > Invalid <property> identifier:
-  >  <identifier>
-  > at object:
-  >  <object map>
-  > linked object:
-  >  <object map>"
+   | Invalid <property> identifier:
+   |  <identifier>
+   | at object:
+   |  <object map>
+   | linked object:
+   |  <object map>"
   [_ _ _ value]
   (let [attrs-list
         (m/match [value]
@@ -249,10 +249,10 @@
 
 (defn value-str-scc
   "Custom value string for strongly connected component error messages (if a
-  digraph has a cycle). Takes the form:
-  > Cycle detected in the following nodes:
-  >   <identifier>
-  >   <identifier>"
+   digraph has a cycle). Takes the form:
+   | Cycle detected in the following nodes:
+   |   <identifier>
+   |   <identifier>"
   [_ _ _ value]
   (str "Cycle detected involving the following nodes:\n  "
        (->> value sort (string/join "\n  "))))
