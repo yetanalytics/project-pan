@@ -141,6 +141,10 @@
 
 ;; Context spec messages
 
+(exp/defmsg ::ctx/context-keyword
+            "should be a JSON-LD context keyword")
+(exp/defmsg ::ctx/context-prefix
+            "should be a JSON-LD prefix")
 (exp/defmsg ::ctx/simple-term-def
             "simple term definition does not have valid prefix")
 (exp/defmsg ::ctx/expanded-term-def
@@ -202,19 +206,19 @@
 ;; TODO Current default-printer function is quite unhelpful in locating errors.
 ;; May look into this again.
 #_(defn value-str-def
-    "Custom value string for syntax validation error messages. Takes the form:
+  "Custom value string for syntax validation error messages. Takes the form:
   | Invalid value: <value>
   | At path: profile -> <key1> -> <key2>"
-    [_ form path value]
-    (let [tag (if (-> path peek int?)
-                (-> path pop peek name (string/split #"s") first keyword)
-                (peek path))
-          path-arr (mapv strv path)
-          val-str (if (map? value)
-                    (-> value pr-str (string/replace #"(?<!\\), " ",\n   "))
-                    (pr-str value))]
-      (str tag " " val-str "\n"
-           "  at path: " (string/join " > " path-arr))))
+  [_ form path value]
+  (let [tag (if (-> path peek int?)
+              (-> path pop peek name (string/split #"s") first keyword)
+              (peek path))
+        path-arr (mapv strv path)
+        val-str (if (map? value)
+                  (-> value pr-str (string/replace #"(?<!\\), " ",\n   "))
+                  (pr-str value))]
+    (str tag " " val-str "\n"
+         "  at path: " (string/join " > " path-arr))))
 
 (defn value-str-id
   "Custom value string for duplicate ID error messages. Takes the form:
@@ -226,7 +230,7 @@
           (last path)
           value))
 
-(defn value-str-ver
+(defn value-str-version
   "Custom value string for inScheme error messages. Takes the form:
    | Invalid inScheme: <in-scheme>
    |  at object: <identifier>
@@ -338,7 +342,7 @@
       :id
       (exp/custom-printer {:value-str-fn value-str-id :print-specs? false})
       :in-scheme
-      (exp/custom-printer {:value-str-fn value-str-ver :print-specs? false})
+      (exp/custom-printer {:value-str-fn value-str-version :print-specs? false})
       :edge
       (exp/custom-printer {:value-str-fn value-str-edge :print-specs? false})
       :cycle
@@ -346,7 +350,7 @@
       :else
       #_default-printer
       (exp/custom-printer {:show-valid-values? false :print-specs? false})
-      #_(exp/custom-printer {:value-str-fn value-str-def :print-specs? false}))))
+      #_(exp/custom-printer {:value-str-fn value-str-default :print-specs? false}))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Expounding functions

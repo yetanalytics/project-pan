@@ -84,8 +84,7 @@
 
 ;; Nuke the first Template
 (def bad-profile-2a
-  (assoc-in good-profile-2 [:templates 0]
-            {:id "this-template-is-invalid"}))
+  (assoc-in good-profile-2 [:templates 0] {:id "this-template-is-invalid"}))
 
 ;; Make IDs duplicate
 (def bad-profile-2b
@@ -94,8 +93,6 @@
       (assoc-in [:templates 1 :id] "https://foo.org/template")))
 
 ;; Invalidate inScheme values
-
-
 (def bad-profile-2c
   (-> good-profile-2
       (assoc-in [:templates 0 :inScheme] "https://foo.org/invalid")
@@ -136,6 +133,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Tests
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(comment
+  (e/expound-errors {:syntax-errors (p/validate bad-profile-2a)}))
 
 (deftest expound-test
   (testing "error/expound-errors error messages"
@@ -325,7 +325,7 @@
            (with-out-str
              (e/expound-errors
               {:pattern-cycle-errors
-               (pt/explain-graph-cycles
+               (pt/validate-pattern-tree
                                       (pt/create-graph (:templates bad-profile-2f)
                                                        (:patterns bad-profile-2f)))}))))
     (is (= (str "-- Spec failed --------------------\n"

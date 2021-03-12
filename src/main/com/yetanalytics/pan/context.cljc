@@ -53,8 +53,8 @@
 ;; JSON-LD node objects may be aliased to the following keywords.
 ;; This spec checks if a @context key is an alias to a keyword value.
 ;; See section 6.2: Node Objects in the JSON-LD grammar.
-(s/def ::keyword
-  (fn [k]
+(s/def ::context-keyword
+  (fn keyword? [k]
     (contains? #{"@context" "@id" "@graph" "@nest" "@type" "@reverse" "@index"}
                k)))
 
@@ -63,34 +63,23 @@
 (def gen-delims-regex
   #?(:clj #".*(?:\:|\/|\?|\#|\[|\]|\@)$"
      :cljs #".*(?:\:|/|\?|\#|\[|\]|\@)$"))
+
 (def prefix-regex #"(.*\:)")
 
 ;; JSON-LD 1.1 prefixes may be a simple term definition that ends in a URI
 ;; general delimiter char or an expanded term definition with @prefix set to
 ;; true. See section 4.4: Compact IRIs in the JSON-LD grammar.
-(s/def ::prefix
+(s/def ::context-prefix
   (s/or :simple-term-def
         (s/and ::ax/iri #(->> % (re-matches gen-delims-regex) some?))
         :expanded-term-def
-        (s/and map?  #(-> % :prefix true?))))
+        (s/and map? #(-> % :prefix true?))))
 
 (defn collect-prefixes
   "Returns all the prefixes in a context."
   [context]
   (reduce-kv (fn [accum k v]
-               (if (s/valid? ::prefix v)
-                 (assoc accum k v)
-                 accum))
-             {}
-             context))
-
-(defn dissoc-prefixes
-  "Returns all terms in a context that are not prefixes nor keyword aliases."
-  [context]
-  (reduce-kv (fn [accum k v]
-               (if (or (s/valid? ::keyword v) (s/valid? ::prefix v))
-                 accum
-                 (assoc accum k v)))
+               (if (s/valid? ::prefix v) (assoc accum k v) accum))
              {}
              context))
 
@@ -106,32 +95,20 @@
   (and (map? value)
        (compact-iri? prefixes (:at/id value))))
 
-(defn simple-term-spec
-  [prefixes]
-  (s/def ::simple-term-def (partial compact-iri? prefixes)))
-
-(defn expanded-term-spec
-  [prefixes]
-  (s/def ::expanded-term-def (partial context-map? prefixes)))
-
-;; A term definition may either have a string as a value (ie. a simple term
-;; definition) or a map (ie. an expanded term definition).
-(defn term-def-spec
-  [prefixes]
-  (s/or :simple-term-def (simple-term-spec prefixes)
-        :expanded-term-def (expanded-term-spec prefixes)))
-
-(defn term-defs-spec
-  [prefixes]
-  (let [v-spec (term-def-spec prefixes)]
-    (s/map-of any? v-spec)))
-
+;; TODO: Add "!" due to side effect on spec registry
 (defn validate-context
   [context]
-  (let [prefixes  (collect-prefixes context)
-        term-defs (dissoc-prefixes context)
-        spec      (term-defs-spec prefixes)]
-    (s/explain-data spec term-defs)))
+  (let [prefixes (collect-prefixes context)]
+    ;; Hack the global spec registry by redefining these specs w/ new prefixes
+    (s/def ::simple-term-def (partial compact-iri? prefixes))
+    (s/def ::expanded-term-def (partial context-map? prefixes))
+    (s/def ::jsonld-context (s/map-of
+                             any?
+                             (s/or :keyword ::context-keyword
+                                   :prefix  ::context-prefix
+                                   :simple-term-def   ::simple-term-def
+                                   :expanded-term-def ::expanded-term-def)))
+    (s/explain-data ::jsonld-context context)))
 
 (defn create-context
   [context-iri]
@@ -241,38 +218,35 @@
           true ;; We found the key at the curr context!
           (recur (pop context-stack)))))))
 
-(defn- contexted-key-spec
-  [contexts]
-  (s/def ::iri-key (partial search-contexts contexts)))
-
 ;; Cannot use set as predicate, or else Expound overrides custom error msg.
 ;; List of keywords taken from Section 1.7 of the JSON-LD spec.
 (s/def ::keyword-key #(or (= % :_context)
-                            (= % :_id)
-                            (= % :_type)
-                            (= % :_base)
-                            (= % :_container)
-                            (= % :_graph)
-                            (= % :_index)
-                            (= % :_language)
-                            (= % :_list)
-                            (= % :_nest)
-                            (= % :_none)
-                            (= % :_prefix)
-                            (= % :_reverse)
-                            (= % :_set)
-                            (= % :_value)
-                            (= % :_version)
-                            (= % :_vocab)))
+                          (= % :_id)
+                          (= % :_type)
+                          (= % :_base)
+                          (= % :_container)
+                          (= % :_graph)
+                          (= % :_index)
+                          (= % :_language)
+                          (= % :_list)
+                          (= % :_nest)
+                          (= % :_none)
+                          (= % :_prefix)
+                          (= % :_reverse)
+                          (= % :_set)
+                          (= % :_value)
+                          (= % :_version)
+                          (= % :_vocab)))
 
 ;; At this point all @ signs are replaced by underscores
+;; TODO: Add "!" to denote side effect
 (defn validate-keys
   [contexts curr-node]
-  (contexted-key-spec contexts) ; bind key to registry as side effect
-  (let [node-spec (s/map-of (s/or :absolute-iri ::iri-key
-                                  :keyword ::keyword-key)
-                            any?)]
-    (s/explain-data node-spec curr-node)))
+  ;; Bind key to registry as side effect.
+  (s/def ::iri-key (partial search-contexts contexts))
+  (s/def ::jsonld-node (s/map-of (s/or :iri ::iri-key :keyword ::keyword-key)
+                                 any?))
+  (s/explain-data ::jsonld-node curr-node))
 
 (defn update-profile-errors
   [contexts curr-node profile-errors]
@@ -280,6 +254,28 @@
     (if (some? new-errors)
       (conj profile-errors new-errors)
       profile-errors)))
+
+(defn- error-seq->map
+  "Returns the combined error map, or nil if `error-seq` is empty.
+   Updates `:in` to reflect conslidated values."
+  [spec-kw error-seq]
+  (when (not-empty error-seq)
+    (-> (reduce
+         (fn [{index :index :as acc}
+              {probs ::s/problems
+               value ::s/value}]
+           (let [probs' (map (fn [p] (update p :in #(into [index] %))) probs)]
+             (-> acc
+                 (update ::s/problems concat probs')
+                 (update ::s/value conj value)
+                 (update :index inc))))
+         {::s/problems '()
+          ::s/spec     spec-kw
+          ::s/value    '()
+          :index       0}
+         error-seq)
+        (dissoc :index)
+        (update ::s/value reverse))))
 
 (defn validate-contexts
   "Validate all the contexts in a Profile."
@@ -307,24 +303,7 @@
                    pushed-stack context-errors new-perrors))))
       (let [context-err-seq (filter some? context-errors)
             profile-err-seq (filter some? profile-errors)
-            ;; Quick and dirty smooshing of seqs of problems
-            ;; Properties like `:in` no longer accurately reflect err data
-            context-err-map (reduce (fn [acc {probs ::s/problems
-                                              value ::s/value}]
-                                      (-> acc
-                                          (update ::s/problems concat probs)
-                                          (update ::s/value merge value)))
-                                    {::s/problems '()
-                                     ::s/spec     ::values
-                                     ::s/value    {}}
-                                    context-err-seq)
-            profile-err-map (reduce (fn [acc {probs ::s/problems}]
-                                      (update acc ::s/problems concat probs))
-                                    {::s/problems '()
-                                     ::s/spec     ::contexted-map
-                                     ::s/value    profile}
-                                    profile-err-seq)]
-        {:context-errors
-         (when (not-empty context-err-seq) context-err-map)
-         :context-key-errors
-         (when (not-empty profile-err-seq) profile-err-map)}))))
+            context-err-map (error-seq->map ::jsonld-context context-err-seq)
+            profile-err-map (error-seq->map ::jsonld-node profile-err-seq)]
+        {:context-errors     context-err-map
+         :context-key-errors profile-err-map}))))
