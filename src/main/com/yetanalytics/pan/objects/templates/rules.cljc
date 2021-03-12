@@ -15,9 +15,9 @@
 (s/def ::scopeNote ::ax/language-map)
 
 (s/def ::rule
-  (s/and (s/keys :req-un [::location
-                          (or ::presence ::any ::all ::none)]
-                 :opt-un [::selector ::scopeNote])))
+  (s/keys :req-un [::location
+                   (or ::presence ::any ::all ::none)]
+          :opt-un [::selector ::scopeNote]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; validation which requires external calls

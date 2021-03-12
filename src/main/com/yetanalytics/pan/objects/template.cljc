@@ -42,20 +42,22 @@
 
 (s/def ::rules (s/coll-of ::rules/rule :type vector?))
 
+(s/def ::template-keys
+  (s/keys :req-un [::id ::type ::inScheme ::prefLabel ::definition]
+          :opt-un [::deprecated
+                   ::rules
+                   ::verb
+                   ::objectActivityType
+                   ::contextGroupingActivityType
+                   ::contextParentActivityType
+                   ::contextOtherActivityType
+                   ::contextCategoryActivityType
+                   ::attachmentUsageType
+                   ::objectStatementRefTemplate
+                   ::contextStatementRefTemplate]))
+
 (s/def ::template
-  (s/and
-   (s/keys :req-un [::id ::type ::inScheme ::prefLabel ::definition]
-           :opt-un [::deprecated ::rules
-                    ::verb
-                    ::objectActivityType
-                    ::contextGroupingActivityType
-                    ::contextParentActivityType
-                    ::contextOtherActivityType
-                    ::contextCategoryActivityType
-                    ::attachmentUsageType
-                    ::objectStatementRefTemplate
-                    ::contextStatementRefTemplate])
-   ::type-or-reference))
+  (s/and ::template-keys ::type-or-reference))
 
 (s/def ::templates (s/coll-of ::template :kind vector? :min-count 1))
 

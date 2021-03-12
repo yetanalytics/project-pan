@@ -23,11 +23,13 @@
 (s/def ::no-recommended-activity-types
   (fn [ext] (not (contains? ext :recommendedActivityTypes))))
 
-(s/def ::extension
-  (s/and (s/keys
-          :req-un [::id ::type ::inScheme ::prefLabel ::definition]
+(s/def ::extension-keys
+  (s/keys :req-un [::id ::type ::inScheme ::prefLabel ::definition]
           :opt-un [::deprecated ::recommendedVerbs
-                   ::context ::schema ::inlineSchema])
+                   ::context ::schema ::inlineSchema]))
+
+(s/def ::extension
+  (s/and ::extension-keys
          ::util/inline-or-iri
          ::no-recommended-activity-types))
 

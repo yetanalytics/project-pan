@@ -48,19 +48,25 @@
         zom? (not (or alt? opt? oom? sqn?))))))
 
 ;; Spec for a primary pattern ('primary' is set to true).
+(s/def ::primary-pattern-keys
+  (s/keys :req-un [::id ::type ::prefLabel ::definition ::primary]
+          :opt-un [::inScheme ::deprecated ::alternates ::optional
+                   ::oneOrMore ::sequence ::zeroOrMore]))
+
 (s/def ::primary-pattern
-  (s/and (s/keys :req-un [::id ::type ::prefLabel ::definition ::primary]
-                 :opt-un [::inScheme ::deprecated ::alternates ::optional
-                          ::oneOrMore ::sequence ::zeroOrMore])
+  (s/and ::primary-pattern-keys
          ::pattern-clause
          ::is-primary-true))
 
 ;; Spec for a non-primary pattern ('primary' is set to false).
+(s/def ::non-primary-pattern-keys
+  (s/keys :req-un [::id ::type]
+          :opt-un [::primary ::inScheme ::prefLabel ::definition
+                   ::deprecated ::alternates ::optional ::oneOrMore
+                   ::sequence ::zeroOrMore]))
+
 (s/def ::non-primary-pattern
-  (s/and (s/keys :req-un [::id ::type]
-                 :opt-un [::primary ::inScheme ::prefLabel ::definition
-                          ::deprecated ::alternates ::optional ::oneOrMore
-                          ::sequence ::zeroOrMore])
+  (s/and ::non-primary-pattern-keys
          ::pattern-clause
          ::is-primary-false))
 
