@@ -408,7 +408,7 @@
            (set (pattern/get-edges pgraph))))
     (should-satisfy ::pattern/valid-edges (pattern/get-edges pgraph))
     (should-satisfy ::pattern/singleton-sccs (graph/scc pgraph))
-    (is (nil? (pattern/explain-graph pgraph)))
+    (is (nil? (pattern/validate-pattern-edges pgraph)))
     (is (nil? (pattern/explain-graph-cycles pgraph)))))
 
 (def cyclic-patterns-1
@@ -434,9 +434,9 @@
 (deftest no-cycles-test
   (testing "MUST not have any cycles in graph"
     ;; No cycles
-    (is (some? (pattern/explain-graph-cycles cyclic-pgraph-1)))
+    (is (some? (pattern/validate-pattern-tree cyclic-pgraph-1)))
     ;; No self loops
     ;; Note: Self loops are NOT caught by explain-graph-cycles, but are
     ;; caught by the edge validation specs
-    (is (some? (pattern/explain-graph cyclic-pgraph-2)))
-    (is (nil? (pattern/explain-graph-cycles cyclic-pgraph-2)))))
+    (is (some? (pattern/validate-pattern-edges cyclic-pgraph-2)))
+    (is (nil? (pattern/validate-pattern-tree cyclic-pgraph-2)))))

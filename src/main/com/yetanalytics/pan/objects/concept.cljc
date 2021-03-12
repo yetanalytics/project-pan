@@ -69,15 +69,15 @@
   related, etc.)"
   [cgraph]
   (map (fn [edge]
-         (let [src (graph/src edge)
+         (let [src  (graph/src edge)
                dest (graph/dest edge)]
-           {:src src
-            :src-type (graph/attr cgraph src :type)
-            :src-version (graph/attr cgraph src :inScheme)
-            :dest dest
-            :dest-type (graph/attr cgraph dest :type)
+           {:src          src
+            :src-type     (graph/attr cgraph src :type)
+            :src-version  (graph/attr cgraph src :inScheme)
+            :dest         dest
+            :dest-type    (graph/attr cgraph dest :type)
             :dest-version (graph/attr cgraph dest :inScheme)
-            :type (graph/attr cgraph edge :type)}))
+            :type         (graph/attr cgraph edge :type)}))
        (graph/edges cgraph)))
 
 ;; Edge property specs
@@ -98,18 +98,18 @@
     (contains? #{"ActivityType" "AttachmentUsageType" "Verb"} dest-type)))
 
 ;; Is the source an Activity Extension?
-(s/def ::aext-src
+(s/def ::activity-ext-src
   (fn aext-src? [{:keys [src-type]}]
     (contains? #{"ActivityExtension"} src-type)))
 
 ;; Is the source a Context or Result Extension?
-(s/def ::crext-src
+(s/def ::ctxt-result-ext-src
   (fn crext-src? [{:keys [src-type]}]
     (contains? #{"ContextExtension" "ResultExtension"} src-type)))
 
 ;; Is the destination an Activity Type?
-(s/def ::at-dest
-  (fn  at-dest? [{:keys [dest-type]}]
+(s/def ::activity-type-dest
+  (fn at-dest? [{:keys [dest-type]}]
     (contains? #{"ActivityType"} dest-type)))
 
 ;; Is the destination a Verb?
@@ -158,29 +158,25 @@
          ::same-concept
          ::same-version))
 
-; ;; recommendedActivityTypes MUST point to ActivityType Concepts
+;; recommendedActivityTypes MUST point to ActivityType Concepts
 (defmethod valid-edge? :recommendedActivityTypes [_]
-  (s/and ::aext-src
+  (s/and ::activity-ext-src
          ::valid-dest
          ::graph/not-self-loop
          ::at-dest))
 
-; ;; recommendedVerbs MUST point to Verb Concepts
+;; recommendedVerbs MUST point to Verb Concepts
 (defmethod valid-edge? :recommendedVerbs [_]
-  (s/and ::crext-src
+  (s/and ::ctxt-result-ext-src
          ::valid-dest
          ::graph/not-self-loop
          ::verb-dest))
 
 ;; Is one edge valid?
-(s/def ::valid-edge (s/multi-spec valid-edge? util/type-dispatch))
+(s/def ::concept-edge (s/multi-spec valid-edge? util/type-dispatch))
 
 ;; Are all edges valid?
-(s/def ::valid-edges (s/coll-of ::valid-edge))
+(s/def ::concept-edges (s/coll-of ::concept-edge))
 
-(s/def ::concept-graph
-  (fn concept-graph? [cgraph]
-    (s/valid? ::valid-edges (get-edges cgraph))))
-
-(defn explain-graph [cgraph]
-  (s/explain-data ::valid-edges (get-edges cgraph)))
+(defn validate-graph-edges [cgraph]
+  (s/explain-data ::concept-edges (get-edges cgraph)))

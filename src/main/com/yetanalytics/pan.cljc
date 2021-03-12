@@ -56,22 +56,19 @@
                         :in-scheme-errors (id/validate-in-schemes profile))
                  (true? relations?) ;; URI errors
                  (merge
-                  (let [;; Graphs
-                        cgraph (concept/create-graph (:concepts profile))
-                        tgraph (template/create-graph (:concepts profile)
-                                                      (:templates profile))
-                        pgraph (pattern/create-graph (:templates profile)
-                                                     (:patterns profile))
+                  (let [{:keys [concepts templates patterns]} profile
+                        ;; Graphs
+                        cgraph (concept/create-graph concepts)
+                        tgraph (template/create-graph concepts templates)
+                        pgraph (pattern/create-graph templates patterns)
                         ;; Errors
-                        cerrors (concept/explain-graph cgraph)
-                        terrors (template/explain-graph tgraph)
-                        perrors (pattern/explain-graph pgraph)
-                        pc-errors (if (nil? perrors)
-                                    (pattern/explain-graph-cycles pgraph)
-                                    nil)]
-                    {:concept-errors cerrors
-                     :template-errors terrors
-                     :pattern-errors perrors
+                        cerrors   (concept/validate-graph-edges cgraph)
+                        terrors   (template/validate-template-edges tgraph)
+                        perrors   (pattern/validate-pattern-edges pgraph)
+                        pc-errors (pattern/validate-pattern-tree pgraph)]
+                    {:concept-edge-errors  cerrors
+                     :template-edge-errors terrors
+                     :pattern-edge-errors  perrors
                      :pattern-cycle-errors pc-errors}))
                  (true? contexts?) ;; @context errors
                  (merge (context/validate-contexts profile)))]

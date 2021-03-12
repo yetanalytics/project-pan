@@ -127,15 +127,15 @@
   Property or Statement Ref Template type)"
   [tgraph]
   (map (fn [edge]
-         (let [src (graph/src edge)
+         (let [src  (graph/src edge)
                dest (graph/dest edge)]
-           {:src src
-            :src-type (graph/attr tgraph src :type)
-            :src-version (graph/attr tgraph src :inScheme)
-            :dest dest
-            :dest-type (graph/attr tgraph dest :type)
+           {:src          src
+            :src-type     (graph/attr tgraph src :type)
+            :src-version  (graph/attr tgraph src :inScheme)
+            :dest         dest
+            :dest-type    (graph/attr tgraph dest :type)
             :dest-version (graph/attr tgraph dest :inScheme)
-            :type (graph/attr tgraph edge :type)}))
+            :type         (graph/attr tgraph edge :type)}))
        (graph/edges tgraph)))
 
 ;; Edge property specs
@@ -156,12 +156,12 @@
     (contains? #{"Verb"} dest-type)))
 
 ;; Is the destination an Activity Type?
-(s/def ::at-dest
+(s/def ::activity-type-dest
   (fn at-dest? [{:keys [dest-type]}]
     (contains? #{"ActivityType"} dest-type)))
 
 ;; Is the destination an Attachment Usage Type?
-(s/def ::aut-dest
+(s/def ::attachment-use-type-dest
   (fn aut-dest? [{:keys [dest-type]}]
     (contains? #{"AttachmentUsageType"} dest-type)))
 
@@ -198,35 +198,35 @@
   (s/and ::template-src
          ::valid-dest
          ::graph/not-self-loop
-         ::at-dest))
+         ::activity-type-dest))
 
 ;; contextParentActivityType MUST point to parent ActivityTypes
 (defmethod valid-edge? :contextParentActivityType [_]
   (s/and ::template-src
          ::valid-dest
          ::graph/not-self-loop
-         ::at-dest))
+         ::activity-type-dest))
 
 ;; contextOtherActivityType MUST point to other ActivityTypes
 (defmethod valid-edge? :contextOtherActivityType [_]
   (s/and ::template-src
          ::valid-dest
          ::graph/not-self-loop
-         ::at-dest))
+         ::activity-type-dest))
 
 ;; contextCategoryActivityType MUST point to category ActivityTypes
 (defmethod valid-edge? :contextCategoryActivityType [_]
   (s/and ::template-src
          ::valid-dest
          ::graph/not-self-loop
-         ::at-dest))
+         ::activity-type-dest))
 
 ;; attachmentUsageType MUST point to AttachmentUsageType Concepts
 (defmethod valid-edge? :attachmentUsageType [_]
   (s/and ::template-src
          ::valid-dest
          ::graph/not-self-loop
-         ::aut-dest))
+         ::attachment-use-type-dest))
 
 ;; objectStatementRefTemplate MUST point to Statement Templates from this
 ;; profile version
@@ -245,19 +245,13 @@
          ::same-version))
 
 ;; Validate a single edge
-(s/def ::valid-edge (s/multi-spec valid-edge? util/type-dispatch))
-
+(s/def ::template-edge (s/multi-spec valid-edge? util/type-dispatch))
 
 ;; Validate all the edges
-(s/def ::valid-edges (s/coll-of ::valid-edge))
+(s/def ::template-edges (s/coll-of ::template-edge))
 
 ;; Putting it all together
-
-(s/def ::template-graph
-  (fn template-graph? [tgraph]
-    (s/valid? ::valid-edges (get-edges tgraph))))
-
-(defn explain-graph [tgraph]
-  (s/explain-data ::valid-edges (get-edges tgraph)))
+(defn validate-template-edges [tgraph]
+  (s/explain-data ::template-edges (get-edges tgraph)))
 
 ;; TODO Validate links that are external to this Profile

@@ -264,7 +264,7 @@
           (with-out-str
             (e/expound-errors
              {:template-errors
-              (t/explain-graph (t/create-graph [] (:templates bad-profile-2d)))}))))
+              (t/validate-template-edges (t/create-graph [] (:templates bad-profile-2d)))}))))
     (is (= (str "-- Spec failed --------------------\n"
                 "\n"
                 "Invalid verb identifier:\n"
@@ -310,7 +310,7 @@
            (with-out-str
              (e/expound-errors
               {:template-errors
-               (t/explain-graph
+               (t/validate-template-edges
                 (t/create-graph [] (:templates bad-profile-2e)))}))))
     (is (= (str "-- Spec failed --------------------\n"
                 "\n"
@@ -355,7 +355,7 @@
            (with-out-str
              (e/expound-errors
               {:pattern-errors
-               (pt/explain-graph
+               (pt/validate-pattern-edges
                 (pt/create-graph (:templates bad-profile-2g)
                                  (:patterns bad-profile-2g)))}))))))
 

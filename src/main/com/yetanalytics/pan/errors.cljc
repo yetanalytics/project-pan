@@ -1,12 +1,12 @@
 (ns com.yetanalytics.pan.errors
   (:require [clojure.core :refer [format]]
-            [clojure.spec.alpha :as s]
+            #_[clojure.spec.alpha :as s]
             [clojure.string :as string]
             [expound.alpha :as exp]
             [com.yetanalytics.pan.axioms :as ax]
             [com.yetanalytics.pan.context :as ctx]
             [com.yetanalytics.pan.identifiers :as id]
-            [com.yetanalytics.pan.graph :as g]
+            [com.yetanalytics.pan.graph :as graph]
             [com.yetanalytics.pan.objects.concept :as c]
             [com.yetanalytics.pan.objects.template :as t]
             [com.yetanalytics.pan.objects.pattern :as p]
@@ -27,8 +27,10 @@
 ;; :in = Path of map keys + array entry numbers
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Syntax spec messages
+;; Spec messages
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; Syntax spec messages
 
 (exp/defmsg ::ax/boolean "should be a boolean")
 (exp/defmsg ::ax/string "should be a non-empty string")
@@ -46,62 +48,108 @@
 (exp/defmsg ::ax/array-of-iri "should be an array of IRIs")
 (exp/defmsg ::ax/array-of-uri "should be an array of URIs")
 
-(exp/defmsg ::u/inline-or-iri "cannot contain both linked and inline JSON schema")
-(exp/defmsg ::u/related-only-deprecated "related can only be used on deprecated concepts")
-(exp/defmsg ::ae/no-recommended-verbs "only allowed on context or result extensions")
-(exp/defmsg ::ce/no-recommended-activity-types "only allowed on activity extensions")
-(exp/defmsg ::re/no-recommended-activity-types "only allowed on activity extensions")
-(exp/defmsg ::act/activityDefinition "invalid activity definition")
+(exp/defmsg ::u/inline-or-iri
+            "cannot contain both linked and inline JSON schema")
+(exp/defmsg ::u/related-only-deprecated
+            "related can only be used on deprecated concepts")
 
-(exp/defmsg ::t/type-or-reference "cannot contain both objectActivityType and objectStatementRefTemplate")
+(exp/defmsg ::ae/no-recommended-verbs
+            "only allowed on context or result extensions")
+(exp/defmsg ::ce/no-recommended-activity-types
+            "only allowed on activity extensions")
+(exp/defmsg ::re/no-recommended-activity-types
+            "only allowed on activity extensions")
+(exp/defmsg ::act/activityDefinition
+            "invalid activity definition")
 
-(exp/defmsg ::p/pattern-clause "pattern contains too many properties")
-(exp/defmsg ::p/is-primary-true "primary is not true")
-(exp/defmsg ::p/is-primary-false "primary is not false nor nil")
+(exp/defmsg ::t/type-or-reference
+            "cannot contain both objectActivityType and objectStatementRefTemplate")
+
+(exp/defmsg ::p/pattern-clause
+            "pattern contains too many properties")
+(exp/defmsg ::p/is-primary-true
+            "primary is not true")
+(exp/defmsg ::p/is-primary-false
+            "primary is not false nor nil")
 
 ;; ID spec messages
-(exp/defmsg ::id/one-count "the id value is not unique")
-(exp/defmsg ::id/in-scheme "the inScheme value is not a valid version ID")
+
+(exp/defmsg ::id/one-count
+            "the id value is not unique")
+(exp/defmsg ::id/in-scheme
+            "the inScheme value is not a valid version ID")
 
 ;; Graph spec messages
-(exp/defmsg ::g/not-self-loop "object cannot refer to itself")
 
-(exp/defmsg ::c/valid-dest "linked concept does not exist")
-(exp/defmsg ::c/relatable-src "should be type: \"ActivityType\", \"AttachmentUsageType\" or \"Verb\"")
-(exp/defmsg ::c/relatable-dest "should link to type: \"ActivityType\", \"AttachmentUsageType\" or \"Verb\"")
-(exp/defmsg ::c/aext-src "should be type: \"ActivityExtension\"")
-(exp/defmsg ::c/crext-src "should be type: \"ContextExtension\" or \"ResultExtension\"")
-(exp/defmsg ::c/at-dest "should link to type: \"ActivityType\"")
-(exp/defmsg ::c/verb-dest "should link to type: \"Verb\"")
-(exp/defmsg ::c/same-concepts "the concepts are not the same type")
-(exp/defmsg ::c/same-version "inScheme values do not match")
+(exp/defmsg ::graph/not-self-loop
+            "object cannot refer to itself")
+(exp/defmsg ::graph/singleton-scc
+            "cyclical reference detected")
 
-(exp/defmsg ::t/template-src "should be type: \"StatementTemplate\"")
-(exp/defmsg ::t/valid-dest "linked concept or template does not exist")
-(exp/defmsg ::t/verb-dest "should link to type: \"Verb\"")
-(exp/defmsg ::t/at-dest "should link to type: \"ActivityType\"")
-(exp/defmsg ::t/aut-dest "should link to type: \"AttachmentUsageType\"")
-(exp/defmsg ::t/template-dest "should link to type: \"StatementTemplate\"")
-(exp/defmsg ::t/same-version "inScheme values do not match")
+(exp/defmsg ::c/valid-dest
+            "linked concept does not exist")
+(exp/defmsg ::c/relatable-src
+            "should be type: \"ActivityType\", \"AttachmentUsageType\" or \"Verb\"")
+(exp/defmsg ::c/relatable-dest
+            "should link to type: \"ActivityType\", \"AttachmentUsageType\" or \"Verb\"")
+(exp/defmsg ::c/activity-ext-src
+            "should be type: \"ActivityExtension\"")
+(exp/defmsg ::c/ctxt-result-ext-src
+            "should be type: \"ContextExtension\" or \"ResultExtension\"")
+(exp/defmsg ::c/activity-type-dest
+            "should link to type: \"ActivityType\"")
+(exp/defmsg ::c/verb-dest 
+            "should link to type: \"Verb\"")
+(exp/defmsg ::c/same-concepts
+            "the concepts are not the same type")
+(exp/defmsg ::c/same-version
+            "inScheme values do not match")
 
-(exp/defmsg ::p/valid-dest "linked template or pattern does not exist")
-(exp/defmsg ::p/pattern-src "should be type: \"Pattern\"")
-(exp/defmsg ::p/pattern-dest "should link to type: \"Pattern\"")
-(exp/defmsg ::p/template-dest "should link to type: \"StatementTemplate\"")
-(exp/defmsg ::p/non-opt-dest "alternate pattern cannot contain an optional or zeroOrMore pattern")
-(exp/defmsg ::p/singleton-src "primary sequence pattern has multiple links")
-(exp/defmsg ::p/not-singleton-src "sequence pattern must have at least two links")
-(exp/defmsg ::p/primary-pattern "pattern is not primary")
-(exp/defmsg ::p/zero-indegree-src "pattern must not be used elsewhere")
+(exp/defmsg ::t/template-src
+            "should be type: \"StatementTemplate\"")
+(exp/defmsg ::t/valid-dest
+            "linked concept or template does not exist")
+(exp/defmsg ::t/verb-dest
+            "should link to type: \"Verb\"")
+(exp/defmsg ::t/activity-type-dest
+            "should link to type: \"ActivityType\"")
+(exp/defmsg ::t/attachment-use-type-dest
+            "should link to type: \"AttachmentUsageType\"")
+(exp/defmsg ::t/template-dest
+            "should link to type: \"StatementTemplate\"")
+(exp/defmsg ::t/same-version
+            "inScheme values do not match")
 
-(exp/defmsg ::p/singleton-scc "cyclical reference detected")
+(exp/defmsg ::p/valid-dest
+            "linked template or pattern does not exist")
+(exp/defmsg ::p/pattern-src
+            "should be type: \"Pattern\"")
+(exp/defmsg ::p/pattern-dest
+            "should link to type: \"Pattern\"")
+(exp/defmsg ::p/template-dest
+            "should link to type: \"StatementTemplate\"")
+(exp/defmsg ::p/non-opt-dest
+            "alternate pattern cannot contain an optional or zeroOrMore pattern")
+(exp/defmsg ::p/singleton-src
+            "primary sequence pattern has multiple links")
+(exp/defmsg ::p/not-singleton-src
+            "sequence pattern must have at least two links")
+(exp/defmsg ::p/primary-pattern
+            "pattern is not primary")
+(exp/defmsg ::p/zero-indegree-src
+            "pattern must not be used elsewhere")
 
-;; Context errors
-(exp/defmsg ::ctx/simple-term-def "simple term definition does not have valid prefix")
-(exp/defmsg ::ctx/expanded-term-def "expanded term definition does not have valid prefix")
+;; Context spec messages
 
-(exp/defmsg ::ctx/contexed-key "key cannot be expanded into absolute IRI")
-(exp/defmsg ::ctx/is-at-context "key is not JSON-LD keyword")
+(exp/defmsg ::ctx/simple-term-def
+            "simple term definition does not have valid prefix")
+(exp/defmsg ::ctx/expanded-term-def
+            "expanded term definition does not have valid prefix")
+
+(exp/defmsg ::ctx/contexed-key
+            "key cannot be expanded into absolute IRI")
+(exp/defmsg ::ctx/is-at-context
+            "key is not JSON-LD keyword")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Value display
@@ -329,9 +377,9 @@
   [{:keys [syntax-errors
            id-errors
            in-scheme-errors
-           concept-errors
-           template-errors
-           pattern-errors
+           concept-edge-errors
+           template-edge-errors
+           pattern-edge-errors
            pattern-cycle-errors
            context-errors
            context-key-errors]}]
@@ -341,12 +389,12 @@
     (expound-error id-errors "ID Errors" :id))
   (when in-scheme-errors
     (expound-error in-scheme-errors "Version Errors" :in-scheme))
-  (when concept-errors
-    (expound-error concept-errors "Concept Edge Errors" :edge))
-  (when template-errors
-    (expound-error template-errors "Template Edge Errors" :edge))
-  (when pattern-errors
-    (expound-error pattern-errors "Pattern Edge Errors" :edge))
+  (when concept-edge-errors
+    (expound-error concept-edge-errors "Concept Edge Errors" :edge))
+  (when template-edge-errors
+    (expound-error template-edge-errors "Template Edge Errors" :edge))
+  (when pattern-edge-errors
+    (expound-error pattern-edge-errors "Pattern Edge Errors" :edge))
   (when pattern-cycle-errors
     (expound-error pattern-cycle-errors "Pattern Cycle Errors" :cycle))
   (when context-errors

@@ -150,17 +150,17 @@
   - type: the regex property of this edge (sequence, alternates, etc.)"
   [pgraph]
   (map (fn [edge]
-         (let [src (graph/src edge)
+         (let [src  (graph/src edge)
                dest (graph/dest edge)]
-           {:src src
-            :src-type (graph/attr pgraph src :type)
-            :src-primary (graph/attr pgraph src :primary)
-            :src-indegree (graph/in-degree pgraph src)
+           {:src           src
+            :src-type      (graph/attr pgraph src :type)
+            :src-primary   (graph/attr pgraph src :primary)
+            :src-indegree  (graph/in-degree pgraph src)
             :src-outdegree (graph/out-degree pgraph src)
-            :dest dest
-            :dest-type (graph/attr pgraph dest :type)
+            :dest          dest
+            :dest-type     (graph/attr pgraph dest :type)
             :dest-property (graph/attr pgraph dest :property)
-            :type (graph/attr pgraph edge :type)}))
+            :type          (graph/attr pgraph edge :type)}))
        (graph/edges pgraph)))
 
 ;; Edge property specs
@@ -269,48 +269,18 @@
                :template ::template-dest)))
 
 ;; Is one edge valid?
-(s/def ::valid-edge (s/multi-spec valid-edge? util/type-dispatch))
+(s/def ::pattern-edge (s/multi-spec valid-edge? util/type-dispatch))
 
 ;; Are all the edges valid?
-(s/def ::valid-edges (s/coll-of ::valid-edge))
-
-;; MUST NOT include any Pattern within itself, at any depth.
-;; In other words, no cycles. We need to check for two things:
-;;
-;; 1. All strongly connected components (subgraphs where all nodes can be
-;; reached from any other node in the subgraph) must be singletons. (Imagine
-;; a SCC of two nodes - there must be a cycle present; induct from there.)
-;; We find our SCCs using Kosaraju's Algorithm (which is what Loom uses in
-;; alg/scc), which has a time complexity of O(V+E); we then validate that they
-;; all only have one member node.
-;;
-;; 2. No self-loops exist. This condition is not caught by Kosaraju's Algorithm
-;; (and thus not by our SCC specs) but is caught by our edge validation.
-;;
-;; Note that Loom has a built-in function for DAG determination (which does
-;; correctly identify self-loops), but we use this algorithm to make our spec
-;; errors cleaner.
-
-;; Check that one SCC is a singleton
-;; (Technically we can do this with s/cat, but this allows us to return the
-;; entire vector as a value in the error map)
-(s/def ::singleton-scc
-  (s/coll-of any? :kind vector? :min-count 1 :max-count 1))
-
-;; Check that all SCCs are singletons
-(s/def ::singleton-sccs (s/coll-of ::singleton-scc :kind vector?))
-
-(s/def ::pattern-graph
-  (fn pattern-graph? [pgraph]
-    (and (s/valid? ::valid-edges (get-edges pgraph))
-         (s/valid? ::acyclic-graph pgraph))))
+(s/def ::pattern-edges (s/coll-of ::pattern-edge))
 
 ;; Edge validation
-(defn explain-graph [pgraph]
+(defn validate-pattern-edges [pgraph]
   (s/explain-data ::valid-edges (get-edges pgraph)))
 
-;; Cycle validation
-(defn explain-graph-cycles [pgraph]
-  (s/explain-data ::singleton-sccs (graph/scc pgraph)))
+;; MUST NOT include any Pattern within itself, at any depth.
+;; In other words, no cycles (including self loops)
+(defn validate-pattern-tree [pgraph]
+  (s/explain-data ::graph/singleton-sccs (graph/scc pgraph)))
 
 ;; TODO: MAY re-use Statement Templates and Patterns from other Profiles

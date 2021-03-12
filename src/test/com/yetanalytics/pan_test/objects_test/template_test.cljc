@@ -317,4 +317,4 @@
               :type :objectStatementRefTemplate}}
            (set (template/get-edges tgraph))))
     (should-satisfy ::template/template-graph tgraph)
-    (is (nil? (template/explain-graph tgraph)))))
+    (is (nil? (template/validate-template-edges tgraph)))))

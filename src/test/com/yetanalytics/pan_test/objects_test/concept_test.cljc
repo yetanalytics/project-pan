@@ -153,4 +153,4 @@
               :dest "https://foo.org/aut1" :dest-type "AttachmentUsageType" :dest-version "https://foo.org/v1"
               :type :narrower}}
            (set (concept/get-edges cgraph))))
-    (is (nil? (concept/explain-graph cgraph)))))
+    (is (nil? (concept/validate-graph-edges cgraph)))))
