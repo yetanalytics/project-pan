@@ -310,10 +310,10 @@
                                               value ::s/value}]
                                       (-> acc
                                           (update ::s/problems concat probs)
-                                          (update ::s/value conj value)))
+                                          (update ::s/value merge value)))
                                     {::s/problems '()
                                      ::s/spec     ::values
-                                     ::s/value    #{}}
+                                     ::s/value    {}}
                                     context-err-seq)
             profile-err-map (reduce (fn [acc {probs ::s/problems}]
                                       (update acc ::s/problems concat probs))

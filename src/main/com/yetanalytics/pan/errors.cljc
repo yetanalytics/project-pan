@@ -133,14 +133,14 @@
     :_vocab     "@vocab"
     (if (keyword? value) (name value) (pr-str value))))
 
-(defn pluralize
+(defn- pluralize
   "Make the word plural based off of a count if needed, by adding a plural s
   at the end."
   [word cnt]
   (if (not= 1 cnt) (str word "s") word))
 
 ;; Needed to get around Issue #110 in Expound
-(defn default-printer
+(defn- default-printer
   "Return a default printer with :show-valid-values? and :print-specs? both
   preset to false. Also truncate lines that only contain elipses."
   [explain-data]
@@ -270,173 +270,18 @@
   [& [error-type]]
   (let [error-type (if (nil? error-type) :else error-type)]
     (case error-type
-      "id"
+      :id
       (exp/custom-printer {:value-str-fn value-str-id :print-specs? false})
-      "in-scheme"
+      :in-scheme
       (exp/custom-printer {:value-str-fn value-str-ver :print-specs? false})
-      "edge"
+      :edge
       (exp/custom-printer {:value-str-fn value-str-edge :print-specs? false})
-      "cycle"
+      :cycle
       (exp/custom-printer {:value-str-fn value-str-scc :print-specs? false})
       :else
       #_default-printer
       (exp/custom-printer {:show-valid-values? false :print-specs? false})
       #_(exp/custom-printer {:value-str-fn value-str-def :print-specs? false}))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Property ordering in error messages
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(def property-order
-  {;; Profile metadata
-   :id          0
-   :type        1
-   :inScheme    2
-   :_context    3
-   :conformsTo  4
-   :prefLabel   5
-   :definition  6
-   :deprecated  7
-   :author      8
-   :versions    9
-   :concepts    10
-   :templates   11
-   :patterns    12
-   ;; Profile version objects
-   :generatedAtTime 13
-   :wasRevisionOf   14
-   ;; Profile author objects
-   :name  15
-   :url   16
-   ;; Concept properties
-   :broader      17
-   :broadMatch   18
-   :narrower     19
-   :narrowMatch  20
-   :related      21
-   :relatedMatch 22
-   :exactMatch   23
-   ;; Extension and Resource properties
-   :recommendedActivityTypes  24
-   :recommendedVerbs          25
-   :context                   26
-   :contentType               27
-   :schema                    28
-   :inlineSchema              29
-   ;; Activity properties
-   :activityDefinition        30
-   :description               31
-   :moreInfo                  32
-   :interactionType           33
-   :correctResponsesPattern   34
-   :choices     35
-   :scale       36
-   :source      37
-   :target      38
-   :steps       39
-   :extensions  40
-   ;; Statement Template properties
-   :verb                          41
-   :objectActivityType            42
-   :contextGroupingActivityType   43
-   :contextParentActivityType     44
-   :contextOtherActivityType      45
-   :contextCategoryActivityType   46
-   :attachmentUsageType           47
-   :objectStatementRefTemplate    48
-   :contextStatementRefTemplate   49
-   :rules                         50
-   ;; Statement Template rules properties
-   :location  51
-   :selector  52
-   :presence  53
-   :any       54
-   :all       55
-   :none      56
-   :scopeNote 57
-   ;; Pattern properties
-   :primary    58
-   :alternates 59
-   :optional   60
-   :oneOrMore  61
-   :sequence   62
-   :zeroOrMore 63})
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Error map manipulation functions
-;;
-;; XXX: Expound can act pretty funny when it comes to s/keys and s/coll-of
-;; specs. See Issue #165: Improve grouping of spec errors on Expound's Github.
-;; This is why we need the functions expound-error-list and expound-error-map
-;; and the helper functions in this section.
-;;
-;; TODO: Issue #165 has been marked as a bug so it should be fixed at some
-;; point. When that happens, rework this namespace to rely on Expound's native
-;; error grouping functionality so it doesn't have to do awkward map manips.
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defn compare-properties
-  "Get the order of two properties based on how it was listed in the xAPI
-  Profile spec. Properties not listed in the property-order map will be pushed
-  to the end of the error list and sorted alphabetically.
-  - neg number: prop1 comes before prop2
-  - pos number: prop1 comes after prop2
-  - zero: prop1 and prop2 are equal"
-  [prop1 prop2]
-  (let [order1 (get property-order prop1)
-        order2 (get property-order prop2)]
-    (cond
-      (and (nil? prop1) (nil? prop2)) 0
-      (and (nil? prop1) (some? prop2)) -1
-      (and (some? prop1) (nil? prop2)) 1
-      (and (some? order1) (nil? order2)) -1
-      (and (nil? order1) (some? order2)) 1
-      (and (some? order1) (some? order2)) (compare order1 order2)
-      (and (nil? order1) (nil? order2)) (compare prop1 prop2))))
-
-(defn compare-arrs
-  "Compare two arrays of keywords (or strings), such that lexiographical order
-  of corresponding entries takes precedence over array length.
-  The conventional compares array length first, then lexicographical order.
-  - Sort using compare-arrs: ([:a] [:a :b] [:z])
-  - Sort using regular compare: ([:a] [:z] [:a :b])"
-  [arr1 arr2]
-  (loop [a1 arr1
-         a2 arr2]
-    (if (and (empty? a1) (empty? a2))
-      0
-      (let [comp-int (compare-properties (first a1) (first a2))]
-        (if (= 0 comp-int)
-          (recur (rest a1) (rest a2))
-          comp-int)))))
-
-(defn group-by-in
-  "Splits up a spec error map by the :in path of an ::s/problems map, which
-  lists the keys that lead to the value in a map data structure. For example,
-  an invalid version ID would have the path ::v/version ::v/id. Returns a
-  sequence of spec error maps (each with ::s/problems, ::s/spec and ::s/value
-  keys) group together by :in paths.
-
-  This is required because otherwise Expound will group together random spec
-  errors together in ways that don't make sense. By doing this, we group spec
-  errors by where they occur in the data structure."
-  [error-map]
-  (let [{problems ::s/problems spec ::s/spec value ::s/value} error-map
-        problems-map (group-by :in problems)]
-    (reduce-kv (fn [err-list _ v]
-                 (conj err-list (assoc {}
-                                       ::s/problems (if (vector? v)
-                                                      (sequence v) (list v))
-                                       ::s/spec spec
-                                       ::s/value value))) (list) problems-map)))
-
-(defn sort-by-path
-  "Sort a sequence of spec error maps by the value of the :path key, which is
-  a list of all keywords that lead up to the final spec. (Unlike :key, this
-  include tagged portions of specs, eg. of s/or.) Useful for keeping specs
-  in the same area grouped together"
-  [error-map-list]
-  (sort-by #(-> % ::s/problems first :path) compare-arrs error-map-list))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Expounding functions
@@ -446,41 +291,12 @@
   "Print an Expounded error message using a custom printer. The custom printer
   is determined using the error-type arg; if not supplied, it prints a default
   Expound error message (without the Relevant Specs trace)."
-  [error-map & {:keys [error-type silent]}]
-  (when (not silent)
-    (let [print-fn (custom-printer error-type)]
-      (print-fn error-map))))
-
-#_(defn expound-error-list
-  "Sort a list of spec error maps using the value of the :path key."
-  [error-list & {:keys [error-type silent]}]
-  (mapv (fn [error]
-          (let [error-text (expound-error error
-                                          :error-type error-type
-                                          :silent silent)
-                error-path (-> error
-                               ::s/problems
-                               first
-                               :path)]
-            (when error-text
-              (println error-text))
-            {:path error-path
-             :text error-text}))
-        error-list))
-
-(defn expound-error-list
-  [error-list & {:keys [error-type silent]}]
-  (doseq [err error-list] (expound-error err error-type silent)))
-
-#_(defn expound-error-map
-  "Regroup an error map into a sorted list of error maps.
-  Used to avoid Issue #165 for Expound."
-  [error-map & {:keys [error-type silent]}]
-  (-> error-map
-      group-by-in
-      sort-by-path
-      (expound-error-list :error-type error-type
-                          :silent silent)))
+  ([error-map error-label]
+   (expound-error error-map error-label nil))
+  ([error-map error-label error-type]
+   (let [print-fn (custom-printer error-type)]
+     (println (str "\n**** " error-label " ****\n"))
+     (print-fn error-map))))
 
 (defn expound-errors
   "Print errors from profile validation using Expound. Available keys:
@@ -501,40 +317,22 @@
            pattern-errors
            pattern-cycle-errors
            context-errors
-           context-key-errors
-           silent]}]
-  (cond-> {}
-    (some? syntax-errors)
-    (assoc :syntax-errors (expound-error syntax-errors
-                                        :silent silent))
-    (some? id-errors)
-    (assoc :id-errors (expound-error id-errors
-                                     :error-type "id"
-                                     :silent silent))
-    (some? in-scheme-errors)
-    (assoc :in-scheme-errors (expound-error in-scheme-errors
-                                            :error-type "in-scheme"
-                                            :silent silent))
-    (some? concept-errors)
-    (assoc :concept-errors (expound-error concept-errors
-                                          :error-type "edge"
-                                          :silent silent))
-    (some? template-errors)
-    (assoc :template-errors (expound-error template-errors
-                                           :error-type "edge"
-                                           :silent silent))
-    (some? pattern-errors)
-    (assoc :pattern-errors (expound-error pattern-errors
-                                          :error-type "edge"
-                                          :silent silent))
-    (some? pattern-cycle-errors)
-    (assoc :pattern-cycle-errors (expound-error pattern-cycle-errors
-                                                :error-type "cycle"
-                                                :silent silent))
-    ;; Context errors are already in list format
-    (some? context-errors)
-    (assoc :context-errors (expound-error context-errors
-                                               :silent silent))
-    (some? context-key-errors)
-    (assoc :context-key-errors (expound-error context-key-errors
-                                                   :silent silent))))
+           context-key-errors]}]
+  (when syntax-errors
+    (expound-error syntax-errors "Syntax Errors"))
+  (when id-errors
+    (expound-error id-errors "ID Errors" :id))
+  (when in-scheme-errors
+    (expound-error in-scheme-errors "Version Errors" :in-scheme))
+  (when concept-errors
+    (expound-error concept-errors "Concept Edge Errors" :edge))
+  (when template-errors
+    (expound-error template-errors "Template Edge Errors" :edge))
+  (when pattern-errors
+    (expound-error pattern-errors "Pattern Edge Errors" :edge))
+  (when pattern-cycle-errors
+    (expound-error pattern-cycle-errors "Cycle Errors" :cycle))
+  (when context-errors
+    (expound-error context-errors "Context Errors"))
+  (when context-key-errors
+    (expound-error context-key-errors "Context Key Errors")))
