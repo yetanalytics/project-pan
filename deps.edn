@@ -7,7 +7,7 @@
          luposlip/json-schema         {:mvn/version "0.1.6"} ; clj only
          aysylu/loom                  {:mvn/version "1.0.2"
                                        :exclusions  [org.clojure/clojurescript]}
-         expound/expound              {:mvn/version "0.7.2"}
+         expound/expound              {:mvn/version "0.8.9"}
          com.yetanalytics/xapi-schema ;; Latest commit: 1/29/21
          {:git/url    "https://github.com/yetanalytics/xapi-schema"
           :sha        "0e552227e74913d1b35dfa648407b9a9ac4b6b00"
