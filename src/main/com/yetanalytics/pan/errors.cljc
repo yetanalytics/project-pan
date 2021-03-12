@@ -146,9 +146,9 @@
 (exp/defmsg ::ctx/expanded-term-def
             "expanded term definition does not have valid prefix")
 
-(exp/defmsg ::ctx/contexed-key
+(exp/defmsg ::ctx/iri-key
             "key cannot be expanded into absolute IRI")
-(exp/defmsg ::ctx/is-at-context
+(exp/defmsg ::ctx/keyword-key
             "key is not JSON-LD keyword")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

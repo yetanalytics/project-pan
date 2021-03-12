@@ -142,41 +142,47 @@
                                {:at/type "@id" :at/id "dcterms:conformsTo"})
                ::s/problems first :via)))))
 
-(deftest value-spec-test
-  (testing "value-spec spec creation function"
-    (is (s/valid? (c/value-spec {:xapi "https://w3id.org/xapi/ontology#"})
+(deftest term-def-spec-test
+  (testing "term-def spec creation function"
+    (is (s/valid? (c/term-def-spec {:xapi "https://w3id.org/xapi/ontology#"})
                   "xapi:Verb"))
-    (is (s/valid? (c/value-spec {:xapi "https://w3id.org/xapi/ontology#"})
+    (is (s/valid? (c/term-def-spec {:xapi "https://w3id.org/xapi/ontology#"})
                   {:at/id "xapi:type" :at/type "@id"}))
-    (is (s/valid? (c/value-spec (c/collect-prefixes profile-context))
+    (is (s/valid? (c/term-def-spec (c/collect-prefixes profile-context))
                   {:at/id "profile:schema" :at/type "@id"}))
-    (is (not (s/valid? (c/value-spec {:xapi "https://w3id.org/xapi/ontology#"})
+    (is (not (s/valid? (c/term-def-spec {:xapi "https://w3id.org/xapi/ontology#"})
                        "skos:prefLabel")))
-    (is (not (s/valid? (c/value-spec {:xapi "https://w3id.org/xapi/ontology#"})
+    (is (not (s/valid? (c/term-def-spec {:xapi "https://w3id.org/xapi/ontology#"})
                        {:at/type "@id" :at/id "dcterms:conformsTo"})))
     (is (= ::c/simple-term-def
            (-> (s/explain-data
-                (c/value-spec {:xapi "https://w3id.org/xapi/ontology#"})
+                (c/term-def-spec {:xapi "https://w3id.org/xapi/ontology#"})
                 "skos:prefLabel")
-               ::s/problems first :via last)))
+               ::s/problems
+               first
+               :via
+               last)))
     (is (= ::c/expanded-term-def
            (-> (s/explain-data
-                (c/value-spec {:xapi "https://w3id.org/xapi/ontology#"})
+                (c/term-def-spec {:xapi "https://w3id.org/xapi/ontology#"})
                 "skos:prefLabel")
-               ::s/problems second :via last)))))
+               ::s/problems
+               second
+               :via
+               last)))))
 
-(deftest values-spec-test
-  (testing "values-spec spec creation function"
-    (is (s/valid? (c/values-spec {:xapi "https://w3id.org/xapi/ontology#"})
+(deftest term-defs-spec-test
+  (testing "term-defs spec creation function"
+    (is (s/valid? (c/term-defs-spec {:xapi "https://w3id.org/xapi/ontology#"})
                   {:type {:at/id "xapi:type" :at/type "@id"}
                    :name {:at/id "xapi:name" :at/container "@language"}}))
-    (is (not (s/valid? (c/values-spec {:xapi "https://w3id.org/xapi/ontology#"})
+    (is (not (s/valid? (c/term-defs-spec {:xapi "https://w3id.org/xapi/ontology#"})
                        {:prefLabel {:at/id "skos:prefLabel"
                                     :at/container "@language"}
                         :definition {:at/id "skos:definition"
                                      :at/container "@language"}})))
     (is (= 4
-           (-> (s/explain-data (c/values-spec {:xapi "https://w3id.org/xapi/ontology#"})
+           (-> (s/explain-data (c/term-defs-spec {:xapi "https://w3id.org/xapi/ontology#"})
                                {:prefLabel {:at/id "skos:prefLabel"
                                             :at/container "@language"}
                                 :definition {:at/id "skos:definition"
@@ -184,12 +190,12 @@
                ::s/problems count)))
     ;; Test that rebinding ::context/values will work
     (is (and (not (s/valid?
-                   (c/values-spec {:xapi "https://w3id.org/xapi/ontology#"})
+                   (c/term-defs-spec {:xapi "https://w3id.org/xapi/ontology#"})
                    {:prefLabel {:at/id "skos:prefLabel"
                                 :at/container "@language"}
                     :definition {:at/id "skos:definition"
                                  :at/container "@language"}}))
-             (s/valid?  (c/values-spec {:xapi "https://w3id.org/xapi/ontology#"
+             (s/valid?  (c/term-defs-spec {:xapi "https://w3id.org/xapi/ontology#"
                                         :skos "http://www.w3.org/2004/02/skos/core#"})
                         {:prefLabel {:at/id "skos:prefLabel"
                                      :at/container "@language"}
@@ -248,7 +254,10 @@
                                :gamma {:at/id "prefix2:gamma2"}}
                     :alpha 9001
                     :gamma "foo bar"}}
-            c/profile-to-zipper zip/next zip/next zip/end?))))
+            c/profile-to-zipper
+            zip/next
+            zip/next
+            zip/end?))))
 
 (deftest subvec?-test
   (testing "subvec? predicate: v1 should be a subvector of v2"

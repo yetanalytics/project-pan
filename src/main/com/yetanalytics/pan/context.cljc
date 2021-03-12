@@ -81,7 +81,8 @@
                (if (s/valid? ::prefix v)
                  (assoc accum k v)
                  accum))
-             {} context))
+             {}
+             context))
 
 (defn dissoc-prefixes
   "Returns all terms in a context that are not prefixes nor keyword aliases."
@@ -89,7 +90,9 @@
   (reduce-kv (fn [accum k v]
                (if (or (s/valid? ::keyword v) (s/valid? ::prefix v))
                  accum
-                 (assoc accum k v))) {} context))
+                 (assoc accum k v)))
+             {}
+             context))
 
 (defn compact-iri?
   "Validates whether this is a compact iri that has a valid prefix."
@@ -113,23 +116,22 @@
 
 ;; A term definition may either have a string as a value (ie. a simple term
 ;; definition) or a map (ie. an expanded term definition).
-(defn value-spec
+(defn term-def-spec
   [prefixes]
-  (s/def ::value
-    (s/or :simple-term-def (simple-term-spec prefixes)
-          :expanded-term-def (expanded-term-spec prefixes))))
+  (s/or :simple-term-def (simple-term-spec prefixes)
+        :expanded-term-def (expanded-term-spec prefixes)))
 
-(defn values-spec
+(defn term-defs-spec
   [prefixes]
-  (let [v-spec (value-spec prefixes)]
-    (s/def ::values (s/map-of any? v-spec))))
+  (let [v-spec (term-def-spec prefixes)]
+    (s/map-of any? v-spec)))
 
 (defn validate-context
   [context]
-  (let [prefixes (collect-prefixes context)
+  (let [prefixes  (collect-prefixes context)
         term-defs (dissoc-prefixes context)
-        vals-spec (values-spec prefixes)]
-    (s/explain-data vals-spec term-defs)))
+        spec      (term-defs-spec prefixes)]
+    (s/explain-data spec term-defs)))
 
 (defn create-context
   [context-iri]
@@ -157,7 +159,8 @@
                   (s/valid? (s/coll-of map? :type vector?) v)
                   (concat accum v)
                   :else accum))
-              (list) node)))
+              (list)
+              node)))
 
 (defn profile-to-zipper
   "Create a zipper from a profile structure."
@@ -240,11 +243,11 @@
 
 (defn- contexted-key-spec
   [contexts]
-  (s/def ::contexed-key (partial search-contexts contexts)))
+  (s/def ::iri-key (partial search-contexts contexts)))
 
 ;; Cannot use set as predicate, or else Expound overrides custom error msg.
 ;; List of keywords taken from Section 1.7 of the JSON-LD spec.
-(s/def ::is-at-context #(or (= % :_context)
+(s/def ::keyword-key #(or (= % :_context)
                             (= % :_id)
                             (= % :_type)
                             (= % :_base)
@@ -265,11 +268,11 @@
 ;; At this point all @ signs are replaced by underscores
 (defn validate-keys
   [contexts curr-node]
-  (let [_ (contexted-key-spec contexts)
-        _ (s/def ::contexted-map (s/map-of (s/or :absolute-iri ::contexed-key
-                                                 :keyword ::is-at-context)
-                                           any?))]
-    (s/explain-data ::contexted-map curr-node)))
+  (contexted-key-spec contexts) ; bind key to registry as side effect
+  (let [node-spec (s/map-of (s/or :absolute-iri ::iri-key
+                                  :keyword ::keyword-key)
+                            any?)]
+    (s/explain-data node-spec curr-node)))
 
 (defn update-profile-errors
   [contexts curr-node profile-errors]
