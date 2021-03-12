@@ -1,6 +1,5 @@
 (ns com.yetanalytics.pan.errors
-  (:require #?(:clj [clojure.core.match :as m]
-               :cljs [cljs.core.match :as m])
+  (:require [clojure.core :refer [format]]
             [clojure.spec.alpha :as s]
             [clojure.string :as string]
             [expound.alpha :as exp]
@@ -133,7 +132,7 @@
     :_vocab     "@vocab"
     (if (keyword? value) (name value) (pr-str value))))
 
-(defn- pluralize
+#_(defn- pluralize
   "Make the word plural based off of a count if needed, by adding a plural s
   at the end."
   [word cnt]
@@ -172,10 +171,12 @@
 (defn value-str-id
   "Custom value string for duplicate ID error messages. Takes the form:
    | Duplicate id: <identifier>
-   |  with count: <int>"
+   |  with count:  <int>"
   [_ _ path value]
-  (str "Duplicate id: " (-> path last strv) "\n"
-       " with count:  " (strv value)))
+  (format (str "Duplicate id: %s\n"
+               " with count:  %d")
+          (last path)
+          value))
 
 (defn value-str-ver
   "Custom value string for inScheme error messages. Takes the form:
@@ -185,11 +186,13 @@
    |   <version-id-1>
    |   <version-id-2>
    |   ..."
-  [_ _ _ value]
-  (str "Invalid inScheme: " (-> value :inScheme strv) "\n"
-       " at object: " (-> value :id strv) "\n"
-       " profile version ids:\n  "
-       (->> value :version-ids sequence sort reverse (string/join "\n  "))))
+  [_ _ _ {:keys [id inScheme version-ids] :as _value}]
+  (format (str "Invalid inScheme: %s\n"
+               " at object: %s\n"
+               " profile version ids %s")
+          inScheme
+          id
+          (->> version-ids sequence sort reverse (string/join "\n  "))))
 
 #_{:clj-kondo/ignore [:unresolved-symbol]} ; kondo doesn't recognize core.match
 (defn value-str-edge
@@ -200,52 +203,65 @@
    |  <object map>
    | linked object:
    |  <object map>"
-  [_ _ _ value]
-  (let [attrs-list
-        (m/match [value]
-          ;; Patterns
-          [{:src-primary   src-primary
-            :src-indegree  src-indegree
-            :src-outdegree src-outdegree
-            :dest-property dest-property}]
-          (str " at object:\n"
-               "  {:id " (-> value :src strv) ",\n"
-               "   :type " (-> value :src-type strv) ",\n"
-               "   :primary " (strv src-primary) ",\n"
-               "   ...}\n"
-               "\n"
-               " linked object:\n"
-               "   {:id " (-> value :dest strv) ",\n"
-               "    :type " (-> value :dest-type strv) ",\n"
-               "    :" (strv dest-property) " ...,\n"
-               "    ...}\n"
-               "\n"
-               ;; Add text that says:
-               ;; "pattern is used # time(s) in the profile
-               ;; and links out to # other object(s)."
-               " pattern is used " (strv src-indegree) " "
-               (pluralize "time" src-indegree) " in the profile\n"
-               " and links out to " (strv src-outdegree) " other "
-               (pluralize "object" src-outdegree) ".")
-          ;; Concepts and Templates
-          [{:src-version  src-version
-            :dest-version dest-version}]
-          (str " at object:\n"
-               "  {:id " (-> value :src strv) ",\n"
-               "   :type " (-> value :src-type strv) ",\n"
-               "   :inScheme " (strv src-version) ",\n"
-               "   ...}\n"
-               "\n"
-               " linked object:\n"
-               "  {:id " (-> value :dest strv) ",\n"
-               "   :type " (-> value :dest-type strv) ",\n"
-               "   :inScheme " (strv dest-version) ",\n"
-               "   ...}")
-          ;; Shouldn't happen but just in case
-          :else "")]
-    (str "Invalid " (-> value :type strv) " identifier:\n"
-         " " (-> value :dest strv) "\n"
-         "\n" attrs-list)))
+  [_ _ _ {:keys [type src src-type dest dest-type] :as value}]
+  (cond
+    (= "Pattern" src-type)
+    (let [{:keys [src-primary src-indegree src-outdegree dest-property]}
+          value]
+      (format (str "Invalid %s identifier:"
+                   " %s\n"
+                   "\n"
+                   " at object:\n"
+                   "  {:id \"%s\",\n"
+                   "   :type \"%s\",\n"
+                   "   :primary %d,\n"
+                   "   ...}\n"
+                   "\n"
+                   " linked object:\n"
+                   "   {:id \"%s\",\n"
+                   "    :type \"%s\",\n"
+                   "    %s ...,\n"
+                   "    ...}\n"
+                   "\n"
+                   " pattern is used %d time%s in the profile and links out to %d other object%s.")
+              type
+              dest
+              src
+              src-type
+              (strv src-primary)
+              dest
+              dest-type
+              dest-property
+              src-indegree
+              (if (= 1 src-indegree) "" "s")
+              src-outdegree
+              (if (= 1 src-outdegree) "" "s")))
+    (or (= "Concept" src-type) (= "StatementTemplate" src-type))
+    (let [{:keys [src-version dest-version]} value]
+      (format (str "Invalid %s identifier:"
+                   " %s\n"
+                   "\n"
+                   " at object:\n"
+                   "  {:id \"%s\",\n"
+                   "   :type \"%s\",\n"
+                   "   :inScheme \"%s\",\n"
+                   "   ...}\n"
+                   "\n"
+                   " linked object:\n"
+                   "  {:id \"%s\",\n"
+                   "   :type \"%s\",\n"
+                   "   :inScheme \"%s\",\n"
+                   "   ...}")
+              type
+              dest
+              src
+              src-type
+              src-version
+              dest
+              dest-type
+              dest-version))
+    :else
+    ""))
 
 (defn value-str-scc
   "Custom value string for strongly connected component error messages (if a
@@ -254,8 +270,9 @@
    |   <identifier>
    |   <identifier>"
   [_ _ _ value]
-  (str "Cycle detected involving the following nodes:\n  "
-       (->> value sort (string/join "\n  "))))
+  (format (str "Cycle detected involving the following nodes:\n"
+               "  %s")
+          (->> value sort (string/join "\n  "))))
 
 ;; TODO Possibly make custom error messages for @context errors?
 (defn custom-printer
@@ -331,7 +348,7 @@
   (when pattern-errors
     (expound-error pattern-errors "Pattern Edge Errors" :edge))
   (when pattern-cycle-errors
-    (expound-error pattern-cycle-errors "Cycle Errors" :cycle))
+    (expound-error pattern-cycle-errors "Pattern Cycle Errors" :cycle))
   (when context-errors
     (expound-error context-errors "Context Errors"))
   (when context-key-errors
