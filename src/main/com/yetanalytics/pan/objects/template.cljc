@@ -34,11 +34,12 @@
 
 ;; A StatementTemplate MUST NOT have both objectStatementRefTemplate and
 ;; objectActivityType at the same time.
-(s/def ::type-or-reference
-  (fn type-or-ref? [st]
-    (let [otype? (contains? st :objectActivityType)
-          otemp? (contains? st :objectStatementRefTemplate)]
-      (not (and otype? otemp?)))))
+(defn- type-or-ref? [st]
+  (let [otype? (contains? st :objectActivityType)
+        otemp? (contains? st :objectStatementRefTemplate)]
+    (not (and otype? otemp?))))
+
+(s/def ::type-or-reference type-or-ref?)
 
 (s/def ::rules (s/coll-of ::rules/rule :type vector?))
 
@@ -56,8 +57,7 @@
                    ::objectStatementRefTemplate
                    ::contextStatementRefTemplate]))
 
-(s/def ::template
-  (s/and ::template-keys ::type-or-reference))
+(s/def ::template (s/and ::template-keys ::type-or-reference))
 
 (s/def ::templates (s/coll-of ::template :kind vector? :min-count 1))
 

@@ -22,7 +22,7 @@
 (s/def ::inlineSchema ::ax/json-schema)
 
 (s/def ::no-recommended-verbs
-  (fn [ext] (not (contains? ext :recommendedVerbs))))
+  (fn no-rec-ats? [ext] (not (contains? ext :recommendedVerbs))))
 
 (s/def ::extension-keys
   (s/keys :req-un [::id ::type ::inScheme ::prefLabel ::definition]
