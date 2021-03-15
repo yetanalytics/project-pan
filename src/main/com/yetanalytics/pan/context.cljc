@@ -57,10 +57,7 @@
 ;; This spec checks if a @context key is an alias to a keyword value.
 ;; See section 6.2: Node Objects in the JSON-LD grammar.
 (s/def ::context-keyword
-  (fn keyword? [k]
-    (contains?
-     #{"@context" "@id" "@graph" "@nest" "@type" "@reverse" "@index"}
-     k)))
+  #{"@context" "@id" "@graph" "@nest" "@type" "@reverse" "@index"})
 
 ;; Regular expressions
 ;; Note: Forward slash is not escaped in JS regex
@@ -122,7 +119,7 @@
 (def excluded-props
   #{:prefLabel :definition :scopeNote :name :description :_context})
 
-(defn children
+(defn- children
   "Zipper function for returning the children at a location in a Profile.
   Returns nil if there are no children at the location."
   [node]
@@ -131,7 +128,7 @@
     (fn [accum k v]
       (cond
         ;; Objects
-        (and (map? v) (not (contains? excluded-props k)))
+        (and (map? v) (not (excluded-props k)))
         (conj accum v)
         ;; Arrays of objects
         (and (vector? v) (every? map? v))
@@ -222,28 +219,25 @@
           true ;; We found the key at the curr context!
           (recur (pop context-stack)))))))
 
-;; Cannot use set as predicate, or else Expound overrides custom error msg.
 ;; List of keywords taken from Section 1.7 of the JSON-LD spec.
 (s/def ::keyword-key
-  (fn keyword-key? [k] (contains?
-                        #{:_context
-                          :_id
-                          :_type
-                          :_base
-                          :_container
-                          :_graph
-                          :_index
-                          :_language
-                          :_list
-                          :_nest
-                          :_none
-                          :_prefix
-                          :_reverse
-                          :_set
-                          :_value
-                          :_version
-                          :_vocab}
-                        k)))
+  #{:_context
+    :_id
+    :_type
+    :_base
+    :_container
+    :_graph
+    :_index
+    :_language
+    :_list
+    :_nest
+    :_none
+    :_prefix
+    :_reverse
+    :_set
+    :_value
+    :_version
+    :_vocab})
 
 ;; At this point all @ signs are replaced by underscores
 ;; TODO: Add "!" to denote side effect
@@ -291,24 +285,30 @@
   (loop [profile-loc (profile-to-zipper profile)
          context-stack []
          ;; For contexts themselves that are bad
-         context-errors (list)
+         context-errors '()
          ;; When the profile doesn't follow the context 
-         profile-errors (list)]
+         profile-errors '()]
     (if-not (zip/end? profile-loc)
       (let [curr-node (zip/node profile-loc)
             popped-stack (pop-contexts context-stack profile-loc)
             pushed-stack (push-context context-stack profile-loc)]
         (if (-> pushed-stack peek :context nil?)
           ;; If latest context is erroneous
-          (let [new-cerrors (update-context-errors popped-stack pushed-stack
+          (let [new-cerrors (update-context-errors popped-stack
+                                                   pushed-stack
                                                    context-errors)]
             (recur (zip/next profile-loc)
-                   pushed-stack new-cerrors profile-errors))
+                   pushed-stack
+                   new-cerrors
+                   profile-errors))
           ;; If latest context is valid => validate map keys
-          (let [new-perrors (update-profile-errors pushed-stack curr-node
+          (let [new-perrors (update-profile-errors pushed-stack
+                                                   curr-node
                                                    profile-errors)]
             (recur (zip/next profile-loc)
-                   pushed-stack context-errors new-perrors))))
+                   pushed-stack
+                   context-errors
+                   new-perrors))))
       (let [context-err-seq (filter some? context-errors)
             profile-err-seq (filter some? profile-errors)
             context-err-map (error-seq->map ::jsonld-context context-err-seq)
