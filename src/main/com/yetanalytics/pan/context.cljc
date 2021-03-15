@@ -2,7 +2,8 @@
   (:require [clojure.spec.alpha :as s]
             [clojure.string :as string]
             [clojure.zip :as zip]
-            [com.yetanalytics.pan.axioms :as ax])
+            [com.yetanalytics.pan.axioms :as ax]
+            [com.yetanalytics.pan.utils.spec :as util])
   #?(:clj (:require [com.yetanalytics.pan.utils.resources
                      :refer [read-json-resource]])
      :cljs (:require-macros [com.yetanalytics.pan.utils.resources
@@ -27,7 +28,7 @@
 (def activity-context
   (read-json-resource "context/activity-context.json" "at/"))
 
-(defn- get-context*
+(defn- uri->context*
   "Get a context and parse it from JSON to EDN.
    If a @context is one of two contexts given by the profile spec, call them
    from local resources."
@@ -38,13 +39,15 @@
     "https://w3id.org/xapi/profiles/activity-context"
     activity-context
     ;; TODO get other contexts from the Internet; currently throws exception
-    (throw (ex-info "Unable to read from URL" {:url context}))))
+    (throw (ex-info "Unable to read from URI"
+                    {:type ::unknown-context-uri
+                     :url   context}))))
 
-(defn get-context
+(defn uri->context
   "Get a raw context, then parse it from JSON to EDN.
   Return the JSON object given by the @context key"
   [context-uri]
-  (-> context-uri get-context* :at/context))
+  (-> context-uri uri->context* :at/context))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Validate context 
@@ -55,8 +58,9 @@
 ;; See section 6.2: Node Objects in the JSON-LD grammar.
 (s/def ::context-keyword
   (fn keyword? [k]
-    (contains? #{"@context" "@id" "@graph" "@nest" "@type" "@reverse" "@index"}
-               k)))
+    (contains?
+     #{"@context" "@id" "@graph" "@nest" "@type" "@reverse" "@index"}
+     k)))
 
 ;; Regular expressions
 ;; Note: Forward slash is not escaped in JS regex
@@ -79,7 +83,7 @@
   "Returns all the prefixes in a context."
   [context]
   (reduce-kv (fn [accum k v]
-               (if (s/valid? ::prefix v) (assoc accum k v) accum))
+               (if (s/valid? ::context-prefix v) (assoc accum k v) accum))
              {}
              context))
 
@@ -114,41 +118,41 @@
 ;; Validate profile against context 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+; Exclude language maps or inline @context maps as node children
+(def excluded-props
+  #{:prefLabel :definition :scopeNote :name :description :_context})
+
 (defn children
   "Zipper function for returning the children at a location in a Profile.
   Returns nil if there are no children at the location."
   [node]
   (not-empty
-   (reduce-kv (fn [accum k v]
-                (cond
-                  (and (map? v)
-                       ;; Exclude language maps or inline @context maps
-                       (not (contains? #{:prefLabel :definition :scopeNote
-                                         :name :description :_context} k)))
-                  (conj accum v)
-                  (s/valid? (s/coll-of map? :type vector?) v)
-                  (concat accum v)
-                  :else accum))
-              (list)
-              node)))
+   (reduce-kv
+    (fn [accum k v]
+      (cond
+        ;; Objects
+        (and (map? v) (not (contains? excluded-props k)))
+        (conj accum v)
+        ;; Arrays of objects
+        (and (vector? v) (every? map? v))
+        (concat accum v)
+        ;; Don't consider anything else as children
+        :else
+        accum))
+    '()
+    node)))
 
 (defn profile-to-zipper
   "Create a zipper from a profile structure."
   [profile]
   (zip/zipper map? children nil profile))
 
-(defn subvec?
-  "True if v1 is a subvector of v2, false otherwise."
-  [v1 v2]
-  (and (<= (count v1) (count v2))
-       (= v1 (subvec v2 0 (count v1)))))
-
 (defn pop-context
   "Pop the last-added context if the path is not located at the current
   location nor a parent of the current location."
   [context-stack location]
-  (if-not (subvec? (-> context-stack peek :path)
-                   (vec (zip/path location)))
+  (if-not (util/subvec? (-> context-stack peek :path)
+                        (-> location zip/path vec))
     (pop context-stack)
     context-stack))
 
@@ -182,17 +186,20 @@
       (cond
         ;; @context is URI valued
         (s/valid? ::ax/iri context-val)
-        (push-context* context-stack (get-context context-val))
+        (push-context* context-stack (uri->context context-val))
         ;; @context is array valued
         (s/valid? ::ax/array-of-iri context-val)
-        (reduce push-context* context-stack (map get-context context-val))
+        (reduce push-context* context-stack (map uri->context context-val))
         ;; @context is inline (not allowed by spec, but good for debug)
         (map? context-val)
         (push-context* context-stack context-val)
         ;; No @context key at this location
+        (nil? context-val)
+        context-stack
         :else
-        (do (assert (nil? context-val)) ; FIXME - more permanent chekc
-            context-stack)))))
+        (throw (ex-info "Unknown @context value"
+                        {:type  ::unknown-context-val
+                         :value context-val}))))))
 
 (defn update-context-errors
   "Update the list of context errors if a new erroneous context had been
@@ -217,32 +224,36 @@
 
 ;; Cannot use set as predicate, or else Expound overrides custom error msg.
 ;; List of keywords taken from Section 1.7 of the JSON-LD spec.
-(s/def ::keyword-key #(or (= % :_context)
-                          (= % :_id)
-                          (= % :_type)
-                          (= % :_base)
-                          (= % :_container)
-                          (= % :_graph)
-                          (= % :_index)
-                          (= % :_language)
-                          (= % :_list)
-                          (= % :_nest)
-                          (= % :_none)
-                          (= % :_prefix)
-                          (= % :_reverse)
-                          (= % :_set)
-                          (= % :_value)
-                          (= % :_version)
-                          (= % :_vocab)))
+(s/def ::keyword-key
+  (fn keyword-key? [k] (contains?
+                        #{:_context
+                          :_id
+                          :_type
+                          :_base
+                          :_container
+                          :_graph
+                          :_index
+                          :_language
+                          :_list
+                          :_nest
+                          :_none
+                          :_prefix
+                          :_reverse
+                          :_set
+                          :_value
+                          :_version
+                          :_vocab}
+                        k)))
 
 ;; At this point all @ signs are replaced by underscores
 ;; TODO: Add "!" to denote side effect
 (defn validate-keys
   [contexts curr-node]
   ;; Bind key to registry as side effect.
-  (s/def ::iri-key (partial search-contexts contexts))
-  (s/def ::jsonld-node (s/map-of (s/or :iri ::iri-key :keyword ::keyword-key)
-                                 any?))
+  (s/def ::iri-key
+    (partial search-contexts contexts))
+  (s/def ::jsonld-node
+    (s/map-of (s/or :iri ::iri-key :keyword ::keyword-key) any?))
   (s/explain-data ::jsonld-node curr-node))
 
 (defn update-profile-errors

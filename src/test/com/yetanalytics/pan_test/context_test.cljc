@@ -10,18 +10,18 @@
                              :refer [read-json-resource]])))
 
 (def profile-context
-  (c/get-context "https://w3id.org/xapi/profiles/context"))
+  (c/uri->context "https://w3id.org/xapi/profiles/context"))
 
 (def activity-context
-  (c/get-context "https://w3id.org/xapi/profiles/activity-context"))
+  (c/uri->context "https://w3id.org/xapi/profiles/activity-context"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Parsing and validating context tests 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; TODO Test getting external @context
-(deftest get-context-test
-  (testing "get-context function: Get @context and convert from JSON to EDN."
+(deftest uri->context-test
+  (testing "uri->context function: Get @context and convert from JSON to EDN."
     (is (map? profile-context))
     (is (= {:xapi "https://w3id.org/xapi/ontology#"
             :type {:at/id "xapi:type" :at/type "@id"}
@@ -42,7 +42,7 @@
 
 (deftest prefix-spec-test
   (testing "prefix spec"
-    (should-satisfy+ ::c/prefix
+    (should-satisfy+ ::c/context-prefix
                      "https://w3id.org/xapi/ontology#"
                      "https://foo.org/"
                      "https://foo.org?"
@@ -51,7 +51,7 @@
                      "what the pineapple"
                      "https//bad-uri/"
                      "https://w3id.org/xapi/ontology")
-    (should-satisfy+ ::c/prefix
+    (should-satisfy+ ::c/context-prefix
                      {:id "http://example.com/compact-iris-" :prefix true}
                      :bad
                      {:id "http://example.com/compact-iris-" :prefix false}
@@ -148,14 +148,6 @@
             zip/next
             zip/next
             zip/end?))))
-
-(deftest subvec?-test
-  (testing "subvec? predicate: v1 should be a subvector of v2"
-    (is (c/subvec? [1 2 3] [1 2 3 4]))
-    (is (c/subvec? [1 2 3 4] [1 2 3 4]))
-    (is (c/subvec? [] [{:foo 1 :bar 2}]))
-    (is (not (c/subvec? [1 2 3 4] [1 2 3])))
-    (is (not (c/subvec? [1 3 5] [1 2 3 4])))))
 
 (deftest pop-context-test
   (testing "pop-context function"

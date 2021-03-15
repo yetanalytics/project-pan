@@ -4,6 +4,14 @@
             ;; Not to be confused with test-utils in test dir
             [com.yetanalytics.pan.utils.spec :as u]))
 
+(deftest subvec?-test
+  (testing "subvec? predicate: v1 should be a subvector of v2"
+    (is (u/subvec? [1 2 3] [1 2 3 4]))
+    (is (u/subvec? [1 2 3 4] [1 2 3 4]))
+    (is (u/subvec? [] [{:foo 1 :bar 2}]))
+    (is (not (u/subvec? [1 2 3 4] [1 2 3])))
+    (is (not (u/subvec? [1 3 5] [1 2 3 4])))))
+
 ;; TODO Normalize profile test
 
 ;; related MUST only be used on deprecated concepts
