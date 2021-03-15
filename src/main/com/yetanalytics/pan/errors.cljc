@@ -1,6 +1,5 @@
 (ns com.yetanalytics.pan.errors
   (:require [clojure.core :refer [format]]
-            #_[clojure.spec.alpha :as s]
             [clojure.pprint :as pprint]
             [clojure.string :as string]
             [expound.alpha :as exp]
@@ -16,16 +15,6 @@
             [com.yetanalytics.pan.objects.concepts.extensions.result :as re]
             [com.yetanalytics.pan.objects.concepts.activities :as act]
             [com.yetanalytics.pan.utils.spec :as u]))
-
-;; TODO: Expound can act pretty funny sometimes and we have to use some hacks
-;; to avoid said funniness. Look into creating an in-house error message lib.
-
-;; Error map reference:
-;; :path = Path of map + spec keywords
-;; :pred = Spec predicate
-;; :val = Value being specced
-;; :via = Path of spec keywords
-;; :in = Path of map keys + array entry numbers
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Spec messages
@@ -239,17 +228,20 @@
    :patterns    64})
 
 (defn- cmp-properties
-  "Get the order of two properties based on how it was listed in the xAPI
-  Profile spec. Properties not listed in the property-order map will be pushed
-  to the end of the error list and sorted alphabetically.
-  - neg number: prop1 comes before prop2
-  - pos number: prop1 comes after prop2
-  - zero: prop1 and prop2 are equal"
+  "Compare two Profile property keys, mostly based on how it was
+   listed in the xAPI Profile spec. Properties not listed in the
+   property-order map will be pushed to the end of the error list
+   and sorted alphabetically.
+
+   Return value meaning:
+   - neg number: prop1 comes before prop2
+   - pos number: prop1 comes after prop2
+   - zero: prop1 and prop2 are equal"
   [p1 p2]
   (let [n1 (get property-order p1)
         n2 (get property-order p2)]
     (cond
-      ;; Compare properties' existence
+      ;; Compare properties' existences
       (and (nil? p1) (nil? p2)) 0
       (and (nil? p1) (some? p2)) -1
       (and (some? p1) (nil? p2)) 1
@@ -260,6 +252,7 @@
       (and (nil? n1) (nil? n2)) (compare p1 p2))))
 
 (defn- map->sorted-map
+  "Sort the keys of a Profile object."
   [m]
   (into (sorted-map-by cmp-properties) m))
 
@@ -267,23 +260,31 @@
 ;; Value display
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn- elide-arrs [obj]
+(defn- elide-arrs
+  "Elide concept, template, and pattern arrays as to not distract
+   from showing top-level Profile properties."
+  [obj]
   (cond-> obj
     (:concepts obj) (assoc :concepts ['...])
     (:templates obj) (assoc :templates ['...])
     (:patterns obj) (assoc :patterns ['...])))
 
 (defn- ppr-str
-  [x]
-  (pprint/write x :stream nil))
+  "Format `obj` according to clojure.core/pprint and returns a
+   string."
+  [obj]
+  (pprint/write obj :stream nil))
 
-(defn value-str-obj
+(defn- value-str-obj
+  "Custom value string fn for errors on objects."
   [_ profile path value]
   (if (or (empty? path) (int? (last path)))
+    ;; Error occured over the entire object
     (let [obj (->> path (get-in profile) elide-arrs map->sorted-map)]
       (format (str "Object:\n"
                    "%s")
               (ppr-str obj)))
+    ;; Error occured on a specific property.
     (let [obj (->> path butlast (get-in profile) elide-arrs map->sorted-map)]
       (format (str "Value:\n"
                    "%s\n"
@@ -297,7 +298,8 @@
               (pr-str (last path))
               (ppr-str obj)))))
 
-(defn value-str-obj-nopath
+(defn- value-str-obj-nopath
+  "Similar to `value-str-obj` but do not show the path."
   [_ profile path value]
   (let [obj (->> path butlast (get-in profile) elide-arrs map->sorted-map)]
     (format (str "Value:\n"
@@ -308,10 +310,8 @@
             (ppr-str value)
             (ppr-str obj))))
 
-(defn value-str-id
-  "Custom value string for duplicate ID error messages. Takes the form:
-   | Duplicate id: <identifier>
-   |  with count:  <int>"
+(defn- value-str-id
+  "Custom value string fn for duplicate ID errors"
   [_ _ path value]
   (format (str "Identifer:\n"
                "%s\n"
@@ -321,14 +321,8 @@
           value
           (if (= 1 value) "" "s")))
 
-(defn value-str-version
-  "Custom value string for inScheme error messages. Takes the form:
-   | Invalid inScheme: <in-scheme>
-   |  at object: <identifier>
-   |  profile version ids:
-   |   <version-id-1>
-   |   <version-id-2>
-   |   ..."
+(defn- value-str-version
+  "Custom value string fn for inScheme error messages."
   [_ _ _ {:keys [id inScheme version-ids] :as _value}]
   (format (str "InScheme IRI:\n"
                "%s\n"
@@ -342,15 +336,8 @@
           (pr-str id)
           (->> version-ids sort (map pr-str) (string/join "\n"))))
 
-#_{:clj-kondo/ignore [:unresolved-symbol]} ; kondo doesn't recognize core.match
-(defn value-str-edge
-  "Custom value string for IRI link error messages. Takes the form:
-   | Invalid <property> identifier:
-   |  <identifier>
-   | at object:
-   |  <object map>
-   | linked object:
-   |  <object map>"
+(defn- value-str-edge
+  "Custom value string fn for IRI link error messages."
   [_ _ _ {:keys [src src-type dest dest-type] :as value}]
   (cond
     (= "Pattern" src-type)
@@ -410,18 +397,16 @@
     :else
     ""))
 
-(defn value-str-scc
-  "Custom value string for strongly connected component error messages (if a
-   digraph has a cycle). Takes the form:
-   | Cycle detected in the following nodes:
-   |   <identifier>
-   |   <identifier>"
+(defn- value-str-scc
+  "Custom value string fn for strongly connected component errors.
+   Used for pattern cycle errors."
   [_ _ _ value]
   (format (str "The following Patterns:\n"
                "%s")
           (->> value sort (map pr-str) (string/join "\n"))))
 
-(defn value-str-context
+(defn- value-str-context
+  "Custom value string fn to print errors on contexts."
   [_ contexts path value]
   (format (str "Value:\n"
                "%s\n"
@@ -431,10 +416,9 @@
           (ppr-str value)
           (ppr-str (->> path butlast (get-in contexts) map->sorted-map))))
 
-(defn custom-printer
-  "Returns a printer based on the error-type argument. A nil error-type will
-  result in the default Expound printer (except with :print-specs? set to
-  false)."
+(defn- custom-printer
+  "Returns a printer based on `error-type`. A `nil` value will
+  result in the default return value of `value-str-obj`."
   [& [error-type]]
   (let [error-type (if (nil? error-type) :else error-type)
         make-opts  (fn [f] {:print-specs? false :value-str-fn f})]
@@ -459,9 +443,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn expound-error
-  "Print an Expounded error message using a custom printer. The custom printer
-  is determined using the error-type arg; if not supplied, it prints a default
-  Expound error message (without the Relevant Specs trace)."
+  "Print an Expounded error message using a custom printer. The custom
+   printer is determined via `error-type`; if not supplied, it assumes
+   that it is a syntax error. Prints `error-label` as the header."
   ([error-map error-label]
    (expound-error error-map error-label nil))
   ([error-map error-label error-type]
@@ -471,15 +455,15 @@
 
 (defn expound-errors
   "Print errors from profile validation using Expound. Available keys:
-  :syntax-errors - Basic syntax validation (always present)
-  :id-errors - Duplicate ID errors
-  :in-scheme-errors - inScheme property validation
-  :concept-errors - Concept relation/link errors
-  :template-errors - Template relation/link errors
-  :pattern-errors - Pattern relation/link errors
-  :pattern-cycle-errors - Cyclical pattern errors
-  :context-errors - Errors in any @context maps
-  :context-key-errors - Errors in expanding any keys via @context maps"
+  :syntax-errors         Basic syntax validation (always present)
+  :id-errors             Duplicate ID errors
+  :in-scheme-errors      inScheme property validation
+  :concept-errors        Concept relation/link errors
+  :template-errors       Template relation/link errors
+  :pattern-errors        Pattern relation/link errors
+  :pattern-cycle-errors  Cyclical pattern errors
+  :context-errors        Errors in @context maps
+  :context-key-errors    Errors in expanding keys via @context maps"
   [{:keys [syntax-errors
            id-errors
            in-scheme-errors
