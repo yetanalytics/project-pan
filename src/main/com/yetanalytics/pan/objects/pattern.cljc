@@ -282,7 +282,7 @@
 
 ;; Edge validation
 (defn validate-pattern-edges [pgraph]
-  (s/explain-data ::valid-edges (get-edges pgraph)))
+  (s/explain-data ::pattern-edges (get-edges pgraph)))
 
 ;; MUST NOT include any Pattern within itself, at any depth.
 ;; In other words, no cycles (including self loops)

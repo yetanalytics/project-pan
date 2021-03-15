@@ -277,7 +277,7 @@
           :index       0}
          error-seq)
         (dissoc :index)
-        (update ::s/value reverse))))
+        (update ::s/value (comp vec reverse)))))
 
 (defn validate-contexts
   "Validate all the contexts in a Profile."

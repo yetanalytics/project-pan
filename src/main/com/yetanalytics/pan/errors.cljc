@@ -1,6 +1,7 @@
 (ns com.yetanalytics.pan.errors
   (:require [clojure.core :refer [format]]
             #_[clojure.spec.alpha :as s]
+            [clojure.pprint :as pprint]
             [clojure.string :as string]
             [expound.alpha :as exp]
             [com.yetanalytics.pan.axioms :as ax]
@@ -49,111 +50,111 @@
 (exp/defmsg ::ax/array-of-uri "should be an array of URIs")
 
 (exp/defmsg ::u/inline-or-iri
-            "cannot contain both linked and inline JSON schema")
+  "cannot contain both linked and inline JSON schema")
 (exp/defmsg ::u/related-only-deprecated
-            "related can only be used on deprecated concepts")
+  "related can only be used on deprecated concepts")
 
 (exp/defmsg ::ae/no-recommended-verbs
-            "only allowed on context or result extensions")
+  "only allowed on context or result extensions")
 (exp/defmsg ::ce/no-recommended-activity-types
-            "only allowed on activity extensions")
+  "only allowed on activity extensions")
 (exp/defmsg ::re/no-recommended-activity-types
-            "only allowed on activity extensions")
+  "only allowed on activity extensions")
 (exp/defmsg ::act/activityDefinition
-            "invalid activity definition")
+  "invalid activity definition")
 
 (exp/defmsg ::t/type-or-reference
-            "cannot contain both objectActivityType and objectStatementRefTemplate")
+  "cannot contain both objectActivityType and objectStatementRefTemplate")
 
 (exp/defmsg ::p/pattern-clause
-            "pattern contains too many properties")
+  "pattern contains too many properties")
 (exp/defmsg ::p/is-primary-true
-            "primary is not true")
+  "primary is not true")
 (exp/defmsg ::p/is-primary-false
-            "primary is not false nor nil")
+  "primary is not false nor nil")
 
 ;; ID spec messages
 
 (exp/defmsg ::id/one-count
-            "the id value is not unique")
+  "the id value is not unique")
 (exp/defmsg ::id/in-scheme
-            "the inScheme value is not a valid version ID")
+  "the inScheme value is not a valid version ID")
 
 ;; Graph spec messages
 
 (exp/defmsg ::graph/not-self-loop
-            "object cannot refer to itself")
+  "object cannot refer to itself")
 (exp/defmsg ::graph/singleton-scc
-            "cyclical reference detected")
+  "cyclical reference detected")
 
 (exp/defmsg ::c/valid-dest
-            "linked concept does not exist")
+  "linked concept does not exist")
 (exp/defmsg ::c/relatable-src
-            "should be type: \"ActivityType\", \"AttachmentUsageType\" or \"Verb\"")
+  "should be type: \"ActivityType\", \"AttachmentUsageType\" or \"Verb\"")
 (exp/defmsg ::c/relatable-dest
-            "should link to type: \"ActivityType\", \"AttachmentUsageType\" or \"Verb\"")
+  "should link to type: \"ActivityType\", \"AttachmentUsageType\" or \"Verb\"")
 (exp/defmsg ::c/activity-ext-src
-            "should be type: \"ActivityExtension\"")
+  "should be type: \"ActivityExtension\"")
 (exp/defmsg ::c/ctxt-result-ext-src
-            "should be type: \"ContextExtension\" or \"ResultExtension\"")
+  "should be type: \"ContextExtension\" or \"ResultExtension\"")
 (exp/defmsg ::c/activity-type-dest
-            "should link to type: \"ActivityType\"")
-(exp/defmsg ::c/verb-dest 
-            "should link to type: \"Verb\"")
+  "should link to type: \"ActivityType\"")
+(exp/defmsg ::c/verb-dest
+  "should link to type: \"Verb\"")
 (exp/defmsg ::c/same-concepts
-            "the concepts are not the same type")
+  "the concepts are not the same type")
 (exp/defmsg ::c/same-version
-            "inScheme values do not match")
+  "inScheme values do not match")
 
 (exp/defmsg ::t/template-src
-            "should be type: \"StatementTemplate\"")
+  "should be type: \"StatementTemplate\"")
 (exp/defmsg ::t/valid-dest
-            "linked concept or template does not exist")
+  "linked concept or template does not exist")
 (exp/defmsg ::t/verb-dest
-            "should link to type: \"Verb\"")
+  "should link to type: \"Verb\"")
 (exp/defmsg ::t/activity-type-dest
-            "should link to type: \"ActivityType\"")
+  "should link to type: \"ActivityType\"")
 (exp/defmsg ::t/attachment-use-type-dest
-            "should link to type: \"AttachmentUsageType\"")
+  "should link to type: \"AttachmentUsageType\"")
 (exp/defmsg ::t/template-dest
-            "should link to type: \"StatementTemplate\"")
+  "should link to type: \"StatementTemplate\"")
 (exp/defmsg ::t/same-version
-            "inScheme values do not match")
+  "inScheme values do not match")
 
 (exp/defmsg ::p/valid-dest
-            "linked template or pattern does not exist")
+  "linked template or pattern does not exist")
 (exp/defmsg ::p/pattern-src
-            "should be type: \"Pattern\"")
+  "should be type: \"Pattern\"")
 (exp/defmsg ::p/pattern-dest
-            "should link to type: \"Pattern\"")
+  "should link to type: \"Pattern\"")
 (exp/defmsg ::p/template-dest
-            "should link to type: \"StatementTemplate\"")
+  "should link to type: \"StatementTemplate\"")
 (exp/defmsg ::p/non-opt-dest
-            "alternate pattern cannot contain an optional or zeroOrMore pattern")
+  "alternate pattern cannot contain an optional or zeroOrMore pattern")
 (exp/defmsg ::p/singleton-src
-            "primary sequence pattern has multiple links")
+  "primary sequence pattern has multiple links")
 (exp/defmsg ::p/not-singleton-src
-            "sequence pattern must have at least two links")
+  "sequence pattern must have at least two links")
 (exp/defmsg ::p/primary-pattern
-            "pattern is not primary")
+  "pattern is not primary")
 (exp/defmsg ::p/zero-indegree-src
-            "pattern must not be used elsewhere")
+  "pattern must not be used elsewhere")
 
 ;; Context spec messages
 
 (exp/defmsg ::ctx/context-keyword
-            "should be a JSON-LD context keyword")
+  "should be a JSON-LD context keyword")
 (exp/defmsg ::ctx/context-prefix
-            "should be a JSON-LD prefix")
+  "should be a JSON-LD prefix")
 (exp/defmsg ::ctx/simple-term-def
-            "simple term definition does not have valid prefix")
+  "simple term definition does not have valid prefix")
 (exp/defmsg ::ctx/expanded-term-def
-            "expanded term definition does not have valid prefix")
+  "expanded term definition does not have valid prefix")
 
 (exp/defmsg ::ctx/iri-key
-            "key cannot be expanded into absolute IRI")
+  "key cannot be expanded into absolute IRI")
 (exp/defmsg ::ctx/keyword-key
-            "key is not JSON-LD keyword")
+  "key is not JSON-LD keyword")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Value display
@@ -184,41 +185,46 @@
     :_vocab     "@vocab"
     (if (keyword? value) (name value) (pr-str value))))
 
-#_(defn- pluralize
-  "Make the word plural based off of a count if needed, by adding a plural s
-  at the end."
-  [word cnt]
-  (if (not= 1 cnt) (str word "s") word))
+(defn- elide-arrs [obj]
+  (cond-> obj
+    (:concepts obj) (assoc :concepts ['...])
+    (:templates obj) (assoc :templates ['...])
+    (:patterns obj) (assoc :patterns ['...])))
 
-;; Needed to get around Issue #110 in Expound
-(defn default-printer
-  "Return a default printer with :show-valid-values? and :print-specs? both
-  preset to false. Also truncate lines that only contain elipses."
-  [explain-data]
-  (let [unformed-str
-        (with-out-str ;; Pretty hacky, but it works
-          ((exp/custom-printer {:show-valid-values? false
-                                :print-specs? false}) explain-data))
-        formed-str
-        (string/replace unformed-str #"(?<=\n)\s+\.\.\.\n" "")]
-    formed-str))
+(defn- ppr-str
+  [x]
+  (pprint/write x :stream nil))
 
-;; TODO Current default-printer function is quite unhelpful in locating errors.
-;; May look into this again.
-#_(defn value-str-def
-  "Custom value string for syntax validation error messages. Takes the form:
-  | Invalid value: <value>
-  | At path: profile -> <key1> -> <key2>"
-  [_ form path value]
-  (let [tag (if (-> path peek int?)
-              (-> path pop peek name (string/split #"s") first keyword)
-              (peek path))
-        path-arr (mapv strv path)
-        val-str (if (map? value)
-                  (-> value pr-str (string/replace #"(?<!\\), " ",\n   "))
-                  (pr-str value))]
-    (str tag " " val-str "\n"
-         "  at path: " (string/join " > " path-arr))))
+(defn value-str-obj
+  [_ profile path value]
+  (if (or (empty? path) (int? (last path)))
+    (let [obj (->> path (get-in profile) elide-arrs)]
+      (format (str "Object:\n"
+                   "%s")
+              (ppr-str obj)))
+    (let [obj (->> path butlast (get-in profile) elide-arrs)]
+      (format (str "Value:\n"
+                   "%s\n"
+                   "\n"
+                   "of property:\n"
+                   "%s\n"
+                   "\n"
+                   "in object:\n"
+                   "%s")
+              (ppr-str value)
+              (pr-str (last path))
+              (ppr-str obj)))))
+
+(defn value-str-obj-nopath
+  [_ profile path value]
+  (let [obj (->> path butlast (get-in profile) elide-arrs)]
+    (format (str "Value:\n"
+                 "%s\n"
+                 "\n"
+                 "in object:\n"
+                 "%s")
+            (ppr-str value)
+            (ppr-str obj))))
 
 (defn value-str-id
   "Custom value string for duplicate ID error messages. Takes the form:
@@ -266,7 +272,7 @@
                    " at object:\n"
                    "  {:id \"%s\",\n"
                    "   :type \"%s\",\n"
-                   "   :primary %d,\n"
+                   "   :primary %b,\n"
                    "   ...}\n"
                    "\n"
                    " linked object:\n"
@@ -280,7 +286,7 @@
               dest
               src
               src-type
-              (strv src-primary)
+              src-primary
               dest
               dest-type
               dest-property
@@ -326,31 +332,38 @@
                "  %s")
           (->> value sort (string/join "\n  "))))
 
-;; TODO Possibly make custom error messages for @context errors?
+(defn value-str-context
+  [_ contexts path value]
+  (format (str "Value:\n"
+               "%s\n"
+               "\n"
+               "in context:\n"
+               "%s")
+          (ppr-str value)
+          (ppr-str (->> path butlast (get-in contexts)))))
+
 (defn custom-printer
   "Returns a printer based on the error-type argument. A nil error-type will
   result in the default Expound printer (except with :print-specs? set to
-  false). error-types:
-  - id: Duplicate ID errors
-  - in-scheme: InScheme property errors
-  - edge: Concept, Template and Pattern link errors
-  - cycle: Pattern cycle errors
-  - no arg: Basic syntax + @context validation"
+  false)."
   [& [error-type]]
-  (let [error-type (if (nil? error-type) :else error-type)]
+  (let [error-type (if (nil? error-type) :else error-type)
+        make-opts  (fn [f] {:print-specs? false :value-str-fn f})]
     (case error-type
       :id
-      (exp/custom-printer {:value-str-fn value-str-id :print-specs? false})
+      (exp/custom-printer (make-opts value-str-id))
       :in-scheme
-      (exp/custom-printer {:value-str-fn value-str-version :print-specs? false})
+      (exp/custom-printer (make-opts value-str-version))
       :edge
-      (exp/custom-printer {:value-str-fn value-str-edge :print-specs? false})
+      (exp/custom-printer (make-opts value-str-edge))
       :cycle
-      (exp/custom-printer {:value-str-fn value-str-scc :print-specs? false})
+      (exp/custom-printer (make-opts value-str-scc))
+      :context
+      (exp/custom-printer (make-opts value-str-context))
+      :context-key
+      (exp/custom-printer (make-opts value-str-obj-nopath))
       :else
-      #_default-printer
-      (exp/custom-printer {:show-valid-values? false :print-specs? false})
-      #_(exp/custom-printer {:value-str-fn value-str-default :print-specs? false}))))
+      (exp/custom-printer (make-opts value-str-obj)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Expounding functions
@@ -402,6 +415,6 @@
   (when pattern-cycle-errors
     (expound-error pattern-cycle-errors "Pattern Cycle Errors" :cycle))
   (when context-errors
-    (expound-error context-errors "Context Errors"))
+    (expound-error context-errors "Context Errors" :context))
   (when context-key-errors
-    (expound-error context-key-errors "Context Key Errors")))
+    (expound-error context-key-errors "Context Key Errors" :context-key)))

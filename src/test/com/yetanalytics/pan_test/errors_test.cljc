@@ -84,7 +84,8 @@
 
 ;; Nuke the first Template
 (def bad-profile-2a
-  (assoc-in good-profile-2 [:templates 0] {:id "this-template-is-invalid"}))
+  (assoc-in good-profile-2 [:templates 0] {:id   "this-template-is-invalid"
+                                           :type "FooBar"}))
 
 ;; Make IDs duplicate
 (def bad-profile-2b
@@ -134,346 +135,574 @@
 ;; Tests
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(comment
-  (e/expound-errors {:syntax-errors (p/validate bad-profile-2a)}))
+(def err-msg-1 
+"
+**** Syntax Errors ****
+
+-- Spec failed --------------------
+
+Value:
+\"not an id\"
+
+of property:
+:id
+
+in object:
+{:id \"not an id\",
+ :type \"FooBar\",
+ :prefLabel {\"en\" \"Catch\"},
+ :definition
+ {\"en\" \"The profile for the trinity education application CATCH\"},
+ :_context \"https://w3id.org/xapi/profiles/context\",
+ :versions
+ [{:id \"https://w3id.org/xapi/catch/v1\",
+   :generatedAtTime \"2017-12-22T22:30:00-07:00\"}],
+ :author
+ {:url \"https://www.yetanalytics.io\",
+  :type \"Organization\",
+  :name \"Yet Analytics\"},
+ :conformsTo \"https://w3id.org/xapi/profiles#1.0\"}
+
+should be a valid IRI
+
+-- Spec failed --------------------
+
+Value:
+\"FooBar\"
+
+of property:
+:type
+
+in object:
+{:id \"not an id\",
+ :type \"FooBar\",
+ :prefLabel {\"en\" \"Catch\"},
+ :definition
+ {\"en\" \"The profile for the trinity education application CATCH\"},
+ :_context \"https://w3id.org/xapi/profiles/context\",
+ :versions
+ [{:id \"https://w3id.org/xapi/catch/v1\",
+   :generatedAtTime \"2017-12-22T22:30:00-07:00\"}],
+ :author
+ {:url \"https://www.yetanalytics.io\",
+  :type \"Organization\",
+  :name \"Yet Analytics\"},
+ :conformsTo \"https://w3id.org/xapi/profiles#1.0\"}
+
+should be: \"Profile\"
+
+-------------------------
+Detected 2 errors
+")
+
+(def err-msg-2
+"
+**** Syntax Errors ****
+
+-- Spec failed --------------------
+
+Object:
+{:id \"this-template-is-invalid\", :type \"FooBar\"}
+
+should contain keys: :definition, :inScheme, :prefLabel
+
+| key         | spec                                          |
+|=============+===============================================|
+| :definition | (map-of                                       |
+|             |  :com.yetanalytics.pan.axioms/language-tag    |
+|             |  :com.yetanalytics.pan.axioms/lang-map-string |
+|             |  :min-count                                   |
+|             |  1)                                           |
+|-------------+-----------------------------------------------|
+| :inScheme   | (and                                          |
+|             |  :com.yetanalytics.pan.axioms/string          |
+|             |  (partial                                     |
+|             |   re-matches                                  |
+|             |   xapi-schema.spec.regex/AbsoluteIRIRegEx))   |
+|-------------+-----------------------------------------------|
+| :prefLabel  | (map-of                                       |
+|             |  :com.yetanalytics.pan.axioms/language-tag    |
+|             |  :com.yetanalytics.pan.axioms/lang-map-string |
+|             |  :min-count                                   |
+|             |  1)                                           |
+
+-- Spec failed --------------------
+
+Value:
+\"this-template-is-invalid\"
+
+of property:
+:id
+
+in object:
+{:id \"this-template-is-invalid\", :type \"FooBar\"}
+
+should be a valid URI
+
+-- Spec failed --------------------
+
+Value:
+\"FooBar\"
+
+of property:
+:type
+
+in object:
+{:id \"this-template-is-invalid\", :type \"FooBar\"}
+
+should be: \"StatementTemplate\"
+
+-------------------------
+Detected 3 errors
+")
+
+(def err-msg-3
+"
+**** ID Errors ****
+
+-- Spec failed --------------------
+
+Duplicate id: https://w3id.org/xapi/catch/v1
+ with count:  2
+
+the id value is not unique
+
+-- Spec failed --------------------
+
+Duplicate id: https://foo.org/template
+ with count:  2
+
+the id value is not unique
+
+-------------------------
+Detected 2 errors
+")
+
+(def err-msg-4
+"
+**** Version Errors ****
+
+-- Spec failed --------------------
+
+Invalid inScheme: https://foo.org/invalid
+ at object: https://foo.org/template
+ profile version ids https://w3id.org/xapi/catch/v2
+  https://w3id.org/xapi/catch/v1
+
+the inScheme value is not a valid version ID
+
+-- Spec failed --------------------
+
+Invalid inScheme: https://foo.org/also-invalid
+ at object: https://foo.org/template2
+ profile version ids https://w3id.org/xapi/catch/v2
+  https://w3id.org/xapi/catch/v1
+
+the inScheme value is not a valid version ID
+
+-------------------------
+Detected 2 errors
+")
+
+(def err-msg-5
+"
+**** Template Edge Errors ****
+
+-- Spec failed --------------------
+
+Invalid :verb identifier: https://foo.org/dead-verb
+
+ at object:
+  {:id \"https://foo.org/template\",
+   :type \"StatementTemplate\",
+   :inScheme \"https://w3id.org/xapi/catch/v1\",
+   ...}
+
+ linked object:
+  {:id \"https://foo.org/dead-verb\",
+   :type \"null\",
+   :inScheme \"null\",
+   ...}
+
+linked concept or template does not exist
+
+-- Spec failed --------------------
+
+Invalid :attachmentUsageType identifier: https://foo.org/dead-aut1
+
+ at object:
+  {:id \"https://foo.org/template\",
+   :type \"StatementTemplate\",
+   :inScheme \"https://w3id.org/xapi/catch/v1\",
+   ...}
+
+ linked object:
+  {:id \"https://foo.org/dead-aut1\",
+   :type \"null\",
+   :inScheme \"null\",
+   ...}
+
+linked concept or template does not exist
+
+-------------------------
+Detected 2 errors
+")
+
+(def err-msg-6
+"
+**** Template Edge Errors ****
+
+-- Spec failed --------------------
+
+Invalid :verb identifier: https://foo.org/template2
+
+ at object:
+  {:id \"https://foo.org/template\",
+   :type \"StatementTemplate\",
+   :inScheme \"https://w3id.org/xapi/catch/v1\",
+   ...}
+
+ linked object:
+  {:id \"https://foo.org/template2\",
+   :type \"StatementTemplate\",
+   :inScheme \"https://w3id.org/xapi/catch/v1\",
+   ...}
+
+should link to type: \"Verb\"
+
+-- Spec failed --------------------
+
+Invalid :attachmentUsageType identifier: https://foo.org/template
+
+ at object:
+  {:id \"https://foo.org/template\",
+   :type \"StatementTemplate\",
+   :inScheme \"https://w3id.org/xapi/catch/v1\",
+   ...}
+
+ linked object:
+  {:id \"https://foo.org/template\",
+   :type \"StatementTemplate\",
+   :inScheme \"https://w3id.org/xapi/catch/v1\",
+   ...}
+
+object cannot refer to itself
+
+-------------------------
+Detected 2 errors
+")
+
+(def err-msg-7
+"
+**** Pattern Cycle Errors ****
+
+-- Spec failed --------------------
+
+Cycle detected involving the following nodes:
+  https://foo.org/pattern-one
+  https://foo.org/pattern-two
+
+cyclical reference detected
+
+-------------------------
+Detected 1 error
+")
+
+(def err-msg-8
+"
+**** Pattern Edge Errors ****
+
+-- Spec failed --------------------
+
+Invalid :oneOrMore identifier: https://foo.org/pattern-three
+
+ at object:
+  {:id \"https://foo.org/pattern-three\",
+   :type \"Pattern\",
+   :primary true,
+   ...}
+
+ linked object:
+   {:id \"https://foo.org/pattern-three\",
+    :type \"Pattern\",
+    :oneOrMore ...,
+    ...}
+
+ pattern is used 1 time in the profile and links out to 1 other object.
+
+object cannot refer to itself
+
+-------------------------
+Detected 1 error
+")
+
+(def err-msg-9
+"
+**** Context Errors ****
+
+-- Spec failed --------------------
+
+Value:
+\"profile:Profile\"
+
+in context:
+{:type \"@type\",
+ :id \"@id\",
+ :prov \"http://www.w3.org/ns/prov#\",
+ :skos \"http://www.w3.org/2004/02/skos/core#\",
+ :Profile \"profile:Profile\"}
+
+should be a JSON-LD context keyword
+
+or
+
+should be a JSON-LD prefix
+
+or
+
+simple term definition does not have valid prefix
+
+or
+
+expanded term definition does not have valid prefix
+
+-- Spec failed --------------------
+
+Value:
+\"xapi:Verb\"
+
+in context:
+{:Profile \"profile:Profile\",
+ :type \"@type\",
+ :id \"@id\",
+ :prov \"http://www.w3.org/ns/prov#\",
+ :Verb \"xapi:Verb\",
+ :skos \"http://www.w3.org/2004/02/skos/core#\",
+ :ActivityType \"xapi:ActivityType\",
+ :AttachmentUsageType \"xapi:AttachmentUsageType\",
+ :profile \"https://w3id.org/xapi/profiles/ontology#\"}
+
+should be a JSON-LD context keyword
+
+or
+
+should be a JSON-LD prefix
+
+or
+
+simple term definition does not have valid prefix
+
+or
+
+expanded term definition does not have valid prefix
+
+-- Spec failed --------------------
+
+Value:
+\"xapi:ActivityType\"
+
+in context:
+{:Profile \"profile:Profile\",
+ :type \"@type\",
+ :id \"@id\",
+ :prov \"http://www.w3.org/ns/prov#\",
+ :Verb \"xapi:Verb\",
+ :skos \"http://www.w3.org/2004/02/skos/core#\",
+ :ActivityType \"xapi:ActivityType\",
+ :AttachmentUsageType \"xapi:AttachmentUsageType\",
+ :profile \"https://w3id.org/xapi/profiles/ontology#\"}
+
+should be a JSON-LD context keyword
+
+or
+
+should be a JSON-LD prefix
+
+or
+
+simple term definition does not have valid prefix
+
+or
+
+expanded term definition does not have valid prefix
+
+-- Spec failed --------------------
+
+Value:
+\"xapi:AttachmentUsageType\"
+
+in context:
+{:Profile \"profile:Profile\",
+ :type \"@type\",
+ :id \"@id\",
+ :prov \"http://www.w3.org/ns/prov#\",
+ :Verb \"xapi:Verb\",
+ :skos \"http://www.w3.org/2004/02/skos/core#\",
+ :ActivityType \"xapi:ActivityType\",
+ :AttachmentUsageType \"xapi:AttachmentUsageType\",
+ :profile \"https://w3id.org/xapi/profiles/ontology#\"}
+
+should be a JSON-LD context keyword
+
+or
+
+should be a JSON-LD prefix
+
+or
+
+simple term definition does not have valid prefix
+
+or
+
+expanded term definition does not have valid prefix
+
+-------------------------
+Detected 4 errors
+")
+
+(def err-msg-10
+"
+**** Context Key Errors ****
+
+-- Spec failed --------------------
+
+Value:
+:hello
+
+in object:
+{:id \"https://foo.org/activity/1\",
+ :type \"Activity\",
+ :_context \"https://w3id.org/xapi/profiles/activity-context\",
+ :hello \"World\"}
+
+key cannot be expanded into absolute IRI
+
+or
+
+key is not JSON-LD keyword
+
+-- Spec failed --------------------
+
+Value:
+:foo
+
+in object:
+{:id \"https://foo.org/profile\",
+ :type \"Profile\",
+ :_context \"https://w3id.org/xapi/profiles/context\",
+ :foo \"Bar\",
+ :baz \"Qux\",
+ :concepts [...]}
+
+key cannot be expanded into absolute IRI
+
+or
+
+key is not JSON-LD keyword
+
+-- Spec failed --------------------
+
+Value:
+:baz
+
+in object:
+{:id \"https://foo.org/profile\",
+ :type \"Profile\",
+ :_context \"https://w3id.org/xapi/profiles/context\",
+ :foo \"Bar\",
+ :baz \"Qux\",
+ :concepts [...]}
+
+key cannot be expanded into absolute IRI
+
+or
+
+key is not JSON-LD keyword
+
+-------------------------
+Detected 3 errors
+")
 
 (deftest expound-test
   (testing "error/expound-errors error messages"
-    (is (= (str "-- Spec failed --------------------\n"
-                "\n"
-                "  {:id \"not an id\",\n"
-                "       ^^^^^^^^^^^\n"
-                "   :type ...,\n"
-                "   :prefLabel ...,\n"
-                "   :definition ...,\n"
-                "   :_context ...,\n"
-                "   :versions ...,\n"
-                "   :author ...,\n"
-                "   :conformsTo ...}\n"
-                "\n"
-                "should be a valid IRI\n"
-                "\n"
-                "-------------------------\n"
-                "Detected 1 error\n"
-                "\n"
-                "-- Spec failed --------------------\n"
-                "\n"
-                "  {:id ...,\n"
-                "   :type \"FooBar\",\n"
-                "         ^^^^^^^^\n"
-                "   :prefLabel ...,\n"
-                "   :definition ...,\n"
-                "   :_context ...,\n"
-                "   :versions ...,\n"
-                "   :author ...,\n"
-                "   :conformsTo ...}\n"
-                "\n"
-                "should be: \"Profile\"\n"
-                "\n"
-                "-------------------------\n"
-                "Detected 1 error\n"
-                "\n"
-                "")
-           (with-out-str
-             (e/expound-errors {:syntax-errors (p/validate bad-profile-1b)}))))
-    (is (= (str "-- Spec failed --------------------\n"
-                "\n"
-                "Duplicate id: \"https://w3id.org/xapi/catch/v1\"\n"
-                " with count: 2\n"
-                "\n"
-                "the id value is not unique\n"
-                "\n"
-                "-- Spec failed --------------------\n"
-                "\n"
-                "Duplicate id: \"https://foo.org/template\"\n"
-                " with count: 2\n"
-                "\n"
-                "the id value is not unique\n"
-                "\n"
-                "-------------------------\n"
-                "Detected 2 errors\n")
-           (with-out-str
-             (e/expound-errors {:id-errors (id/validate-ids bad-profile-2b)}))))
-    (is (= (str "-- Spec failed --------------------\n"
-                "\n"
-                "Invalid inScheme: \"https://foo.org/invalid\"\n"
-                " at object: \"https://foo.org/template\"\n"
-                " profile version ids:\n"
-                "  https://w3id.org/xapi/catch/v2\n"
-                "  https://w3id.org/xapi/catch/v1\n"
-                "\n"
-                "the inScheme value is not a valid version ID\n"
-                "\n"
-                "-- Spec failed --------------------\n"
-                "\n"
-                "Invalid inScheme: \"https://foo.org/also-invalid\"\n"
-                " at object: \"https://foo.org/template2\"\n"
-                " profile version ids:\n"
-                "  https://w3id.org/xapi/catch/v2\n"
-                "  https://w3id.org/xapi/catch/v1\n"
-                "\n"
-                "the inScheme value is not a valid version ID\n"
-                "\n"
-                "-------------------------\n"
-                "Detected 2 errors\n")
-           (with-out-str
-             (e/expound-errors
-              {:in-scheme-errors (id/validate-in-schemes bad-profile-2c)}))))
-    (is (= (str "-- Spec failed --------------------\n"
-                "\n"
-                "Invalid verb identifier:\n"
-                " \"https://foo.org/dead-verb\"\n"
-                "\n"
-                " at object:\n"
-                "  {:id \"https://foo.org/template\",\n"
-                "   :type \"StatementTemplate\",\n"
-                "   :inScheme \"https://w3id.org/xapi/catch/v1\",\n"
-                "   ...}\n"
-                "\n"
-                " linked object:\n"
-                "  {:id \"https://foo.org/dead-verb\",\n"
-                "   :type nil,\n"
-                "   :inScheme nil,\n"
-                "   ...}\n"
-                "\n"
-                "linked concept or template does not exist\n"
-                "\n"
-                "-------------------------\n"
-                "Detected 1 error\n"
-                "-- Spec failed --------------------\n"
-                "\n"
-                "Invalid attachmentUsageType identifier:\n"
-                " \"https://foo.org/dead-aut1\"\n"
-                "\n"
-                " at object:\n"
-                "  {:id \"https://foo.org/template\",\n"
-                "   :type \"StatementTemplate\",\n"
-                "   :inScheme \"https://w3id.org/xapi/catch/v1\",\n"
-                "   ...}\n"
-                "\n"
-                " linked object:\n"
-                "  {:id \"https://foo.org/dead-aut1\",\n"
-                "   :type nil,\n"
-                "   :inScheme nil,\n"
-                "   ...}\n"
-                "\n"
-                "linked concept or template does not exist\n"
-                "\n"
-                "-------------------------\n"
-                "Detected 1 error\n")
-          (with-out-str
-            (e/expound-errors
-             {:template-errors
-              (t/validate-template-edges (t/create-graph [] (:templates bad-profile-2d)))}))))
-    (is (= (str "-- Spec failed --------------------\n"
-                "\n"
-                "Invalid verb identifier:\n"
-                " \"https://foo.org/template2\"\n"
-                "\n"
-                " at object:\n"
-                "  {:id \"https://foo.org/template\",\n"
-                "   :type \"StatementTemplate\",\n"
-                "   :inScheme \"https://w3id.org/xapi/catch/v1\",\n"
-                "   ...}\n"
-                "\n"
-                " linked object:\n"
-                "  {:id \"https://foo.org/template2\",\n"
-                "   :type \"StatementTemplate\",\n"
-                "   :inScheme \"https://w3id.org/xapi/catch/v1\",\n"
-                "   ...}\n"
-                "\n"
-                "should link to type: \"Verb\"\n"
-                "\n"
-                "-------------------------\n"
-                "Detected 1 error\n"
-                "-- Spec failed --------------------\n"
-                "\n"
-                "Invalid attachmentUsageType identifier:\n"
-                " \"https://foo.org/template\"\n"
-                "\n"
-                " at object:\n"
-                "  {:id \"https://foo.org/template\",\n"
-                "   :type \"StatementTemplate\",\n"
-                "   :inScheme \"https://w3id.org/xapi/catch/v1\",\n"
-                "   ...}\n"
-                "\n"
-                " linked object:\n"
-                "  {:id \"https://foo.org/template\",\n"
-                "   :type \"StatementTemplate\",\n"
-                "   :inScheme \"https://w3id.org/xapi/catch/v1\",\n"
-                "   ...}\n"
-                "\n"
-                "object cannot refer to itself\n"
-                "\n"
-                "-------------------------\n"
-                "Detected 1 error\n")
-           (with-out-str
-             (e/expound-errors
-              {:template-errors
-               (t/validate-template-edges
-                (t/create-graph [] (:templates bad-profile-2e)))}))))
-    (is (= (str "-- Spec failed --------------------\n"
-                "\n"
-                "Cycle detected involving the following nodes:\n"
-                "  https://foo.org/pattern-one\n"
-                "  https://foo.org/pattern-two\n"
-                "\n"
-                "cyclical reference detected\n"
-                "\n"
-                "-------------------------\n"
-                "Detected 1 error\n")
-           (with-out-str
-             (e/expound-errors
-              {:pattern-cycle-errors
-               (pt/validate-pattern-tree
-                                      (pt/create-graph (:templates bad-profile-2f)
-                                                       (:patterns bad-profile-2f)))}))))
-    (is (= (str "-- Spec failed --------------------\n"
-                "\n"
-                "Invalid oneOrMore identifier:\n"
-                " \"https://foo.org/pattern-three\"\n"
-                "\n"
-                " at object:\n"
-                "  {:id \"https://foo.org/pattern-three\",\n"
-                "   :type \"Pattern\",\n"
-                "   :primary true,\n"
-                "   ...}\n"
-                "\n"
-                " linked object:\n"
-                "   {:id \"https://foo.org/pattern-three\",\n"
-                "    :type \"Pattern\",\n"
-                "    :oneOrMore ...,\n"
-                "    ...}\n"
-                "\n"
-                " pattern is used 1 time in the profile\n"
-                " and links out to 1 other object.\n"
-                "\n"
-                "object cannot refer to itself\n"
-                "\n"
-                "-------------------------\n"
-                "Detected 1 error\n")
-           (with-out-str
-             (e/expound-errors
-              {:pattern-errors
-               (pt/validate-pattern-edges
-                (pt/create-graph (:templates bad-profile-2g)
-                                 (:patterns bad-profile-2g)))}))))))
-
-(deftest context-error-msg-tests
-  (testing "@context-related error messages"
-    (is (= (str
-            "-- Spec failed --------------------\n"
-            "\n"
-            "  {:Profile ...,\n"
-            "   :Verb \"xapi:Verb\",\n"
-            "         ^^^^^^^^^^^\n"
-            "   :ActivityType ...,\n"
-            "   :AttachmentUsageType ...}\n"
-            "\n"
-            "simple term definition does not have valid prefix\n"
-            "\n"
-            "or\n"
-            "\n"
-            "expanded term definition does not have valid prefix\n"
-            "\n"
-            "-- Spec failed --------------------\n"
-            "\n"
-            "  {:Profile ...,\n"
-            "   :Verb ...,\n"
-            "   :ActivityType \"xapi:ActivityType\",\n"
-            "                 ^^^^^^^^^^^^^^^^^^^\n"
-            "   :AttachmentUsageType ...}\n"
-            "\n"
-            "simple term definition does not have valid prefix\n"
-            "\n"
-            "or\n"
-            "\n"
-            "expanded term definition does not have valid prefix\n"
-            "\n"
-            "-- Spec failed --------------------\n"
-            "\n"
-            "  {:Profile ...,\n"
-            "   :Verb ...,\n"
-            "   :ActivityType ...,\n"
-            "   :AttachmentUsageType \"xapi:AttachmentUsageType\"}\n"
-            "                        ^^^^^^^^^^^^^^^^^^^^^^^^^^\n"
-            "\n"
-            "simple term definition does not have valid prefix\n"
-            "\n"
-            "or\n"
-            "\n"
-            "expanded term definition does not have valid prefix\n"
-            "\n"
-            "-------------------------\n"
-            "Detected 3 errors\n"
-            "\n")
-           (with-out-str
-             (e/expound-errors
-              {:context-errors
-               (:context-errors
-                (ctx/validate-contexts
-                 {:id       "https://foo.org/profile"
-                  :type     "Profile"
-                  :_context {:type                "@type"
-                             :id                  "@id"
-                             :prov                "http://www.w3.org/ns/prov#"
-                             :skos                "http://www.w3.org/2004/02/skos/core#"
-                             :profile             "https://w3id.org/xapi/profiles/ontology#"
-                             :Profile             "profile:Profile"
-                             :Verb                "xapi:Verb"
-                             :ActivityType        "xapi:ActivityType"
-                             :AttachmentUsageType "xapi:AttachmentUsageType"}
-                  :concepts [{:id       "https://foo.org/activity/1"
-                              :type     "Activity"
-                              :_context {:type    "@type"
-                                         :id      "@id"
-                                         :prov    "http://www.w3.org/ns/prov#"
-                                         :skos    "http://www.w3.org/2004/02/skos/core#"
-                                         :Profile "profile:Profile"}}]}))}))))
-    (is (= (str "-- Spec failed --------------------\n"
-                "\n"
-                "  {:id ...,\n"
-                "   :type ...,\n"
-                "   :_context ...,\n"
-                "   :baz ...,\n"
-                "   :foo ...}\n"
-                "   ^^^^\n"
-                "\n"
-                "key cannot be expanded into absolute IRI\n"
-                "\n"
-                "or\n"
-                "\n"
-                "key is not JSON-LD keyword\n"
-                "\n"
-                "-- Spec failed --------------------\n"
-                "\n"
-                "  {:id ...,\n"
-                "   :type ...,\n"
-                "   :_context ...,\n"
-                "   :foo ...,\n"
-                "   :baz ...}\n"
-                "   ^^^^\n"
-                "\n"
-                "key cannot be expanded into absolute IRI\n"
-                "\n"
-                "or\n"
-                "\n"
-                "key is not JSON-LD keyword\n"
-                "\n"
-                "-------------------------\n"
-                "Detected 2 errors\n"
-                "\n")
-           (with-out-str
-             (e/expound-errors
-              {:context-key-errors
-               (:context-key-errors
-                (ctx/validate-contexts
-                 {:id       "https://foo.org/profile"
-                  :type     "Profile"
-                  :_context "https://w3id.org/xapi/profiles/context"
-                  :foo      "Bar"
-                  :baz      "Qux"
-                  :concepts [{:id       "https://foo.org/activity/1"
-                              :type     "Activity"
-                              :_context "https://w3id.org/xapi/profiles/activity-context"
-                              :hello    "World"}]}))}))))))
+    (is (= err-msg-1
+           (-> {:syntax-errors (p/validate bad-profile-1b)}
+               e/expound-errors
+               with-out-str)))
+    (is (= err-msg-2
+           (-> {:syntax-errors (p/validate bad-profile-2a)}
+               e/expound-errors
+               with-out-str)))
+    (is (= err-msg-3
+           (-> {:id-errors (id/validate-ids bad-profile-2b)}
+               e/expound-errors
+               with-out-str)))
+    (is (= err-msg-4
+           (-> {:in-scheme-errors (id/validate-in-schemes bad-profile-2c)}
+               e/expound-errors
+               with-out-str)))
+    (is (= err-msg-5
+           (-> {:concept-edge-errors nil
+                :pattern-edge-errors nil
+                :template-edge-errors
+                (t/validate-template-edges
+                 (t/create-graph [] (:templates bad-profile-2d)))}
+               e/expound-errors
+               with-out-str)))
+    (is (= err-msg-6
+           (-> {:concept-edge-errors nil
+                :pattern-edge-errors nil
+                :template-edge-errors
+                (t/validate-template-edges
+                 (t/create-graph [] (:templates bad-profile-2e)))}
+               e/expound-errors
+               with-out-str)))
+    (is (= err-msg-7
+           (-> {:pattern-cycle-errors
+                (pt/validate-pattern-tree
+                 (pt/create-graph (:templates bad-profile-2f)
+                                  (:patterns bad-profile-2f)))}
+               e/expound-errors
+               with-out-str)))
+    (is (= err-msg-8
+           (-> {:pattern-edge-errors
+                (pt/validate-pattern-edges
+                 (pt/create-graph (:templates bad-profile-2g)
+                                  (:patterns bad-profile-2g)))}
+               e/expound-errors
+               with-out-str)))
+    (is (= err-msg-9
+           (-> {:id       "https://foo.org/profile"
+                :type     "Profile"
+                :_context {:type                "@type"
+                           :id                  "@id"
+                           :prov                "http://www.w3.org/ns/prov#"
+                           :skos                "http://www.w3.org/2004/02/skos/core#"
+                           :profile             "https://w3id.org/xapi/profiles/ontology#"
+                           :Profile             "profile:Profile"
+                           :Verb                "xapi:Verb"
+                           :ActivityType        "xapi:ActivityType"
+                           :AttachmentUsageType "xapi:AttachmentUsageType"}
+                :concepts [{:id       "https://foo.org/activity/1"
+                            :type     "Activity"
+                            :_context {:type    "@type"
+                                       :id      "@id"
+                                       :prov    "http://www.w3.org/ns/prov#"
+                                       :skos    "http://www.w3.org/2004/02/skos/core#"
+                                       :Profile "profile:Profile"}}]}
+               ctx/validate-contexts
+               e/expound-errors
+               with-out-str)))
+    (is (= err-msg-10
+           (-> {:id       "https://foo.org/profile"
+                :type     "Profile"
+                :_context "https://w3id.org/xapi/profiles/context"
+                :foo      "Bar"
+                :baz      "Qux"
+                :concepts [{:id       "https://foo.org/activity/1"
+                            :type     "Activity"
+                            :_context "https://w3id.org/xapi/profiles/activity-context"
+                            :hello    "World"}]}
+               ctx/validate-contexts
+               e/expound-errors
+               with-out-str)))))
