@@ -135,6 +135,8 @@
 ;; Tests
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; Profile metadata error
+
 (def err-msg-1 
 "
 **** Syntax Errors ****
@@ -154,14 +156,14 @@ in object:
  :definition
  {\"en\" \"The profile for the trinity education application CATCH\"},
  :_context \"https://w3id.org/xapi/profiles/context\",
- :versions
- [{:id \"https://w3id.org/xapi/catch/v1\",
-   :generatedAtTime \"2017-12-22T22:30:00-07:00\"}],
+ :conformsTo \"https://w3id.org/xapi/profiles#1.0\",
  :author
  {:url \"https://www.yetanalytics.io\",
   :type \"Organization\",
   :name \"Yet Analytics\"},
- :conformsTo \"https://w3id.org/xapi/profiles#1.0\"}
+ :versions
+ [{:id \"https://w3id.org/xapi/catch/v1\",
+   :generatedAtTime \"2017-12-22T22:30:00-07:00\"}]}
 
 should be a valid IRI
 
@@ -180,20 +182,22 @@ in object:
  :definition
  {\"en\" \"The profile for the trinity education application CATCH\"},
  :_context \"https://w3id.org/xapi/profiles/context\",
- :versions
- [{:id \"https://w3id.org/xapi/catch/v1\",
-   :generatedAtTime \"2017-12-22T22:30:00-07:00\"}],
+ :conformsTo \"https://w3id.org/xapi/profiles#1.0\",
  :author
  {:url \"https://www.yetanalytics.io\",
   :type \"Organization\",
   :name \"Yet Analytics\"},
- :conformsTo \"https://w3id.org/xapi/profiles#1.0\"}
+ :versions
+ [{:id \"https://w3id.org/xapi/catch/v1\",
+   :generatedAtTime \"2017-12-22T22:30:00-07:00\"}]}
 
 should be: \"Profile\"
 
 -------------------------
 Detected 2 errors
 ")
+
+;; Statement Template error
 
 (def err-msg-2
 "
@@ -256,27 +260,35 @@ should be: \"StatementTemplate\"
 Detected 3 errors
 ")
 
+;; ID Error
+
 (def err-msg-3
 "
 **** ID Errors ****
 
 -- Spec failed --------------------
 
-Duplicate id: https://w3id.org/xapi/catch/v1
- with count:  2
+Identifer:
+\"https://w3id.org/xapi/catch/v1\"
 
-the id value is not unique
+which occurs 2 times in the Profile
+
+should be a unique identifier value
 
 -- Spec failed --------------------
 
-Duplicate id: https://foo.org/template
- with count:  2
+Identifer:
+\"https://foo.org/template\"
 
-the id value is not unique
+which occurs 2 times in the Profile
+
+should be a unique identifier value
 
 -------------------------
 Detected 2 errors
 ")
+
+;; InScheme Error
 
 (def err-msg-4
 "
@@ -284,25 +296,37 @@ Detected 2 errors
 
 -- Spec failed --------------------
 
-Invalid inScheme: https://foo.org/invalid
- at object: https://foo.org/template
- profile version ids https://w3id.org/xapi/catch/v2
-  https://w3id.org/xapi/catch/v1
+InScheme IRI:
+\"https://foo.org/invalid\"
 
-the inScheme value is not a valid version ID
+associated with the identifier:
+\"https://foo.org/template\"
+
+in a Profile with the following version IDs:
+\"https://w3id.org/xapi/catch/v1\"
+\"https://w3id.org/xapi/catch/v2\"
+
+should be a valid version ID
 
 -- Spec failed --------------------
 
-Invalid inScheme: https://foo.org/also-invalid
- at object: https://foo.org/template2
- profile version ids https://w3id.org/xapi/catch/v2
-  https://w3id.org/xapi/catch/v1
+InScheme IRI:
+\"https://foo.org/also-invalid\"
 
-the inScheme value is not a valid version ID
+associated with the identifier:
+\"https://foo.org/template2\"
+
+in a Profile with the following version IDs:
+\"https://w3id.org/xapi/catch/v1\"
+\"https://w3id.org/xapi/catch/v2\"
+
+should be a valid version ID
 
 -------------------------
 Detected 2 errors
 ")
+
+;; Template edge errors - nonexistent destination node
 
 (def err-msg-5
 "
@@ -310,43 +334,41 @@ Detected 2 errors
 
 -- Spec failed --------------------
 
-Invalid :verb identifier: https://foo.org/dead-verb
+Statement Template:
+{:id \"https://foo.org/template\",
+ :type \"StatementTemplate\",
+ :inScheme \"https://w3id.org/xapi/catch/v1\",
+ ...}
 
- at object:
-  {:id \"https://foo.org/template\",
-   :type \"StatementTemplate\",
-   :inScheme \"https://w3id.org/xapi/catch/v1\",
-   ...}
+that links to object:
+{:id \"https://foo.org/dead-verb\",
+ :type nil,
+ :inScheme nil,
+ ...}
 
- linked object:
-  {:id \"https://foo.org/dead-verb\",
-   :type \"null\",
-   :inScheme \"null\",
-   ...}
-
-linked concept or template does not exist
+should not link to non-existent Concept or Template
 
 -- Spec failed --------------------
 
-Invalid :attachmentUsageType identifier: https://foo.org/dead-aut1
+Statement Template:
+{:id \"https://foo.org/template\",
+ :type \"StatementTemplate\",
+ :inScheme \"https://w3id.org/xapi/catch/v1\",
+ ...}
 
- at object:
-  {:id \"https://foo.org/template\",
-   :type \"StatementTemplate\",
-   :inScheme \"https://w3id.org/xapi/catch/v1\",
-   ...}
+that links to object:
+{:id \"https://foo.org/dead-aut1\",
+ :type nil,
+ :inScheme nil,
+ ...}
 
- linked object:
-  {:id \"https://foo.org/dead-aut1\",
-   :type \"null\",
-   :inScheme \"null\",
-   ...}
-
-linked concept or template does not exist
+should not link to non-existent Concept or Template
 
 -------------------------
 Detected 2 errors
 ")
+
+;; Template edge errors - invalid destinations
 
 (def err-msg-6
 "
@@ -354,43 +376,41 @@ Detected 2 errors
 
 -- Spec failed --------------------
 
-Invalid :verb identifier: https://foo.org/template2
+Statement Template:
+{:id \"https://foo.org/template\",
+ :type \"StatementTemplate\",
+ :inScheme \"https://w3id.org/xapi/catch/v1\",
+ ...}
 
- at object:
-  {:id \"https://foo.org/template\",
-   :type \"StatementTemplate\",
-   :inScheme \"https://w3id.org/xapi/catch/v1\",
-   ...}
-
- linked object:
-  {:id \"https://foo.org/template2\",
-   :type \"StatementTemplate\",
-   :inScheme \"https://w3id.org/xapi/catch/v1\",
-   ...}
+that links to object:
+{:id \"https://foo.org/template2\",
+ :type \"StatementTemplate\",
+ :inScheme \"https://w3id.org/xapi/catch/v1\",
+ ...}
 
 should link to type: \"Verb\"
 
 -- Spec failed --------------------
 
-Invalid :attachmentUsageType identifier: https://foo.org/template
+Statement Template:
+{:id \"https://foo.org/template\",
+ :type \"StatementTemplate\",
+ :inScheme \"https://w3id.org/xapi/catch/v1\",
+ ...}
 
- at object:
-  {:id \"https://foo.org/template\",
-   :type \"StatementTemplate\",
-   :inScheme \"https://w3id.org/xapi/catch/v1\",
-   ...}
+that links to object:
+{:id \"https://foo.org/template\",
+ :type \"StatementTemplate\",
+ :inScheme \"https://w3id.org/xapi/catch/v1\",
+ ...}
 
- linked object:
-  {:id \"https://foo.org/template\",
-   :type \"StatementTemplate\",
-   :inScheme \"https://w3id.org/xapi/catch/v1\",
-   ...}
-
-object cannot refer to itself
+should not refer to itself
 
 -------------------------
 Detected 2 errors
 ")
+
+;; Cyclic pattern error
 
 (def err-msg-7
 "
@@ -398,15 +418,17 @@ Detected 2 errors
 
 -- Spec failed --------------------
 
-Cycle detected involving the following nodes:
-  https://foo.org/pattern-one
-  https://foo.org/pattern-two
+The following Patterns:
+\"https://foo.org/pattern-one\"
+\"https://foo.org/pattern-two\"
 
-cyclical reference detected
+should not contain cyclical references
 
 -------------------------
 Detected 1 error
 ")
+
+;; Pattern edge errors
 
 (def err-msg-8
 "
@@ -414,27 +436,27 @@ Detected 1 error
 
 -- Spec failed --------------------
 
-Invalid :oneOrMore identifier: https://foo.org/pattern-three
+Pattern:
+{:id \"https://foo.org/pattern-three\",
+ :type \"Pattern\",
+ :primary true,
+ ...}
 
- at object:
-  {:id \"https://foo.org/pattern-three\",
-   :type \"Pattern\",
-   :primary true,
-   ...}
+that links to object:
+{:id \"https://foo.org/pattern-three\",
+ :type \"Pattern\",
+ :oneOrMore ...,
+ ...}
 
- linked object:
-   {:id \"https://foo.org/pattern-three\",
-    :type \"Pattern\",
-    :oneOrMore ...,
-    ...}
+and is used 1 time to link out to 1 other object
 
- pattern is used 1 time in the profile and links out to 1 other object.
-
-object cannot refer to itself
+should not refer to itself
 
 -------------------------
 Detected 1 error
 ")
+
+;; Context errors
 
 (def err-msg-9
 "
@@ -446,11 +468,11 @@ Value:
 \"profile:Profile\"
 
 in context:
-{:type \"@type\",
- :id \"@id\",
+{:id \"@id\",
+ :type \"@type\",
+ :Profile \"profile:Profile\",
  :prov \"http://www.w3.org/ns/prov#\",
- :skos \"http://www.w3.org/2004/02/skos/core#\",
- :Profile \"profile:Profile\"}
+ :skos \"http://www.w3.org/2004/02/skos/core#\"}
 
 should be a JSON-LD context keyword
 
@@ -460,11 +482,11 @@ should be a JSON-LD prefix
 
 or
 
-simple term definition does not have valid prefix
+should be a simple term definition with a valid prefix
 
 or
 
-expanded term definition does not have valid prefix
+should be an expanded term definition with a valid prefix
 
 -- Spec failed --------------------
 
@@ -472,15 +494,15 @@ Value:
 \"xapi:Verb\"
 
 in context:
-{:Profile \"profile:Profile\",
+{:id \"@id\",
  :type \"@type\",
- :id \"@id\",
- :prov \"http://www.w3.org/ns/prov#\",
- :Verb \"xapi:Verb\",
- :skos \"http://www.w3.org/2004/02/skos/core#\",
  :ActivityType \"xapi:ActivityType\",
  :AttachmentUsageType \"xapi:AttachmentUsageType\",
- :profile \"https://w3id.org/xapi/profiles/ontology#\"}
+ :Profile \"profile:Profile\",
+ :Verb \"xapi:Verb\",
+ :profile \"https://w3id.org/xapi/profiles/ontology#\",
+ :prov \"http://www.w3.org/ns/prov#\",
+ :skos \"http://www.w3.org/2004/02/skos/core#\"}
 
 should be a JSON-LD context keyword
 
@@ -490,11 +512,11 @@ should be a JSON-LD prefix
 
 or
 
-simple term definition does not have valid prefix
+should be a simple term definition with a valid prefix
 
 or
 
-expanded term definition does not have valid prefix
+should be an expanded term definition with a valid prefix
 
 -- Spec failed --------------------
 
@@ -502,15 +524,15 @@ Value:
 \"xapi:ActivityType\"
 
 in context:
-{:Profile \"profile:Profile\",
+{:id \"@id\",
  :type \"@type\",
- :id \"@id\",
- :prov \"http://www.w3.org/ns/prov#\",
- :Verb \"xapi:Verb\",
- :skos \"http://www.w3.org/2004/02/skos/core#\",
  :ActivityType \"xapi:ActivityType\",
  :AttachmentUsageType \"xapi:AttachmentUsageType\",
- :profile \"https://w3id.org/xapi/profiles/ontology#\"}
+ :Profile \"profile:Profile\",
+ :Verb \"xapi:Verb\",
+ :profile \"https://w3id.org/xapi/profiles/ontology#\",
+ :prov \"http://www.w3.org/ns/prov#\",
+ :skos \"http://www.w3.org/2004/02/skos/core#\"}
 
 should be a JSON-LD context keyword
 
@@ -520,11 +542,11 @@ should be a JSON-LD prefix
 
 or
 
-simple term definition does not have valid prefix
+should be a simple term definition with a valid prefix
 
 or
 
-expanded term definition does not have valid prefix
+should be an expanded term definition with a valid prefix
 
 -- Spec failed --------------------
 
@@ -532,15 +554,15 @@ Value:
 \"xapi:AttachmentUsageType\"
 
 in context:
-{:Profile \"profile:Profile\",
+{:id \"@id\",
  :type \"@type\",
- :id \"@id\",
- :prov \"http://www.w3.org/ns/prov#\",
- :Verb \"xapi:Verb\",
- :skos \"http://www.w3.org/2004/02/skos/core#\",
  :ActivityType \"xapi:ActivityType\",
  :AttachmentUsageType \"xapi:AttachmentUsageType\",
- :profile \"https://w3id.org/xapi/profiles/ontology#\"}
+ :Profile \"profile:Profile\",
+ :Verb \"xapi:Verb\",
+ :profile \"https://w3id.org/xapi/profiles/ontology#\",
+ :prov \"http://www.w3.org/ns/prov#\",
+ :skos \"http://www.w3.org/2004/02/skos/core#\"}
 
 should be a JSON-LD context keyword
 
@@ -550,15 +572,17 @@ should be a JSON-LD prefix
 
 or
 
-simple term definition does not have valid prefix
+should be a simple term definition with a valid prefix
 
 or
 
-expanded term definition does not have valid prefix
+should be an expanded term definition with a valid prefix
 
 -------------------------
 Detected 4 errors
 ")
+
+;; Context key errors
 
 (def err-msg-10
 "
@@ -575,11 +599,11 @@ in object:
  :_context \"https://w3id.org/xapi/profiles/activity-context\",
  :hello \"World\"}
 
-key cannot be expanded into absolute IRI
+should be expandable into an absolute IRI
 
 or
 
-key is not JSON-LD keyword
+should be a JSON-LD keyword
 
 -- Spec failed --------------------
 
@@ -590,15 +614,15 @@ in object:
 {:id \"https://foo.org/profile\",
  :type \"Profile\",
  :_context \"https://w3id.org/xapi/profiles/context\",
- :foo \"Bar\",
+ :concepts [...],
  :baz \"Qux\",
- :concepts [...]}
+ :foo \"Bar\"}
 
-key cannot be expanded into absolute IRI
+should be expandable into an absolute IRI
 
 or
 
-key is not JSON-LD keyword
+should be a JSON-LD keyword
 
 -- Spec failed --------------------
 
@@ -609,15 +633,15 @@ in object:
 {:id \"https://foo.org/profile\",
  :type \"Profile\",
  :_context \"https://w3id.org/xapi/profiles/context\",
- :foo \"Bar\",
+ :concepts [...],
  :baz \"Qux\",
- :concepts [...]}
+ :foo \"Bar\"}
 
-key cannot be expanded into absolute IRI
+should be expandable into an absolute IRI
 
 or
 
-key is not JSON-LD keyword
+should be a JSON-LD keyword
 
 -------------------------
 Detected 3 errors
@@ -636,11 +660,11 @@ Detected 3 errors
     (is (= err-msg-3
            (-> {:id-errors (id/validate-ids bad-profile-2b)}
                e/expound-errors
-               #_with-out-str)))
+               with-out-str)))
     (is (= err-msg-4
            (-> {:in-scheme-errors (id/validate-in-schemes bad-profile-2c)}
                e/expound-errors
-               #_with-out-str)))
+               with-out-str)))
     (is (= err-msg-5
            (-> {:concept-edge-errors nil
                 :pattern-edge-errors nil
@@ -648,7 +672,7 @@ Detected 3 errors
                 (t/validate-template-edges
                  (t/create-graph [] (:templates bad-profile-2d)))}
                e/expound-errors
-               #_with-out-str)))
+               with-out-str)))
     (is (= err-msg-6
            (-> {:concept-edge-errors nil
                 :pattern-edge-errors nil
@@ -656,21 +680,21 @@ Detected 3 errors
                 (t/validate-template-edges
                  (t/create-graph [] (:templates bad-profile-2e)))}
                e/expound-errors
-               #_with-out-str)))
+               with-out-str)))
     (is (= err-msg-7
            (-> {:pattern-cycle-errors
                 (pt/validate-pattern-tree
                  (pt/create-graph (:templates bad-profile-2f)
                                   (:patterns bad-profile-2f)))}
                e/expound-errors
-               #_with-out-str)))
+               with-out-str)))
     (is (= err-msg-8
            (-> {:pattern-edge-errors
                 (pt/validate-pattern-edges
                  (pt/create-graph (:templates bad-profile-2g)
                                   (:patterns bad-profile-2g)))}
                e/expound-errors
-               #_with-out-str)))
+               with-out-str)))
     (is (= err-msg-9
            (-> {:id       "https://foo.org/profile"
                 :type     "Profile"

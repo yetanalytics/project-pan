@@ -157,33 +157,115 @@
   "should be a JSON-LD keyword")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Value display
+;; Property orderings
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn strv
-  "Short for 'stringify-value.' Like str or pr-str, but makes special cases
-  for nils and keywords."
-  [value]
-  (case value
-    nil "nil"
-    :_context   "@context"
-    :_id        "@id"
-    :_type      "@type"
-    :_base      "@base"
-    :_container "@container"
-    :_graph     "@graph"
-    :_index     "@index"
-    :_language  "@language"
-    :_list      "@list"
-    :_nest      "@nest"
-    :_none      "@none"
-    :_prefix    "@prefix"
-    :_reverse   "@reverse"
-    :_set       "@set"
-    :_value     "@value"
-    :_version   "@version"
-    :_vocab     "@vocab"
-    (if (keyword? value) (name value) (pr-str value))))
+(def property-order
+  {;; Common object properties
+   :id          0
+   :type        1
+   :inScheme    2
+   :prefLabel   3
+   :definition  4
+   :deprecated  5
+   :_context    6
+   ;; Profile metadata
+   :conformsTo  7
+   :seeAlso     8
+   :author      9
+   :versions    10
+   ;; Profile version objects
+   :wasRevisionOf   11
+   :generatedAtTime 12
+   ;; Profile author objects
+   :name  13
+   :url   14
+   ;; Concept properties
+   :broader      15
+   :broadMatch   16
+   :narrower     17
+   :narrowMatch  18
+   :related      19
+   :relatedMatch 20
+   :exactMatch   21
+   ;; Extension and Document Resource properties
+   :context                   22
+   :recommendedActivityTypes  23
+   :recommendedVerbs          24
+   :contentType               25
+   :schema                    26
+   :inlineSchema              27
+   ;; Activity properties
+   :activityDefinition        28
+   :description               29
+   :moreInfo                  30
+   :interactionType           31
+   :correctResponsesPattern   32
+   :choices     33
+   :scale       34
+   :source      35
+   :target      36
+   :steps       37
+   :extensions  38
+   ;; Statement Template properties
+   :verb                          39
+   :objectActivityType            40
+   :contextGroupingActivityType   41
+   :contextParentActivityType     42
+   :contextOtherActivityType      43
+   :contextCategoryActivityType   44
+   :attachmentUsageType           45
+   :objectStatementRefTemplate    46
+   :contextStatementRefTemplate   47
+   :rules                         48
+   ;; Statement Template rules properties
+   :location  49
+   :selector  50
+   :presence  51
+   :any       52
+   :all       53
+   :none      54
+   :scopeNote 55
+   ;; Pattern properties
+   :primary    56
+   :alternates 57
+   :optional   58
+   :oneOrMore  59
+   :sequence   60
+   :zeroOrMore 61
+   ;; Top-level object lists
+   :concepts    62
+   :templates   63
+   :patterns    64})
+
+(defn- cmp-properties
+  "Get the order of two properties based on how it was listed in the xAPI
+  Profile spec. Properties not listed in the property-order map will be pushed
+  to the end of the error list and sorted alphabetically.
+  - neg number: prop1 comes before prop2
+  - pos number: prop1 comes after prop2
+  - zero: prop1 and prop2 are equal"
+  [p1 p2]
+  (let [n1 (get property-order p1)
+        n2 (get property-order p2)]
+    (cond
+      ;; Compare properties' existence
+      (and (nil? p1) (nil? p2)) 0
+      (and (nil? p1) (some? p2)) -1
+      (and (some? p1) (nil? p2)) 1
+      ;; Compare properties' orders
+      (and (some? n1) (nil? n2)) -1
+      (and (nil? n1) (some? n2)) 1
+      (and (some? n1) (some? n2)) (compare n1 n2)
+      (and (nil? n1) (nil? n2)) (compare p1 p2))))
+
+(defn- map->sorted-map
+  [m]
+  (into (sorted-map-by cmp-properties) m))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Value display
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn- elide-arrs [obj]
   (cond-> obj
@@ -198,11 +280,11 @@
 (defn value-str-obj
   [_ profile path value]
   (if (or (empty? path) (int? (last path)))
-    (let [obj (->> path (get-in profile) elide-arrs)]
+    (let [obj (->> path (get-in profile) elide-arrs map->sorted-map)]
       (format (str "Object:\n"
                    "%s")
               (ppr-str obj)))
-    (let [obj (->> path butlast (get-in profile) elide-arrs)]
+    (let [obj (->> path butlast (get-in profile) elide-arrs map->sorted-map)]
       (format (str "Value:\n"
                    "%s\n"
                    "\n"
@@ -217,7 +299,7 @@
 
 (defn value-str-obj-nopath
   [_ profile path value]
-  (let [obj (->> path butlast (get-in profile) elide-arrs)]
+  (let [obj (->> path butlast (get-in profile) elide-arrs map->sorted-map)]
     (format (str "Value:\n"
                  "%s\n"
                  "\n"
@@ -234,9 +316,10 @@
   (format (str "Identifer:\n"
                "%s\n"
                "\n"
-               "which occurs %d times in the Profile")
+               "which occurs %d time%s in the Profile")
           (-> path last pr-str)
-          value))
+          value
+          (if (= 1 value) "" "s")))
 
 (defn value-str-version
   "Custom value string for inScheme error messages. Takes the form:
@@ -285,7 +368,7 @@
                    " %s ...,\n"
                    " ...}\n"
                    "\n"
-                   "and is used %d time%s to link out to %d other object%s")
+                   "and is used %d time%s to link out to %d object%s")
               (pr-str src)
               (pr-str src-type)
               src-primary
@@ -338,7 +421,7 @@
                "in context:\n"
                "%s")
           (ppr-str value)
-          (ppr-str (->> path butlast (get-in contexts)))))
+          (ppr-str (->> path butlast (get-in contexts) map->sorted-map))))
 
 (defn custom-printer
   "Returns a printer based on the error-type argument. A nil error-type will
