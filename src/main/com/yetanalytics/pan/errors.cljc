@@ -368,6 +368,9 @@
                    " %s ...,\n"
                    " ...}\n"
                    "\n"
+                   "via the property:\n"
+                   "%s\n"
+                   "\n"
                    "and is used %d time%s to link out to %d object%s")
               (pr-str src)
               (pr-str src-type)
@@ -375,6 +378,7 @@
               (pr-str dest)
               (pr-str dest-type)
               dest-property
+              (pr-str (:type value)) ; Don't shadow clojure.core/type
               src-indegree
               (if (= 1 src-indegree) "" "s")
               src-outdegree
@@ -391,14 +395,18 @@
                    "{:id %s,\n"
                    " :type %s,\n"
                    " :inScheme %s,\n"
-                   " ...}")
+                   " ...}\n"
+                   "\n"
+                   "via the property:\n"
+                   "%s")
               (if (= "Concept" src-type) "Concept" "Statement Template")
               (pr-str src)
               (pr-str src-type)
               (pr-str src-version)
               (pr-str dest)
               (pr-str dest-type)
-              (pr-str dest-version)))
+              (pr-str dest-version)
+              (pr-str (:type value))))
     :else
     ""))
 

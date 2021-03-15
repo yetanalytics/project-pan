@@ -346,6 +346,9 @@ that links to object:
  :inScheme nil,
  ...}
 
+via the property:
+:verb
+
 should not link to non-existent Concept or Template
 
 -- Spec failed --------------------
@@ -361,6 +364,9 @@ that links to object:
  :type nil,
  :inScheme nil,
  ...}
+
+via the property:
+:attachmentUsageType
 
 should not link to non-existent Concept or Template
 
@@ -388,6 +394,9 @@ that links to object:
  :inScheme \"https://w3id.org/xapi/catch/v1\",
  ...}
 
+via the property:
+:verb
+
 should link to type: \"Verb\"
 
 -- Spec failed --------------------
@@ -403,6 +412,9 @@ that links to object:
  :type \"StatementTemplate\",
  :inScheme \"https://w3id.org/xapi/catch/v1\",
  ...}
+
+via the property:
+:attachmentUsageType
 
 should not refer to itself
 
@@ -448,7 +460,10 @@ that links to object:
  :oneOrMore ...,
  ...}
 
-and is used 1 time to link out to 1 other object
+via the property:
+:oneOrMore
+
+and is used 1 time to link out to 1 object
 
 should not refer to itself
 
