@@ -50,45 +50,45 @@
 (exp/defmsg ::ax/array-of-uri "should be an array of URIs")
 
 (exp/defmsg ::u/inline-or-iri
-  "cannot contain both linked and inline JSON schema")
+  "should not contain both linked and inline JSON schema")
 (exp/defmsg ::u/related-only-deprecated
-  "related can only be used on deprecated concepts")
+  "should not use related property in a non-deprecated Concept")
 
 (exp/defmsg ::ae/no-recommended-verbs
-  "only allowed on context or result extensions")
+  "should not use recommended verb property on an Activity Extension")
 (exp/defmsg ::ce/no-recommended-activity-types
-  "only allowed on activity extensions")
+  "should not use recommended activity type on a Context Extension")
 (exp/defmsg ::re/no-recommended-activity-types
-  "only allowed on activity extensions")
+  "should not use recommended activity type on a Result Extension")
 (exp/defmsg ::act/activityDefinition
-  "invalid activity definition")
+  "should be a valid activity definition")
 
 (exp/defmsg ::t/type-or-reference
-  "cannot contain both objectActivityType and objectStatementRefTemplate")
+  "should not contain both objectActivityType and objectStatementRefTemplate")
 
 (exp/defmsg ::p/pattern-clause
-  "pattern contains too many properties")
+  "should only have one of sequences, alternates, etc")
 (exp/defmsg ::p/is-primary-true
-  "primary is not true")
+  "should be a primary pattern")
 (exp/defmsg ::p/is-primary-false
-  "primary is not false nor nil")
+  "should not be a primary Pattern")
 
 ;; ID spec messages
 
 (exp/defmsg ::id/one-count
-  "the id value is not unique")
+  "should be a unique identifier value")
 (exp/defmsg ::id/in-scheme
-  "the inScheme value is not a valid version ID")
+  "should be a valid version ID")
 
 ;; Graph spec messages
 
 (exp/defmsg ::graph/not-self-loop
-  "object cannot refer to itself")
+  "should not refer to itself")
 (exp/defmsg ::graph/singleton-scc
-  "cyclical reference detected")
+  "should not contain cyclical references")
 
 (exp/defmsg ::c/valid-dest
-  "linked concept does not exist")
+  "should not link to a non-existent Concept")
 (exp/defmsg ::c/relatable-src
   "should be type: \"ActivityType\", \"AttachmentUsageType\" or \"Verb\"")
 (exp/defmsg ::c/relatable-dest
@@ -102,14 +102,14 @@
 (exp/defmsg ::c/verb-dest
   "should link to type: \"Verb\"")
 (exp/defmsg ::c/same-concepts
-  "the concepts are not the same type")
+  "should link to a Concept of the same type")
 (exp/defmsg ::c/same-version
-  "inScheme values do not match")
+  "should link to an object with matching inScheme value")
 
+(exp/defmsg ::t/valid-dest
+  "should not link to non-existent Concept or Template")
 (exp/defmsg ::t/template-src
   "should be type: \"StatementTemplate\"")
-(exp/defmsg ::t/valid-dest
-  "linked concept or template does not exist")
 (exp/defmsg ::t/verb-dest
   "should link to type: \"Verb\"")
 (exp/defmsg ::t/activity-type-dest
@@ -119,10 +119,10 @@
 (exp/defmsg ::t/template-dest
   "should link to type: \"StatementTemplate\"")
 (exp/defmsg ::t/same-version
-  "inScheme values do not match")
+  "should link to an object with matching inScheme value")
 
 (exp/defmsg ::p/valid-dest
-  "linked template or pattern does not exist")
+  "should not link to non-existent Template or Pattern")
 (exp/defmsg ::p/pattern-src
   "should be type: \"Pattern\"")
 (exp/defmsg ::p/pattern-dest
@@ -130,15 +130,15 @@
 (exp/defmsg ::p/template-dest
   "should link to type: \"StatementTemplate\"")
 (exp/defmsg ::p/non-opt-dest
-  "alternate pattern cannot contain an optional or zeroOrMore pattern")
+  "should not link to an optional or zeroOrMore Pattern")
 (exp/defmsg ::p/singleton-src
-  "primary sequence pattern has multiple links")
+  "should only link to one other object")
 (exp/defmsg ::p/not-singleton-src
-  "sequence pattern must have at least two links")
+  "should link to at least two other objects")
 (exp/defmsg ::p/primary-pattern
-  "pattern is not primary")
+  "should be a primary Pattern")
 (exp/defmsg ::p/zero-indegree-src
-  "pattern must not be used elsewhere")
+  "should not be used elsewhere in the Profile")
 
 ;; Context spec messages
 
@@ -147,14 +147,14 @@
 (exp/defmsg ::ctx/context-prefix
   "should be a JSON-LD prefix")
 (exp/defmsg ::ctx/simple-term-def
-  "simple term definition does not have valid prefix")
+  "should be a simple term definition with a valid prefix")
 (exp/defmsg ::ctx/expanded-term-def
-  "expanded term definition does not have valid prefix")
+  "should be an expanded term definition with a valid prefix")
 
 (exp/defmsg ::ctx/iri-key
-  "key cannot be expanded into absolute IRI")
+  "should be expandable into an absolute IRI")
 (exp/defmsg ::ctx/keyword-key
-  "key is not JSON-LD keyword")
+  "should be a JSON-LD keyword")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Value display
@@ -231,9 +231,11 @@
    | Duplicate id: <identifier>
    |  with count:  <int>"
   [_ _ path value]
-  (format (str "Duplicate id: %s\n"
-               " with count:  %d")
-          (last path)
+  (format (str "Identifer:\n"
+               "%s\n"
+               "\n"
+               "which occurs %d times in the Profile")
+          (-> path last pr-str)
           value))
 
 (defn value-str-version
@@ -245,12 +247,17 @@
    |   <version-id-2>
    |   ..."
   [_ _ _ {:keys [id inScheme version-ids] :as _value}]
-  (format (str "Invalid inScheme: %s\n"
-               " at object: %s\n"
-               " profile version ids %s")
-          inScheme
-          id
-          (->> version-ids sequence sort reverse (string/join "\n  "))))
+  (format (str "InScheme IRI:\n"
+               "%s\n"
+               "\n"
+               "associated with the identifier:\n"
+               "%s\n"
+               "\n"
+               "in a Profile with the following version IDs:\n"
+               "%s")
+          (pr-str inScheme)
+          (pr-str id)
+          (->> version-ids sort (map pr-str) (string/join "\n"))))
 
 #_{:clj-kondo/ignore [:unresolved-symbol]} ; kondo doesn't recognize core.match
 (defn value-str-edge
@@ -261,34 +268,29 @@
    |  <object map>
    | linked object:
    |  <object map>"
-  [_ _ _ {:keys [type src src-type dest dest-type] :as value}]
+  [_ _ _ {:keys [src src-type dest dest-type] :as value}]
   (cond
     (= "Pattern" src-type)
     (let [{:keys [src-primary src-indegree src-outdegree dest-property]}
           value]
-      (format (str "Invalid %s identifier:"
-                   " %s\n"
+      (format (str "Pattern:\n"
+                   "{:id %s,\n"
+                   " :type %s,\n"
+                   " :primary %b,\n"
+                   " ...}\n"
                    "\n"
-                   " at object:\n"
-                   "  {:id \"%s\",\n"
-                   "   :type \"%s\",\n"
-                   "   :primary %b,\n"
-                   "   ...}\n"
+                   "that links to object:\n"
+                   "{:id %s,\n"
+                   " :type %s,\n"
+                   " %s ...,\n"
+                   " ...}\n"
                    "\n"
-                   " linked object:\n"
-                   "   {:id \"%s\",\n"
-                   "    :type \"%s\",\n"
-                   "    %s ...,\n"
-                   "    ...}\n"
-                   "\n"
-                   " pattern is used %d time%s in the profile and links out to %d other object%s.")
-              type
-              dest
-              src
-              src-type
+                   "and is used %d time%s to link out to %d other object%s")
+              (pr-str src)
+              (pr-str src-type)
               src-primary
-              dest
-              dest-type
+              (pr-str dest)
+              (pr-str dest-type)
               dest-property
               src-indegree
               (if (= 1 src-indegree) "" "s")
@@ -296,28 +298,24 @@
               (if (= 1 src-outdegree) "" "s")))
     (or (= "Concept" src-type) (= "StatementTemplate" src-type))
     (let [{:keys [src-version dest-version]} value]
-      (format (str "Invalid %s identifier:"
-                   " %s\n"
+      (format (str "%s:\n"
+                   "{:id %s,\n"
+                   " :type %s,\n"
+                   " :inScheme %s,\n"
+                   " ...}\n"
                    "\n"
-                   " at object:\n"
-                   "  {:id \"%s\",\n"
-                   "   :type \"%s\",\n"
-                   "   :inScheme \"%s\",\n"
-                   "   ...}\n"
-                   "\n"
-                   " linked object:\n"
-                   "  {:id \"%s\",\n"
-                   "   :type \"%s\",\n"
-                   "   :inScheme \"%s\",\n"
-                   "   ...}")
-              type
-              dest
-              src
-              src-type
-              src-version
-              dest
-              dest-type
-              dest-version))
+                   "that links to object:\n"
+                   "{:id %s,\n"
+                   " :type %s,\n"
+                   " :inScheme %s,\n"
+                   " ...}")
+              (if (= "Concept" src-type) "Concept" "Statement Template")
+              (pr-str src)
+              (pr-str src-type)
+              (pr-str src-version)
+              (pr-str dest)
+              (pr-str dest-type)
+              (pr-str dest-version)))
     :else
     ""))
 
@@ -328,9 +326,9 @@
    |   <identifier>
    |   <identifier>"
   [_ _ _ value]
-  (format (str "Cycle detected involving the following nodes:\n"
-               "  %s")
-          (->> value sort (string/join "\n  "))))
+  (format (str "The following Patterns:\n"
+               "%s")
+          (->> value sort (map pr-str) (string/join "\n"))))
 
 (defn value-str-context
   [_ contexts path value]

@@ -636,11 +636,11 @@ Detected 3 errors
     (is (= err-msg-3
            (-> {:id-errors (id/validate-ids bad-profile-2b)}
                e/expound-errors
-               with-out-str)))
+               #_with-out-str)))
     (is (= err-msg-4
            (-> {:in-scheme-errors (id/validate-in-schemes bad-profile-2c)}
                e/expound-errors
-               with-out-str)))
+               #_with-out-str)))
     (is (= err-msg-5
            (-> {:concept-edge-errors nil
                 :pattern-edge-errors nil
@@ -648,7 +648,7 @@ Detected 3 errors
                 (t/validate-template-edges
                  (t/create-graph [] (:templates bad-profile-2d)))}
                e/expound-errors
-               with-out-str)))
+               #_with-out-str)))
     (is (= err-msg-6
            (-> {:concept-edge-errors nil
                 :pattern-edge-errors nil
@@ -656,21 +656,21 @@ Detected 3 errors
                 (t/validate-template-edges
                  (t/create-graph [] (:templates bad-profile-2e)))}
                e/expound-errors
-               with-out-str)))
+               #_with-out-str)))
     (is (= err-msg-7
            (-> {:pattern-cycle-errors
                 (pt/validate-pattern-tree
                  (pt/create-graph (:templates bad-profile-2f)
                                   (:patterns bad-profile-2f)))}
                e/expound-errors
-               with-out-str)))
+               #_with-out-str)))
     (is (= err-msg-8
            (-> {:pattern-edge-errors
                 (pt/validate-pattern-edges
                  (pt/create-graph (:templates bad-profile-2g)
                                   (:patterns bad-profile-2g)))}
                e/expound-errors
-               with-out-str)))
+               #_with-out-str)))
     (is (= err-msg-9
            (-> {:id       "https://foo.org/profile"
                 :type     "Profile"
