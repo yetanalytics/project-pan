@@ -193,7 +193,7 @@
   (s/and ::template-src
          ::valid-dest
          ::graph/not-self-loop
-         ::at-dest))
+         ::activity-type-dest))
 
 ;; contextGroupingActivityType MUST point to grouping ActivityTypes
 (defmethod valid-edge? :contextGroupingActivityType [_]

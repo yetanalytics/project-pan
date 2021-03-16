@@ -1,12 +1,10 @@
 (ns com.yetanalytics.pan-test
   (:require [clojure.test :refer [deftest is testing]]
             [com.yetanalytics.pan :refer [validate-profile]])
-  #?(:clj
-     (:require [com.yetanalytics.pan.utils.resources
-                :refer [read-resource]])
-     :cljs
-     (:require-macros [com.yetanalytics.pan.utils.resources
-                       :refer [read-resource]])))
+  #?(:clj (:require [com.yetanalytics.pan.utils.resources
+                     :refer [read-resource]])
+     :cljs (:require-macros [com.yetanalytics.pan.utils.resources
+                             :refer [read-resource]])))
 
 ;; Profiles to test
 (def will-profile-raw

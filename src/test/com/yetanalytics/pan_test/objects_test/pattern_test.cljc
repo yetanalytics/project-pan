@@ -250,7 +250,7 @@
 (deftest alternates-test-2
   (testing "Alternates pattern MUST NOT include optional or zeroOrMore directly."
     (should-satisfy+
-     ::pattern/valid-edge
+     ::pattern/pattern-edge
      {:src "https://foo.org/p1" :dest "https://foo.org/p2"
       :src-type "Pattern" :dest-type "Pattern"
       :type :alternates :dest-property :alternates}
@@ -274,15 +274,10 @@
       :src-type "Pattern" :dest-type "Verb"
       :type :alternates :dest-property nil})))
 
-#_(s/explain ::pattern/valid-edge
-           {:src "https://foo.org/p1" :dest "https://foo.org/p2"
-            :src-type "Pattern" :dest-type "Pattern"
-            :type :alternates :dest-property :alternates})
-
 (deftest sequence-test-2
   (testing "Sequence pattern MUST include at least two members, unless pattern is a primary pattern not used elsewhere that contains one StatementTemplate."
     (should-satisfy+
-     ::pattern/valid-edge
+     ::pattern/pattern-edge
      {:src "https://foo.org/p1" :dest "https://foo.org/p2"
       :src-type "Pattern" :dest-type "Pattern" :type :sequence
       :src-indegree 1 :src-outdegree 2 :src-primary false}
@@ -303,7 +298,7 @@
 (deftest edge-test
   (testing "Optional, oneOrMore, or zeroOrMore pattern edges"
     (should-satisfy+
-     ::pattern/valid-edge
+     ::pattern/pattern-edge
      {:src "https://foo.org/p1" :dest "https://foo.org/p2"
       :src-type "Pattern" :dest-type "Pattern" :type :optional}
      {:src "https://foo.org/p1" :dest "https://foo.org/p2"
@@ -406,10 +401,10 @@
               :dest "https://foo.org/template5" :dest-type "StatementTemplate"
               :dest-property nil :type :zeroOrMore}}
            (set (pattern/get-edges pgraph))))
-    (should-satisfy ::pattern/valid-edges (pattern/get-edges pgraph))
-    (should-satisfy ::pattern/singleton-sccs (graph/scc pgraph))
+    (should-satisfy ::pattern/pattern-edges (pattern/get-edges pgraph))
+    (should-satisfy ::graph/singleton-sccs (graph/scc pgraph))
     (is (nil? (pattern/validate-pattern-edges pgraph)))
-    (is (nil? (pattern/explain-graph-cycles pgraph)))))
+    (is (nil? (pattern/validate-pattern-tree pgraph)))))
 
 (def cyclic-patterns-1
   [{:id "https://foo.org/pattern-one"

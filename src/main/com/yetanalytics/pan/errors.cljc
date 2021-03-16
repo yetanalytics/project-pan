@@ -1,5 +1,7 @@
 (ns com.yetanalytics.pan.errors
-  (:require [clojure.core :refer [format]]
+  (:require #?(:clj [clojure.core :refer [format]]
+               :cljs [goog.string :as gstring]
+                     [goog.string.format :as format])
             [clojure.pprint :as pprint]
             [clojure.string :as string]
             [expound.alpha :as exp]
@@ -14,6 +16,7 @@
             [com.yetanalytics.pan.objects.concepts.extensions.context :as ce]
             [com.yetanalytics.pan.objects.concepts.extensions.result :as re]
             [com.yetanalytics.pan.objects.concepts.activities :as act]
+            [com.yetanalytics.pan.objects.templates.rules :as r]
             [com.yetanalytics.pan.utils.spec :as u]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -43,6 +46,8 @@
 (exp/defmsg ::u/related-only-deprecated
   "should not use related property in a non-deprecated Concept")
 
+(exp/defmsg ::c/concept
+  "should have a valid Concept type")
 (exp/defmsg ::ae/no-recommended-verbs
   "should not use recommended verb property on an Activity Extension")
 (exp/defmsg ::ce/no-recommended-activity-types
@@ -54,6 +59,8 @@
 
 (exp/defmsg ::t/type-or-reference
   "should not contain both objectActivityType and objectStatementRefTemplate")
+(exp/defmsg ::r/rule-keywords
+  "should contain one of presence, any, all, or none")
 
 (exp/defmsg ::p/pattern-clause
   "should only have one of sequences, alternates, etc")
@@ -260,6 +267,8 @@
 ;; Value display
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(def fmt #?(:clj format :cljs gstring/format))
+
 (defn- elide-arrs
   "Elide concept, template, and pattern arrays as to not distract
    from showing top-level Profile properties."
@@ -275,66 +284,88 @@
   [obj]
   (pprint/write obj :stream nil))
 
+(defn- get-prop-from-path
+  "Get the erroneous property from a error data path."
+  [path]
+  (->> path reverse (some (fn [x] (when (keyword? x) x)))))
+
 (defn- value-str-obj
   "Custom value string fn for errors on objects."
   [_ profile path value]
-  (if (or (empty? path) (int? (last path)))
-    ;; Error occured over the entire object
-    (let [obj (->> path (get-in profile) elide-arrs map->sorted-map)]
-      (format (str "Object:\n"
-                   "%s")
-              (ppr-str obj)))
-    ;; Error occured on a specific property.
-    (let [obj (->> path butlast (get-in profile) elide-arrs map->sorted-map)]
-      (format (str "Value:\n"
-                   "%s\n"
-                   "\n"
-                   "of property:\n"
-                   "%s\n"
-                   "\n"
-                   "in object:\n"
-                   "%s")
-              (ppr-str value)
-              (pr-str (last path))
-              (ppr-str obj)))))
+  (cond
+    ;; Error occured over the entire Profile, Concept, Template, or Pattern
+    (or (= [] path) (#{[:concepts] [:templates] [:patterns]} (butlast path)))
+    (let [obj (-> value elide-arrs map->sorted-map)]
+      (fmt (str "Object:\n"
+                "%s")
+           (ppr-str obj)))
+    ;; Error occured inside a Concept, Template, or Pattern
+    (#{:concepts :templates :patterns} (first path))
+    (let [path' (subvec path 0 2)
+          obj   (->> path' (get-in profile) map->sorted-map)]
+      (fmt (str "Value:\n"
+                "%s\n"
+                "\n"
+                "of property:\n"
+                "%s\n"
+                "\n"
+                "in object:\n"
+                "%s")
+           (ppr-str value)
+           (pr-str (get-prop-from-path path))
+           (ppr-str obj)))
+    ;; Error occured on Profile metadata
+    :else
+    (let [obj (-> profile elide-arrs map->sorted-map)]
+      (fmt (str "Value:\n"
+                "%s\n"
+                "\n"
+                "of property:\n"
+                "%s\n"
+                "\n"
+                "in object:\n"
+                "%s")
+           (ppr-str value)
+           (pr-str (get-prop-from-path path))
+           (ppr-str obj)))))
 
 (defn- value-str-obj-nopath
   "Similar to `value-str-obj` but do not show the path."
   [_ profile path value]
   (let [obj (->> path butlast (get-in profile) elide-arrs map->sorted-map)]
-    (format (str "Value:\n"
-                 "%s\n"
-                 "\n"
-                 "in object:\n"
-                 "%s")
-            (ppr-str value)
-            (ppr-str obj))))
+    (fmt (str "Value:\n"
+              "%s\n"
+              "\n"
+              "in object:\n"
+              "%s")
+         (ppr-str value)
+         (ppr-str obj))))
 
 (defn- value-str-id
   "Custom value string fn for duplicate ID errors"
   [_ _ path value]
-  (format (str "Identifer:\n"
-               "%s\n"
-               "\n"
-               "which occurs %d time%s in the Profile")
-          (-> path last pr-str)
-          value
-          (if (= 1 value) "" "s")))
+  (fmt (str "Identifer:\n"
+            "%s\n"
+            "\n"
+            "which occurs %d time%s in the Profile")
+       (-> path last pr-str)
+       value
+       (if (= 1 value) "" "s")))
 
 (defn- value-str-version
   "Custom value string fn for inScheme error messages."
   [_ _ _ {:keys [id inScheme version-ids] :as _value}]
-  (format (str "InScheme IRI:\n"
-               "%s\n"
-               "\n"
-               "associated with the identifier:\n"
-               "%s\n"
-               "\n"
-               "in a Profile with the following version IDs:\n"
-               "%s")
-          (pr-str inScheme)
-          (pr-str id)
-          (->> version-ids sort (map pr-str) (string/join "\n"))))
+  (fmt (str "InScheme IRI:\n"
+            "%s\n"
+            "\n"
+            "associated with the identifier:\n"
+            "%s\n"
+            "\n"
+            "in a Profile with the following version IDs:\n"
+            "%s")
+       (pr-str inScheme)
+       (pr-str id)
+       (->> version-ids sort (map pr-str) (string/join "\n"))))
 
 (defn- value-str-edge
   "Custom value string fn for IRI link error messages."
@@ -343,57 +374,57 @@
     (= "Pattern" src-type)
     (let [{:keys [src-primary src-indegree src-outdegree dest-property]}
           value]
-      (format (str "Pattern:\n"
-                   "{:id %s,\n"
-                   " :type %s,\n"
-                   " :primary %b,\n"
-                   " ...}\n"
-                   "\n"
-                   "that links to object:\n"
-                   "{:id %s,\n"
-                   " :type %s,\n"
-                   " %s ...,\n"
-                   " ...}\n"
-                   "\n"
-                   "via the property:\n"
-                   "%s\n"
-                   "\n"
-                   "and is used %d time%s to link out to %d object%s")
-              (pr-str src)
-              (pr-str src-type)
-              src-primary
-              (pr-str dest)
-              (pr-str dest-type)
-              dest-property
-              (pr-str (:type value)) ; Don't shadow clojure.core/type
-              src-indegree
-              (if (= 1 src-indegree) "" "s")
-              src-outdegree
-              (if (= 1 src-outdegree) "" "s")))
+      (fmt (str "Pattern:\n"
+                "{:id %s,\n"
+                " :type %s,\n"
+                " :primary %b,\n"
+                " ...}\n"
+                "\n"
+                "that links to object:\n"
+                "{:id %s,\n"
+                " :type %s,\n"
+                " %s ...,\n"
+                " ...}\n"
+                "\n"
+                "via the property:\n"
+                "%s\n"
+                "\n"
+                "and is used %d time%s to link out to %d object%s")
+           (pr-str src)
+           (pr-str src-type)
+           src-primary
+           (pr-str dest)
+           (pr-str dest-type)
+           dest-property
+           (pr-str (:type value)) ; Don't shadow clojure.core/type
+           src-indegree
+           (if (= 1 src-indegree) "" "s")
+           src-outdegree
+           (if (= 1 src-outdegree) "" "s")))
     (or (= "Concept" src-type) (= "StatementTemplate" src-type))
     (let [{:keys [src-version dest-version]} value]
-      (format (str "%s:\n"
-                   "{:id %s,\n"
-                   " :type %s,\n"
-                   " :inScheme %s,\n"
-                   " ...}\n"
-                   "\n"
-                   "that links to object:\n"
-                   "{:id %s,\n"
-                   " :type %s,\n"
-                   " :inScheme %s,\n"
-                   " ...}\n"
-                   "\n"
-                   "via the property:\n"
-                   "%s")
-              (if (= "Concept" src-type) "Concept" "Statement Template")
-              (pr-str src)
-              (pr-str src-type)
-              (pr-str src-version)
-              (pr-str dest)
-              (pr-str dest-type)
-              (pr-str dest-version)
-              (pr-str (:type value))))
+      (fmt (str "%s:\n"
+                "{:id %s,\n"
+                " :type %s,\n"
+                " :inScheme %s,\n"
+                " ...}\n"
+                "\n"
+                "that links to object:\n"
+                "{:id %s,\n"
+                " :type %s,\n"
+                " :inScheme %s,\n"
+                " ...}\n"
+                "\n"
+                "via the property:\n"
+                "%s")
+           (if (= "Concept" src-type) "Concept" "Statement Template")
+           (pr-str src)
+           (pr-str src-type)
+           (pr-str src-version)
+           (pr-str dest)
+           (pr-str dest-type)
+           (pr-str dest-version)
+           (pr-str (:type value))))
     :else
     ""))
 
@@ -401,20 +432,20 @@
   "Custom value string fn for strongly connected component errors.
    Used for pattern cycle errors."
   [_ _ _ value]
-  (format (str "The following Patterns:\n"
-               "%s")
-          (->> value sort (map pr-str) (string/join "\n"))))
+  (fmt (str "The following Patterns:\n"
+            "%s")
+       (->> value sort (map pr-str) (string/join "\n"))))
 
 (defn- value-str-context
   "Custom value string fn to print errors on contexts."
   [_ contexts path value]
-  (format (str "Value:\n"
-               "%s\n"
-               "\n"
-               "in context:\n"
-               "%s")
-          (ppr-str value)
-          (ppr-str (->> path butlast (get-in contexts) map->sorted-map))))
+  (fmt (str "Value:\n"
+            "%s\n"
+            "\n"
+            "in context:\n"
+            "%s")
+       (ppr-str value)
+       (ppr-str (->> path butlast (get-in contexts) map->sorted-map))))
 
 (defn- custom-printer
   "Returns a printer based on `error-type`. A `nil` value will

@@ -33,6 +33,7 @@
 (defmethod concept? "ActivityProfileResource" [_] ::act-pr/document-resource)
 (defmethod concept? "AgentProfileResource" [_] ::ag-pr/document-resource)
 (defmethod concept? "StateResource" [_] ::s-pr/document-resource)
+(defmethod concept? :default [_] (constantly false))
 
 (s/def ::concept (s/multi-spec concept? #(:type %)))
 
@@ -163,7 +164,7 @@
   (s/and ::activity-ext-src
          ::valid-dest
          ::graph/not-self-loop
-         ::at-dest))
+         ::activity-type-dest))
 
 ;; recommendedVerbs MUST point to Verb Concepts
 (defmethod valid-edge? :recommendedVerbs [_]

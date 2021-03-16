@@ -78,7 +78,7 @@
         no-errors? (every? nil? (vals errors))]
     (if print-errs?
       (if no-errors?
-        (println "Success") ; Exactly like spec/explain
+        (println "Success!") ; Exactly like spec/explain
         (errors/expound-errors errors))
       (when-not no-errors?
         errors))))
