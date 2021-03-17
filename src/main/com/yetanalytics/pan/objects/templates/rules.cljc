@@ -6,12 +6,14 @@
 ;; Rules 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(s/def ::value-array (s/coll-of any? :type vector? :min-count 1))
+
 (s/def ::location ::ax/json-path)
 (s/def ::selector ::ax/json-path)
 (s/def ::presence #{"included" "excluded" "recommended"})
-(s/def ::any (s/coll-of any? :type vector? :min-count 1))
-(s/def ::all (s/coll-of any? :type vector? :min-count 1))
-(s/def ::none (s/coll-of any? :type vector? :min-count 1))
+(s/def ::any ::value-array)
+(s/def ::all ::value-array)
+(s/def ::none ::value-array)
 (s/def ::scopeNote ::ax/language-map)
 
 (s/def ::rule-keys

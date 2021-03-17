@@ -59,6 +59,8 @@
 
 (exp/defmsg ::t/type-or-reference
   "should not contain both objectActivityType and objectStatementRefTemplate")
+(exp/defmsg ::r/value-array
+  "should be an non-empty array of values")
 (exp/defmsg ::r/rule-keywords
   "should contain one of presence, any, all, or none")
 
