@@ -230,9 +230,11 @@ Detected 2 errors
 ")
 
 ;; Statement Template error
+;; Note: cljs version differs from clj by having an extra column in the table
 
 (def err-msg-2
-"
+  #?(:clj
+     "
 **** Syntax Errors ****
 
 -- Spec failed --------------------
@@ -290,7 +292,67 @@ should be: \"StatementTemplate\"
 
 -------------------------
 Detected 3 errors
-")
+"
+     :cljs
+     "
+**** Syntax Errors ****
+
+-- Spec failed --------------------
+
+Object:
+{:id \"this-template-is-invalid\", :type \"FooBar\"}
+
+should contain keys: :definition, :inScheme, :prefLabel
+
+| key         | spec                                           |
+|=============+================================================|
+| :definition | (map-of                                        |
+|             |  :com.yetanalytics.pan.axioms/language-tag     |
+|             |  :com.yetanalytics.pan.axioms/lang-map-string  |
+|             |  :min-count                                    |
+|             |  1)                                            |
+|-------------+------------------------------------------------|
+| :inScheme   | (and                                           |
+|             |  :com.yetanalytics.pan.axioms/string           |
+|             |  (partial                                      |
+|             |   re-matches                                   |
+|             |   xapi-schema.spec.regex/AbsoluteIRIRegEx))    |
+|-------------+------------------------------------------------|
+| :prefLabel  | (map-of                                        |
+|             |  :com.yetanalytics.pan.axioms/language-tag     |
+|             |  :com.yetanalytics.pan.axioms/lang-map-string  |
+|             |  :min-count                                    |
+|             |  1)                                            |
+
+-- Spec failed --------------------
+
+Value:
+\"this-template-is-invalid\"
+
+of property:
+:id
+
+in object:
+{:id \"this-template-is-invalid\", :type \"FooBar\"}
+
+should be a valid URI
+
+-- Spec failed --------------------
+
+Value:
+\"FooBar\"
+
+of property:
+:type
+
+in object:
+{:id \"this-template-is-invalid\", :type \"FooBar\"}
+
+should be: \"StatementTemplate\"
+
+-------------------------
+Detected 3 errors
+"))
 
 ;; ID Error
 
@@ -695,7 +757,7 @@ Detected 3 errors
 ")
 
 (deftest expound-test
-  (testing "error/expound-errors error messages"
+  (testing "error messages"
     (are [expected-str err-map] (= expected-str
                                    (with-out-str (e/expound-errors err-map)))
       err-msg-1 {:syntax-errors (p/validate bad-profile-1b)}

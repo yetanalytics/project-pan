@@ -377,7 +377,7 @@
       (fmt (str "Pattern:\n"
                 "{:id %s,\n"
                 " :type %s,\n"
-                " :primary %b,\n"
+                " :primary %s,\n"
                 " ...}\n"
                 "\n"
                 "that links to object:\n"
@@ -392,7 +392,7 @@
                 "and is used %d time%s to link out to %d object%s")
            (pr-str src)
            (pr-str src-type)
-           src-primary
+           (pr-str src-primary) ; cljs does not support "%b"
            (pr-str dest)
            (pr-str dest-type)
            dest-property
