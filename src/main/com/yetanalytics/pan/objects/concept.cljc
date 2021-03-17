@@ -1,7 +1,6 @@
 (ns com.yetanalytics.pan.objects.concept
   (:require [clojure.spec.alpha :as s]
             [com.yetanalytics.pan.graph :as graph]
-            [com.yetanalytics.pan.utils.spec :as util]
             [com.yetanalytics.pan.objects.concepts.verbs :as v]
             [com.yetanalytics.pan.objects.concepts.activities :as a]
             [com.yetanalytics.pan.objects.concepts.activity-types :as at]
@@ -21,7 +20,7 @@
 ;; Concepts 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defmulti concept? util/type-dispatch)
+(defmulti concept? :type)
 
 (defmethod concept? "Verb" [_] ::v/verb)
 (defmethod concept? "Activity" [_] ::a/activity)
@@ -35,7 +34,7 @@
 (defmethod concept? "StateResource" [_] ::s-pr/document-resource)
 (defmethod concept? :default [_] (constantly false))
 
-(s/def ::concept (s/multi-spec concept? #(:type %)))
+(s/def ::concept (s/multi-spec concept? :type))
 
 (s/def ::concepts (s/coll-of ::concept :type vector? :min-count 1))
 
@@ -130,7 +129,7 @@
 
 ;; Edge validation multimethod 
 
-(defmulti valid-edge? util/type-dispatch)
+(defmulti valid-edge? :type)
 
 ;; broader MUST point to same-type Concepts from the same profile version
 (defmethod valid-edge? :broader [_]
@@ -174,7 +173,7 @@
          ::verb-dest))
 
 ;; Is one edge valid?
-(s/def ::concept-edge (s/multi-spec valid-edge? util/type-dispatch))
+(s/def ::concept-edge (s/multi-spec valid-edge? :type))
 
 ;; Are all edges valid?
 (s/def ::concept-edges (s/coll-of ::concept-edge))

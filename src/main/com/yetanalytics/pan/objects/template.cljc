@@ -2,7 +2,6 @@
   (:require [clojure.spec.alpha :as s]
             [com.yetanalytics.pan.axioms :as ax]
             [com.yetanalytics.pan.graph :as graph]
-            [com.yetanalytics.pan.utils.spec :as util]
             [com.yetanalytics.pan.objects.templates.rules :as rules]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -179,7 +178,7 @@
 
 ;; Edge validation multimethod
 
-(defmulti valid-edge? util/type-dispatch)
+(defmulti valid-edge? :type)
 
 ;; verb MUST point to a Verb Concept
 (defmethod valid-edge? :verb [_]
@@ -247,7 +246,7 @@
          ::same-version))
 
 ;; Validate a single edge
-(s/def ::template-edge (s/multi-spec valid-edge? util/type-dispatch))
+(s/def ::template-edge (s/multi-spec valid-edge? :type))
 
 ;; Validate all the edges
 (s/def ::template-edges (s/coll-of ::template-edge))

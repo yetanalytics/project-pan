@@ -331,8 +331,8 @@
            (pr-str (get-prop-from-path path))
            (ppr-str obj)))))
 
-(defn- value-str-obj-nopath
-  "Similar to `value-str-obj` but do not show the path."
+(defn- value-str-obj-key
+  "Similar to `value-str-obj` but when the value is a map key."
   [_ profile path value]
   (let [obj (->> path butlast (get-in profile) elide-arrs map->sorted-map)]
     (fmt (str "Value:\n"
@@ -467,7 +467,7 @@
       :context
       (exp/custom-printer (make-opts value-str-context))
       :context-key
-      (exp/custom-printer (make-opts value-str-obj-nopath))
+      (exp/custom-printer (make-opts value-str-obj-key))
       :else
       (exp/custom-printer (make-opts value-str-obj)))))
 

@@ -20,12 +20,6 @@
       (update :templates normalize-nil)
       (update :patterns normalize-nil)))
 
-(defn type-dispatch
-  "Dispatch on the type key of an object, eg. in a multimethod.
-  Works for both Profile objects and graph edges with the type attribute"
-  [object]
-  (:type object))
-
 (defn subvec?
   "True if v1 is a subvector of v2, false otherwise."
   [v1 v2]
@@ -41,7 +35,7 @@
           inline-schema? (contains? ext :inlineSchema)]
       (not (and schema? inline-schema?)))))
 
-;; In concepts that may have the related property, it MUST only be used on a
+;; In Concepts that may have the related property, it MUST only be used on a
 ;; deprecated property
 (s/def ::related-only-deprecated
   (fn [{:keys [deprecated related]}]

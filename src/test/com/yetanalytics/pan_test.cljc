@@ -1,5 +1,5 @@
 (ns com.yetanalytics.pan-test
-  (:require [clojure.test :refer [deftest testing is are]]
+  (:require [clojure.test :refer [deftest testing is]]
             [clojure.spec.alpha :as s]
             [com.yetanalytics.pan :refer [validate-profile]]
             [com.yetanalytics.pan.objects.profile :as profile]

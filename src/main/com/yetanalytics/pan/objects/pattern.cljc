@@ -1,8 +1,7 @@
 (ns com.yetanalytics.pan.objects.pattern
   (:require [clojure.spec.alpha :as s]
             [com.yetanalytics.pan.axioms :as ax]
-            [com.yetanalytics.pan.graph :as graph]
-            [com.yetanalytics.pan.utils.spec :as util]))
+            [com.yetanalytics.pan.graph :as graph]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Patterns 
@@ -223,7 +222,7 @@
 
 ;; Edge validation multimethod
 
-(defmulti valid-edge? util/type-dispatch)
+(defmulti valid-edge? :type)
 
 ;; MUST NOT include optional or zeroOrMore directly inside alternates
 (defmethod valid-edge? :alternates [_]
@@ -275,7 +274,7 @@
                :template ::template-dest)))
 
 ;; Is one edge valid?
-(s/def ::pattern-edge (s/multi-spec valid-edge? util/type-dispatch))
+(s/def ::pattern-edge (s/multi-spec valid-edge? :type))
 
 ;; Are all the edges valid?
 (s/def ::pattern-edges (s/coll-of ::pattern-edge))
