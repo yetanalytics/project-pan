@@ -16,20 +16,13 @@
 (s/def ::deprecated ::ax/boolean)
 (s/def ::verb ::ax/iri)
 (s/def ::objectActivityType ::ax/iri)
-(s/def ::contextGroupingActivityType
-  (s/coll-of ::ax/iri :type vector? :min-count 1))
-(s/def ::contextParentActivityType
-  (s/coll-of ::ax/iri :type vector? :min-count 1))
-(s/def ::contextOtherActivityType
-  (s/coll-of ::ax/iri :type vector? :min-count 1))
-(s/def ::contextCategoryActivityType
-  (s/coll-of ::ax/iri :type vector? :min-count 1))
-(s/def ::attachmentUsageType
-  (s/coll-of ::ax/iri :type vector? :min-count 1))
-(s/def ::objectStatementRefTemplate
-  (s/coll-of ::ax/iri :type vector? :min-count 1))
-(s/def ::contextStatementRefTemplate
-  (s/coll-of ::ax/iri :type vector? :min-count 1))
+(s/def ::contextGroupingActivityType ::ax/array-of-iri)
+(s/def ::contextParentActivityType ::ax/array-of-iri)
+(s/def ::contextOtherActivityType ::ax/array-of-iri)
+(s/def ::contextCategoryActivityType ::ax/array-of-iri)
+(s/def ::attachmentUsageType ::ax/array-of-iri)
+(s/def ::objectStatementRefTemplate ::ax/array-of-iri)
+(s/def ::contextStatementRefTemplate ::ax/array-of-iri)
 
 ;; A StatementTemplate MUST NOT have both objectStatementRefTemplate and
 ;; objectActivityType at the same time.

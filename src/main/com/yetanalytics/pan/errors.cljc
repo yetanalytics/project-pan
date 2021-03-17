@@ -33,7 +33,7 @@
 (exp/defmsg ::ax/lang-map-string "should be a valid string")
 (exp/defmsg ::ax/media-type "should be a RFC 2046 media type")
 (exp/defmsg ::ax/json-path "should be a valid JSONPath string")
-(exp/defmsg ::ax/json-path "should be a valid JSON schema")
+(exp/defmsg ::ax/json-schema "should be a valid JSON schema")
 (exp/defmsg ::ax/iri "should be a valid IRI")
 (exp/defmsg ::ax/irl "should be a valid IRL")
 (exp/defmsg ::ax/uri "should be a valid URI")
@@ -372,8 +372,8 @@
 (defn- value-str-edge
   "Custom value string fn for IRI link error messages."
   [_ _ _ {:keys [src src-type dest dest-type] :as value}]
-  (cond
-    (= "Pattern" src-type)
+  (if (= "Pattern" src-type)
+    ;; Patterns
     (let [{:keys [src-primary src-indegree src-outdegree dest-property]}
           value]
       (fmt (str "Pattern:\n"
@@ -403,7 +403,7 @@
            (if (= 1 src-indegree) "" "s")
            src-outdegree
            (if (= 1 src-outdegree) "" "s")))
-    (or (= "Concept" src-type) (= "StatementTemplate" src-type))
+    ;; Concepts and Statement Templates
     (let [{:keys [src-version dest-version]} value]
       (fmt (str "%s:\n"
                 "{:id %s,\n"
@@ -419,16 +419,14 @@
                 "\n"
                 "via the property:\n"
                 "%s")
-           (if (= "Concept" src-type) "Concept" "Statement Template")
+           (if (= "StatementTemplate" src-type) "Statement Template" "Concept")
            (pr-str src)
            (pr-str src-type)
            (pr-str src-version)
            (pr-str dest)
            (pr-str dest-type)
            (pr-str dest-version)
-           (pr-str (:type value))))
-    :else
-    ""))
+           (pr-str (:type value))))))
 
 (defn- value-str-scc
   "Custom value string fn for strongly connected component errors.

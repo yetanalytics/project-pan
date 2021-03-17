@@ -131,7 +131,9 @@
 
 (defmulti valid-edge? :type)
 
-;; broader MUST point to same-type Concepts from the same profile version
+;; broader, narrower, and related  MUST point to same-type Concepts from the
+;; same Profile version
+
 (defmethod valid-edge? :broader [_]
   (s/and ::relatable-src
          ::valid-dest
@@ -140,7 +142,6 @@
          ::same-concept
          ::same-version))
 
-;; narrower MUST point to same-type Concepts from the same profile version
 (defmethod valid-edge? :narrower [_]
   (s/and ::relatable-src
          ::valid-dest
@@ -149,7 +150,6 @@
          ::same-concept
          ::same-version))
 
-;; related MUST point to same-type Concepts from the same profile version
 (defmethod valid-edge? :related [_]
   (s/and ::relatable-src
          ::valid-dest
@@ -157,6 +157,40 @@
          ::relatable-dest
          ::same-concept
          ::same-version))
+
+;; broadMatch, narrowMatch, relatedMatch, and exactMatch MUST point to same-type
+;; Concepts from a different Profile
+
+;; TODO: Currently never used due to lack of external Profiles
+
+(comment
+  (defmethod valid-edge? :broadMatch [_]
+    (s/and ::relatable-src
+           ::valid-dest
+           ::graph/not-self-loop
+           ::relatable-dest
+           ::same-concept))
+
+  (defmethod valid-edge? :narrowMatch [_]
+    (s/and ::relatable-src
+           ::valid-dest
+           ::graph/not-self-loop
+           ::relatable-dest
+           ::same-concept))
+
+  (defmethod valid-edge? :relatedMatch [_]
+    (s/and ::relatable-src
+           ::valid-dest
+           ::graph/not-self-loop
+           ::relatable-dest
+           ::same-concept))
+
+  (defmethod valid-edge? :exactMatch [_]
+    (s/and ::relatable-src
+           ::valid-dest
+           ::graph/not-self-loop
+           ::relatable-dest
+           ::same-concept)))
 
 ;; recommendedActivityTypes MUST point to ActivityType Concepts
 (defmethod valid-edge? :recommendedActivityTypes [_]

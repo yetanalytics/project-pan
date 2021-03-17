@@ -13,14 +13,27 @@
 ;; Profiles to test
 (def will-profile-raw
   (read-resource "sample_profiles/will-profile-raw.json"))
-(def will-profile-fix
-  (read-resource "sample_profiles/will-profile-reduced.json"))
 (def cmi-profile-raw
   (read-resource "sample_profiles/cmi5.json"))
+(def acrossx-profile-raw
+  (read-resource "sample_profiles/acrossx.json"))
+(def activity-stream-profile-raw
+  (read-resource "sample_profiles/activity_stream.json"))
+(def tincan-profile-raw
+  (read-resource "sample_profiles/tincan.json"))
+(def video-profile-raw
+  (read-resource "sample_profiles/video.json"))
+(def mom-profile-raw
+  (read-resource "sample_profiles/mom.json"))
+(def scorm-profile-raw
+  (read-resource "sample_profiles/scorm.json"))
+
+(def will-profile-fix
+  (read-resource "sample_profiles/will-profile-reduced.json"))
 (def cmi-profile-fix
   (read-resource "sample_profiles/cmi5-fixed.json"))
 
-; ;; Raw profile
+;; Raw profile
 (deftest will-raw-test
   (testing "Will's unfixed CATCH profile with printing"
     (is (not= "Success!\n"
@@ -110,12 +123,105 @@
     (is (= "Success!\n"
            (with-out-str (validate-profile cmi-profile-fix :syntax? false :contexts? true))))))
 
+;; Other raw profiles
+(deftest profile-test
+  (testing "acrossx profile"
+    (is (not= "Success!\n"
+              (with-out-str (validate-profile acrossx-profile-raw))))
+    (is (= "Success!\n"
+           (with-out-str (validate-profile acrossx-profile-raw
+                                           :syntax? false
+                                           :ids? true))))
+    (is (not= "Success!\n"
+              (with-out-str (validate-profile acrossx-profile-raw
+                                              :syntax? false
+                                              :relations? true))))
+    (is (= "Success!\n"
+           (with-out-str (validate-profile acrossx-profile-raw
+                                           :syntax? false
+                                           :contexts? true)))))
+  (testing "activity stream profile"
+    (is (not= "Success!\n"
+              (with-out-str (validate-profile activity-stream-profile-raw))))
+    (is (not= "Success!\n"
+              (with-out-str (validate-profile activity-stream-profile-raw
+                                              :syntax? false
+                                              :ids? true))))
+    (is (not= "Success!\n"
+              (with-out-str (validate-profile activity-stream-profile-raw
+                                              :syntax? false
+                                              :relations? true))))
+    (is (= "Success!\n"
+           (with-out-str (validate-profile activity-stream-profile-raw
+                                           :syntax? false
+                                           :contexts? true)))))
+  (testing "tincan profile"
+    (is (= "Success!\n"
+           (with-out-str (validate-profile tincan-profile-raw))))
+    (is (not= "Success!\n"
+              (with-out-str (validate-profile tincan-profile-raw
+                                              :syntax? false
+                                              :ids? true))))
+    (is (not= "Success!\n"
+              (with-out-str (validate-profile tincan-profile-raw
+                                              :syntax? false
+                                              :relations? true))))
+    (is (= "Success!\n"
+           (with-out-str (validate-profile tincan-profile-raw
+                                           :syntax? false
+                                           :contexts? true)))))
+  (testing "video profile"
+    (is (= "Success!\n"
+           (with-out-str (validate-profile video-profile-raw))))
+    (is (= "Success!\n"
+           (with-out-str (validate-profile video-profile-raw
+                                           :syntax? false
+                                           :ids? true))))
+    (is (not= "Success!\n"
+              (with-out-str (validate-profile video-profile-raw
+                                              :syntax? false
+                                              :relations? true))))
+    (is (= "Success!\n"
+           (with-out-str (validate-profile video-profile-raw
+                                           :syntax? false
+                                           :contexts? true)))))
+  (testing "mom profile"
+    (is (= "Success!\n"
+           (with-out-str (validate-profile mom-profile-raw))))
+    (is (not= "Success!\n"
+           (with-out-str (validate-profile mom-profile-raw
+                                           :syntax? false
+                                           :ids? true))))
+    (is (not= "Success!\n"
+              (with-out-str (validate-profile mom-profile-raw
+                                              :syntax? false
+                                              :relations? true))))
+    (is (= "Success!\n"
+           (with-out-str (validate-profile mom-profile-raw
+                                           :syntax? false
+                                           :contexts? true)))))
+  (testing "scorm profile" ; NOTE: scorm version could be outdated
+    (is (not= "Success!\n"
+           (with-out-str (validate-profile scorm-profile-raw))))
+    (is (not= "Success!\n"
+              (with-out-str (validate-profile scorm-profile-raw
+                                              :syntax? false
+                                              :ids? true))))
+    (is (not= "Success!\n"
+              (with-out-str (validate-profile scorm-profile-raw
+                                              :syntax? false
+                                              :relations? true))))
+    (is (= "Success!\n"
+           (with-out-str (validate-profile scorm-profile-raw
+                                           :syntax? false
+                                           :contexts? true))))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Error message tests
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (def will-profile-err-msg
-"
+  "
 **** Syntax Errors ****
 
 -- Spec failed --------------------
@@ -193,7 +299,7 @@ Detected 3 errors
 ")
 
 (def cmi-profile-err-msg
-"
+  "
 **** Syntax Errors ****
 
 -- Spec failed --------------------
