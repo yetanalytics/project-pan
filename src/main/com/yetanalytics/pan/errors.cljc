@@ -346,7 +346,7 @@
 (defn- value-str-id
   "Custom value string fn for duplicate ID errors"
   [_ _ path value]
-  (fmt (str "Identifer:\n"
+  (fmt (str "Identifier:\n"
             "%s\n"
             "\n"
             "which occurs %d time%s in the Profile")
@@ -397,7 +397,7 @@
            (pr-str src-primary) ; cljs does not support "%b"
            (pr-str dest)
            (pr-str dest-type)
-           dest-property
+           (pr-str dest-property)
            (pr-str (:type value)) ; Don't shadow clojure.core/type
            src-indegree
            (if (= 1 src-indegree) "" "s")

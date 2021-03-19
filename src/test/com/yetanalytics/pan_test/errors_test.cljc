@@ -362,7 +362,7 @@ Detected 3 errors
 
 -- Spec failed --------------------
 
-Identifer:
+Identifier:
 \"https://w3id.org/xapi/catch/v1\"
 
 which occurs 2 times in the Profile
@@ -371,7 +371,7 @@ should be a unique identifier value
 
 -- Spec failed --------------------
 
-Identifer:
+Identifier:
 \"https://foo.org/template\"
 
 which occurs 2 times in the Profile
