@@ -279,7 +279,7 @@
                                        :alpha 9001}}}]})))))
 
 (def catch-profile
-  (read-json-resource "sample_profiles/will-profile.json" ""))
+  (read-json-resource "sample_profiles/catch.json" ""))
 
 (deftest validate-contexts-integration-test
   (testing "integration testing on Will's CATCH profile"
