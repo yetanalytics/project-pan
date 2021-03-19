@@ -59,7 +59,7 @@ should be a valid IRI
 -- Spec failed --------------------
 
 Value:
-\"FooBar\"
+"FooBar"
 
 of property:
 :type
@@ -79,7 +79,7 @@ in object:
  [{:id "https://example.org/example/v1",
    :generatedAtTime "2017-12-22T22:30:00-07:00"}]}
 
-should be: \"Profile\"
+should be: "Profile"
 
 -------------------------
 Detected 2 errors
@@ -208,8 +208,8 @@ Detected 1 error
 -- Spec failed --------------------
 
 The following Patterns:
-\"https://foo.org/pattern-one\"
-\"https://foo.org/pattern-two\"
+"https://foo.org/pattern-one"
+"https://foo.org/pattern-two"
 
 should not contain cyclical references
 
@@ -225,14 +225,14 @@ Invalid `@context` value:
 -- Spec failed --------------------
 
 Value:
-\"profile:Profile\"
+"profile:Profile"
 
 in context:
-{:id \"@id\",
- :type \"@type\",
- :Profile \"profile:Profile\",
- :prov \"http://www.w3.org/ns/prov#\",
- :skos \"http://www.w3.org/2004/02/skos/core#\"}
+{:id "@id",
+ :type "@type",
+ :Profile "profile:Profile",
+ :prov "http://www.w3.org/ns/prov#",
+ :skos "http://www.w3.org/2004/02/skos/core#"}
 
 should be a JSON-LD context keyword
 
@@ -263,10 +263,10 @@ Value:
 :hello
 
 in object:
-{:id \"https://foo.org/activity/1\",
- :type \"Activity\",
- :_context \"https://w3id.org/xapi/profiles/activity-context\",
- :hello \"World\"}
+{:id "https://foo.org/activity/1",
+ :type "Activity",
+ :_context "https://w3id.org/xapi/profiles/activity-context",
+ :hello "World"}
 
 should be expandable into an absolute IRI
 
