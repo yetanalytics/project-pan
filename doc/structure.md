@@ -1,12 +1,10 @@
 # Project structure
 
-The structure of project-pan is given at a high level here, including what each
-namespace does and the different kinds of validation happens.
+The structure of project-pan is given at a high level here, including what each namespace does and the different kinds of validation happens.
 
 ## axioms
 
-The `axioms` namespace contains all base-level properties that are used to
-validate the values of Profile properties. These axioms include:
+The `axioms` namespace contains all base-level properties that are used to validate the values of Profile properties. These axioms include:
 - Booleans
 - Strings (non-empty ones only)
 - Language Maps
@@ -18,11 +16,7 @@ validate the values of Profile properties. These axioms include:
 
 ## objects
 
-The `objects` folder contains all specs for syntax validation of Profiles, as
-well as relational IRI validation between objects. The structure of this folder
-is designed as such to reflect the hierarchical structure of a Profile based
-off of the values of the `type` property (though there are exceptions, such as
-the `rules` folder under `templates`.
+The `objects` folder contains all specs for syntax validation of Profiles, as well as relational IRI validation between objects. The structure of this folder is designed as such to reflect the hierarchical structure of a Profile based off of the values of the `type` property (though there are exceptions, such as the `rules` folder under `templates`.
 
 ```
 objects
@@ -49,26 +43,20 @@ objects
 
 ## identifiers
 
-This namespace is used for ID-related validation tasks, include checking for
-duplicate IDs and validating `inScheme` values.
+This namespace is used for ID-related validation tasks, include checking for duplicate IDs and validating `inScheme` values.
 
 ## context
 
-This namespace is used for `@context`-related validation tasks, including
-validating `@context` maps and validating that keys can use them to expand
-to absolute IRIs.
+This namespace is used for `@context`-related validation tasks, including validating `@context` maps and validating that keys can use them to expand to absolute IRIs.
 
 ## graph
 
-This is a util namespace used for common graph-related functions, such as
-building nodes and edges as well as checking for self-loops.
-
-## util
-
-This namespace is used for shared functions and specs, including JSON parsing.
+This is a util namespace used for common graph-related functions, such as building nodes and edges as well as checking for self-loops.
 
 ## errors
 
-This namespace is used for printing error messages using Expound (as well as
-manipulating spec error maps to get them to work with Expound). Check this
-namespace to get a full list of error messages.
+This namespace is used for printing error messages using Expound. Check this namespace to get a full list of error messages.
+
+## util
+
+This folder contains shared functions and specs, including those for JSON and EDN parsing.
