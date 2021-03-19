@@ -764,3 +764,15 @@ Detected 3 errors
                                              :syntax? false
                                              :relations? true
                                              :external-iris? false))))))
+
+(deftest success-msg-test
+  (testing "error messages on fixed profiles"
+    (is (= "Success!\n"
+           (with-out-str (validate-profile will-profile-fix
+                                           :syntax? true
+                                           :relations? true
+                                           :context? true))))
+    (is (= "Success!\n"
+           (with-out-str (validate-profile cmi-profile-fix
+                                           :syntax? true
+                                           :context? true))))))
