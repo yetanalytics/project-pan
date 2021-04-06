@@ -227,7 +227,6 @@
     (is (not (s/valid? ::ax/json-schema schema-3))) 
     (is (not (s/valid? ::ax/json-schema schema-4)))))
 
-;; TODO Should check that IRIs with non-ASCII chars pass (currently they don't)
 (deftest test-iri
   (testing "IRIs/IRLs/URIs/URLs"
     (should-satisfy+ ::ax/iri
@@ -235,4 +234,9 @@
                      "https://foo.org/"
                      :bad
                      "foo.org"
-                     "www.foo.org")))
+                     "www.foo.org"))
+  (testing "IRIs/IRLs vs URIs/URLs"
+    (is (s/valid? ::ax/iri "https://안녕하세요.ko"))
+    (is (s/valid? ::ax/irl "https://안녕하세요.ko"))
+    (is (not (s/valid? ::ax/uri "https://안녕하세요.ko")))
+    (is (not (s/valid? ::ax/url "https://안녕하세요.ko")))))

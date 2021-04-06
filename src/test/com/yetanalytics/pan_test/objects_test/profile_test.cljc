@@ -8,8 +8,9 @@
   (testing "profile ID"
     (should-satisfy+ ::profile/id
                      "https://w3id.org/xapi/catch/"
-                     :bad
                      "https:///w3id.org/xapi/catch/"
+                     :bad
+                     "https://^w3id.org/xapi/catch/"
                      "what the pineapple")))
 
 (deftest context-test

@@ -1,9 +1,10 @@
 (ns com.yetanalytics.pan.axioms
   (:require [clojure.spec.alpha :as s]
             [clojure.string :as string]
-            #?(:clj [clojure.data.json :as json])
+            [xapi-schema.spec :as xs]
             [xapi-schema.spec.regex :as xsr]
-            [com.yetanalytics.pan.utils.json-schema :as jsn-schema])
+            [com.yetanalytics.pan.utils.json-schema :as jsn-schema]
+            #?(:clj [clojure.data.json :as json]))
   #?(:clj (:require
            [com.yetanalytics.pan.utils.resources :refer [read-edn-resource]])
      :cljs (:require-macros
@@ -23,11 +24,10 @@
 
 ;; Timestamps
 ;; Example: "2010-01-14T12:13:14Z"
-(s/def ::timestamp (s/and ::string (partial re-matches xsr/TimestampRegEx)))
+(s/def ::timestamp ::xs/timestamp)
 
 ;; Language Maps
 ;; Example: {"en" "Hello World"} or {:en "Hello World"}
-;; TODO Should revise language maps such that keys like :foo are not counted
 (s/def ::language-tag
   (fn language-tag? [t]
     (or (and (keyword? t)
@@ -99,18 +99,12 @@
 ;; IRIs/IRLs/URIs/URLs
 ;; Example: "https://yetanalytics.io"
 
-;; TODO We are currently using the xapi-schema specs as substitutes for the
-;; real thing (currently they do not correctly differentiate between IRIs,
-;; which accept non-ASCII chars, and URIs, which do not).
 (s/def ::iri (s/and ::string (partial re-matches xsr/AbsoluteIRIRegEx)))
 (s/def ::irl (s/and ::string (partial re-matches xsr/AbsoluteIRIRegEx)))
-(s/def ::uri (s/and ::string (partial re-matches xsr/AbsoluteIRIRegEx)))
-(s/def ::url (s/and ::string (partial re-matches xsr/AbsoluteIRIRegEx)))
-
-; (s/def ::iri ::xs/iri)
-; (s/def ::irl ::xs/irl)
-; (s/def ::uri ::xs/iri)
-; (s/def ::url ::xs/irl)
+#_{:clj-kondo/ignore [:unresolved-var]} ; kondo is buggy here for some reason
+(s/def ::uri (s/and ::string (partial re-matches xsr/AbsoluteURIRegEx)))
+#_{:clj-kondo/ignore [:unresolved-var]}
+(s/def ::url (s/and ::string (partial re-matches xsr/AbsoluteURIRegEx)))
 
 ;; Array of identifiers
 ;; Example: ["https://foo.org" "https://bar.org"]
