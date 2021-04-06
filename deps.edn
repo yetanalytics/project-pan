@@ -4,7 +4,6 @@
                                        :exclusions  [org.clojure/data.json]}
          org.clojure/core.match       {:mvn/version "0.3.0"}
          org.clojure/data.json        {:mvn/version "1.0.0"} ; clj only
-         luposlip/json-schema         {:mvn/version "0.1.6"} ; clj only
          aysylu/loom                  {:mvn/version "1.0.2"
                                        :exclusions  [org.clojure/clojurescript]}
          expound/expound              {:mvn/version "0.8.9"}
@@ -32,4 +31,4 @@
    :main-opts  ["-m" "cljs-test-runner.main"
                 "-d" "src/test"
                 "-c" "build.edn"]}}
- :mvn/repos {"jitpack" {:url "https://jitpack.io"}}}
+ #_:mvn/repos #_{"jitpack" {:url "https://jitpack.io"}}}

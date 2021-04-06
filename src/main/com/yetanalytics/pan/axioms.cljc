@@ -1,15 +1,13 @@
 (ns com.yetanalytics.pan.axioms
   (:require [clojure.spec.alpha :as s]
             [clojure.string :as string]
+            #?(:clj [clojure.data.json :as json])
             [xapi-schema.spec.regex :as xsr]
-            #?(:clj [json-schema.core :as jschema]
-               :cljs [jsonschema]))
+            [com.yetanalytics.pan.utils.json-schema :as jsn-schema])
   #?(:clj (:require
-           [com.yetanalytics.pan.utils.resources
-            :refer [read-resource read-edn-resource]])
+           [com.yetanalytics.pan.utils.resources :refer [read-edn-resource]])
      :cljs (:require-macros
-            [com.yetanalytics.pan.utils.resources
-             :refer [read-resource read-edn-resource]])))
+            [com.yetanalytics.pan.utils.resources :refer [read-edn-resource]])))
 
 ;; Booleans
 ;; (Useless wrapper, but exists for consistency)
@@ -81,23 +79,22 @@
 ;; JSON Schema
 ;; Example: "{\"type\":\"array\", \"uniqueItems\":true}"
 
-(defn- validate-schema [json-schema json]
-  #?(:clj
-     (try (let [vres (jschema/validate json-schema json)]
-            (some? vres))
-          (catch Exception _ false))
-     :cljs
-     (try (let [vres (.validate jsonschema
-                                (.parse js/JSON json)
-                                (.parse js/JSON json-schema))]
-            (. vres -valid))
-          (catch js/Error _ false))))
+;; TODO: Support for versions other than draft-07,
+;; e.g. draft-04, draft-06, draft-2019-09, and draft-2020-12
 
-;; TODO: dynamic var for json schema version
-;; TODO: test newest schema: version 08
-(def meta-schema-7 (read-resource "json/schema-07.json"))
+(defn- str->jsn
+  "Parses JSON string to EDN, returns ::s/invalid on failure
+   (for s/conformer)."
+  [s]
+  #?(:clj (try (json/read-str s :key-fn keyword)
+               (catch Exception _ ::s/invalid))
+     :cljs (try (js->clj (.parse js/JSON s) :keywordize-keys true)
+                (catch js/Error _ ::s/invalid))))
 
-(s/def ::json-schema (s/and ::string (partial validate-schema meta-schema-7)))
+(s/def ::json-schema
+  (s/and string?
+         (s/conformer str->jsn)
+         ::jsn-schema/schema))
 
 ;; IRIs/IRLs/URIs/URLs
 ;; Example: "https://yetanalytics.io"

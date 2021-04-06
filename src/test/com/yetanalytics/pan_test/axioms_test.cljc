@@ -206,10 +206,12 @@
     }
 }")
 
+;; TODO: More complete test coverage
 (deftest test-json-schema
   (testing "JSON Schema strings"
     (is (s/valid? ::ax/json-schema "{}"))
     (is (s/valid? ::ax/json-schema "{\"foo\" : \"bar\"}"))
+    (is (s/valid? ::ax/json-schema "{ \"type\": \"number\" }"))
     (is (s/valid? ::ax/json-schema schema-1))
     (is (s/valid? ::ax/json-schema schema-2))
     (is (s/valid? ::ax/json-schema schema-5))
