@@ -30,5 +30,4 @@
                                                        org.clojure/data.json]}}
    :main-opts  ["-m" "cljs-test-runner.main"
                 "-d" "src/test"
-                "-c" "build.edn"]}}
- #_:mvn/repos #_{"jitpack" {:url "https://jitpack.io"}}}
+                "-c" "build.edn"]}}}
