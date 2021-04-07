@@ -81,38 +81,51 @@
                       :rules      [{:location "$.actor.name"
                                     :all      ["Yet Analytics"]}]}]))
 
-;; Nuke the first Template
+;; Invalid Concept
 (def bad-profile-2a
+  (assoc good-profile-2
+         :concepts
+         [{:id                       "https://foo.org/bad-concept"
+           :type                     "ContextExtension"
+           :inScheme                 "https://w3id.org/xapi/catch/v1"
+           :prefLabel                {"en" "Bad Concept"}
+           :definition               {"en" "foo bar"}
+           :recommendedVerbs         ["not an iri"]
+           :inlineSchema             "{\"type\": \"notAType\"}"}]))
+
+;; Nuke the first Template
+(def bad-profile-2b
   (assoc-in good-profile-2 [:templates 0] {:id   "this-template-is-invalid"
                                            :type "FooBar"}))
 
 ;; Make IDs duplicate
-(def bad-profile-2b
+(def bad-profile-2c
   (-> good-profile-2
       (assoc-in [:versions 1 :id] "https://w3id.org/xapi/catch/v1")
       (assoc-in [:templates 1 :id] "https://foo.org/template")))
 
 ;; Invalidate inScheme values
-(def bad-profile-2c
+(def bad-profile-2d
   (-> good-profile-2
       (assoc-in [:templates 0 :inScheme] "https://foo.org/invalid")
       (assoc-in [:templates 1 :inScheme] "https://foo.org/also-invalid")))
 
 ;; Add a bunch of dead links
-(def bad-profile-2d
+(def bad-profile-2e
   (-> good-profile-2
       (assoc-in [:templates 0 :verb] "https://foo.org/dead-verb")
       (assoc-in [:templates 0 :attachmentUsageType] ["https://foo.org/dead-aut1"])))
 
 ;; Add a bunch of invalid links
-(def bad-profile-2e
+(def bad-profile-2f
   (-> good-profile-2
       (assoc-in [:templates 0 :verb] "https://foo.org/template2")
       (assoc-in [:templates 0 :attachmentUsageType] ["https://foo.org/template"])))
 
 ;; Let's add patterns! But they have cycles
-(def bad-profile-2f
-  (assoc good-profile-2 :patterns
+(def bad-profile-2g
+  (assoc good-profile-2
+         :patterns
          [{:id        "https://foo.org/pattern-one"
            :type      "Pattern"
            :primary   true
@@ -123,8 +136,9 @@
            :oneOrMore "https://foo.org/pattern-one"}]))
 
 ;; Let's add patterns! But our pattern refers to itself
-(def bad-profile-2g
-  (assoc good-profile-2 :patterns
+(def bad-profile-2h
+  (assoc good-profile-2
+         :patterns
          [{:id        "https://foo.org/pattern-three"
            :type      "Pattern"
            :primary   true
@@ -169,7 +183,7 @@
 
 ;; Profile metadata error
 
-(def err-msg-1 
+(def err-msg-1
 "
 **** Syntax Errors ****
 
@@ -229,10 +243,58 @@ should be: \"Profile\"
 Detected 2 errors
 ")
 
+;; Concept error
+
+(def err-msg-2
+"
+**** Syntax Errors ****
+
+-- Spec failed --------------------
+
+Value:
+\"not an iri\"
+
+of property:
+:recommendedVerbs
+
+in object:
+{:id \"https://foo.org/bad-concept\",
+ :type \"ContextExtension\",
+ :inScheme \"https://w3id.org/xapi/catch/v1\",
+ :prefLabel {\"en\" \"Bad Concept\"},
+ :definition {\"en\" \"foo bar\"},
+ :recommendedVerbs [\"not an iri\"],
+ :inlineSchema \"{\\\"type\\\": \\\"notAType\\\"}\"}
+
+should be a valid IRI
+
+-- Spec failed --------------------
+
+Value:
+\"{\\\"type\\\": \\\"notAType\\\"}\"
+
+of property:
+:inlineSchema
+
+in object:
+{:id \"https://foo.org/bad-concept\",
+ :type \"ContextExtension\",
+ :inScheme \"https://w3id.org/xapi/catch/v1\",
+ :prefLabel {\"en\" \"Bad Concept\"},
+ :definition {\"en\" \"foo bar\"},
+ :recommendedVerbs [\"not an iri\"],
+ :inlineSchema \"{\\\"type\\\": \\\"notAType\\\"}\"}
+
+should be a valid JSON schema
+
+-------------------------
+Detected 2 errors
+")
+
 ;; Statement Template error
 ;; Note: cljs version differs from clj by having an extra column in the table
 
-(def err-msg-2
+(def err-msg-3
   #?(:clj
      "
 **** Syntax Errors ****
@@ -356,7 +418,7 @@ Detected 3 errors
 
 ;; ID Error
 
-(def err-msg-3
+(def err-msg-4
 "
 **** ID Errors ****
 
@@ -384,7 +446,7 @@ Detected 2 errors
 
 ;; InScheme Error
 
-(def err-msg-4
+(def err-msg-5
 "
 **** Version Errors ****
 
@@ -422,7 +484,7 @@ Detected 2 errors
 
 ;; Template edge errors - nonexistent destination node
 
-(def err-msg-5
+(def err-msg-6
 "
 **** Template Edge Errors ****
 
@@ -470,7 +532,7 @@ Detected 2 errors
 
 ;; Template edge errors - invalid destinations
 
-(def err-msg-6
+(def err-msg-7
 "
 **** Template Edge Errors ****
 
@@ -518,7 +580,7 @@ Detected 2 errors
 
 ;; Cyclic pattern error
 
-(def err-msg-7
+(def err-msg-8
 "
 **** Pattern Cycle Errors ****
 
@@ -536,7 +598,7 @@ Detected 1 error
 
 ;; Pattern edge errors
 
-(def err-msg-8
+(def err-msg-9
 "
 **** Pattern Edge Errors ****
 
@@ -567,7 +629,7 @@ Detected 1 error
 
 ;; Context errors
 
-(def err-msg-9
+(def err-msg-10
 "
 **** Context Errors ****
 
@@ -693,7 +755,7 @@ Detected 4 errors
 
 ;; Context key errors
 
-(def err-msg-10
+(def err-msg-11
 "
 **** Context Key Errors ****
 
@@ -762,46 +824,47 @@ Detected 3 errors
                                    (with-out-str (e/expound-errors err-map)))
       err-msg-1 {:syntax-errors (p/validate bad-profile-1b)}
       err-msg-2 {:syntax-errors (p/validate bad-profile-2a)}
-      err-msg-3 {:id-errors (id/validate-ids bad-profile-2b)}
-      err-msg-4 {:in-scheme-errors (id/validate-in-schemes bad-profile-2c)}
-      err-msg-5 {:concept-edge-errors nil
-                 :pattern-edge-errors nil
-                 :template-edge-errors
-                 (t/validate-template-edges
-                  (t/create-graph [] (:templates bad-profile-2d)))}
+      err-msg-3 {:syntax-errors (p/validate bad-profile-2b)}
+      err-msg-4 {:id-errors (id/validate-ids bad-profile-2c)}
+      err-msg-5 {:in-scheme-errors (id/validate-in-schemes bad-profile-2d)}
       err-msg-6 {:concept-edge-errors nil
                  :pattern-edge-errors nil
                  :template-edge-errors
                  (t/validate-template-edges
                   (t/create-graph [] (:templates bad-profile-2e)))}
-      err-msg-7 {:pattern-cycle-errors
+      err-msg-7 {:concept-edge-errors nil
+                 :pattern-edge-errors nil
+                 :template-edge-errors
+                 (t/validate-template-edges
+                  (t/create-graph [] (:templates bad-profile-2f)))}
+      err-msg-8 {:pattern-cycle-errors
                  (pt/validate-pattern-tree
-                  (pt/create-graph (:templates bad-profile-2f)
-                                   (:patterns bad-profile-2f)))}
-      err-msg-8 {:pattern-edge-errors
-                 (pt/validate-pattern-edges
                   (pt/create-graph (:templates bad-profile-2g)
                                    (:patterns bad-profile-2g)))}
-      err-msg-9 (ctx/validate-contexts bad-profile-3a)
-      err-msg-10 (ctx/validate-contexts bad-profile-3b)))
+      err-msg-9 {:pattern-edge-errors
+                 (pt/validate-pattern-edges
+                  (pt/create-graph (:templates bad-profile-2h)
+                                   (:patterns bad-profile-2h)))}
+      err-msg-10 (ctx/validate-contexts bad-profile-3a)
+      err-msg-11 (ctx/validate-contexts bad-profile-3b)))
   (testing "combining error messages"
-    (is (= (str err-msg-3 err-msg-4)
-           (-> {:id-errors (id/validate-ids bad-profile-2b)
-                :in-scheme-errors (id/validate-in-schemes bad-profile-2c)}
+    (is (= (str err-msg-4 err-msg-5)
+           (-> {:id-errors (id/validate-ids bad-profile-2c)
+                :in-scheme-errors (id/validate-in-schemes bad-profile-2d)}
                e/expound-errors
                with-out-str)))
-    (is (= (str err-msg-6 err-msg-8 err-msg-7)
+    (is (= (str err-msg-7 err-msg-9 err-msg-8)
            (-> {:concept-edge-errors nil
                 :template-edge-errors
                 (t/validate-template-edges
-                 (t/create-graph [] (:templates bad-profile-2e)))
+                 (t/create-graph [] (:templates bad-profile-2f)))
                 :pattern-edge-errors
                 (pt/validate-pattern-edges
-                 (pt/create-graph (:templates bad-profile-2g)
-                                  (:patterns bad-profile-2g)))
+                 (pt/create-graph (:templates bad-profile-2h)
+                                  (:patterns bad-profile-2h)))
                 :pattern-cycle-errors
                 (pt/validate-pattern-tree
-                 (pt/create-graph (:templates bad-profile-2f)
-                                  (:patterns bad-profile-2f)))}
+                 (pt/create-graph (:templates bad-profile-2g)
+                                  (:patterns bad-profile-2g)))}
                e/expound-errors
                with-out-str)))))

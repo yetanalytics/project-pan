@@ -27,10 +27,29 @@
 (def type-array-spec
   (s/coll-of simple-types :kind vector? :min-count 1 :distinct true :gen-max 5))
 
+(defn- frag-spec []
+  (let [fs #?(:clj "\\/" :cljs "/")
+        frag-char (str "(?:"
+                       "[\\w\\-\\.\\~]" "|"  ; unreserved 
+                       "%[0-9A-Fa-f]{2}" "|" ; pct-encoded
+                       "[!$&'()*+,;=]" "|"   ; sub-delims
+                       "|:|@"                ; extra chars
+                       ")")
+        fragment  (str "^#(?:" frag-char "|" fs "|" "\\?" ")*$")]
+    (re-pattern fragment)))
+
+#_{:clj-kondo/ignore [:unresolved-var]}
+(def uri-reference-spec
+  (s/or :absolute-ref (partial re-matches xsr/AbsoluteURIRegEx)
+        :relative-ref (partial re-matches xsr/RelativeURLRegEx)
+        :same-doc-ref (partial re-matches (frag-spec))))
+
 ;; URI references
-(s/def ::$id string?) ; Just "id" in draft 4)
-(s/def ::$schema (s/and string? (partial re-matches xsr/AbsoluteIRIRegEx)))
-(s/def ::$ref string?)
+(s/def ::$id (s/and string? uri-reference-spec)) ; Just "id" in draft 4)
+(s/def ::$ref (s/and string? uri-reference-spec))
+#_{:clj-kondo/ignore [:unresolved-var]}
+(s/def ::$schema (s/and string? (partial re-matches xsr/AbsoluteURIRegEx)))
+
 (s/def ::$comment string?) ; Added in draft 7
 
 ;; Annotations
@@ -41,18 +60,18 @@
 (s/def ::examples vector?) ; Added in draft 6
 
 ;; Numeric
-(s/def ::multipleOf pos?)
+(s/def ::multipleOf (s/and number? pos?))
 (s/def ::maximum number?)
 (s/def ::exclusiveMaximum number?)
 (s/def ::minimum number?)
 (s/def ::exclusiveMinimum number?)
-(s/def ::maxLength pos-int?)
-(s/def ::minLength pos-int?)
+(s/def ::maxLength nat-int?)
+(s/def ::minLength nat-int?)
 
-;; Values
+;; Values and items
 (s/def ::pattern (s/and string? regex?))
 (s/def ::additionalItems ::schema)
-(s/def ::anyItems (s/or :schema ::schema :array vector?))
+(s/def ::items (s/or :schema ::schema :array schema-array-spec))
 (s/def ::maxItems nat-int?)
 (s/def ::minItems nat-int?)
 (s/def ::uniqueItems boolean?)
@@ -113,7 +132,7 @@
                                  ::minLength
                                  ::pattern
                                  ::additionalItems
-                                 ::anyItems
+                                 ::items
                                  ::maxItems
                                  ::minItems
                                  ::uniqueItems

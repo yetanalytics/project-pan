@@ -83,25 +83,32 @@
 ;; e.g. draft-04, draft-06, draft-2019-09, and draft-2020-12
 
 (defn- str->jsn
-  "Parses JSON string to EDN, returns ::s/invalid on failure
-   (for s/conformer)."
+  "Parses JSON string to EDN, returns nil on failure."
   [s]
   #?(:clj (try (json/read-str s :key-fn keyword)
-               (catch Exception _ ::s/invalid))
+               (catch Exception _ nil))
      :cljs (try (js->clj (.parse js/JSON s) :keywordize-keys true)
-                (catch js/Error _ ::s/invalid))))
+                (catch js/Error _ nil))))
 
+(defn- json-schema?
+  "Returns false if `s` is not parseable as JSON or not a valid
+   JSON schema, true otherwise."
+  [s]
+  (if-some [jsn (str->jsn s)]
+    (s/valid? ::jsn-schema/schema jsn)
+    false))
+
+;; This could also be done with s/conformer, but doing so will mess
+;; with expound.
 (s/def ::json-schema
-  (s/and string?
-         (s/conformer str->jsn)
-         ::jsn-schema/schema))
+  (s/and string? json-schema?))
 
 ;; IRIs/IRLs/URIs/URLs
 ;; Example: "https://yetanalytics.io"
 
 (s/def ::iri (s/and ::string (partial re-matches xsr/AbsoluteIRIRegEx)))
 (s/def ::irl (s/and ::string (partial re-matches xsr/AbsoluteIRIRegEx)))
-#_{:clj-kondo/ignore [:unresolved-var]} ; kondo is buggy here for some reason
+#_{:clj-kondo/ignore [:unresolved-var]} ; kondo doesn't see regex for some reason
 (s/def ::uri (s/and ::string (partial re-matches xsr/AbsoluteURIRegEx)))
 #_{:clj-kondo/ignore [:unresolved-var]}
 (s/def ::url (s/and ::string (partial re-matches xsr/AbsoluteURIRegEx)))
