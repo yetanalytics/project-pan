@@ -21,13 +21,15 @@
 (s/def ::inlineSchema ::ax/json-schema)
 
 (s/def ::no-recommended-activity-types
-  (fn [ext] (not (contains? ext :recommendedActivityTypes))))
+  (fn no-rec-ats? [ext] (not (contains? ext :recommendedActivityTypes))))
+
+(s/def ::extension-keys
+  (s/keys :req-un [::id ::type ::inScheme ::prefLabel ::definition]
+          :opt-un [::deprecated ::recommendedVerbs
+                   ::context ::schema ::inlineSchema]))
 
 (s/def ::extension
-  (s/and (s/keys
-          :req-un [::id ::type ::inScheme ::prefLabel ::definition]
-          :opt-un [::deprecated ::recommendedVerbs
-                   ::context ::schema ::inlineSchema])
+  (s/and ::extension-keys
          ::util/inline-or-iri
          ::no-recommended-activity-types))
 

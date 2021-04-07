@@ -128,4 +128,24 @@
 ;; Graph specs 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(s/def ::not-self-loop (fn not-self-loop? [edge] (not= (src edge) (dest edge))))
+(s/def ::not-self-loop
+  (fn not-self-loop? [edge] (not= (src edge) (dest edge))))
+
+;; All strongly connected components (subgraphs where all nodes can be
+;; reached from any other node in the subgraph) must be singletons. (Imagine
+;; a SCC of two nodes - there must be a cycle present; induct from there.)
+;; We find our SCCs using Kosaraju's Algorithm (which is what Loom uses in
+;; alg/scc), which has a time complexity of O(V+E); we then validate that they
+;; all only have one member node.
+;; 
+;; Note that Loom has a built-in function for DAG determination (which does
+;; correctly identify self-loops), but we use this algorithm to make our spec
+;; errors cleaner.
+;; 
+;; The following specs are to be used on the result of graph/scc.
+
+(s/def ::singleton-scc
+  (s/coll-of any? :kind vector? :min-count 1 :max-count 1))
+
+(s/def ::singleton-sccs
+  (s/coll-of ::singleton-scc :kind vector?))

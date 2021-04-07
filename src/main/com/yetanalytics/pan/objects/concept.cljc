@@ -1,7 +1,6 @@
 (ns com.yetanalytics.pan.objects.concept
   (:require [clojure.spec.alpha :as s]
             [com.yetanalytics.pan.graph :as graph]
-            [com.yetanalytics.pan.utils.spec :as util]
             [com.yetanalytics.pan.objects.concepts.verbs :as v]
             [com.yetanalytics.pan.objects.concepts.activities :as a]
             [com.yetanalytics.pan.objects.concepts.activity-types :as at]
@@ -21,7 +20,7 @@
 ;; Concepts 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defmulti concept? util/type-dispatch)
+(defmulti concept? :type)
 
 (defmethod concept? "Verb" [_] ::v/verb)
 (defmethod concept? "Activity" [_] ::a/activity)
@@ -33,8 +32,9 @@
 (defmethod concept? "ActivityProfileResource" [_] ::act-pr/document-resource)
 (defmethod concept? "AgentProfileResource" [_] ::ag-pr/document-resource)
 (defmethod concept? "StateResource" [_] ::s-pr/document-resource)
+(defmethod concept? :default [_] (constantly false))
 
-(s/def ::concept (s/multi-spec concept? #(:type %)))
+(s/def ::concept (s/multi-spec concept? :type))
 
 (s/def ::concepts (s/coll-of ::concept :type vector? :min-count 1))
 
@@ -69,69 +69,71 @@
   related, etc.)"
   [cgraph]
   (map (fn [edge]
-         (let [src (graph/src edge)
+         (let [src  (graph/src edge)
                dest (graph/dest edge)]
-           {:src src
-            :src-type (graph/attr cgraph src :type)
-            :src-version (graph/attr cgraph src :inScheme)
-            :dest dest
-            :dest-type (graph/attr cgraph dest :type)
+           {:src          src
+            :src-type     (graph/attr cgraph src :type)
+            :src-version  (graph/attr cgraph src :inScheme)
+            :dest         dest
+            :dest-type    (graph/attr cgraph dest :type)
             :dest-version (graph/attr cgraph dest :inScheme)
-            :type (graph/attr cgraph edge :type)}))
+            :type         (graph/attr cgraph edge :type)}))
        (graph/edges cgraph)))
 
 ;; Edge property specs
 
 ;; Is the destination not nil?
 (s/def ::valid-dest
-  (fn [{:keys [dest-type dest-version]}]
+  (fn valid-dest? [{:keys [dest-type dest-version]}]
     (and (some? dest-type) (some? dest-version))))
 
 ;; Is the source an Activity Type, Attachment Usage Type, or a Verb?
 (s/def ::relatable-src
-  (fn [{:keys [src-type]}]
+  (fn relatable-src? [{:keys [src-type]}]
     (contains? #{"ActivityType" "AttachmentUsageType" "Verb"} src-type)))
 
 ;; Is the destination an Activity Type, Attachment Usage Type, or a Verb?
 (s/def ::relatable-dest
-  (fn [{:keys [dest-type]}]
+  (fn relatable-dest? [{:keys [dest-type]}]
     (contains? #{"ActivityType" "AttachmentUsageType" "Verb"} dest-type)))
 
 ;; Is the source an Activity Extension?
-(s/def ::aext-src
-  (fn [{:keys [src-type]}]
+(s/def ::activity-ext-src
+  (fn aext-src? [{:keys [src-type]}]
     (contains? #{"ActivityExtension"} src-type)))
 
 ;; Is the source a Context or Result Extension?
-(s/def ::crext-src
-  (fn [{:keys [src-type]}]
+(s/def ::ctxt-result-ext-src
+  (fn crext-src? [{:keys [src-type]}]
     (contains? #{"ContextExtension" "ResultExtension"} src-type)))
 
 ;; Is the destination an Activity Type?
-(s/def ::at-dest
-  (fn [{:keys [dest-type]}]
+(s/def ::activity-type-dest
+  (fn at-dest? [{:keys [dest-type]}]
     (contains? #{"ActivityType"} dest-type)))
 
 ;; Is the destination a Verb?
 (s/def ::verb-dest
-  (fn [{:keys [dest-type]}]
+  (fn verb-dest? [{:keys [dest-type]}]
     (contains? #{"Verb"} dest-type)))
 
 ;; Are both the source and destination the same type of Concept?
 (s/def ::same-concept
-  (fn [{:keys [src-type dest-type]}]
+  (fn same-concept? [{:keys [src-type dest-type]}]
     (= src-type dest-type)))
 
 ;; Are both the source and destination of the same version?
 (s/def ::same-version
-  (fn [{:keys [src-version dest-version]}]
+  (fn same-version? [{:keys [src-version dest-version]}]
     (= src-version dest-version)))
 
 ;; Edge validation multimethod 
 
-(defmulti valid-edge? util/type-dispatch)
+(defmulti valid-edge? :type)
 
-;; broader MUST point to same-type Concepts from the same profile version
+;; broader, narrower, and related  MUST point to same-type Concepts from the
+;; same Profile version
+
 (defmethod valid-edge? :broader [_]
   (s/and ::relatable-src
          ::valid-dest
@@ -140,7 +142,6 @@
          ::same-concept
          ::same-version))
 
-;; narrower MUST point to same-type Concepts from the same profile version
 (defmethod valid-edge? :narrower [_]
   (s/and ::relatable-src
          ::valid-dest
@@ -149,7 +150,6 @@
          ::same-concept
          ::same-version))
 
-;; related MUST point to same-type Concepts from the same profile version
 (defmethod valid-edge? :related [_]
   (s/and ::relatable-src
          ::valid-dest
@@ -158,28 +158,59 @@
          ::same-concept
          ::same-version))
 
-; ;; recommendedActivityTypes MUST point to ActivityType Concepts
+;; broadMatch, narrowMatch, relatedMatch, and exactMatch MUST point to same-type
+;; Concepts from a different Profile
+
+;; TODO: Currently never used due to lack of external Profiles
+
+(comment
+  (defmethod valid-edge? :broadMatch [_]
+    (s/and ::relatable-src
+           ::valid-dest
+           ::graph/not-self-loop
+           ::relatable-dest
+           ::same-concept))
+
+  (defmethod valid-edge? :narrowMatch [_]
+    (s/and ::relatable-src
+           ::valid-dest
+           ::graph/not-self-loop
+           ::relatable-dest
+           ::same-concept))
+
+  (defmethod valid-edge? :relatedMatch [_]
+    (s/and ::relatable-src
+           ::valid-dest
+           ::graph/not-self-loop
+           ::relatable-dest
+           ::same-concept))
+
+  (defmethod valid-edge? :exactMatch [_]
+    (s/and ::relatable-src
+           ::valid-dest
+           ::graph/not-self-loop
+           ::relatable-dest
+           ::same-concept)))
+
+;; recommendedActivityTypes MUST point to ActivityType Concepts
 (defmethod valid-edge? :recommendedActivityTypes [_]
-  (s/and ::aext-src
+  (s/and ::activity-ext-src
          ::valid-dest
          ::graph/not-self-loop
-         ::at-dest))
+         ::activity-type-dest))
 
-; ;; recommendedVerbs MUST point to Verb Concepts
+;; recommendedVerbs MUST point to Verb Concepts
 (defmethod valid-edge? :recommendedVerbs [_]
-  (s/and ::crext-src
+  (s/and ::ctxt-result-ext-src
          ::valid-dest
          ::graph/not-self-loop
          ::verb-dest))
 
 ;; Is one edge valid?
-(s/def ::valid-edge (s/multi-spec valid-edge? util/type-dispatch))
+(s/def ::concept-edge (s/multi-spec valid-edge? :type))
 
 ;; Are all edges valid?
-(s/def ::valid-edges (s/coll-of ::valid-edge))
+(s/def ::concept-edges (s/coll-of ::concept-edge))
 
-(s/def ::concept-graph
-  (fn [cgraph] (s/valid? ::valid-edges (get-edges cgraph))))
-
-(defn explain-graph [cgraph]
-  (s/explain-data ::valid-edges (get-edges cgraph)))
+(defn validate-graph-edges [cgraph]
+  (s/explain-data ::concept-edges (get-edges cgraph)))

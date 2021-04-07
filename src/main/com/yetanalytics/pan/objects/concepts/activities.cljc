@@ -36,11 +36,15 @@
 
 ;; Need to use this function instead of s/merge because of restrict-keys in
 ;; xapi-schema function.
+(s/def ::activity-definition-keys
+       (s/keys :req-un [::_context]))
+
+(defn- activity-def? [adef]
+  (s/valid? :activity/definition
+            (stringify-lang-keys (dissoc adef :_context))))
+
 (s/def ::activityDefinition
-  (s/and (s/keys :req-un [::_context])
-         (fn [adef]
-           (s/valid? :activity/definition
-                     (stringify-lang-keys (dissoc adef :_context))))))
+  (s/and ::activity-definition-keys activity-def?))
 
 (s/def ::activity
   (s/keys :req-un [::id ::type ::inScheme ::activityDefinition]

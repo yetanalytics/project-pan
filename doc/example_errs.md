@@ -1,240 +1,279 @@
 # Example error messages
 
-*Note:* The `Detected x errors` at the bottom may not always make sense in
-terms of how it's displayed. This is due to limitations of the Expound library
-and the hacky workarounds needed to make it work semi-decently.
-
-## No arguments 
-Failed basic syntax validation:
+```clojure
+(def minimal-profile
+  {:id         "https://example.org/example"
+   :type       "Profile"
+   :prefLabel  {"en" "Ex-Profile"}
+   :definition {"en" "Example Profile"}
+   :_context   "https://w3id.org/xapi/profiles/context"
+   :versions   [{:id "https://example.org/example/v1"
+                 :generatedAtTime "2017-12-22T22:30:00-07:00"}]
+   :author     {:url  "https://www.yetanalytics.io"
+                :type "Organization"
+                :name "Yet Analytics"}
+   :conformsTo "https://w3id.org/xapi/profiles#1.0"})
 ```
+
+## No arguments (i.e. `:syntax?` argument)
+
+We invalidate the `:id` and `:type` properties of the Profile (these sorts of errors can also apply to Concepts, Templates, and Patterns).
+
+```clojure
+(def bad-profile-1
+  (-> minimal-profile
+      (assoc :id "not an id")
+      (assoc :type "FooBar")))
+
+(pan/validate-profile bad-profile-1)
+```
+
+```
+**** Syntax Errors ****
+
 -- Spec failed --------------------
 
-  {:id "not an id",
-       ^^^^^^^^^^^
-   :type ...,
-   :prefLabel ...,
-   :definition ...,
-   :_context ...,
-   :versions ...,
-   :author ...,
-   :conformsTo ...}
+Value:
+"not an id"
+
+of property:
+:id
+
+in object:
+{:id "not an id",
+ :type "FooBar",
+ :prefLabel {"en" "Ex-Profile},
+ :definition {"en" "Example Profile"},
+ :_context "https://w3id.org/xapi/profiles/context",
+ :conformsTo "https://w3id.org/xapi/profiles#1.0",
+ :author
+ {:url "https://www.yetanalytics.io",
+  :type "Organization",
+  :name "Yet Analytics"},
+ :versions
+ [{:id "https://example.org/example/v1",
+   :generatedAtTime "2017-12-22T22:30:00-07:00"}]}
 
 should be a valid IRI
 
--------------------------
-Detected 1 error
-
 -- Spec failed --------------------
 
-  {:id ...,
-   :type "FooBar",
-         ^^^^^^^^
-   :prefLabel ...,
-   :definition ...,
-   :_context ...,
-   :versions ...,
-   :author ...,
-   :conformsTo ...}
+Value:
+"FooBar"
+
+of property:
+:type
+
+in object:
+{:id "not an id",
+ :type "FooBar",
+ :prefLabel {"en" "Ex-Profile},
+ :definition {"en" "Example Profile"},
+ :_context "https://w3id.org/xapi/profiles/context",
+ :conformsTo "https://w3id.org/xapi/profiles#1.0",
+ :author
+ {:url "https://www.yetanalytics.io",
+  :type "Organization",
+  :name "Yet Analytics"},
+ :versions
+ [{:id "https://example.org/example/v1",
+   :generatedAtTime "2017-12-22T22:30:00-07:00"}]}
 
 should be: "Profile"
 
 -------------------------
-Detected 1 error
-```
-
-## 'id' argument 
-
-Duplicate IDs present:
-```
--- Spec failed --------------------
-
-Duplicate id: https://w3id.org/xapi/catch/v1
- with count: 2
-
-the id value is not unique
-
--- Spec failed --------------------
-
-Duplicate id: https://foo.org/template
- with count: 2
-
-the id value is not unique
-
--------------------------
 Detected 2 errors
+
 ```
 
-Invalid inSchemes:
+## `:id?` argument 
+
+We have duplicate IDs and `:inScheme` values that are not listed Profile versions:
+
+```clojure
+(def bad-templates
+  [{:id         "https://foo.org/template"
+    :type       "StatementTemplate"
+    :inScheme   "https://example.org/example/v1"
+    :prefLabel  {"en" "Example 1"}
+    :definition {"en" "Example Template 1"}
+    :rules      [{:location "$.actor.mbox"
+                  :all      ["yet@yetanalytics.io"]}]}
+    {:id        "https://foo.org/template"
+    :type       "StatementTemplate"
+    :inScheme   "https://example.org/example/v2"
+    :prefLabel  {"en" "Example 2"}
+    :definition {"en" "Example Template 2"}
+    :rules      [{:location "$.actor.name"
+                  :all      ["Yet Analytics"]}]}])
+
+(def bad-profile-2
+  (assoc minimal-profile :templates bad-templates))
+
+(pan/validate-profile bad-profile-2 :syntax? false :ids? true)
 ```
+
+```
+**** ID Errors ****
+
 -- Spec failed --------------------
 
-Invalid inScheme: https://foo.org/invalid
- at object: https://foo.org/template
- profile version ids:
-  https://w3id.org/xapi/catch/v2
-  https://w3id.org/xapi/catch/v1
+Identifier:
+"https://foo.org/template"
 
-the inScheme value is not a valid version ID
+which occurs 2 times in the Profile
 
--- Spec failed --------------------
-
-Invalid inScheme: https://foo.org/also-invalid
- at object: https://foo.org/template2
- profile version ids:
-  https://w3id.org/xapi/catch/v2
-  https://w3id.org/xapi/catch/v1
-
-the inScheme value is not a valid version ID
-
--------------------------
-Detected 2 errors
-```
-
-## 'relations' argument
-
-Links pointed to non-existent objects (here a Verb and an attachmentUsageType):
-```
--- Spec failed --------------------
-
-Invalid verb identifier:
- https://foo.org/dead-verb
-
- at object:
-  {:id "https://foo.org/template",
-   :type "StatementTemplate",
-   :inScheme "https://w3id.org/xapi/catch/v1",
-   ...}
-
- linked object:
-  {:id "https://foo.org/dead-verb",
-   :type nil,
-   :inScheme nil,
-   ...}
-
-linked concept or template does not exist
+should be a unique identifier value
 
 -------------------------
 Detected 1 error
 
+**** Version Errors ****
+
 -- Spec failed --------------------
 
-Invalid attachmentUsageType identifier:
- https://foo.org/dead-aut1
+InScheme IRI:
+"https://example.org/example/v2"
 
- at object:
-  {:id "https://foo.org/template",
-   :type "StatementTemplate",
-   :inScheme "https://w3id.org/xapi/catch/v1",
-   ...}
+associated with the identifier:
+"https://foo.org/template"
 
- linked object:
-  {:id "https://foo.org/dead-aut1",
-   :type nil,
-   :inScheme nil,
-   ...}
+in a Profile with the following version IDs:
+"https://example.org/example/v1"
 
-linked concept or template does not exist
+should be a valid version ID
 
 -------------------------
 Detected 1 error
 ```
 
-Cyclical patterns detected:
+## `:relations?` argument
+
+The Statement Template links to a non-existent Verb, while the Patterns form a cyclical reference (so they both eventually contain themselves).
+
+```clojure
+(def bad-templates-2
+  [{:id         "https://foo.org/template"
+    :type       "StatementTemplate"
+    :inScheme   "https://example.org/example/v1"
+    :prefLabel  {"en" "Example 1"}
+    :definition {"en" "Example Template 1"}
+    :verb       "https://foo.org/dead-verb"}])
+
+(def bad-patterns
+  [{:id        "https://foo.org/pattern-one"
+    :type      "Pattern"
+    :primary   true
+    :oneOrMore "https://foo.org/pattern-two"}
+  {:id        "https://foo.org/pattern-two"
+    :type      "Pattern"
+    :primary   true
+    :oneOrMore "https://foo.org/pattern-one"}])
+
+(def bad-profile-3
+  (-> minimal-profile
+      (assoc :templates bad-templates-2
+      (assoc :patterns bad-patterns))))
+
+(pan/validate-profile bad-profile-3 :syntax? false :relations? true)
 ```
+
+```
+**** Template Edge Errors ****
+
 -- Spec failed --------------------
 
-Cycle detected involving the following nodes:
-  https://foo.org/pattern-one
-  https://foo.org/pattern-two
+Statement Template:
+{:id "https://foo.org/template",
+ :type "StatementTemplate",
+ :inScheme "https://example.org/example/v1",
+ ...}
 
-cyclical reference detected
+that links to object:
+{:id "https://foo.org/dead-verb",
+ :type nil,
+ :inScheme nil,
+ ...}
+
+via the property:
+:verb
+
+should not link to non-existent Concept or Template
+
+-------------------------
+Detected 1 error
+
+**** Pattern Cycle Errors ****
+
+-- Spec failed --------------------
+
+The following Patterns:
+"https://foo.org/pattern-one"
+"https://foo.org/pattern-two"
+
+should not contain cyclical references
 
 -------------------------
 Detected 1 error
 ```
 
-## 'context' argument:
+## `context?` argument:
 
-Invalid `@context` value
+Invalid `@context` value:
+
 ```
 -- Spec failed --------------------
 
-  {:Profile ...,
-   :Verb "xapi:Verb",
-         ^^^^^^^^^^^
-   :ActivityType ...,
-   :AttachmentUsageType ...}
+Value:
+"profile:Profile"
 
-simple term definition does not have valid prefix
+in context:
+{:id "@id",
+ :type "@type",
+ :Profile "profile:Profile",
+ :prov "http://www.w3.org/ns/prov#",
+ :skos "http://www.w3.org/2004/02/skos/core#"}
 
-or
-
-expanded term definition does not have valid prefix
-
--- Spec failed --------------------
-
-  {:Profile ...,
-   :Verb ...,
-   :ActivityType "xapi:ActivityType",
-                 ^^^^^^^^^^^^^^^^^^^
-   :AttachmentUsageType ...}
-
-simple term definition does not have valid prefix
+should be a JSON-LD context keyword
 
 or
 
-expanded term definition does not have valid prefix
-
--- Spec failed --------------------
-
-  {:Profile ...,
-   :Verb ...,
-   :ActivityType ...,
-   :AttachmentUsageType "xapi:AttachmentUsageType"}
-                        ^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-simple term definition does not have valid prefix
+should be a JSON-LD prefix
 
 or
 
-expanded term definition does not have valid prefix
+should be a simple term definition with a valid prefix
+
+or
+
+should be an expanded term definition with a valid prefix
 
 -------------------------
-Detected 3 errors
+Detected 1 error
 ```
 
-Key was not in `@context` value:
+Key that cannot be expanded using a `@context` value:
+
 ```
--- Spec failed --------------------
-
-  {:id ...,
-   :type ...,
-   :_context ...,
-   :baz ...,
-   :foo ...}
-   ^^^^
-
-key cannot be expanded into absolute IRI
-
-or
-
-key is not @context
+**** Context Key Errors ****
 
 -- Spec failed --------------------
 
-  {:id ...,
-   :type ...,
-   :_context ...,
-   :foo ...,
-   :baz ...}
-   ^^^^
+Value:
+:hello
 
-key cannot be expanded into absolute IRI
+in object:
+{:id "https://foo.org/activity/1",
+ :type "Activity",
+ :_context "https://w3id.org/xapi/profiles/activity-context",
+ :hello "World"}
+
+should be expandable into an absolute IRI
 
 or
 
-key is not @context
+should be a JSON-LD keyword
 
 -------------------------
-Detected 2 errors
+Detected 1 error
 ```

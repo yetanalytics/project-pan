@@ -10,7 +10,7 @@
 (deftest valid-relation-test
   (testing "Concepts MUST be of the same type from this Profile version."
     (should-satisfy+
-     ::concept/valid-edge
+     ::concept/concept-edge
      {:src "https://foo.org/at1" :dest "https://foo.org/at2"
       :src-type "ActivityType" :dest-type "ActivityType"
       :src-version "https://foo.org/v1" :dest-version "https://foo.org/v1"
@@ -69,7 +69,7 @@
 (deftest valid-extension-test
   (testing "Extensions MUST point to appropriate recommended concepts."
     (should-satisfy+
-     ::concept/valid-edge
+     ::concept/concept-edge
      {:src "https://foo.org/ae" :dest "https://foo.org/at"
       :src-type "ActivityExtension" :dest-type "ActivityType"
       :src-version "https://foo.org/v1" :dest-version "https://foo.org/v1"
@@ -153,4 +153,4 @@
               :dest "https://foo.org/aut1" :dest-type "AttachmentUsageType" :dest-version "https://foo.org/v1"
               :type :narrower}}
            (set (concept/get-edges cgraph))))
-    (is (nil? (concept/explain-graph cgraph)))))
+    (is (nil? (concept/validate-graph-edges cgraph)))))

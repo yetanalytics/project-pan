@@ -19,7 +19,8 @@
 (deftest url-test
   (testing "url property"
     (is (s/valid? ::author/url "https://www.yetanalytics.io"))
-    (is (not (s/valid? ::author/url "https:///www.yetanalytics.io")))))
+    (is (s/valid? ::author/url "https:///www.yetanalytics.io"))
+    (is (not (s/valid? ::author/url "https://^www.yetanalytics.io")))))
 
 (deftest author-test
   (testing "author object"

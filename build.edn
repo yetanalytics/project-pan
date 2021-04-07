@@ -1,5 +1,4 @@
 {
  :install-deps true
- :npm-deps     {"jsonschema" "1.4.0"}
  :target       :nodejs
- }
+}

@@ -1,8 +1,7 @@
 (ns com.yetanalytics.pan.objects.pattern
   (:require [clojure.spec.alpha :as s]
             [com.yetanalytics.pan.axioms :as ax]
-            [com.yetanalytics.pan.graph :as graph]
-            [com.yetanalytics.pan.utils.spec :as util]))
+            [com.yetanalytics.pan.graph :as graph]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Patterns 
@@ -26,8 +25,8 @@
 (s/def ::zeroOrMore ::ax/iri)
 
 ;; Check if 'primary' property is true or false
-(s/def ::is-primary-true (fn [p] (:primary p)))
-(s/def ::is-primary-false (fn [p] (not (:primary p))))
+(s/def ::is-primary-true (fn is-primary? [p] (:primary p)))
+(s/def ::is-primary-false (fn is-not-primary? [p] (not (:primary p))))
 
 ;; A Pattern MUST contain exactly one of 'sequence', 'alternates', 'optional',
 ;; 'oneOrMore' or 'zeroOrMore'.
@@ -48,19 +47,25 @@
         zom? (not (or alt? opt? oom? sqn?))))))
 
 ;; Spec for a primary pattern ('primary' is set to true).
+(s/def ::primary-pattern-keys
+  (s/keys :req-un [::id ::type ::prefLabel ::definition ::primary]
+          :opt-un [::inScheme ::deprecated ::alternates ::optional
+                   ::oneOrMore ::sequence ::zeroOrMore]))
+
 (s/def ::primary-pattern
-  (s/and (s/keys :req-un [::id ::type ::prefLabel ::definition ::primary]
-                 :opt-un [::inScheme ::deprecated ::alternates ::optional
-                          ::oneOrMore ::sequence ::zeroOrMore])
+  (s/and ::primary-pattern-keys
          ::pattern-clause
          ::is-primary-true))
 
 ;; Spec for a non-primary pattern ('primary' is set to false).
+(s/def ::non-primary-pattern-keys
+  (s/keys :req-un [::id ::type]
+          :opt-un [::primary ::inScheme ::prefLabel ::definition
+                   ::deprecated ::alternates ::optional ::oneOrMore
+                   ::sequence ::zeroOrMore]))
+
 (s/def ::non-primary-pattern
-  (s/and (s/keys :req-un [::id ::type]
-                 :opt-un [::primary ::inScheme ::prefLabel ::definition
-                          ::deprecated ::alternates ::optional ::oneOrMore
-                          ::sequence ::zeroOrMore])
+  (s/and ::non-primary-pattern-keys
          ::pattern-clause
          ::is-primary-false))
 
@@ -91,13 +96,13 @@
 
 (defmulti get-pattern-edges dispatch-on-pattern)
 
-(defmethod get-pattern-edges '(:alternates) [{:keys [id alternates]}]
-  (mapv #(vector id % {:type :alternates}) alternates))
-
 ;; Use non-terse destructuring syntax because "sequence" is already a Clojure
 ;; core function
 (defmethod get-pattern-edges '(:sequence) [{:keys [id] :as pattern}]
   (mapv #(vector id % {:type :sequence}) (:sequence pattern)))
+
+(defmethod get-pattern-edges '(:alternates) [{:keys [id alternates]}]
+  (mapv #(vector id % {:type :alternates}) alternates))
 
 (defmethod get-pattern-edges '(:optional) [{:keys [id optional]}]
   (vector (vector id optional {:type :optional})))
@@ -150,73 +155,74 @@
   - type: the regex property of this edge (sequence, alternates, etc.)"
   [pgraph]
   (map (fn [edge]
-         (let [src (graph/src edge)
+         (let [src  (graph/src edge)
                dest (graph/dest edge)]
-           {:src src
-            :src-type (graph/attr pgraph src :type)
-            :src-primary (graph/attr pgraph src :primary)
-            :src-indegree (graph/in-degree pgraph src)
+           {:src           src
+            :src-type      (graph/attr pgraph src :type)
+            :src-primary   (graph/attr pgraph src :primary)
+            :src-indegree  (graph/in-degree pgraph src)
             :src-outdegree (graph/out-degree pgraph src)
-            :dest dest
-            :dest-type (graph/attr pgraph dest :type)
+            :dest          dest
+            :dest-type     (graph/attr pgraph dest :type)
             :dest-property (graph/attr pgraph dest :property)
-            :type (graph/attr pgraph edge :type)}))
+            :type          (graph/attr pgraph edge :type)}))
        (graph/edges pgraph)))
 
 ;; Edge property specs
 
 ;; Is the destination not nil?
 (s/def ::valid-dest
-  (fn [{:keys [dest-type]}]
+  (fn valid-dest? [{:keys [dest-type]}]
     (some? dest-type)))
 
 ;; Is the source a Pattern?
 (s/def ::pattern-src
-  (fn [{:keys [src-type]}] (contains? #{"Pattern"} src-type)))
+  (fn pattern-src? [{:keys [src-type]}]
+    (contains? #{"Pattern"} src-type)))
 
 ;; Is the destination a Pattern?
 (s/def ::pattern-dest
-  (fn [{:keys [dest-type]}]
+  (fn pattern-dest? [{:keys [dest-type]}]
     (contains? #{"Pattern"} dest-type)))
 
 ;; Is the destination a Template?
 (s/def ::template-dest
-  (fn [{:keys [dest-type]}]
+  (fn template-dest? [{:keys [dest-type]}]
     (contains? #{"StatementTemplate"} dest-type)))
 
 ;; Unique to alternates patterns
 
 ;; Is the destination not 'optional' or 'zeroOrMore'?
 (s/def ::non-opt-dest
-  (fn [{:keys [dest-property]}]
+  (fn non-opt-dest? [{:keys [dest-property]}]
     (not (contains? #{:optional :zeroOrMore} dest-property))))
 
 ;; Unique to sequence patterns
 
 ;; Does the source only have one outgoing connection?
 (s/def ::singleton-src
-  (fn [{:keys [src-outdegree]}]
+  (fn singleton-src? [{:keys [src-outdegree]}]
     (= 1 src-outdegree)))
 
 ;; Does the source have two or more outgoing connections?
 (s/def ::not-singleton-src
-  (fn [{:keys [src-outdegree]}]
+  (fn not-singleton-src? [{:keys [src-outdegree]}]
     (<= 2 src-outdegree)))
 
 ;; Is the source node a primary Pattern?
 (s/def ::primary-src
-  (fn [{:keys [src-primary]}]
+  (fn primary-src? [{:keys [src-primary]}]
     (true? src-primary)))
 
 ;; Does the source node have zero incoming connections? In other words, is it
 ;; used nowhere else in the Profile?
 (s/def ::zero-indegree-src
-  (fn [{:keys [src-indegree]}]
+  (fn zero-indegree-src? [{:keys [src-indegree]}]
     (= 0 src-indegree)))
 
 ;; Edge validation multimethod
 
-(defmulti valid-edge? util/type-dispatch)
+(defmulti valid-edge? :type)
 
 ;; MUST NOT include optional or zeroOrMore directly inside alternates
 (defmethod valid-edge? :alternates [_]
@@ -268,47 +274,18 @@
                :template ::template-dest)))
 
 ;; Is one edge valid?
-(s/def ::valid-edge (s/multi-spec valid-edge? util/type-dispatch))
+(s/def ::pattern-edge (s/multi-spec valid-edge? :type))
 
 ;; Are all the edges valid?
-(s/def ::valid-edges (s/coll-of ::valid-edge))
-
-;; MUST NOT include any Pattern within itself, at any depth.
-;; In other words, no cycles. We need to check for two things:
-;;
-;; 1. All strongly connected components (subgraphs where all nodes can be
-;; reached from any other node in the subgraph) must be singletons. (Imagine
-;; a SCC of two nodes - there must be a cycle present; induct from there.)
-;; We find our SCCs using Kosaraju's Algorithm (which is what Loom uses in
-;; alg/scc), which has a time complexity of O(V+E); we then validate that they
-;; all only have one member node.
-;;
-;; 2. No self-loops exist. This condition is not caught by Kosaraju's Algorithm
-;; (and thus not by our SCC specs) but is caught by our edge validation.
-;;
-;; Note that Loom has a built-in function for DAG determination (which does
-;; correctly identify self-loops), but we use this algorithm to make our spec
-;; errors cleaner.
-
-;; Check that one SCC is a singleton
-;; (Technically we can do this with s/cat, but this allows us to return the
-;; entire vector as a value in the error map)
-(s/def ::singleton-scc
-  (s/coll-of any? :kind vector? :min-count 1 :max-count 1))
-
-;; Check that all SCCs are singletons
-(s/def ::singleton-sccs (s/coll-of ::singleton-scc :kind vector?))
-
-(s/def ::pattern-graph
-  (fn [pgraph] (and (s/valid? ::valid-edges (get-edges pgraph))
-                    (s/valid? ::acyclic-graph pgraph))))
+(s/def ::pattern-edges (s/coll-of ::pattern-edge))
 
 ;; Edge validation
-(defn explain-graph [pgraph]
-  (s/explain-data ::valid-edges (get-edges pgraph)))
+(defn validate-pattern-edges [pgraph]
+  (s/explain-data ::pattern-edges (get-edges pgraph)))
 
-;; Cycle validation
-(defn explain-graph-cycles [pgraph]
-  (s/explain-data ::singleton-sccs (graph/scc pgraph)))
+;; MUST NOT include any Pattern within itself, at any depth.
+;; In other words, no cycles (including self loops)
+(defn validate-pattern-tree [pgraph]
+  (s/explain-data ::graph/singleton-sccs (graph/scc pgraph)))
 
 ;; TODO: MAY re-use Statement Templates and Patterns from other Profiles

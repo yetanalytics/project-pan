@@ -19,11 +19,13 @@
 (s/def ::schema ::ax/iri)
 (s/def ::inlineSchema ::ax/json-schema)
 
+(s/def ::document-resource-keys
+  (s/keys
+   :req-un [::id ::type ::inScheme ::prefLabel ::definition ::contentType]
+   :opt-un [::deprecated ::context ::schema ::inlineSchema]))
+
 (s/def ::document-resource
-  (s/and (s/keys
-          :req-un [::id ::type ::inScheme ::prefLabel ::definition
-                   ::contentType]
-          :opt-un [::deprecated ::context ::schema ::inlineSchema])
+  (s/and ::document-resource-keys
          ::util/inline-or-iri))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

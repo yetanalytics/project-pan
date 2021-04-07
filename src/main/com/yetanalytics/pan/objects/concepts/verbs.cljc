@@ -8,7 +8,6 @@
 ;; Verb
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-
 (s/def ::id ::ax/iri)
 (s/def ::type #{"Verb"})
 (s/def ::inScheme ::ax/iri)
@@ -23,13 +22,14 @@
 (s/def ::relatedMatch ::ax/array-of-iri)
 (s/def ::exactMatch ::ax/array-of-iri)
 
+(s/def ::verb-keys
+  (s/keys :req-un [::id ::type ::inScheme ::prefLabel ::definition]
+          :opt-un [::deprecated ::broader ::broadMatch ::narrower
+                   ::narrowMatch ::related ::relatedMatch ::exactMatch]))
+
 (s/def ::verb
-  (s/and
-   (s/keys
-    :req-un [::id ::type ::inScheme ::prefLabel ::definition]
-    :opt-un [::deprecated ::broader ::broadMatch ::narrower
-             ::narrowMatch ::related ::relatedMatch ::exactMatch])
-   ::u/related-only-deprecated))
+  (s/and ::verb-keys
+         ::u/related-only-deprecated))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; in-profile validation+ helpers

@@ -16,19 +16,21 @@
 (s/def ::deprecated ::ax/boolean)
 (s/def ::recommendedActivityTypes ::ax/array-of-iri)
 ;; TODO Clarify on what it means to "not be used"
-;;(s/def ::recommended-verbs (fn [coll] (-> coll not-empty nil?))) ;; if present, it should be nil
+;; (s/def ::recommended-verbs (fn [coll] (-> coll not-empty nil?))) ;; if present, it should be nil
 (s/def ::context ::ax/iri)
 (s/def ::schema ::ax/iri)
 (s/def ::inlineSchema ::ax/json-schema)
 
 (s/def ::no-recommended-verbs
-  (fn [ext] (not (contains? ext :recommendedVerbs))))
+  (fn no-rec-ats? [ext] (not (contains? ext :recommendedVerbs))))
+
+(s/def ::extension-keys
+  (s/keys :req-un [::id ::type ::inScheme ::prefLabel ::definition]
+          :opt-un [::deprecated ::recommendedActivityTypes ::context
+                   ::schema ::inlineSchema]))
 
 (s/def ::extension
-  (s/and (s/keys
-          :req-un [::id ::type ::inScheme ::prefLabel ::definition]
-          :opt-un [::deprecated ::recommendedActivityTypes ::context
-                   ::schema ::inlineSchema])
+  (s/and ::extension-keys
          ::util/inline-or-iri
          ::no-recommended-verbs))
 

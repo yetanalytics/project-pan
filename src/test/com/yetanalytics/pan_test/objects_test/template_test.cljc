@@ -209,7 +209,7 @@
 (deftest valid-edge-test
   (testing "Valid edge properties"
     (should-satisfy+
-     ::template/valid-edge
+     ::template/template-edge
      {:src "http://foo.org/st" :dest "http://foo.org/bar"
       :type :verb :src-type "StatementTemplate" :dest-type "Verb"
       :src-version "https://foo.org/v1" :dest-version "https://foo.org/v1"}
@@ -316,5 +316,5 @@
               :dest "https://foo.org/template1" :dest-type "StatementTemplate" :dest-version "https://foo.org/v1"
               :type :objectStatementRefTemplate}}
            (set (template/get-edges tgraph))))
-    (should-satisfy ::template/template-graph tgraph)
-    (is (nil? (template/explain-graph tgraph)))))
+    (should-satisfy ::template/template-edges (template/get-edges tgraph))
+    (is (nil? (template/validate-template-edges tgraph)))))

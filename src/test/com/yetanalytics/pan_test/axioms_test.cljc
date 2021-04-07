@@ -167,21 +167,26 @@
                 \"id\" : \"https://luposlip.com/some-schema.json\",
                 \"type\" : \"object\",
                 \"properties\" : {
-                    \"id\" :{
+                    \"id\" : {
                         \"type\" : \"number\",
-                        \"exclusiveMinimum\": 0} 
+                        \"exclusiveMinimum\": 0
+                    } 
                 },
                 \"required\" : [\"id\"]}")
 
 ; Examples from xAPI Profile Spec README
-(def schema-3 "{ \"type\": \"object\", \"properties\":{
-              \"rank\": {\"type\": \"number\", \"required\": true},
-              \"medal\": {\"type\": \"string\"}}}")
+(def schema-3 "{ \"type\": \"object\",
+                 \"properties\": {
+                   \"rank\": { \"type\": \"number\", \"required\": true },
+                   \"medal\": { \"type\": \"string\" }
+                 }
+               }")
 
-(def schema-4 "{ \"type\": \"object\", \"properties\": { \\
-                 \"cut\": {\"enum\": [\"straight\", \"fitted\"], \"required\": true}, \\
-                 \"size\": {\"enum\": [\"x-small\", \"small\", \"medium\", \"large\", \\
-                 \"x-large\", \"2x-large\", \"3x-large\"], \"required\": true}}}")
+(def schema-4 "{ \"type\": \"object\",
+                 \"properties\": { \\
+                   \"cut\": {\"enum\": [\"straight\", \"fitted\"], \"required\": true}, \\
+                   \"size\": {\"enum\": [\"x-small\", \"small\", \"medium\", \"large\", \"x-large\", \"2x-large\", \"3x-large\"], \"required\": true}}
+               }")
 
 ; Examples from cmi5 profile
 (def schema-5 "{ \"type\": \"number\", \"maximum\": 100, \"minimum\": 0, \"multipleOf\": 1.0 }")
@@ -206,10 +211,14 @@
     }
 }")
 
+;; TODO: More complete test coverage
 (deftest test-json-schema
   (testing "JSON Schema strings"
     (is (s/valid? ::ax/json-schema "{}"))
+    (is (s/valid? ::ax/json-schema "true"))
+    (is (s/valid? ::ax/json-schema "false"))
     (is (s/valid? ::ax/json-schema "{\"foo\" : \"bar\"}"))
+    (is (s/valid? ::ax/json-schema "{ \"type\": \"number\" }"))
     (is (s/valid? ::ax/json-schema schema-1))
     (is (s/valid? ::ax/json-schema schema-2))
     (is (s/valid? ::ax/json-schema schema-5))
@@ -218,14 +227,215 @@
     (is (not (s/valid? ::ax/json-schema 74)))
     (is (not (s/valid? ::ax/json-schema "")))
     (is (not (s/valid? ::ax/json-schema "what the pineapple")))
-    (is (not (s/valid? ::ax/json-schema "{\"$schema\" : \" not a uri \"}")))
-    (is (not (s/valid? ::ax/json-schema "{\"$schema\" : \"alsoNotURI\"}")))
-    (is (not (s/valid? ::ax/json-schema "{\"$comment\" : 74}")))
     ; next two are valid only in draft-03
-    (is (not (s/valid? ::ax/json-schema schema-3))) 
-    (is (not (s/valid? ::ax/json-schema schema-4)))))
+    (is (not (s/valid? ::ax/json-schema schema-3)))
+    (is (not (s/valid? ::ax/json-schema schema-4))))
+  (testing "More JSON Schema strings, mostly from the juxt/jinx test suite"
+    (testing "$schema property"
+      (should-satisfy+ ::ax/json-schema
+                       "{\"$schema\": \"http://json-schema.org/draft-07/schema#\"}"
+                       :bad
+                       "{\"$schema\": \" not an uri \"}"
+                       "{\"$schema\": \"alsoNotURI\"}"))
+    (testing "$ref property"
+      (should-satisfy+ ::ax/json-schema
+                       "{\"$ref\": \"#\"}"
+                       "{\"$ref\": \"#/definitions/schemaArray\"}"
+                       "{\"$ref\": \"https://example.org/ref\"}"
+                       "{\"$ref\": \"/relative?path#example\"}"
+                       :bad
+                       "{\"$ref\": \"not a uri reference\"}"))
+    (testing "$comment property"
+      (should-satisfy+ ::ax/json-schema
+                       "{\"$comment\" : \"74\"}"
+                       :bad
+                       "{\"$comment\" : 74}"))
+    (testing "type property"
+      (should-satisfy+ ::ax/json-schema
+                       "{\"type\": [\"integer\"]}"
+                       :bad
+                       "{\"type\": 10}"
+                       "{\"type\": \"float\"}"
+                       "{\"type\": [\"string\", 10]}"
+                       "{\"type\": [null]}"
+                       "{\"type\": [\"string\", \"string\"]}"
+                       "{\"type\": [\"float\". \"number\"]}"))
+    (testing "enum property"
+      (should-satisfy+ ::ax/json-schema
+                       "{\"enum\": [\"foo\", \"bar\"]}"
+                       :bad
+                       "{\"enum\": \"foo\"}"
+                       "{\"enum\": []}"
+                       "{\"enum\": [\"foo\", \"foo\"]}"))
+    (testing "const property"
+      (should-satisfy+ ::ax/json-schema
+                       "{\"const\": \"foo\"}"
+                       "{\"const\": []}"
+                       "{\"const\": [\"foo\"]}"
+                       "{\"const\": null}"
+                       :bad
+                       "{\"const\": }"))
+    (testing "multipleOf property"
+      (should-satisfy+ ::ax/json-schema
+                       "{\"multipleOf\": 0.1}"
+                       :bad
+                       "{\"multipleOf\": \"foo\"}"
+                       "{\"multipleOf\": 0}"
+                       "{\"multipleOf\": -1}"))
+    (testing "maximum/exclusiveMaximum properties"
+      (should-satisfy+ ::ax/json-schema
+                       "{\"maximum\": 10}"
+                       "{\"maximum\": 10.5}"
+                       "{\"exclusiveMaximum\": 0}"
+                       :bad
+                       "{\"maximum\": \"foo\"}"
+                       "{\"exclusiveMaximum\": \"foo\"}"))
+    (testing "mimimum/exclusiveMinimum properties"
+      (should-satisfy+ ::ax/json-schema
+                       "{\"minimum\": 10}"
+                       "{\"minimum\": 10.5}"
+                       "{\"exclusiveMinimum\": 0}"
+                       :bad
+                       "{\"minimum\": \"foo\"}"
+                       "{\"exclusiveMinimum\": \"foo\"}"))
+    (testing "maxLength/minLength properties"
+      (should-satisfy+ ::ax/json-schema
+                       "{\"maxLength\": 0}"
+                       "{\"maxLength\": 5}"
+                       "{\"minLength\": 0}"
+                       "{\"minLength\": 5}"
+                       :bad
+                       "{\"maxLength\": \"foo\"}"
+                       "{\"minLength\": \"foo\"}"))
+    (testing "pattern property"
+      (should-satisfy+ ::ax/json-schema
+                       "{\"pattern\": \"foobar.?\"}"
+                       :bad
+                       "{\"pattern\": 10}"))
+    (testing "items property"
+      (should-satisfy+ ::ax/json-schema
+                       "{\"items\": {\"type\": \"string\"}}"
+                       "{\"items\": [{\"type\": \"string\"},
+                                     {\"type\": \"number\"}]}"
+                       :bad
+                       "{\"items\": null}"
+                       "{\"items\": {\"type\": \"foo\"}}"
+                       "{\"items\": [{\"type\": \"string\"},
+                                     {\"type\": \"number\"},
+                                     {\"type\": \"float\"}]}"))
+    (testing "additionalItems property"
+      (should-satisfy+ ::ax/json-schema
+                       "{\"additionalItems\": false}"
+                       "{\"additionalItems\": true}"
+                       :bad
+                       "{\"additionalItems\": null}"
+                       "{\"additionalItems\": {\"type\": \"foo\"}}"))
+    (testing "maxItems/minItems properties"
+      (should-satisfy+ ::ax/json-schema
+                       "{\"maxItems\": 10}"
+                       "{\"maxItems\": 0}"
+                       "{\"minItems\": 10}"
+                       "{\"minItems\": 0}"
+                       :bad
+                       "{\"maxItems\": -1}"
+                       "{\"maxItems\": 0.5}"
+                       "{\"minItems\": -1}"
+                       "{\"minItems\": 0.5}"))
+    (testing "uniqueItems property"
+      (should-satisfy+ ::ax/json-schema
+                       "{\"uniqueItems\": true}"
+                       "{\"uniqueItems\": false}"
+                       :bad
+                       "{\"uniqueItems\": 1}"))
+    (testing "contains property"
+      (should-satisfy+ ::ax/json-schema
+                       "{\"contains\": true}"
+                       "{\"contains\": false}"
+                       "{\"contains\": {\"type\": \"string\"}}"
+                       :bad
+                       "{\"contains\": {\"type\": \"foo\"}}"))
+    (testing "maxProperties/minProperties properties"
+      (should-satisfy+ ::ax/json-schema
+                       "{\"maxProperties\": 10}"
+                       "{\"maxProperties\": 0}"
+                       "{\"minProperties\": 10}"
+                       "{\"minProperties\": 0}"
+                       :bad
+                       "{\"maxProperties\": -1}"
+                       "{\"maxProperties\": 0.5}"
+                       "{\"minProperties\": -1}"
+                       "{\"minProperties\": 0.5}"))
+    (testing "required property"
+      (should-satisfy+ ::ax/json-schema
+                       "{\"required\": []}"
+                       "{\"required\": [\"foo\", \"bar\"]}"
+                       :bad
+                       "{\"required\": \"foo\"}"
+                       "{\"required\": [\"foo\", 0]}"
+                       "{\"required\": [\"foo\", \"foo\"]}"))
+    (testing "properties property"
+      (should-satisfy+ ::ax/json-schema
+                       "{\"properties\": {}}"
+                       :bad
+                       "{\"properties\": 10}"
+                       "{\"properties\": {\"foo\": {\"type\": \"bar\"}}}"))
+    (testing "patternProperties property"
+      (should-satisfy+ ::ax/json-schema
+                       "{\"patternProperties\": {}}"
+                       :bad
+                       "{\"patternProperties\": 10}"
+                       "{\"patternProperties\": {\"foo\": {\"type\": \"bar\"}}}"))
+    (testing "additionalProperties property"
+      (should-satisfy+ ::ax/json-schema
+                       "{\"additionalProperties\": false}"
+                       "{\"additionalProperties\": true}"
+                       :bad
+                       "{\"additionalProperties\": null}"
+                       "{\"additionalProperties\": {\"type\": \"foo\"}}"))
+    (testing "dependencies property"
+      (should-satisfy+ ::ax/json-schema
+                       "{\"dependencies\": {}}"
+                       "{\"dependencies\": {\"a\": []}}"
+                       :bad
+                       "{\"dependencies\": true}"
+                       "{\"dependencies\": {\"a\": [\"foo\", \"foo\"]}}"
+                       "{\"dependencies\": {\"a\": [\"foo\", 10]}}"
+                       "{\"dependencies\": {\"a\": {\"type\": \"foo\"}}}"
+                       "{\"dependencies\": {\"a\": null}}"))
+    (testing "propertyNames property"
+      (should-satisfy+ ::ax/json-schema
+                       "{\"propertyNames\": true}"
+                       "{\"propertyNames\": false}"
+                       :bad
+                       "{\"propertyNames\": null}"
+                       "{\"propertyNames\": {\"type\": \"foo\"}}"))
+    (testing "if/then/else/allOf/anyOf/oneOf/not properties"
+      (should-satisfy+ ::ax/json-schema
+                       "{\"allOf\": [{\"type\": \"string\"}]}"
+                       "{\"anyOf\": [{\"type\": \"string\"}]}"
+                       "{\"oneOf\": [{\"type\": \"string\"}]}"
+                       "{\"not\": {\"type\": \"string\"}}"
+                       :bad
+                       "{\"if\": {\"type\": \"foo\"}}"
+                       "{\"then\": {\"type\": \"foo\"}}"
+                       "{\"else\": {\"type\": \"foo\"}}"
+                       "{\"allOf\": {\"type\": \"foo\"}}"
+                       "{\"allOf\": []}"
+                       "{\"allOf\": [{\"type\": \"foo\"}]}"
+                       "{\"anyOf\": {\"type\": \"foo\"}}"
+                       "{\"anyOf\": []}"
+                       "{\"anyOf\": [{\"type\": \"foo\"}]}"
+                       "{\"oneOf\": {\"type\": \"foo\"}}"
+                       "{\"oneOf\": []}"
+                       "{\"oneOf\": [{\"type\": \"foo\"}]}"
+                       "{\"not\": {\"type\": \"foo\"}}"))
+    (testing "format property"
+      (should-satisfy+ ::ax/json-schema
+                       "{\"format\": \"regex\"}"
+                       :bad
+                       "{\"format\": null}"
+                       "{\"format\": []}"))))
 
-;; TODO Should check that IRIs with non-ASCII chars pass (currently they don't)
 (deftest test-iri
   (testing "IRIs/IRLs/URIs/URLs"
     (should-satisfy+ ::ax/iri
@@ -233,4 +443,9 @@
                      "https://foo.org/"
                      :bad
                      "foo.org"
-                     "www.foo.org")))
+                     "www.foo.org"))
+  (testing "IRIs/IRLs vs URIs/URLs"
+    (is (s/valid? ::ax/iri "https://안녕하세요.ko"))
+    (is (s/valid? ::ax/irl "https://안녕하세요.ko"))
+    (is (not (s/valid? ::ax/uri "https://안녕하세요.ko")))
+    (is (not (s/valid? ::ax/url "https://안녕하세요.ko")))))

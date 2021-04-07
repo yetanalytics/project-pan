@@ -14,7 +14,7 @@
 (def res-1 (read-resource "media_types.edn"))
 (def res-2 (read-resource "context/activity-context.json"))
 (def res-3 (read-resource "json/schema-07.json"))
-(def res-4 (read-resource "sample_profiles/will-profile.json"))
+(def res-4 (read-resource "sample_profiles/catch.json"))
 
 (deftest read-resource-testy
   (testing "testing that read-resource returns strings"
@@ -31,7 +31,7 @@
 
 (def res-6 (read-json-resource "json/schema-07.json"))
 (def res-7 (read-json-resource "context/activity-context.json" "at/"))
-(def res-8 (read-json-resource "sample_profiles/will-profile.json" "_"))
+(def res-8 (read-json-resource "sample_profiles/catch.json" "_"))
 
 (deftest read-json-resource-test
   (testing "read-json-resource function"
