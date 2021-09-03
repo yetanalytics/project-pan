@@ -5,7 +5,7 @@ clean:
 	rm -rf cljs-test-runner-out
 
 test-clj:
-	clojure -A:test:runner-clj
+	clojure -M:test:runner-clj
 
 test-cljs:
-	clojure -A:test:runner-cljs
+	clojure -M:test:runner-cljs
