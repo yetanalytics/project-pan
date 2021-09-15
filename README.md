@@ -1,5 +1,7 @@
 # project-pan
 
+[![CI](https://github.com/yetanalytics/project-pan/actions/workflows/main.yml/badge.svg)](https://github.com/yetanalytics/project-pan/actions/workflows/main.yml)
+
 A Clojure library for validating xAPI Profiles, according to the [xAPI Profile specification](https://github.com/adlnet/xapi-profiles).
 
 ## Usage

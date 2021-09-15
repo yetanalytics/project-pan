@@ -10,4 +10,5 @@ test-clj:
 test-cljs:
 	clojure -A:test:runner-cljs
 
-ci: clean test-clj test-cljs	
+ci: test-clj test-cljs
+
