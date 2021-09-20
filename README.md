@@ -64,6 +64,6 @@ Besides validating whole Profiles, you can also use library methods and specs to
 
 ## License
 
-Copyright © 2020 Yet Analytics, Inc.
+Copyright © 2019-2021 Yet Analytics, Inc.
 
 Project Pan is licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE) for the full license text
