@@ -6,7 +6,7 @@ A Clojure library for validating xAPI Profiles, according to the [xAPI Profile s
 
 ## Usage
 
-To use the library to validate a whole Profile, call `validate-profile` in the `pan` namespace. This method takes in an entire Profile (either as a JSON-LD string or an EDN data structure) and prints either a success message on success (obviously) or an error message on failure.
+To use the library to validate a whole Profile, call `validate-profile` in the `pan` namespace. This method takes in an entire Profile as an EDN data structure and prints either a success message on success (obviously) or an error message on failure.
 
 Arguments may be supplied for different levels of validation strictness, which are listed as follows:
 - `:syntax?` - Basic validation; check only the types of properties and simple syntax of all Profile objects. Set to `true` by default.

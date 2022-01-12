@@ -50,8 +50,7 @@
                    contexts? false
                    external-iris? false
                    print-errs? true}}]
-  (let [profile (convert-profile profile)
-        errors  (cond-> {}
+  (let [errors  (cond-> {}
                   syntax?
                   (assoc :syntax-errors (profile/validate profile))
                   ids? ; ID duplicate and inScheme errors
