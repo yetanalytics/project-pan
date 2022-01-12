@@ -55,9 +55,8 @@
    :recommendedVerbs])
 
 (defn get-graph-concepts
-  [profiles extra-profiles]
-  (let [concepts     (mapcat :concepts profiles)
-        ext-concepts (mapcat :concepts extra-profiles)
+  [profile extra-profiles]
+  (let [concepts     (:concepts profile)
         ext-ids      (set (reduce
                            (fn [acc concept]
                              (-> concept
@@ -67,8 +66,8 @@
                                  (concat acc)))
                            []
                            concepts))
-        ext-cons  (filter (fn [{id :id}] (contains? ext-ids id))
-                          ext-concepts)]
+        ext-cons     (->> (mapcat :concepts extra-profiles)
+                          (filter (fn [{id :id}] (contains? ext-ids id))))]
     {:concepts     concepts
      :ext-concepts ext-cons}))
 
@@ -84,9 +83,9 @@
         (graph/add-edges cedges))))
 
 (defn create-graph-2
-  [profiles extra-profiles]
+  [profile extra-profiles]
   (let [{:keys [concepts
-                ext-concepts]} (get-graph-concepts profiles extra-profiles)
+                ext-concepts]} (get-graph-concepts profile extra-profiles)
         cgraph (graph/new-digraph)
         cnodes (->> (concat concepts ext-concepts)
                     (mapv graph/node-with-attrs))

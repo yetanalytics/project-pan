@@ -129,8 +129,8 @@
 (def pattern-ext-keys [:sequence :alternates :optional :oneOrMore :zeroOrMore])
 
 (defn get-graph-templates-patterns
-  [profiles extra-profiles]
-  (let [patterns  (mapcat :patterns profiles)
+  [profile extra-profiles]
+  (let [patterns  (:patterns profile)
         ext-ids   (set (reduce
                         (fn [acc pat]
                           (-> pat
@@ -140,11 +140,11 @@
                               (concat acc)))
                         []
                         patterns))
-        templates (->> profiles
-                       (mapcat :templates)
-                       (filter (fn [{id :id}] (contains? ext-ids id))))
         ext-pats  (->> extra-profiles
                        (mapcat :patterns)
+                       (filter (fn [{id :id}] (contains? ext-ids id))))
+        templates (->> profile
+                       (mapcat :templates)
                        (filter (fn [{id :id}] (contains? ext-ids id))))
         ext-tmps  (->> extra-profiles
                        (mapcat :templates)
@@ -169,11 +169,11 @@
         (graph/add-edges pedges))))
 
 (defn create-graph-2
-  [profiles extra-profiles]
+  [profile extra-profiles]
   (let [{:keys [templates
                 patterns
                 ext-patterns]} (get-graph-templates-patterns
-                                profiles
+                                profile
                                 extra-profiles)
         pgraph (graph/new-digraph)
         pnodes (->> (concat templates patterns ext-patterns)
@@ -211,6 +211,22 @@
             :dest-property (graph/attr pgraph dest :property)
             :type          (graph/attr pgraph edge :type)}))
        (graph/edges pgraph)))
+
+(comment
+  (get-edges
+   (create-graph-2
+    {:patterns [{:id "https://foo.org/pattern1" :type "Pattern"
+                 :inScheme "https://foo.org/v1" :primary true
+                 :alternates ["https://foo.org/pattern2"]}
+                {:id "https://foo.org/pattern2" :type "Pattern"
+                 :inScheme "https://foo.org/v1" :primary true
+                 :sequence ["https://foo.org/pattern3"
+                            "https://foo.org/template1"]}]}
+    [{:templates [{:id "https://foo.org/template1"
+                   :type "StatementTemplate" :inScheme "https://foo.org/v1"}]
+      :patterns [{:id "https://foo.org/pattern3" :type "Pattern"
+                  :inScheme "https://foo.org/v1" :primary true
+                  :optional "https://foo.org/template1"}]}])))
 
 ;; Edge property specs
 

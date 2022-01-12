@@ -130,34 +130,34 @@
 
 (def cgraph
   (concept/create-graph-2
-   [{:concepts [{:id       "https://foo.org/verb1"
-                 :type     "Verb"
-                 :inScheme "https://foo.org/v1"
-                 :broader  ["https://foo.org/verb2"]}
-                {:id       "https://foo.org/verb2"
-                 :type     "Verb"
-                 :inScheme "https://foo.org/v1"
-                 :narrower ["https://foo.org/verb1"]}
-                {:id       "https://foo.org/at1"
-                 :type     "ActivityType"
-                 :inScheme "https://foo.org/v1"
-                 :broader  ["https://foo.org/at2"]}
-                {:id       "https://foo.org/at2"
-                 :type     "ActivityType"
-                 :inScheme "https://foo.org/v1"
-                 :narrower ["https://foo.org/at1"]}
-                {:id       "https://foo.org/aut1"
-                 :type     "AttachmentUsageType"
-                 :inScheme "https://foo.org/v1"
-                 :broader  ["https://foo.org/aut2"]}
-                {:id       "https://foo.org/aut2"
-                 :type     "AttachmentUsageType"
-                 :inScheme "https://foo.org/v1"
-                 :narrower ["https://foo.org/aut1"]}]}
-    {:concepts [{:id          "https://foo.org/aut3"
-                 :type        "AttachmentUsageType"
-                 :inScheme    "https://foo.org/v1"
-                 :narrowMatch ["https://bar.org/ext-aut"]}]}]
+   {:concepts [{:id       "https://foo.org/verb1"
+                :type     "Verb"
+                :inScheme "https://foo.org/v1"
+                :broader  ["https://foo.org/verb2"]}
+               {:id       "https://foo.org/verb2"
+                :type     "Verb"
+                :inScheme "https://foo.org/v1"
+                :narrower ["https://foo.org/verb1"]}
+               {:id       "https://foo.org/at1"
+                :type     "ActivityType"
+                :inScheme "https://foo.org/v1"
+                :broader  ["https://foo.org/at2"]}
+               {:id       "https://foo.org/at2"
+                :type     "ActivityType"
+                :inScheme "https://foo.org/v1"
+                :narrower ["https://foo.org/at1"]}
+               {:id       "https://foo.org/aut1"
+                :type     "AttachmentUsageType"
+                :inScheme "https://foo.org/v1"
+                :broader  ["https://foo.org/aut2"]}
+               {:id       "https://foo.org/aut2"
+                :type     "AttachmentUsageType"
+                :inScheme "https://foo.org/v1"
+                :narrower ["https://foo.org/aut1"]}
+               {:id          "https://foo.org/aut3"
+                :type        "AttachmentUsageType"
+                :inScheme    "https://foo.org/v1"
+                :narrowMatch ["https://bar.org/ext-aut"]}]}
    [{:concepts [{:id       "https://bar.org/ext-aut"
                  :type     "AttachmentUsageType"
                  :inScheme "https://bar.org/v1"}]}]))
