@@ -46,6 +46,32 @@
 
 ;; Graph creation functions
 
+(def concept-ext-keys
+  [:broader :broadMatch
+   :narrower :narrowMatch
+   :related :relatedMatch
+   :exactMatch
+   :recommendedActivityTypes
+   :recommendedVerbs])
+
+(defn get-graph-concepts
+  [profiles extra-profiles]
+  (let [concepts     (mapcat :concepts profiles)
+        ext-concepts (mapcat :concepts extra-profiles)
+        ext-ids      (set (reduce
+                           (fn [acc concept]
+                             (-> concept
+                                 (select-keys concept-ext-keys)
+                                 vals
+                                 flatten
+                                 (concat acc)))
+                           []
+                           concepts))
+        ext-cons  (filter (fn [{id :id}] (contains? ext-ids id))
+                          ext-concepts)]
+    {:concepts     concepts
+     :ext-concepts ext-cons}))
+
 (defn create-graph
   "Create a digraph out of the vector of concepts"
   [concepts]
@@ -53,6 +79,20 @@
         cnodes (mapv (partial graph/node-with-attrs) concepts)
         cedges (graph/collect-edges
                 (mapv (partial graph/edges-with-attrs) concepts))]
+    (-> cgraph
+        (graph/add-nodes cnodes)
+        (graph/add-edges cedges))))
+
+(defn create-graph-2
+  [profiles extra-profiles]
+  (let [{:keys [concepts
+                ext-concepts]} (get-graph-concepts profiles extra-profiles)
+        cgraph (graph/new-digraph)
+        cnodes (->> (concat concepts ext-concepts)
+                    (mapv graph/node-with-attrs))
+        cedges (->> concepts
+                    (mapv graph/edges-with-attrs)
+                    graph/collect-edges)]
     (-> cgraph
         (graph/add-nodes cnodes)
         (graph/add-edges cedges))))

@@ -92,6 +92,41 @@
                     (map #(vector id % {:type :contextStatementRefTemplate})
                          contextStatementRefTemplate)))))
 
+(def template-ext-keys
+  [:verb
+   :objectActivityType
+   :contextGroupingActivityType
+   :contextParentActivityType
+   :contextOtherActivityType
+   :attachmentUsageType
+   :objectStatementRefTemplate
+   :contextStatementRefTemplate])
+
+(defn get-graph-concept-templates
+  [profiles extra-profiles]
+  (let [templates (mapcat :templates profiles)
+        ext-ids   (set (reduce
+                        (fn [acc template]
+                          (-> template
+                              (select-keys template-ext-keys)
+                              vals
+                              flatten
+                              (concat acc)))
+                        []
+                        templates))
+        concepts  (->> profiles
+                       (mapcat :concepts)
+                       (filter (fn [{id :id}] (contains? ext-ids id))))
+        ext-cons  (->> extra-profiles
+                       (mapcat :concepts)
+                       (filter (fn [{id :id}] (contains? ext-ids id))))
+        ext-tmps  (->> extra-profiles
+                       (mapcat :templates)
+                       (filter (fn [{id :id}] (contains? ext-ids id))))]
+    {:concepts      (concat concepts ext-cons)
+     :templates     templates
+     :ext-templates ext-tmps}))
+
 (defn create-graph
   "Create a template graph from its constituent concepts and templates.
   Returns a digraph with connections between templates to concepts (and each
@@ -108,6 +143,52 @@
         (graph/add-nodes cnodes)
         (graph/add-nodes tnodes)
         (graph/add-edges tedges))))
+
+(defn create-graph-2
+  [profiles extra-profiles]
+  (let [{:keys [concepts
+                templates
+                ext-templates]} (get-graph-concept-templates
+                                 profiles
+                                 extra-profiles)
+        tgraph (graph/new-digraph)
+        tnodes (->> (concat concepts templates ext-templates)
+                    (mapv graph/node-with-attrs))
+        tedges (->> templates
+                    (mapv graph/edges-with-attrs)
+                    graph/collect-edges)]
+    (-> tgraph
+        (graph/add-nodes tnodes)
+        (graph/add-edges tedges))))
+
+(comment
+  (create-graph
+   []
+   [{:id "https://foo.org/template1"
+     :type "StatementTemplate"
+     :inScheme "https://foo.org/v1"
+     :verb "https://foo.org/verb"
+     :objectActivityType "https://foo.org/activity-type"
+     :attachmentUsageType ["https://foo.org/attachmentUsageType"]
+     :contextStatementRefTemplate ["https://foo.org/template2"]}
+    {:id "https://foo.org/template2"
+     :type "StatementTemplate"
+     :inScheme "https://foo.org/v1"
+     :objectStatementRefTemplate ["https://foo.org/template1"]}])
+
+  (create-graph-2
+   [{:templates [{:id "https://foo.org/template1"
+                  :type "StatementTemplate"
+                  :inScheme "https://foo.org/v1"
+                  :verb "https://foo.org/verb"
+                  :objectActivityType "https://foo.org/activity-type"
+                  :attachmentUsageType ["https://foo.org/attachmentUsageType"]
+                  :contextStatementRefTemplate ["https://foo.org/template2"]}
+                 {:id "https://foo.org/template2"
+                  :type "StatementTemplate"
+                  :inScheme "https://foo.org/v1"
+                  :objectStatementRefTemplate ["https://foo.org/template1"]}]}]
+   []))
 
 (defn get-edges
   "Return a sequence of edge maps, with the following keys:

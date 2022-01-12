@@ -126,6 +126,33 @@
 (defmethod graph/edges-with-attrs "Pattern" [pattern]
   (get-pattern-edges pattern))
 
+(def pattern-ext-keys [:sequence :alternates :optional :oneOrMore :zeroOrMore])
+
+(defn get-graph-templates-patterns
+  [profiles extra-profiles]
+  (let [patterns  (mapcat :patterns profiles)
+        ext-ids   (set (reduce
+                        (fn [acc pat]
+                          (-> pat
+                              (select-keys pattern-ext-keys)
+                              vals
+                              flatten
+                              (concat acc)))
+                        []
+                        patterns))
+        templates (->> profiles
+                       (mapcat :templates)
+                       (filter (fn [{id :id}] (contains? ext-ids id))))
+        ext-pats  (->> extra-profiles
+                       (mapcat :patterns)
+                       (filter (fn [{id :id}] (contains? ext-ids id))))
+        ext-tmps  (->> extra-profiles
+                       (mapcat :templates)
+                       (filter (fn [{id :id}] (contains? ext-ids id))))]
+    {:templates    (concat templates ext-tmps)
+     :patterns     patterns
+     :ext-patterns ext-pats}))
+
 (defn create-graph
   "Create a graph of links between Patterns and other Patterns and Templates."
   [templates patterns]
@@ -138,6 +165,23 @@
                 (mapv (partial graph/edges-with-attrs) patterns))]
     (-> pgraph
         (graph/add-nodes tnodes)
+        (graph/add-nodes pnodes)
+        (graph/add-edges pedges))))
+
+(defn create-graph-2
+  [profiles extra-profiles]
+  (let [{:keys [templates
+                patterns
+                ext-patterns]} (get-graph-templates-patterns
+                                profiles
+                                extra-profiles)
+        pgraph (graph/new-digraph)
+        pnodes (->> (concat templates patterns ext-patterns)
+                    (mapv graph/node-with-attrs))
+        pedges (->> patterns
+                    (mapv graph/edges-with-attrs)
+                    graph/collect-edges)]
+    (-> pgraph
         (graph/add-nodes pnodes)
         (graph/add-edges pedges))))
 
