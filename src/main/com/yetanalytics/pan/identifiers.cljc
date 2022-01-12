@@ -7,7 +7,8 @@
 
 (defn only-ids
   "Return a collection of IDs from a collection of objects."
-  [obj-coll] (mapv (fn [{:keys [id]}] id) obj-coll))
+  [obj-coll]
+  (mapv (fn [{:keys [id]}] id) obj-coll))
 
 (defn only-ids-multiple
   "Return a collection of all IDs from multiple collections of objects"
@@ -44,6 +45,16 @@
   [{:keys [id versions concepts templates patterns]}]
   (let [ids (concat
              [id] (only-ids-multiple [versions concepts templates patterns]))
+        counts (count-ids ids)]
+    (s/explain-data ::distinct-ids counts)))
+
+(defn- get-profile-ids
+  [{:keys [id versions concepts templates patterns]}]
+  (concat [id] (only-ids-multiple [versions concepts templates patterns])))
+
+(defn validate-ids-2
+  [profiles]
+  (let [ids    (mapcat get-profile-ids profiles)
         counts (count-ids ids)]
     (s/explain-data ::distinct-ids counts)))
 
