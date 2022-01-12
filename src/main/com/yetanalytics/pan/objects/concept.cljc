@@ -167,6 +167,11 @@
   (fn same-version? [{:keys [src-version dest-version]}]
     (= src-version dest-version)))
 
+;; Are both the source and destination from different version/Profile?
+(s/def ::diff-version
+  (fn diff-version? [{:keys [src-version dest-version]}]
+    (not= src-version dest-version)))
+
 ;; Edge validation multimethod 
 
 (defmulti valid-edge? :type)
@@ -203,34 +208,37 @@
 
 ;; TODO: Currently never used due to lack of external Profiles
 
-(comment
-  (defmethod valid-edge? :broadMatch [_]
-    (s/and ::relatable-src
-           ::valid-dest
-           ::graph/not-self-loop
-           ::relatable-dest
-           ::same-concept))
+(defmethod valid-edge? :broadMatch [_]
+  (s/and ::relatable-src
+         ::valid-dest
+         ::graph/not-self-loop
+         ::relatable-dest
+         ::same-concept
+         ::diff-version))
 
-  (defmethod valid-edge? :narrowMatch [_]
-    (s/and ::relatable-src
-           ::valid-dest
-           ::graph/not-self-loop
-           ::relatable-dest
-           ::same-concept))
+(defmethod valid-edge? :narrowMatch [_]
+  (s/and ::relatable-src
+         ::valid-dest
+         ::graph/not-self-loop
+         ::relatable-dest
+         ::same-concept
+         ::diff-version))
 
-  (defmethod valid-edge? :relatedMatch [_]
-    (s/and ::relatable-src
-           ::valid-dest
-           ::graph/not-self-loop
-           ::relatable-dest
-           ::same-concept))
+(defmethod valid-edge? :relatedMatch [_]
+  (s/and ::relatable-src
+         ::valid-dest
+         ::graph/not-self-loop
+         ::relatable-dest
+         ::same-concept
+         ::diff-version))
 
-  (defmethod valid-edge? :exactMatch [_]
-    (s/and ::relatable-src
-           ::valid-dest
-           ::graph/not-self-loop
-           ::relatable-dest
-           ::same-concept)))
+(defmethod valid-edge? :exactMatch [_]
+  (s/and ::relatable-src
+         ::valid-dest
+         ::graph/not-self-loop
+         ::relatable-dest
+         ::same-concept
+         ::diff-version))
 
 ;; recommendedActivityTypes MUST point to ActivityType Concepts
 (defmethod valid-edge? :recommendedActivityTypes [_]
