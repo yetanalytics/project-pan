@@ -126,20 +126,25 @@
 (defmethod graph/edges-with-attrs "Pattern" [pattern]
   (get-pattern-edges pattern))
 
-(def pattern-ext-keys [:sequence :alternates :optional :oneOrMore :zeroOrMore])
+(def pattern-ext-keys
+  [:sequence
+   :alternates
+   :optional
+   :oneOrMore
+   :zeroOrMore])
 
-(defn get-graph-templates-patterns
+(defn- collect-pattern
+  [acc pattern]
+  (-> pattern
+      (select-keys pattern-ext-keys)
+      vals
+      flatten
+      (concat acc)))
+
+(defn- get-graph-templates-patterns
   [profile extra-profiles]
   (let [patterns  (:patterns profile)
-        ext-ids   (set (reduce
-                        (fn [acc pat]
-                          (-> pat
-                              (select-keys pattern-ext-keys)
-                              vals
-                              flatten
-                              (concat acc)))
-                        []
-                        patterns))
+        ext-ids   (set (reduce collect-pattern [] patterns))
         ext-pats  (->> extra-profiles
                        (mapcat :patterns)
                        (filter (fn [{id :id}] (contains? ext-ids id))))
@@ -154,36 +159,27 @@
      :ext-patterns ext-pats}))
 
 (defn create-graph
-  "Create a graph of links between Patterns and other Patterns and Templates."
-  [templates patterns]
-  (let [pgraph (graph/new-digraph)
-        ;; Nodes
-        tnodes (mapv (partial graph/node-with-attrs) templates)
-        pnodes (mapv (partial graph/node-with-attrs) patterns)
-        ;; Edges 
-        pedges (graph/collect-edges
-                (mapv (partial graph/edges-with-attrs) patterns))]
-    (-> pgraph
-        (graph/add-nodes tnodes)
-        (graph/add-nodes pnodes)
-        (graph/add-edges pedges))))
-
-(defn create-graph-2
-  [profile extra-profiles]
-  (let [{:keys [templates
-                patterns
-                ext-patterns]} (get-graph-templates-patterns
-                                profile
-                                extra-profiles)
-        pgraph (graph/new-digraph)
-        pnodes (->> (concat templates patterns ext-patterns)
-                    (mapv graph/node-with-attrs))
-        pedges (->> patterns
-                    (mapv graph/edges-with-attrs)
-                    graph/collect-edges)]
-    (-> pgraph
-        (graph/add-nodes pnodes)
-        (graph/add-edges pedges))))
+  ([profile]
+   (let [{:keys [templates
+                 patterns]} profile
+         pnodes (->> (concat templates patterns)
+                     (mapv graph/node-with-attrs))
+         pedges (->> patterns
+                     (mapv graph/edges-with-attrs)
+                     graph/collect-edges)]
+     (graph/create-graph pnodes pedges)))
+  ([profile extra-profiles]
+   (let [{:keys [templates
+                 patterns
+                 ext-patterns]} (get-graph-templates-patterns
+                                 profile
+                                 extra-profiles)
+         pnodes (->> (concat templates patterns ext-patterns)
+                     (mapv graph/node-with-attrs))
+         pedges (->> patterns
+                     (mapv graph/edges-with-attrs)
+                     graph/collect-edges)]
+     (graph/create-graph pnodes pedges))))
 
 (defn get-edges
   "Return a sequence of edges in the form of maps, with the following keys:
@@ -214,7 +210,7 @@
 
 (comment
   (get-edges
-   (create-graph-2
+   (create-graph
     {:patterns [{:id "https://foo.org/pattern1" :type "Pattern"
                  :inScheme "https://foo.org/v1" :primary true
                  :alternates ["https://foo.org/pattern2"]}

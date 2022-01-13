@@ -54,47 +54,41 @@
    :recommendedActivityTypes
    :recommendedVerbs])
 
-(defn get-graph-concepts
+(defn- collect-concept
+  [acc concept]
+  (-> concept
+      (select-keys concept-ext-keys)
+      vals
+      flatten
+      (concat acc)))
+
+(defn- get-graph-concepts
   [profile extra-profiles]
   (let [concepts     (:concepts profile)
-        ext-ids      (set (reduce
-                           (fn [acc concept]
-                             (-> concept
-                                 (select-keys concept-ext-keys)
-                                 vals
-                                 flatten
-                                 (concat acc)))
-                           []
-                           concepts))
+        ext-ids      (set (reduce collect-concept [] concepts))
         ext-cons     (->> (mapcat :concepts extra-profiles)
                           (filter (fn [{id :id}] (contains? ext-ids id))))]
     {:concepts     concepts
      :ext-concepts ext-cons}))
 
 (defn create-graph
-  "Create a digraph out of the vector of concepts"
-  [concepts]
-  (let [cgraph (graph/new-digraph)
-        cnodes (mapv (partial graph/node-with-attrs) concepts)
-        cedges (graph/collect-edges
-                (mapv (partial graph/edges-with-attrs) concepts))]
-    (-> cgraph
-        (graph/add-nodes cnodes)
-        (graph/add-edges cedges))))
-
-(defn create-graph-2
-  [profile extra-profiles]
-  (let [{:keys [concepts
-                ext-concepts]} (get-graph-concepts profile extra-profiles)
-        cgraph (graph/new-digraph)
-        cnodes (->> (concat concepts ext-concepts)
-                    (mapv graph/node-with-attrs))
-        cedges (->> concepts
-                    (mapv graph/edges-with-attrs)
-                    graph/collect-edges)]
-    (-> cgraph
-        (graph/add-nodes cnodes)
-        (graph/add-edges cedges))))
+  ([profile]
+   (let [{:keys [concepts]} profile
+         cnodes (->> concepts
+                     (mapv graph/node-with-attrs))
+         cedges (->> concepts
+                     (mapv graph/edges-with-attrs)
+                     graph/collect-edges)]
+     (graph/create-graph cnodes cedges)))
+  ([profile extra-profiles]
+   (let [{:keys [concepts
+                 ext-concepts]} (get-graph-concepts profile extra-profiles)
+         cnodes (->> (concat concepts ext-concepts)
+                     (mapv graph/node-with-attrs))
+         cedges (->> concepts
+                     (mapv graph/edges-with-attrs)
+                     graph/collect-edges)]
+     (graph/create-graph cnodes cedges))))
 
 (defn get-edges
   "Returns a sequence of edge maps, with the following keys:

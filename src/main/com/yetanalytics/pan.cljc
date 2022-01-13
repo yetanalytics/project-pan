@@ -21,6 +21,33 @@
            (ex-info "JSON parsing error!" (ex-data e))))
     profile))
 
+(defn- find-syntax-errors
+  [profile]
+  {:syntax-errors (profile/validate profile)})
+
+(defn- find-id-errors
+  ([profile]
+   {:id-errors        (id/validate-ids profile)
+    :in-scheme-errors (id/validate-in-schemes profile)})
+  ([profile extra-profiles]
+   {:id-errors        (id/validate-ids profile)
+    :in-scheme-errors (id/validate-in-schemes profile)
+    :id-dupe-errors   (id/validate-non-duped-ids profile extra-profiles)}))
+
+(defn- find-graph-errors
+  ([profile]
+   {:concept-edge-errors  (concept/create-graph profile)
+    :template-edge-errors (template/create-graph profile)
+    :pattern-edge-errors  (pattern/create-graph profile)})
+  ([profile extra-profiles]
+   {:concept-edge-errors  (concept/create-graph profile extra-profiles)
+    :template-edge-errors (template/create-graph profile extra-profiles)
+    :pattern-edge-drrors  (pattern/create-graph profile extra-profiles)}))
+
+(defn- find-context-errors
+  [profile]
+  (context/validate-contexts profile))
+
 (defn validate-profile
   "Validate a profile from the top down. Takes in a Profile and
    validates it, printing or returning errors on completion.
@@ -43,41 +70,52 @@
 
   More information can be found in the README."
   ;; TODO: Implement :external-iris
-  [profile & {:keys [syntax? ids? relations? contexts? external-iris? print-errs?]
-              :or {syntax? true
-                   ids? false
-                   relations? false
-                   contexts? false
-                   external-iris? false
-                   print-errs? true}}]
-  (let [errors  (cond-> {}
-                  syntax?
-                  (assoc :syntax-errors (profile/validate profile))
-                  ids? ; ID duplicate and inScheme errors
-                  (assoc :id-errors (id/validate-ids profile)
-                         :in-scheme-errors (id/validate-in-schemes profile))
-                  relations? ; URI errors
-                  (merge
-                   (let [{:keys [concepts templates patterns]} profile
-                         ;; Graphs
-                         cgraph (concept/create-graph concepts)
-                         tgraph (template/create-graph concepts templates)
-                         pgraph (pattern/create-graph templates patterns)
-                         ;; Errors
-                         cerrors   (concept/validate-graph-edges cgraph)
-                         terrors   (template/validate-template-edges tgraph)
-                         perrors   (pattern/validate-pattern-edges pgraph)
-                         pc-errors (pattern/validate-pattern-tree pgraph)]
-                     {:concept-edge-errors  cerrors
-                      :template-edge-errors terrors
-                      :pattern-edge-errors  perrors
-                      :pattern-cycle-errors pc-errors}))
-                  contexts? ; @context errors
-                  (merge (context/validate-contexts profile)))
-        no-errors? (every? nil? (vals errors))]
+  [profile & {:keys [syntax? ids? relations? contexts? print-errs? extra-profiles]
+              :or {syntax?        true
+                   ids?           false
+                   relations?     false
+                   contexts?      false
+                   print-errs?    true
+                   extra-profiles []}}]
+  (let [errors   (if (not-empty extra-profiles)
+                   (cond-> {}
+                     syntax?    (merge (find-syntax-errors profile))
+                     ids?       (merge (find-id-errors profile))
+                     relations? (merge (find-graph-errors profile))
+                     contexts?  (merge (find-context-errors profile)))
+                   (cond-> {}
+                     syntax?    (merge (find-syntax-errors profile))
+                     ids?       (merge (find-id-errors profile extra-profiles))
+                     relations? (merge (find-graph-errors profile extra-profiles))
+                     contexts?  (merge (find-context-errors profile))))
+        no-errs? (every? nil? (vals errors))]
     (if print-errs?
-      (if no-errors?
-        (println "Success!") ; Exactly like spec/explain
+      ;; Print monolithic error message, exactly like spec/explain
+      (if no-errs?
+        (println "Success!")
         (errors/expound-errors errors))
-      (when-not no-errors?
+      ;; Return the map of errors
+      (when-not no-errs?
         errors))))
+
+(defn validate-profiles
+  [profiles & {:keys [syntax? ids? relations? contexts? print-errs? extra-profiles]
+               :or {syntax?        true
+                    ids?           false
+                    relations?     false
+                    contexts?      false
+                    print-errs?    true
+                    extra-profiles []}}]
+  (let [profiles-set (set profiles)]
+    (map (fn [profile]
+           (let [extra-profiles* (-> profiles-set
+                                     (disj profile)
+                                     (concat extra-profiles))]
+             (validate-profile profile
+                               :syntax? syntax?
+                               :ids? ids?
+                               :relations? relations?
+                               :contexts? contexts?
+                               :print-errs? print-errs?
+                               :extra-profiles extra-profiles*)))
+         profiles)))

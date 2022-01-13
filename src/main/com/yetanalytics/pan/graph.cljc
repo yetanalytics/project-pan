@@ -71,6 +71,13 @@
           g
           edges))
 
+(defn create-graph
+  "Create a graph with `nodes` and `edges`."
+  [nodes edges]
+  (-> (new-digraph)
+      (add-nodes nodes)
+      (add-edges edges)))
+
 (defn src
   "Return the source node of a directed edge."
   [edge]

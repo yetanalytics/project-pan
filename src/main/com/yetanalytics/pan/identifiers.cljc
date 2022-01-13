@@ -1,5 +1,6 @@
 (ns com.yetanalytics.pan.identifiers
-  (:require [clojure.spec.alpha :as s]))
+  (:require [clojure.spec.alpha :as s]
+            [clojure.set :as cset]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Utils 
@@ -22,6 +23,34 @@
   [ids-coll]
   (reduce (fn [accum id]
             (update accum id #(if (nil? %) 1 (inc %)))) {} ids-coll))
+
+(defn profile->ids-map
+  [{:keys [id versions concepts templates patterns] :as _profile}]
+  {:id        id
+   :versions  (mapv :id versions)
+   :concepts  (mapv :id concepts)
+   :templates (mapv :id templates)
+   :patterns  (mapv :id patterns)})
+
+(defn profile->id-seq*
+  [{:keys [id versions concepts templates patterns] :as _profile}]
+  (concat [id]
+          (map :id versions)
+          (map :id concepts)
+          (map :id templates)
+          (map :id patterns)))
+
+(defn profile->id-set*
+  [profile]
+  (set (profile->id-seq* profile)))
+
+(def profile->id-seq
+  "Memoized version of `profile->id-seq*`."
+  (memoize profile->id-seq*))
+
+(def profile->id-set
+  "Memoized version of `proifle->id-set*`."
+  (memoize profile->id-set*))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; ID distinctness validation
@@ -48,15 +77,17 @@
         counts (count-ids ids)]
     (s/explain-data ::distinct-ids counts)))
 
-(defn- get-profile-ids
-  [{:keys [id versions concepts templates patterns]}]
-  (concat [id] (only-ids-multiple [versions concepts templates patterns])))
+(s/def ::non-duped-id
+       (fn [[id id-set]] (not (contains? id-set id))))
 
-(defn validate-ids-2
-  [profiles]
-  (let [ids    (mapcat get-profile-ids profiles)
-        counts (count-ids ids)]
-    (s/explain-data ::distinct-ids counts)))
+(defn validate-non-duped-ids
+  "Takes `profile` and checks that none of its IDs are duplicated in any of
+   the `extra-profiles`."
+  [profile extra-profiles]
+  (let [id-coll (profile->id-seq profile)
+        id-set  (apply cset/union (map profile->id-set extra-profiles))]
+    (s/explain-data (s/coll-of ::non-duped-id)
+                    (map (fn [id] [id id-set]) id-coll))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; inScheme property validation
