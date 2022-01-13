@@ -349,3 +349,52 @@
   (s/explain-data ::graph/singleton-sccs (graph/scc pgraph)))
 
 ;; TODO: MAY re-use Statement Templates and Patterns from other Profiles
+
+(defn- pattern-children
+  [patterns-m {pat-type :type :as pat}]
+  (when (= "Pattern" pat-type)
+    (let [child-iris (or (-> pat :sequence)
+                         (-> pat :alternates)
+                         (-> pat :optional vector)
+                         (-> pat :oneOrMore vector)
+                         (-> pat :zeroOrMore vector))]
+      (map #(get patterns-m %) child-iris))))
+
+;; Normal loop-recur-based DFS cannot record path traversed due to its
+;; iterative nature, so we roll our own recursion-based solution.
+(defn- pattern-dfs*
+  [pat-children-fn pattern pat-visit pat-path]
+  (let [{pat-id :id :as pat} pattern]
+    (if (contains? pat-visit pat-id)
+      [(conj pat-path pat-id)]
+      (let [pat-visit' (conj pat-visit pat-id)
+            pat-path'  (conj pat-path pat-id)]
+        (if-some [children (-> pat pat-children-fn not-empty)]
+          (mapcat (fn [child]
+                    (pattern-dfs* pat-children-fn child pat-visit' pat-path'))
+                  children)
+          [pat-path'])))))
+
+(defn pattern-dfs
+  [patterns-m pattern]
+  (pattern-dfs* (partial pattern-children patterns-m) pattern #{} []))
+
+;; TODO: Move to util namespace
+(defn- count-ids
+  [ids-coll]
+  (reduce (fn [accum id] (update accum id #(if (nil? %) 1 (inc %))))
+          {}
+          ids-coll))
+
+(s/def ::non-cyclic-path
+       (s/and (s/conformer count-ids)
+              (s/map-of ::ax/iri #(= 1 %))))
+
+(defn validate-pattern-tree-2
+  [profile extra-profiles]
+  (let [primaries (filter :primary (:patterns profile))
+        all-pats  (mapcat :patterns (concat [profile] extra-profiles))
+        pats-map  (zipmap (map :id all-pats) all-pats)
+        pat-paths (mapcat (partial pattern-dfs pats-map) primaries)]
+    (some #(s/explain-data ::non-cyclic-path %)
+          pat-paths)))

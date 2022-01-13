@@ -422,6 +422,34 @@
     :primary true
     :oneOrMore "https://foo.org/pattern-three"}])
 
+(def cyclic-patterns-3
+  [{:id "http://foo.org"
+    :type "Pattern"
+    :primary true
+    :sequence ["http://bar.org"
+               "http://qux.org"]}
+   {:id "http://bar.org"
+    :type "Pattern"
+    :optional "http://foo.org"}
+   {:id "http://baz.org"
+    :type "StatementTemplate"}
+   {:id "http://qux.org"
+    :type "StatementTemplate"}])
+
+(def non-cyclic-patterns
+  [{:id "http://foo.org"
+    :type "Pattern"
+    :primary true
+    :sequence ["http://bar.org"
+               "http://qux.org"]}
+   {:id "http://bar.org"
+    :type "Pattern"
+    :optional "http://baz.org"}
+   {:id "http://baz.org"
+    :type "StatementTemplate"}
+   {:id "http://qux.org"
+    :type "StatementTemplate"}])
+
 (def cyclic-pgraph-1 (pattern/create-graph [] cyclic-patterns-1))
 
 (def cyclic-pgraph-2 (pattern/create-graph [] cyclic-patterns-2))
@@ -435,3 +463,15 @@
     ;; caught by the edge validation specs
     (is (some? (pattern/validate-pattern-edges cyclic-pgraph-2)))
     (is (nil? (pattern/validate-pattern-tree cyclic-pgraph-2)))))
+
+(deftest no-cycles-test-2
+  (testing "MUST not have any cycles in graph"
+    (is (some? (pattern/validate-pattern-tree-2
+                {:patterns cyclic-patterns-1} [])))
+    (is (some? (pattern/validate-pattern-tree-2
+                {:patterns cyclic-patterns-3} [])))
+    ;; Also detects self-loops
+    (is (some? (pattern/validate-pattern-tree-2
+                {:patterns cyclic-patterns-2} [])))
+    (is (nil? (pattern/validate-pattern-tree-2
+               {:patterns non-cyclic-patterns} [])))))
