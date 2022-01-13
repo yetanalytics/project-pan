@@ -7,35 +7,35 @@
             [com.yetanalytics.pan.utils.json :as json]
             [com.yetanalytics.pan-test-fixtures :as fix])
   #?(:clj (:require [com.yetanalytics.pan.utils.resources
-                     :refer [read-resource]])
+                     :refer [read-json-resource]])
      :cljs (:require-macros [com.yetanalytics.pan.utils.resources
-                             :refer [read-resource]])))
+                             :refer [read-json-resource]])))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Profiles to test
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (def will-profile-raw
-  (read-resource "sample_profiles/catch.json"))
+  (read-json-resource "sample_profiles/catch.json" "_"))
 (def cmi-profile-raw
-  (read-resource "sample_profiles/cmi5.json"))
+  (read-json-resource "sample_profiles/cmi5.json" "_"))
 (def acrossx-profile-raw
-  (read-resource "sample_profiles/acrossx.json"))
+  (read-json-resource "sample_profiles/acrossx.json" "_"))
 (def activity-stream-profile-raw
-  (read-resource "sample_profiles/activity_stream.json"))
+  (read-json-resource "sample_profiles/activity_stream.json" "_"))
 (def tincan-profile-raw
-  (read-resource "sample_profiles/tincan.json"))
+  (read-json-resource "sample_profiles/tincan.json" "_"))
 (def video-profile-raw
-  (read-resource "sample_profiles/video.json"))
+  (read-json-resource "sample_profiles/video.json" "_"))
 (def mom-profile-raw
-  (read-resource "sample_profiles/mom.json"))
+  (read-json-resource "sample_profiles/mom.json" "_"))
 (def scorm-profile-raw
-  (read-resource "sample_profiles/scorm.json"))
+  (read-json-resource "sample_profiles/scorm.json" "_"))
 
 (def will-profile-fix
-  (read-resource "sample_profiles/catch-fixed.json"))
+  (read-json-resource "sample_profiles/catch-fixed.json" "_"))
 (def cmi-profile-fix
-  (read-resource "sample_profiles/cmi5-fixed.json"))
+  (read-json-resource "sample_profiles/cmi5-fixed.json" "_"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Profile error tests
@@ -94,10 +94,6 @@
            (-> (validate-profile will-profile-raw :print-errs? false)
                :syntax-errors
                ::s/spec)))
-    (is (= (json/convert-json will-profile-raw "_")
-           (-> (validate-profile will-profile-raw :print-errs? false)
-               :syntax-errors
-               ::s/value)))
     (is (nil? (validate-profile will-profile-raw
                                 :syntax? false
                                 :contexts? true
@@ -112,11 +108,7 @@
     (is (= ::profile/profile
            (-> (validate-profile cmi-profile-raw :print-errs? false)
                :syntax-errors
-               ::s/spec)))
-    (is (= (json/convert-json cmi-profile-raw "_")
-           (-> (validate-profile cmi-profile-raw :print-errs? false)
-               :syntax-errors
-               ::s/value)))))
+               ::s/spec)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Error message tests
