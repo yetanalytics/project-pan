@@ -1,23 +1,20 @@
 (ns com.yetanalytics.pan.objects.concept
-  (:require [clojure.spec.alpha :as s]
-            [com.yetanalytics.pan.graph :as graph]
-            [com.yetanalytics.pan.objects.concepts.verbs :as v]
-            [com.yetanalytics.pan.objects.concepts.activities :as a]
-            [com.yetanalytics.pan.objects.concepts.activity-types :as at]
-            [com.yetanalytics.pan.objects.concepts.extensions.result :as re]
-            [com.yetanalytics.pan.objects.concepts.extensions.context :as ce]
-            [com.yetanalytics.pan.objects.concepts.extensions.activity :as ae]
-            [com.yetanalytics.pan.objects.concepts.attachment-usage-types
-             :as a-ut]
-            [com.yetanalytics.pan.objects.concepts.document-resources.state
-             :as s-pr]
-            [com.yetanalytics.pan.objects.concepts.document-resources.agent-profile
-             :as ag-pr]
-            [com.yetanalytics.pan.objects.concepts.document-resources.activity-profile
-             :as act-pr]))
+  (:require
+   [clojure.spec.alpha         :as s]
+   [com.yetanalytics.pan.graph :as graph]
+   [com.yetanalytics.pan.objects.concepts.verbs          :as v]
+   [com.yetanalytics.pan.objects.concepts.activities     :as a]
+   [com.yetanalytics.pan.objects.concepts.activity-types :as at]
+   [com.yetanalytics.pan.objects.concepts.attachment-usage-types :as a-ut]
+   [com.yetanalytics.pan.objects.concepts.extensions.result      :as re]
+   [com.yetanalytics.pan.objects.concepts.extensions.context     :as ce]
+   [com.yetanalytics.pan.objects.concepts.extensions.activity    :as ae]
+   [com.yetanalytics.pan.objects.concepts.document-resources.state            :as s-pr]
+   [com.yetanalytics.pan.objects.concepts.document-resources.agent-profile    :as ag-pr]
+   [com.yetanalytics.pan.objects.concepts.document-resources.activity-profile :as act-pr]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Concepts 
+;; Concept Specs
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defmulti concept? :type)
@@ -39,12 +36,8 @@
 (s/def ::concepts (s/coll-of ::concept :type vector? :min-count 1))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Strict validation
+;; Concept Graph Creation
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;; TODO make broadMatch, narrowMatch, relatedMatch and exactMatch work
-
-;; Graph creation functions
 
 (def concept-ext-keys
   [:broader :broadMatch
@@ -113,7 +106,9 @@
             :type         (graph/attr cgraph edge :type)}))
        (graph/edges cgraph)))
 
-;; Edge property specs
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Concept Graph Specs
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Is the destination not nil?
 (s/def ::valid-dest

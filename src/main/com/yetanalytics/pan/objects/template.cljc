@@ -5,7 +5,7 @@
             [com.yetanalytics.pan.objects.templates.rules :as rules]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Statement Template
+;; Statement Template Specs
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (s/def ::id ::ax/uri)
@@ -54,10 +54,8 @@
 (s/def ::templates (s/coll-of ::template :kind vector? :min-count 1))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Strict validation
+;; Statement Template Graph Creation
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;; Graph creation functions
 
 ;; From a single StatementTemplate, return a 1D vector of edge vectors of 
 ;; form [src dest {:type type-kword}]
@@ -186,7 +184,9 @@
             :type         (graph/attr tgraph edge :type)}))
        (graph/edges tgraph)))
 
-;; Edge property specs
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Statement Template Graph Specs
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Is the source a Statement Template?
 (s/def ::template-src
@@ -301,5 +301,3 @@
 ;; Putting it all together
 (defn validate-template-edges [tgraph]
   (s/explain-data ::template-edges (get-edges tgraph)))
-
-;; TODO Validate links that are external to this Profile

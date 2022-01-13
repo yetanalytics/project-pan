@@ -4,7 +4,7 @@
             [com.yetanalytics.pan.graph :as graph]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Patterns 
+;; Pattern Specs
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Basic properties
@@ -81,15 +81,19 @@
   (s/coll-of ::pattern :kind vector? :min-count 1))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Strict validation
+;; Pattern Graph Creation
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; Graph creation functions
+(def pattern-ext-keys
+  [:sequence
+   :alternates
+   :optional
+   :oneOrMore
+   :zeroOrMore])
 
 ;; Get the IRIs of a Pattern (within a sequence), depending on its property
-(defn dispatch-on-pattern [pattern]
-  (keys (dissoc pattern :id :type :prefLabel :definition
-                :primary :inScheme :deprecated)))
+(defn- dispatch-on-pattern [pattern]
+  (keys (select-keys pattern pattern-ext-keys)))
 
 ;; Obtain a vector of edges originating from a pattern.
 ;; The multimethod dispatches on what regex property the pattern has.
@@ -117,21 +121,14 @@
 
 ;; Return a vector of nodes of the form [id attribute-map]
 (defmethod graph/node-with-attrs "Pattern" [{id :id :as pattern}]
-  (let [attrs {:type "Pattern"
-               :primary (get pattern :primary false)
+  (let [attrs {:type     "Pattern"
+               :primary  (get pattern :primary false)
                :property (first (dispatch-on-pattern pattern))}]
     (vector id attrs)))
 
 ;; Return a vector of pattern edges in the form [src dest {:type kword}] 
 (defmethod graph/edges-with-attrs "Pattern" [pattern]
   (get-pattern-edges pattern))
-
-(def pattern-ext-keys
-  [:sequence
-   :alternates
-   :optional
-   :oneOrMore
-   :zeroOrMore])
 
 (defn- collect-pattern
   [acc pattern]
@@ -224,7 +221,9 @@
                   :inScheme "https://foo.org/v1" :primary true
                   :optional "https://foo.org/template1"}]}])))
 
-;; Edge property specs
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Pattern Graph Specs
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Is the destination not nil?
 (s/def ::valid-dest
@@ -339,12 +338,14 @@
 (defn validate-pattern-edges [pgraph]
   (s/explain-data ::pattern-edges (get-edges pgraph)))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Pattern Cycle Specs
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 ;; MUST NOT include any Pattern within itself, at any depth.
 ;; In other words, no cycles (including self loops)
 (defn validate-pattern-tree [pgraph]
   (s/explain-data ::graph/singleton-sccs (graph/scc pgraph)))
-
-;; TODO: MAY re-use Statement Templates and Patterns from other Profiles
 
 (defn- pattern-children
   [patterns-m {pat-type :type :as pat}]
