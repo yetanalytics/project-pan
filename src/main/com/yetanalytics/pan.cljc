@@ -34,15 +34,23 @@
     :in-scheme-errors (id/validate-in-schemes profile)
     :id-dupe-errors   (id/validate-non-duped-ids profile extra-profiles)}))
 
+(defn- find-graph-errors*
+  [cgraph tgraph pgraph]
+  {:concept-edge-errors  (concept/validate-concept-edges cgraph)
+   :template-edge-errors (template/validate-template-edges tgraph)
+   :pattern-edge-errors  (pattern/validate-pattern-edges pgraph)})
+
 (defn- find-graph-errors
   ([profile]
-   {:concept-edge-errors  (concept/create-graph profile)
-    :template-edge-errors (template/create-graph profile)
-    :pattern-edge-errors  (pattern/create-graph profile)})
+   (let [cgraph (concept/create-graph profile)
+         tgraph (template/create-graph profile)
+         pgraph (pattern/create-graph profile)]
+     (find-graph-errors* cgraph tgraph pgraph)))
   ([profile extra-profiles]
-   {:concept-edge-errors  (concept/create-graph profile extra-profiles)
-    :template-edge-errors (template/create-graph profile extra-profiles)
-    :pattern-edge-drrors  (pattern/create-graph profile extra-profiles)}))
+   (let [cgraph (concept/create-graph profile extra-profiles)
+         tgraph (template/create-graph profile extra-profiles)
+         pgraph (pattern/create-graph profile extra-profiles)]
+     (find-graph-errors* cgraph tgraph pgraph))))
 
 (defn- find-context-errors
   [profile]

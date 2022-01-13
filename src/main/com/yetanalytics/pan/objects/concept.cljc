@@ -248,5 +248,5 @@
 ;; Are all edges valid?
 (s/def ::concept-edges (s/coll-of ::concept-edge))
 
-(defn validate-graph-edges [cgraph]
+(defn validate-concept-edges [cgraph]
   (s/explain-data ::concept-edges (get-edges cgraph)))

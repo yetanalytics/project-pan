@@ -227,4 +227,4 @@
               :dest-version "https://bar.org/v1"
               :type         :narrowMatch}}
            (set (concept/get-edges cgraph))))
-    (is (nil? (concept/validate-graph-edges cgraph)))))
+    (is (nil? (concept/validate-concept-edges cgraph)))))
