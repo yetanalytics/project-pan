@@ -1,6 +1,5 @@
 (ns com.yetanalytics.pan.identifiers
-  (:require [clojure.spec.alpha :as s]
-            [clojure.set :as cset]))
+  (:require [clojure.spec.alpha :as s]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Utils 
@@ -86,26 +85,30 @@
 (s/def ::distinct-ids
   (s/map-of any? ::one-count))
 
+(defn- filter-by-ids-kv
+  [id-set m]
+  (reduce-kv (fn [m' k v] (cond-> m' (contains? id-set k) (assoc k v)))
+             {}
+             m))
+
 (defn validate-ids
-  "Takes a Profile and validates that all ID values in it are distinct.
-   Returns nil on success, or spec error data on failure."
-  [{:keys [id versions concepts templates patterns]}]
-  (let [ids (concat
-             [id] (only-ids-multiple [versions concepts templates patterns]))
-        counts (count-ids ids)]
-    (s/explain-data ::distinct-ids counts)))
-
-(s/def ::non-duped-id
-       (fn [[id id-set]] (not (contains? id-set id))))
-
-(defn validate-non-duped-ids
-  "Takes `profile` and checks that none of its IDs are duplicated in any of
-   the `extra-profiles`."
-  [profile extra-profiles]
-  (let [id-coll (profile->id-seq profile)
-        id-set  (apply cset/union (map profile->id-set extra-profiles))]
-    (s/explain-data (s/coll-of ::non-duped-id)
-                    (map (fn [id] [id id-set]) id-coll))))
+  "Takes a Profile and validates that all ID values in it are distinct
+   (including across the extra Profiles). Returns nil on success, or
+   spec error data on failure."
+  ([profile]
+   (let [profile-ids (profile->id-seq profile)
+         counts      (count-ids profile-ids)]
+     (s/explain-data ::distinct-ids counts)))
+  ([profile extra-profiles]
+   (let [profile-ids (profile->id-seq profile)
+         prof-id-set (set profile-ids)
+         extra-ids   (mapcat profile->id-seq extra-profiles)
+         ;; We count IDs in all the Profiles, but only validate the
+         ;; counts in the main Profile.
+         counts      (->> (concat profile-ids extra-ids)
+                          count-ids
+                          (filter-by-ids-kv prof-id-set))]
+     (s/explain-data ::distinct-ids counts))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; inScheme property validation

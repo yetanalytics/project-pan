@@ -30,9 +30,8 @@
    {:id-errors        (id/validate-ids profile)
     :in-scheme-errors (id/validate-in-schemes profile)})
   ([profile extra-profiles]
-   {:id-errors        (id/validate-ids profile)
-    :in-scheme-errors (id/validate-in-schemes profile)
-    :id-dupe-errors   (id/validate-non-duped-ids profile extra-profiles)}))
+   {:id-errors        (id/validate-ids profile extra-profiles)
+    :in-scheme-errors (id/validate-in-schemes profile)}))
 
 (defn- find-graph-errors*
   [cgraph tgraph pgraph]

@@ -129,7 +129,41 @@
                 :templates [{:id "https://w3id.org/catch/some-template"
                              :inScheme "https://w3id.org/catch/v1"}]
                 :patterns [{:id "https://w3id.org/catch/some-pattern"
-                            :inScheme "https://w3id.org/catch/v2"}]})))))
+                            :inScheme "https://w3id.org/catch/v2"}]}))))
+  (testing "All IDs MUST be distinct across different profiles"
+    (is (nil? (id/validate-ids
+               {:id "https://w3id.org/xapi/catch"
+                :concepts [{:id "https://w3id.org/catch/some-verb"
+                            :inScheme "https://w3id.org/catch/v1"}]
+                :templates [{:id "https://w3id.org/catch/some-template"
+                             :inScheme "https://w3id.org/catch/v1"}]
+                :patterns [{:id "https://w3id.org/catch/some-pattern"
+                            :inScheme "https://w3id.org/catch/v2"}]}
+               [{:concepts [{:id "https://w3id.org/catch/some-verb-x"
+                             :inScheme "https://w3id.org/catch/v3"}]}
+                {:templates [{:id "https://w3id.org/catch/some-template-x"
+                              :inScheme "https://w3id.org/catch/v4"}]}
+                {:patterns [{:id "https://w3id.org/catch/some-pattern-x"
+                             :inScheme "https://w3id.org/catch/v5"}]}])))
+    (is (some? (id/validate-ids
+                {:id "https://w3id.org/xapi/catch"
+                 :versions [{:id "https://w3id.org/catch/v1"}
+                            {:id "https://w3id.org/catch/v2"}]
+                 :concepts [{:id "https://w3id.org/catch/some-verb"
+                             :inScheme "https://w3id.org/catch/v1"}]
+                 :templates [{:id "https://w3id.org/catch/some-template"
+                              :inScheme "https://w3id.org/catch/v1"}]
+                 :patterns [{:id "https://w3id.org/catch/some-pattern"
+                             :inScheme "https://w3id.org/catch/v2"}]}
+                [{:id "https://w3id.org/xapi/catch"
+                  :versions [{:id "https://w3id.org/catch/v1"}
+                             {:id "https://w3id.org/catch/v2"}]
+                  :concepts [{:id "https://w3id.org/catch/some-verb"
+                              :inScheme "https://w3id.org/catch/v1"}]
+                  :templates [{:id "https://w3id.org/catch/some-template"
+                               :inScheme "https://w3id.org/catch/v1"}]
+                  :patterns [{:id "https://w3id.org/catch/some-pattern"
+                              :inScheme "https://w3id.org/catch/v2"}]}])))))
 
 (deftest in-scheme-test
   (testing "object inScheme MUST be a valid Profile version"
