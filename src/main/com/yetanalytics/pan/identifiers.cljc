@@ -52,6 +52,24 @@
   "Memoized version of `proifle->id-set*`."
   (memoize profile->id-set*))
 
+;;;;;;
+
+(defn filter-by-ids
+  "Given `obj-coll` of maps with the `:id` key, filter such that only those
+   with IDs present in `id-set` remain."
+  [id-set obj-coll]
+  (filter (fn [{id :id}] (contains? id-set id)) obj-coll))
+
+(defn objs->out-ids
+  "Given `obj-coll` of maps with IRI/IRI-array valued keys (defined by
+   `selected-keys`), return a set of all such IRI values."
+  [obj-coll selected-keys]
+  (set (reduce
+        (fn [acc obj]
+          (-> obj (select-keys selected-keys) vals flatten (concat acc)))
+        []
+        obj-coll)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; ID distinctness validation
 ;; All ID values MUST be distinct from each other

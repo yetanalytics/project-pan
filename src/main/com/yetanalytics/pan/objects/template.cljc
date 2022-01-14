@@ -1,7 +1,8 @@
 (ns com.yetanalytics.pan.objects.template
   (:require [clojure.spec.alpha :as s]
-            [com.yetanalytics.pan.axioms :as ax]
-            [com.yetanalytics.pan.graph :as graph]
+            [com.yetanalytics.pan.axioms      :as ax]
+            [com.yetanalytics.pan.graph       :as graph]
+            [com.yetanalytics.pan.identifiers :as ids]
             [com.yetanalytics.pan.objects.templates.rules :as rules]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -70,27 +71,28 @@
            attachmentUsageType
            objectStatementRefTemplate
            contextStatementRefTemplate]}]
-  (into [] (filter #(some? (second %))
-                   (concat
-                    (vector (vector id verb {:type :verb}))
-                    (vector (vector id objectActivityType
-                                    {:type :objectActivityType}))
-                    (map #(vector id % {:type :contextGroupingActivityType})
-                         contextGroupingActivityType)
-                    (map #(vector id % {:type :contextParentActivityType})
-                         contextParentActivityType)
-                    (map #(vector id % {:type :contextOtherActivityType})
-                         contextOtherActivityType)
-                    (map #(vector id % {:type :contextCategoryActivityType})
-                         contextCategoryActivityType)
-                    (map #(vector id % {:type :attachmentUsageType})
-                         attachmentUsageType)
-                    (map #(vector id % {:type :objectStatementRefTemplate})
-                         objectStatementRefTemplate)
-                    (map #(vector id % {:type :contextStatementRefTemplate})
-                         contextStatementRefTemplate)))))
+  (->> (concat
+        (vector (vector id verb {:type :verb}))
+        (vector (vector id objectActivityType
+                        {:type :objectActivityType}))
+        (map #(vector id % {:type :contextGroupingActivityType})
+             contextGroupingActivityType)
+        (map #(vector id % {:type :contextParentActivityType})
+             contextParentActivityType)
+        (map #(vector id % {:type :contextOtherActivityType})
+             contextOtherActivityType)
+        (map #(vector id % {:type :contextCategoryActivityType})
+             contextCategoryActivityType)
+        (map #(vector id % {:type :attachmentUsageType})
+             attachmentUsageType)
+        (map #(vector id % {:type :objectStatementRefTemplate})
+             objectStatementRefTemplate)
+        (map #(vector id % {:type :contextStatementRefTemplate})
+             contextStatementRefTemplate))
+       (filter #(some? (second %)))
+       (into [])))
 
-(def template-ext-keys
+(def template-iri-keys
   [:verb
    :objectActivityType
    :contextGroupingActivityType
@@ -100,66 +102,43 @@
    :objectStatementRefTemplate
    :contextStatementRefTemplate])
 
-(defn- collect-template
-  [acc template]
-  (-> template
-      (select-keys template-ext-keys)
-      vals
-      flatten
-      (concat acc)))
-
 (defn get-graph-concept-templates
-  [profile extra-profiles]
+  [profile ?extra-profiles]
   (let [templates (:templates profile)
-        ext-ids   (set (reduce collect-template [] templates))
-        concepts  (->> (concat [profile] extra-profiles)
+        out-ids   (ids/objs->out-ids templates template-iri-keys)
+        concepts  (->> (concat [profile] ?extra-profiles)
                        (mapcat :concepts)
-                       (filter (fn [{id :id}] (contains? ext-ids id))))
-        ext-tmps  (->> extra-profiles
-                       (mapcat :templates)
-                       (filter (fn [{id :id}] (contains? ext-ids id))))]
-    {:concepts      concepts
-     :templates     templates
-     :ext-templates ext-tmps}))
+                       (ids/filter-by-ids out-ids))
+        ext-tmps  (some->> ?extra-profiles
+                           (mapcat :templates)
+                           (ids/filter-by-ids out-ids))]
+    (cond-> {:concepts  concepts
+             :templates templates}
+      ext-tmps (assoc :ext-templates ext-tmps))))
+
+(defn- create-graph*
+  [node-objs edge-objs]
+  (let [tnodes (->> node-objs
+                    (mapv graph/node-with-attrs))
+        tedges (->> edge-objs
+                    (mapv graph/edges-with-attrs)
+                    graph/collect-edges)]
+    (graph/create-graph tnodes tedges)))
 
 (defn create-graph
   ([profile]
    (let [{:keys [concepts
-                 templates]} profile
-         tnodes (->> (concat concepts templates)
-                     (mapv graph/node-with-attrs))
-         tedges (->> templates
-                     (mapv graph/edges-with-attrs)
-                     graph/collect-edges)]
-     (graph/create-graph tnodes tedges)))
+                 templates]} (get-graph-concept-templates profile nil)]
+     (create-graph* (concat concepts templates)
+                    templates)))
   ([profile extra-profiles]
    (let [{:keys [concepts
                  templates
                  ext-templates]} (get-graph-concept-templates
                                   profile
-                                  extra-profiles)
-         tnodes (->> (concat concepts templates ext-templates)
-                     (mapv graph/node-with-attrs))
-         tedges (->> templates
-                     (mapv graph/edges-with-attrs)
-                     graph/collect-edges)]
-     (graph/create-graph tnodes tedges))))
-
-(comment
-  (create-graph
-   {:templates [{:id "https://foo.org/template1"
-                 :type "StatementTemplate"
-                 :inScheme "https://foo.org/v1"
-                 :verb "https://foo.org/verb"
-                 :objectActivityType "https://foo.org/activity-type"
-                 :attachmentUsageType ["https://foo.org/attachmentUsageType"]
-                 :contextStatementRefTemplate ["https://foo.org/template2"]}
-                {:id "https://foo.org/template2"
-                 :type "StatementTemplate"
-                 :inScheme "https://foo.org/v1"
-                 :objectStatementRefTemplate ["https://foo.org/template1"]}]}
-   [])
-  )
+                                  extra-profiles)]
+     (create-graph* (concat concepts templates ext-templates)
+                    templates))))
 
 (defn get-edges
   "Return a sequence of edge maps, with the following keys:

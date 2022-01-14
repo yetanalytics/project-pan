@@ -85,7 +85,7 @@
 ;; Pattern Graph Creation
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(def pattern-ext-keys
+(def pattern-iri-keys
   [:sequence
    :alternates
    :optional
@@ -94,7 +94,7 @@
 
 ;; Get the IRIs of a Pattern (within a sequence), depending on its property
 (defn- dispatch-on-pattern [pattern]
-  (keys (select-keys pattern pattern-ext-keys)))
+  (keys (select-keys pattern pattern-iri-keys)))
 
 ;; Obtain a vector of edges originating from a pattern.
 ;; The multimethod dispatches on what regex property the pattern has.
@@ -131,19 +131,12 @@
 (defmethod graph/edges-with-attrs "Pattern" [pattern]
   (get-pattern-edges pattern))
 
-(defn- collect-pattern
-  [acc pattern]
-  (-> pattern
-      (select-keys pattern-ext-keys)
-      vals
-      flatten
-      (concat acc)))
-
 (defn- empty-queue []
   #?(:clj clojure.lang.PersistentQueue/EMPTY
      :cljs cljs.core/PersistentQueue.EMPTY))
 
 (defn- pattern-children
+  "Return the children of the Pattern given by `pat-id`."
   [patterns-m pat-id]
   (let [{pat-type :type :as pat} (get patterns-m pat-id)]
     (when (= "Pattern" pat-type)
@@ -154,62 +147,63 @@
                            (some-> pat :zeroOrMore vector))]
         (map #(get patterns-m %) child-iris)))))
 
+(defn- append-bfs
+  "Perform a breadth-first traversal through the Profile Patterns
+   such that all nodes and edges connected to those in the original
+   Profile are found."
+  [pat-map init-pnodes init-pedges queue-objs visit-objs]
+  (loop [;; Start with the nodes and edges from the main Profile
+         pnodes init-pnodes
+         pedges init-pedges
+         ;; Add to queue the Patterns/Templates adjacent to the main
+         ;; Profile nodes
+         pqueue (->> queue-objs (apply conj (empty-queue)))
+         pvisit (->> visit-objs (map :id) set)]
+    (if-some [{pat-id :id
+               :as    pat} (peek pqueue)]
+      (if (contains? pvisit pat-id)
+        [pnodes pedges]
+        (let [new-pnode  (graph/node-with-attrs pat)
+              new-pedges (graph/edges-with-attrs pat)
+              next-pats  (pattern-children pat-map pat-id)]
+          (recur (conj pnodes new-pnode)
+                 (concat pedges new-pedges)
+                 (apply conj (pop pqueue) next-pats)
+                 (conj pvisit pat-id))))
+      [pnodes pedges])))
+
 (defn- create-graph*
-  [patterns templates ext-pats ext-tmps]
-  (let [init-pat-ids (set (reduce collect-pattern [] patterns))
-        templates* (->> templates
-                        (filter (fn [{id :id}] (contains? init-pat-ids id))))
-        pat-coll   (concat patterns templates ext-pats ext-tmps)
-        pat-map    (zipmap (map :id pat-coll) pat-coll)]
-    (loop [;; Start with the nodes and edges from the main Profile
-           pnodes (->> (concat patterns templates*)
-                       (mapv graph/node-with-attrs))
-           pedges (->> patterns
-                       (mapv graph/edges-with-attrs)
-                       graph/collect-edges)
-           ;; Add to queue the Patterns/Templates adjacent to the main
-           ;; Profile nodes
-           pqueue (->> (concat ext-pats ext-tmps)
-                       (filterv (fn [{id :id}] (contains? init-pat-ids id)))
-                       (apply conj (empty-queue)))
-           pvisit (->> (concat patterns templates)
-                       (map :id)
-                       set)]
-      (if-some [{pat-id :id :as pat} (peek pqueue)]
-        (if (contains? pvisit pat-id)
-          [pnodes pedges]
-          (let [new-pnode  (graph/node-with-attrs pat)
-                new-pedges (graph/edges-with-attrs pat)
-                next-pats (pattern-children pat-map pat-id)]
-            (recur (conj pnodes new-pnode)
-                   (concat pedges new-pedges)
-                   (apply conj (pop pqueue) next-pats)
-                   (conj pvisit pat-id))))
-        [pnodes pedges]))))
+  [patterns templates ?ext-pats ?ext-tmps]
+  (let [out-ids    (ids/objs->out-ids patterns pattern-iri-keys)
+        templates* (ids/filter-by-ids out-ids templates)
+        pnodes     (->> (concat patterns templates*)
+                        (mapv graph/node-with-attrs))
+        pedges     (->> patterns
+                        (mapv graph/edges-with-attrs)
+                        graph/collect-edges)]
+    (if (and ?ext-pats ?ext-pats)
+      (let [pat-coll  (concat patterns templates ?ext-pats ?ext-tmps)
+            pat-map   (zipmap (map :id pat-coll) pat-coll)
+            init-exts (->> (concat ?ext-pats ?ext-tmps)
+                           (ids/filter-by-ids out-ids))
+            inits     (concat patterns templates)
+            [pn pe]   (append-bfs pat-map pnodes pedges init-exts inits)]
+        (graph/create-graph pn pe))
+      (graph/create-graph pnodes pedges))))
 
 (defn create-graph
   ([profile]
-   (let [{:keys [patterns
-                 templates]} profile
-         init-pat-ids (set (reduce collect-pattern [] patterns))
-         templates*   (->> templates
-                           (filter (fn [{id :id}] (contains? init-pat-ids id))))
-         pnodes       (->> (concat patterns templates*)
-                           (mapv graph/node-with-attrs))
-         pedges       (->> patterns
-                           (mapv graph/edges-with-attrs)
-                           graph/collect-edges)]
-     (graph/create-graph pnodes pedges)))
+   (let [{:keys
+          [patterns
+           templates]} profile]
+     (create-graph* patterns templates nil nil)))
   ([profile extra-profiles]
-   (let [{:keys [patterns
-                 templates]} profile
-         ext-pats            (mapcat :patterns extra-profiles)
-         ext-tmps            (mapcat :templates extra-profiles)
-         [pnodes pedges]     (create-graph* patterns
-                                              templates
-                                              ext-pats
-                                              ext-tmps)]
-     (graph/create-graph pnodes pedges))))
+   (let [{:keys
+          [patterns
+           templates]} profile
+         ext-pats      (mapcat :patterns extra-profiles)
+         ext-tmps      (mapcat :templates extra-profiles)]
+     (create-graph* patterns templates ext-pats ext-tmps))))
 
 (defn get-edges
   "Return a sequence of edges in the form of maps, with the following keys:
@@ -237,22 +231,6 @@
             :dest-property (graph/attr pgraph dest :property)
             :type          (graph/attr pgraph edge :type)}))
        (graph/edges pgraph)))
-
-(comment
-  (get-edges
-   (create-graph
-    {:patterns [{:id "https://foo.org/pattern1" :type "Pattern"
-                 :inScheme "https://foo.org/v1" :primary true
-                 :alternates ["https://foo.org/pattern2"]}
-                {:id "https://foo.org/pattern2" :type "Pattern"
-                 :inScheme "https://foo.org/v1" :primary true
-                 :sequence ["https://foo.org/pattern3"
-                            "https://foo.org/template1"]}]}
-    [{:templates [{:id "https://foo.org/template1"
-                   :type "StatementTemplate" :inScheme "https://foo.org/v1"}]
-      :patterns [{:id "https://foo.org/pattern3" :type "Pattern"
-                  :inScheme "https://foo.org/v1" :primary true
-                  :optional "https://foo.org/template1"}]}])))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Pattern Graph Specs

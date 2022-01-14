@@ -1,7 +1,8 @@
 (ns com.yetanalytics.pan.objects.concept
   (:require
-   [clojure.spec.alpha         :as s]
-   [com.yetanalytics.pan.graph :as graph]
+   [clojure.spec.alpha               :as s]
+   [com.yetanalytics.pan.graph       :as graph]
+   [com.yetanalytics.pan.identifiers :as ids]
    [com.yetanalytics.pan.objects.concepts.verbs          :as v]
    [com.yetanalytics.pan.objects.concepts.activities     :as a]
    [com.yetanalytics.pan.objects.concepts.activity-types :as at]
@@ -39,7 +40,7 @@
 ;; Concept Graph Creation
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(def concept-ext-keys
+(def concept-iri-keys
   [:broader :broadMatch
    :narrower :narrowMatch
    :related :relatedMatch
@@ -47,41 +48,33 @@
    :recommendedActivityTypes
    :recommendedVerbs])
 
-(defn- collect-concept
-  [acc concept]
-  (-> concept
-      (select-keys concept-ext-keys)
-      vals
-      flatten
-      (concat acc)))
-
 (defn- get-graph-concepts
   [profile extra-profiles]
-  (let [concepts     (:concepts profile)
-        ext-ids      (set (reduce collect-concept [] concepts))
-        ext-cons     (->> (mapcat :concepts extra-profiles)
-                          (filter (fn [{id :id}] (contains? ext-ids id))))]
+  (let [concepts (:concepts profile)
+        out-ids  (ids/objs->out-ids concepts concept-iri-keys)
+        ext-cons (->> (mapcat :concepts extra-profiles)
+                      (ids/filter-by-ids out-ids))]
     {:concepts     concepts
      :ext-concepts ext-cons}))
 
+(defn- create-graph*
+  [node-concepts edge-concepts]
+  (let [cnodes (->> node-concepts
+                    (mapv graph/node-with-attrs))
+        cedges (->> edge-concepts
+                    (mapv graph/edges-with-attrs)
+                    graph/collect-edges)]
+    (graph/create-graph cnodes cedges)))
+
 (defn create-graph
   ([profile]
-   (let [{:keys [concepts]} profile
-         cnodes (->> concepts
-                     (mapv graph/node-with-attrs))
-         cedges (->> concepts
-                     (mapv graph/edges-with-attrs)
-                     graph/collect-edges)]
-     (graph/create-graph cnodes cedges)))
+   (let [{:keys [concepts]} profile]
+     (create-graph* concepts concepts)))
   ([profile extra-profiles]
    (let [{:keys [concepts
-                 ext-concepts]} (get-graph-concepts profile extra-profiles)
-         cnodes (->> (concat concepts ext-concepts)
-                     (mapv graph/node-with-attrs))
-         cedges (->> concepts
-                     (mapv graph/edges-with-attrs)
-                     graph/collect-edges)]
-     (graph/create-graph cnodes cedges))))
+                 ext-concepts]} (get-graph-concepts profile extra-profiles)]
+     (create-graph* (concat concepts ext-concepts)
+                    concepts))))
 
 (defn get-edges
   "Returns a sequence of edge maps, with the following keys:
