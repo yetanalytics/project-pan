@@ -118,12 +118,12 @@
                                       (concat extra-profiles))]
                               (validate-profile
                                profile
-                               :syntax? syntax?
-                               :ids? ids?
-                               :relations? relations?
-                               :contexts? contexts?
-                               :print-errs? print-errs?
-                               :extra-profiles extra-profiles*)))
+                               :syntax?        syntax?
+                               :ids?           ids?
+                               :relations?     relations?
+                               :contexts?      contexts?
+                               :extra-profiles extra-profiles*
+                               :print-errs?    false)))
                           profiles)
         no-errs?     (every? (fn [perr] (every? nil? (vals perr)))
                              profile-errs)]
