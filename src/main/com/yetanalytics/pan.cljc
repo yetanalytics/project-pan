@@ -5,21 +5,7 @@
             [com.yetanalytics.pan.objects.pattern :as pattern]
             [com.yetanalytics.pan.identifiers :as id]
             [com.yetanalytics.pan.context :as context]
-            [com.yetanalytics.pan.errors :as errors]
-            [com.yetanalytics.pan.utils.json :as json]))
-
-;; TODO Add conversion from Turtle and XML formats
-;; Currently only supports JSON-LD
-
-(defn- convert-profile
-  "Converts profile, if it is a JSON-LD string, into EDN format. Otherwise keeps it in EDN format.
-   - Note that all instances of @ in keywords are replaced by '_'"
-  [profile]
-  (if (string? profile)
-    (try (json/convert-json profile "_")
-         (catch #?(:clj Exception :cljs js/Error) e
-           (ex-info "JSON parsing error!" (ex-data e))))
-    profile))
+            [com.yetanalytics.pan.errors :as errors]))
 
 (defn- find-syntax-errors
   [profile]
