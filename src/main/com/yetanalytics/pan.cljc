@@ -38,7 +38,8 @@
   [cgraph tgraph pgraph]
   {:concept-edge-errors  (concept/validate-concept-edges cgraph)
    :template-edge-errors (template/validate-template-edges tgraph)
-   :pattern-edge-errors  (pattern/validate-pattern-edges pgraph)})
+   :pattern-edge-errors  (pattern/validate-pattern-edges pgraph)
+   :pattern-cycle-errors (pattern/validate-pattern-tree pgraph)})
 
 (defn- find-graph-errors
   ([profile]

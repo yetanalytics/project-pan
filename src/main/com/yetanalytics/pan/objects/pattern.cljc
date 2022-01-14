@@ -1,7 +1,8 @@
 (ns com.yetanalytics.pan.objects.pattern
   (:require [clojure.spec.alpha :as s]
             [com.yetanalytics.pan.axioms :as ax]
-            [com.yetanalytics.pan.graph :as graph]))
+            [com.yetanalytics.pan.graph :as graph]
+            [com.yetanalytics.pan.identifiers :as ids]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Pattern Specs
@@ -138,44 +139,76 @@
       flatten
       (concat acc)))
 
-(defn- get-graph-templates-patterns
-  [profile extra-profiles]
-  (let [patterns  (:patterns profile)
-        ext-ids   (set (reduce collect-pattern [] patterns))
-        ext-pats  (->> extra-profiles
-                       (mapcat :patterns)
-                       (filter (fn [{id :id}] (contains? ext-ids id))))
-        templates (->> profile
-                       (mapcat :templates)
-                       (filter (fn [{id :id}] (contains? ext-ids id))))
-        ext-tmps  (->> extra-profiles
-                       (mapcat :templates)
-                       (filter (fn [{id :id}] (contains? ext-ids id))))]
-    {:templates    (concat templates ext-tmps)
-     :patterns     patterns
-     :ext-patterns ext-pats}))
+(defn- empty-queue []
+  #?(:clj clojure.lang.PersistentQueue/EMPTY
+     :cljs cljs.core/PersistentQueue.EMPTY))
+
+(defn- pattern-children
+  [patterns-m pat-id]
+  (let [{pat-type :type :as pat} (get patterns-m pat-id)]
+    (when (= "Pattern" pat-type)
+      (let [child-iris (or (some-> pat :sequence)
+                           (some-> pat :alternates)
+                           (some-> pat :optional vector)
+                           (some-> pat :oneOrMore vector)
+                           (some-> pat :zeroOrMore vector))]
+        (map #(get patterns-m %) child-iris)))))
+
+(defn- create-graph*
+  [patterns templates ext-pats ext-tmps]
+  (let [init-pat-ids (set (reduce collect-pattern [] patterns))
+        templates* (->> templates
+                        (filter (fn [{id :id}] (contains? init-pat-ids id))))
+        pat-coll   (concat patterns templates ext-pats ext-tmps)
+        pat-map    (zipmap (map :id pat-coll) pat-coll)]
+    (loop [;; Start with the nodes and edges from the main Profile
+           pnodes (->> (concat patterns templates*)
+                       (mapv graph/node-with-attrs))
+           pedges (->> patterns
+                       (mapv graph/edges-with-attrs)
+                       graph/collect-edges)
+           ;; Add to queue the Patterns/Templates adjacent to the main
+           ;; Profile nodes
+           pqueue (->> (concat ext-pats ext-tmps)
+                       (filterv (fn [{id :id}] (contains? init-pat-ids id)))
+                       (apply conj (empty-queue)))
+           pvisit (->> (concat patterns templates)
+                       (map :id)
+                       set)]
+      (if-some [{pat-id :id :as pat} (peek pqueue)]
+        (if (contains? pvisit pat-id)
+          [pnodes pedges]
+          (let [new-pnode  (graph/node-with-attrs pat)
+                new-pedges (graph/edges-with-attrs pat)
+                next-pats (pattern-children pat-map pat-id)]
+            (recur (conj pnodes new-pnode)
+                   (concat pedges new-pedges)
+                   (apply conj (pop pqueue) next-pats)
+                   (conj pvisit pat-id))))
+        [pnodes pedges]))))
 
 (defn create-graph
   ([profile]
-   (let [{:keys [templates
-                 patterns]} profile
-         pnodes (->> (concat templates patterns)
-                     (mapv graph/node-with-attrs))
-         pedges (->> patterns
-                     (mapv graph/edges-with-attrs)
-                     graph/collect-edges)]
+   (let [{:keys [patterns
+                 templates]} profile
+         init-pat-ids (set (reduce collect-pattern [] patterns))
+         templates*   (->> templates
+                           (filter (fn [{id :id}] (contains? init-pat-ids id))))
+         pnodes       (->> (concat patterns templates*)
+                           (mapv graph/node-with-attrs))
+         pedges       (->> patterns
+                           (mapv graph/edges-with-attrs)
+                           graph/collect-edges)]
      (graph/create-graph pnodes pedges)))
   ([profile extra-profiles]
-   (let [{:keys [templates
-                 patterns
-                 ext-patterns]} (get-graph-templates-patterns
-                                 profile
-                                 extra-profiles)
-         pnodes (->> (concat templates patterns ext-patterns)
-                     (mapv graph/node-with-attrs))
-         pedges (->> patterns
-                     (mapv graph/edges-with-attrs)
-                     graph/collect-edges)]
+   (let [{:keys [patterns
+                 templates]} profile
+         ext-pats            (mapcat :patterns extra-profiles)
+         ext-tmps            (mapcat :templates extra-profiles)
+         [pnodes pedges]     (create-graph* patterns
+                                              templates
+                                              ext-pats
+                                              ext-tmps)]
      (graph/create-graph pnodes pedges))))
 
 (defn get-edges
@@ -346,52 +379,3 @@
 ;; In other words, no cycles (including self loops)
 (defn validate-pattern-tree [pgraph]
   (s/explain-data ::graph/singleton-sccs (graph/scc pgraph)))
-
-(defn- pattern-children
-  [patterns-m {pat-type :type :as pat}]
-  (when (= "Pattern" pat-type)
-    (let [child-iris (or (-> pat :sequence)
-                         (-> pat :alternates)
-                         (-> pat :optional vector)
-                         (-> pat :oneOrMore vector)
-                         (-> pat :zeroOrMore vector))]
-      (map #(get patterns-m %) child-iris))))
-
-;; Normal loop-recur-based DFS cannot record path traversed due to its
-;; iterative nature, so we roll our own recursion-based solution.
-(defn- pattern-dfs*
-  [pat-children-fn pattern pat-visit pat-path]
-  (let [{pat-id :id :as pat} pattern]
-    (if (contains? pat-visit pat-id)
-      [(conj pat-path pat-id)]
-      (let [pat-visit' (conj pat-visit pat-id)
-            pat-path'  (conj pat-path pat-id)]
-        (if-some [children (-> pat pat-children-fn not-empty)]
-          (mapcat (fn [child]
-                    (pattern-dfs* pat-children-fn child pat-visit' pat-path'))
-                  children)
-          [pat-path'])))))
-
-(defn pattern-dfs
-  [patterns-m pattern]
-  (pattern-dfs* (partial pattern-children patterns-m) pattern #{} []))
-
-;; TODO: Move to util namespace
-(defn- count-ids
-  [ids-coll]
-  (reduce (fn [accum id] (update accum id #(if (nil? %) 1 (inc %))))
-          {}
-          ids-coll))
-
-(s/def ::non-cyclic-path
-       (s/and (s/conformer count-ids)
-              (s/map-of ::ax/iri #(= 1 %))))
-
-(defn validate-pattern-tree-2
-  [profile extra-profiles]
-  (let [primaries (filter :primary (:patterns profile))
-        all-pats  (mapcat :patterns (concat [profile] extra-profiles))
-        pats-map  (zipmap (map :id all-pats) all-pats)
-        pat-paths (mapcat (partial pattern-dfs pats-map) primaries)]
-    (some #(s/explain-data ::non-cyclic-path %)
-          pat-paths)))
