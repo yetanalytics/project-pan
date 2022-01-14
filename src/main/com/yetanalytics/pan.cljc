@@ -74,13 +74,13 @@
   (let [errors   (if (not-empty extra-profiles)
                    (cond-> {}
                      syntax?    (merge (find-syntax-errors profile))
-                     ids?       (merge (find-id-errors profile))
-                     relations? (merge (find-graph-errors profile))
+                     ids?       (merge (find-id-errors profile extra-profiles))
+                     relations? (merge (find-graph-errors profile extra-profiles))
                      contexts?  (merge (find-context-errors profile)))
                    (cond-> {}
                      syntax?    (merge (find-syntax-errors profile))
-                     ids?       (merge (find-id-errors profile extra-profiles))
-                     relations? (merge (find-graph-errors profile extra-profiles))
+                     ids?       (merge (find-id-errors profile))
+                     relations? (merge (find-graph-errors profile))
                      contexts?  (merge (find-context-errors profile))))
         no-errs? (every? nil? (vals errors))]
     (if print-errs?

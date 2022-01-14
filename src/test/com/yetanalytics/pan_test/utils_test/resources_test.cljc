@@ -16,12 +16,12 @@
 (def res-3 (read-json-resource "json/schema-07.json" "_"))
 (def res-4 (read-json-resource "sample_profiles/catch.json" "_"))
 
-(deftest read-resource-testy
+(deftest read-resource-test
   (testing "testing that read-resource returns strings"
-    (is (string? res-1))
-    (is (string? res-2))
-    (is (string? res-3))
-    (is (string? res-4))))
+    (is (associative? res-1))
+    (is (associative? res-2))
+    (is (associative? res-3))
+    (is (associative? res-4))))
 
 (def res-5 (read-edn-resource "media_types.edn"))
 

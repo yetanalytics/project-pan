@@ -1,4 +1,5 @@
-(ns com.yetanalytics.pan-test-fixtures)
+(ns com.yetanalytics.pan-test-fixtures
+  (:require [clojure.string :as cstr]))
 
 (def catch-err-msg
   "
@@ -413,15 +414,12 @@ Detected 1 error
 ")
 
 ;; Graph/relation errors
-;; TODO: Fix concept errors for broadMatch, narrowMatch, relatedMatch, and exactMatch
 
 (def catch-graph-err-msg
   "
 **** Concept Edge Errors ****
 
--- Missing spec -------------------
-
-Cannot find spec for
+-- Spec failed --------------------
 
 Concept:
 {:id \"https://w3id.org/xapi/catch/verbs/finished\",
@@ -438,32 +436,10 @@ that links to object:
 via the property:
 :broadMatch
 
-with
-
- Spec multimethod:      `com.yetanalytics.pan.objects.concept/valid-edge?`
- Dispatch value:        `:broadMatch`
-
--- Spec failed --------------------
-
-Concept:
-{:id \"https://w3id.org/xapi/catch/context-extensions/advocacy-event\",
- :type \"ContextExtension\",
- :inScheme \"https://w3id.org/xapi/catch/v1\",
- ...}
-
-that links to object:
-{:id \"http://adlnet.gov/expapi/verbs/attended\",
- :type nil,
- :inScheme nil,
- ...}
-
-via the property:
-:recommendedVerbs
-
 should not link to a non-existent Concept
 
 -------------------------
-Detected 2 errors
+Detected 1 error
 
 **** Template Edge Errors ****
 
@@ -584,3 +560,15 @@ should only link to one other object
 -------------------------
 Detected 3 errors
 ")
+
+;; SCORM profile forgot the "shared" verb
+(def catch-graph-err-msg-2
+  (-> catch-graph-err-msg
+      (cstr/replace
+       #?(:clj #"https\:\/\/w3id\.org\/xapi\/catch\/verbs\/finished"
+          :cljs #"https\://w3id\.org/xapi/catch/verbs/finished")
+       "https://w3id.org/xapi/catch/verbs/provided")
+      (cstr/replace
+       #?(:clj #"http\:\/\/adlnet\.gov\/expapi\/verbs\/completed"
+          :cljs #"http\://adlnet\.gov/expapi/verbs/completed")
+       "http://adlnet.gov/expapi/verbs/shared")))

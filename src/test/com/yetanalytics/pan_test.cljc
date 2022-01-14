@@ -1,10 +1,10 @@
 (ns com.yetanalytics.pan-test
   (:require [clojure.test :refer [deftest testing is are]]
             [clojure.spec.alpha :as s]
-            [com.yetanalytics.pan :refer [validate-profile]]
+            [com.yetanalytics.pan :refer [validate-profile
+                                          validate-profiles]]
             [com.yetanalytics.pan.objects.profile :as profile]
             [com.yetanalytics.pan.errors :as e]
-            [com.yetanalytics.pan.utils.json :as json]
             [com.yetanalytics.pan-test-fixtures :as fix])
   #?(:clj (:require [com.yetanalytics.pan.utils.resources
                      :refer [read-json-resource]])
@@ -170,8 +170,20 @@
            (expound-to-str (validate-profile will-profile-raw
                                              :print-errs? false
                                              :syntax? false
+                                             :relations? true))))
+    (is (= fix/catch-graph-err-msg-2
+           (expound-to-str (validate-profile will-profile-raw
+                                             :print-errs? false
+                                             :syntax? false
                                              :relations? true
-                                             :external-iris? false))))))
+                                             :extra-profiles [scorm-profile-raw]))))
+    (is (= fix/catch-graph-err-msg-2
+           (-> [will-profile-raw scorm-profile-raw]
+               (validate-profiles :print-errs? false
+                                  :syntax? false
+                                  :relations? true)
+               first
+               expound-to-str)))))
 
 (deftest success-msg-test
   (testing "error messages on fixed profiles"
