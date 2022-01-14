@@ -190,14 +190,17 @@
     (is (= "Success!\n"
            (with-out-str (validate-profile will-profile-fix
                                            :syntax? true
+                                           :ids? true
                                            :relations? true
                                            :context? true))))
     (is (= "Success!\n"
            (with-out-str (validate-profile cmi-profile-fix
                                            :syntax? true
+                                           :ids? true
                                            :context? true))))
     (is (= "Success!\n"
            (with-out-str (validate-profiles [will-profile-fix
                                              cmi-profile-fix]
                                             :syntax? true
+                                            :ids? true
                                             :context? true))))))
