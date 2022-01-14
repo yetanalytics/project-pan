@@ -64,7 +64,12 @@
 
   More information can be found in the README."
   ;; TODO: Implement :external-iris
-  [profile & {:keys [syntax? ids? relations? contexts? print-errs? extra-profiles]
+  [profile & {:keys [syntax?
+                     ids?
+                     relations?
+                     contexts?
+                     print-errs?
+                     extra-profiles]
               :or {syntax?        true
                    ids?           false
                    relations?     false
@@ -93,23 +98,38 @@
         errors))))
 
 (defn validate-profiles
-  [profiles & {:keys [syntax? ids? relations? contexts? print-errs? extra-profiles]
+  [profiles & {:keys [syntax?
+                      ids?
+                      relations?
+                      contexts?
+                      print-errs?
+                      extra-profiles]
                :or {syntax?        true
                     ids?           false
                     relations?     false
                     contexts?      false
                     print-errs?    true
                     extra-profiles []}}]
-  (let [profiles-set (set profiles)]
-    (map (fn [profile]
-           (let [extra-profiles* (-> profiles-set
-                                     (disj profile)
-                                     (concat extra-profiles))]
-             (validate-profile profile
+  (let [profiles-set (set profiles)
+        profile-errs (map (fn [profile]
+                            (let [extra-profiles*
+                                  (-> profiles-set
+                                      (disj profile)
+                                      (concat extra-profiles))]
+                              (validate-profile
+                               profile
                                :syntax? syntax?
                                :ids? ids?
                                :relations? relations?
                                :contexts? contexts?
                                :print-errs? print-errs?
                                :extra-profiles extra-profiles*)))
-         profiles)))
+                          profiles)
+        no-errs?     (every? (fn [perr] (every? nil? (vals perr)))
+                             profile-errs)]
+    (if print-errs?
+      (if no-errs?
+        (println "Success!")
+        (map errors/expound-errors profile-errs))
+      (when-not no-errs?
+        profile-errs))))
