@@ -2,7 +2,7 @@
   (:require [clojure.test :refer [deftest testing is are]]
             [clojure.spec.alpha :as s]
             [com.yetanalytics.pan :refer [validate-profile
-                                          validate-profiles]]
+                                          validate-profile-coll]]
             [com.yetanalytics.pan.objects.profile :as profile]
             [com.yetanalytics.pan.errors :as e]
             [com.yetanalytics.pan-test-fixtures :as fix])
@@ -179,9 +179,9 @@
                                              :extra-profiles [scorm-profile-raw]))))
     (is (= fix/catch-graph-err-msg-2
            (-> [will-profile-raw scorm-profile-raw]
-               (validate-profiles :print-errs? false
-                                  :syntax? false
-                                  :relations? true)
+               (validate-profile-coll :print-errs? false
+                                      :syntax? false
+                                      :relations? true)
                first
                expound-to-str)))))
 
@@ -199,8 +199,8 @@
                                            :ids? true
                                            :context? true))))
     (is (= "Success!\n"
-           (with-out-str (validate-profiles [will-profile-fix
-                                             cmi-profile-fix]
-                                            :syntax? true
-                                            :ids? true
-                                            :context? true))))))
+           (with-out-str (validate-profile-coll [will-profile-fix
+                                                 cmi-profile-fix]
+                                                :syntax? true
+                                                :ids? true
+                                                :context? true))))))

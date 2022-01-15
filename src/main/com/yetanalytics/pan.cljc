@@ -90,13 +90,13 @@
       (when-not no-errs?
         errors))))
 
-(defn validate-profiles
-  "Like `validate-profile`, but takes a coll of `profiles` instead of a
+(defn validate-profile-coll
+  "Like `validate-profile`, but takes a `profile-coll` instead of a
    single Profile. Each Profile can reference objects in other Profiles
    (as well as those in `:extra-profiles`) and must not share object
    IDs with those in other Profiles. Keyword arguments are the same as
    in `validate-profile`."
-  [profiles & {:keys [syntax?
+  [profile-coll & {:keys [syntax?
                       ids?
                       relations?
                       contexts?
@@ -108,7 +108,7 @@
                     contexts?      false
                     print-errs?    true
                     extra-profiles []}}]
-  (let [profiles-set (set profiles)
+  (let [profiles-set (set profile-coll)
         profile-errs (map (fn [profile]
                             (let [extra-profiles*
                                   (-> profiles-set
@@ -122,7 +122,7 @@
                                :contexts?      contexts?
                                :extra-profiles extra-profiles*
                                :print-errs?    false)))
-                          profiles)
+                          profile-coll)
         no-errs?     (every? (fn [perr] (every? nil? (vals perr)))
                              profile-errs)]
     (if print-errs?
