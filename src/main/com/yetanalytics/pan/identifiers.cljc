@@ -5,59 +5,10 @@
 ;; Utils 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn only-ids
-  "Return a collection of IDs from a collection of objects."
+(defn objs->ids
+  "Return a lazy seq of IDs from a collection of objects."
   [obj-coll]
-  (mapv (fn [{:keys [id]}] id) obj-coll))
-
-(defn only-ids-multiple
-  "Return a collection of all IDs from multiple collections of objects"
-  [obj-colls]
-  (flatten (mapv only-ids obj-colls)))
-
-(defn count-ids
-  "Count the number of ID instances by creating a map between IDs and their
-  respective counts. (Ideally theys should all be one, as IDs MUST be unique
-  by definition.)"
-  [ids-coll]
-  (reduce (fn [accum id]
-            (update accum id #(if (nil? %) 1 (inc %)))) {} ids-coll))
-
-(defn profile->ids-map
-  [{:keys [id versions concepts templates patterns] :as _profile}]
-  {:id        id
-   :versions  (mapv :id versions)
-   :concepts  (mapv :id concepts)
-   :templates (mapv :id templates)
-   :patterns  (mapv :id patterns)})
-
-(defn profile->id-seq*
-  [{:keys [id versions concepts templates patterns] :as _profile}]
-  (concat [id]
-          (map :id versions)
-          (map :id concepts)
-          (map :id templates)
-          (map :id patterns)))
-
-(defn profile->id-set*
-  [profile]
-  (set (profile->id-seq* profile)))
-
-(def profile->id-seq
-  "Memoized version of `profile->id-seq*`."
-  (memoize profile->id-seq*))
-
-(def profile->id-set
-  "Memoized version of `proifle->id-set*`."
-  (memoize profile->id-set*))
-
-;;;;;;
-
-(defn filter-by-ids
-  "Given `obj-coll` of maps with the `:id` key, filter such that only those
-   with IDs present in `id-set` remain."
-  [id-set obj-coll]
-  (filter (fn [{id :id}] (contains? id-set id)) obj-coll))
+  (map :id obj-coll))
 
 (defn objs->out-ids
   "Given `obj-coll` of maps with IRI/IRI-array valued keys (defined by
@@ -69,8 +20,41 @@
         []
         obj-coll)))
 
+(defn filter-by-ids
+  "Given `obj-coll` of maps with the `:id` key, filter such that only those
+   with IDs present in `id-set` remain."
+  [id-set obj-coll]
+  (filter (fn [{id :id}] (contains? id-set id)) obj-coll))
+
+(defn filter-by-ids-kv
+  "Similar to `filter-by-ids`, except that `id-val-m` is a map from IDs
+   to values."
+  [id-set id-val-m]
+  (reduce-kv (fn [m k v] (cond-> m (contains? id-set k) (assoc k v)))
+             {}
+             id-val-m))
+
+(defn count-ids
+  "Count the number of ID instances by creating a map between IDs and their
+  respective counts. (Ideally theys should all be one, as IDs MUST be unique
+  by definition.)"
+  [ids-coll]
+  (reduce (fn [accum id]
+            (update accum id #(if (nil? %) 1 (inc %)))) {} ids-coll))
+
+(defn profile->id-seq*
+  "Given `profile`, return a lazy seq of ID from all of its
+   sub-objects."
+  [{:keys [id versions concepts templates patterns] :as _profile}]
+  (concat [id] (mapcat objs->ids [versions concepts templates patterns])))
+
+(def profile->id-seq
+  "Memoized version of `profile->id-seq*`."
+  (memoize profile->id-seq*))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; ID distinctness validation
+;;
 ;; All ID values MUST be distinct from each other
 ;; Covers requirements that version IDs MUST be distinct from each other and
 ;; from the overall profile ID.
@@ -84,12 +68,6 @@
 ;; for that here.
 (s/def ::distinct-ids
   (s/map-of any? ::one-count))
-
-(defn- filter-by-ids-kv
-  [id-set m]
-  (reduce-kv (fn [m' k v] (cond-> m' (contains? id-set k) (assoc k v)))
-             {}
-             m))
 
 (defn validate-ids
   "Takes a Profile and validates that all ID values in it are distinct
@@ -112,6 +90,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; inScheme property validation
+;;
 ;; All inScheme values MUST be a valid Profile version ID
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -127,7 +106,7 @@
   "Takes a Profile and validates all object inSchemes, which MUST be valid
    version IDs. Returns nil on success, or spec error data on failure."
   [{:keys [versions concepts templates patterns]}]
-  (let [version-ids (set (only-ids versions))
+  (let [version-ids (set (objs->ids versions))
         all-objects (concat concepts templates patterns)
         vid-objects (mapv #(assoc % :version-ids version-ids) all-objects)]
     (s/explain-data ::in-schemes vid-objects)))

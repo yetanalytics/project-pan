@@ -3,13 +3,16 @@
             [clojure.spec.alpha :as s]
             [com.yetanalytics.pan.identifiers :as id]))
 
-;; Data that we will be using of our tests
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Util Tests 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(def number-list [{:id 1}
-                  {:id 3}
-                  {:id 5 :other-key "Foo Bar"}
-                  {:id 7 :another-key true}
-                  {:id 9 :some-key 100}])
+(def number-list
+  [{:id 1}
+   {:id 3}
+   {:id 5 :other-key "Foo Bar"}
+   {:id 7 :another-key true}
+   {:id 9 :some-key 100}])
 
 (def snsd-ot8 [{:id "Taeyeon"}
                {:id "Tiffany"}
@@ -20,39 +23,70 @@
                {:id "Sunny" :some-key "Yet Analytics"}
                {:id "Sooyoung" :another-key true}])
 
-(def snsd-ot9 (merge snsd-ot8 {:not-id "Jessica" :another-key "Krystal"}))
+(def snsd-ot8-coll
+  ["Taeyeon" "Tiffany" "Seohyun" "Hyoyeon" "Yoona" "Yuri" "Sunny" "Sooyoung"])
+
+(def snsd-ot9
+  (merge snsd-ot8
+         {:not-id "Jessica" :another-key "Krystal"}))
 
 ;; Util tests
 
-(deftest only-ids-test
-  (testing "only-ids function"
-    (is (= [1 3 5 7 9] (id/only-ids number-list)))
-    (is (= ["Taeyeon" "Tiffany" "Seohyun" "Hyoyeon"
-            "Yoona" "Yuri" "Sunny" "Sooyoung"]
-           (id/only-ids snsd-ot8)))
-    (is (= ["Taeyeon" "Tiffany" "Seohyun" "Hyoyeon"
-            "Yoona" "Yuri" "Sunny" "Sooyoung" nil]
-           (id/only-ids snsd-ot9)))))
-
-(deftest only-ids-multiple-test
-  (testing "only-ids-multiple function"
+(deftest objs->ids-test
+  (testing "objs->ids function"
     (is (= [1 3 5 7 9]
-           (id/only-ids-multiple [number-list])))
-    (is (= ["Taeyeon" "Tiffany" "Seohyun" "Hyoyeon" "Yoona" "Yuri" "Sunny"
-            "Sooyoung" "Taeyeon" "Tiffany" "Seohyun" "Hyoyeon" "Yoona" "Yuri"
-            "Sunny" "Sooyoung" nil]
-           (id/only-ids-multiple [snsd-ot8 snsd-ot9])))))
+           (id/objs->ids number-list)))
+    (is (= snsd-ot8-coll
+           (id/objs->ids snsd-ot8)))
+    (is (= (conj snsd-ot8-coll nil)
+           (id/objs->ids snsd-ot9)))))
+
+(deftest objs->out-ids-test
+  (testing "objs->out-ids function"
+    (is (= #{"Yet Analytics"}
+           (id/objs->out-ids snsd-ot8 [:some-key])))))
 
 (deftest count-ids-test
   (testing "count-ids function"
-    (is (= {1 1, 3 1, 5 1, 7 1, 9 1}
-           (id/count-ids (id/only-ids number-list))))
-    (is (= {"Taeyeon" 1 "Tiffany" 1 "Seohyun" 1 "Hyoyeon" 1
-            "Yoona" 1 "Yuri" 1 "Sunny" 1 "Sooyoung" 1}
-           (id/count-ids (id/only-ids snsd-ot8))))
-    (is (= {"Taeyeon" 2 "Tiffany" 2 "Seohyun" 2 "Hyoyeon" 2
-            "Yoona" 2 "Yuri" 2 "Sunny" 2 "Sooyoung" 2 nil 1}
-           (id/count-ids (id/only-ids-multiple [snsd-ot8 snsd-ot9]))))))
+    (is (= {1 1
+            3 1
+            5 1
+            7 1
+            9 1}
+           (id/count-ids (id/objs->ids number-list))))
+    (is (= {"Taeyeon"  1
+            "Tiffany"  1
+            "Seohyun"  1
+            "Hyoyeon"  1
+            "Yoona"    1
+            "Yuri"     1
+            "Sunny"    1
+            "Sooyoung" 1}
+           (id/count-ids (id/objs->ids snsd-ot8))))
+    (is (= {"Taeyeon"  2
+            "Tiffany"  2
+            "Seohyun"  2
+            "Hyoyeon"  2
+            "Yoona"    2
+            "Yuri"     2
+            "Sunny"    2
+            "Sooyoung" 2
+            nil        1}
+           (id/count-ids (mapcat id/objs->ids [snsd-ot8 snsd-ot9]))))))
+
+
+(deftest filter-test
+  (testing "filter-by-ids function"
+    (is (= [{:id "Taeyeon"}]
+           (id/filter-by-ids #{"Taeyeon" "Taeyang"} snsd-ot8))))
+  (testing "filter-by-ids-kv function"
+    (is (= {"Taeyeon" 1}
+           (id/filter-by-ids-kv #{"Taeyeon" "Taeyang"}
+                                (id/count-ids (id/objs->ids snsd-ot8)))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Spec Tests 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (deftest distinct-ids-test
   (testing "distinct-ids spec"
