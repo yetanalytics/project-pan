@@ -39,8 +39,9 @@
   respective counts. (Ideally theys should all be one, as IDs MUST be unique
   by definition.)"
   [ids-coll]
-  (reduce (fn [accum id]
-            (update accum id #(if (nil? %) 1 (inc %)))) {} ids-coll))
+  (reduce (fn [accum id] (update accum id #(if (nil? %) 1 (inc %))))
+          {}
+          ids-coll))
 
 (defn profile->id-seq*
   "Given `profile`, return a lazy seq of ID from all of its
@@ -60,8 +61,8 @@
 ;; from the overall profile ID.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; Validate that a single ID count is 1 
-(s/def ::one-count #(= 1 %))
+;; Validate that a single ID count is 1
+(s/def ::one-count (fn one? [n] (= 1 n)))
 
 ;; Validate that all ID counts are 1
 ;; Ideally IDs should be identifiers (IRIs, IRLs, etc.), but we do not check
@@ -96,7 +97,7 @@
 
 ;; Validate that the inScheme is an element of the set of version IDs
 (s/def ::in-scheme
-  (fn [{:keys [version-ids inScheme]}]
+  (fn has-in-scheme? [{:keys [version-ids inScheme]}]
     (contains? version-ids inScheme)))
 
 ;; Validate an array of objects with inSchemes
