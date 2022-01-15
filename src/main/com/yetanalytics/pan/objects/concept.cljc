@@ -67,6 +67,8 @@
     (graph/create-graph cnodes cedges)))
 
 (defn create-graph
+  "Create a graph of Concept relations from `profile` and possibly
+   `extra-profiles` that can then be used in validation."
   ([profile]
    (let [{:keys [concepts]} profile]
      (create-graph* concepts concepts)))
@@ -75,6 +77,10 @@
                  ext-concepts]} (get-graph-concepts profile extra-profiles)]
      (create-graph* (concat concepts ext-concepts)
                     concepts))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Concept Graph Specs
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn get-edges
   "Returns a sequence of edge maps, with the following keys:
@@ -98,10 +104,6 @@
             :dest-version (graph/attr cgraph dest :inScheme)
             :type         (graph/attr cgraph edge :type)}))
        (graph/edges cgraph)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Concept Graph Specs
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Is the destination not nil?
 (s/def ::valid-dest
@@ -187,8 +189,6 @@
 ;; broadMatch, narrowMatch, relatedMatch, and exactMatch MUST point to same-type
 ;; Concepts from a different Profile
 
-;; TODO: Currently never used due to lack of external Profiles
-
 (defmethod valid-edge? :broadMatch [_]
   (s/and ::relatable-src
          ::valid-dest
@@ -241,5 +241,9 @@
 ;; Are all edges valid?
 (s/def ::concept-edges (s/coll-of ::concept-edge))
 
-(defn validate-concept-edges [cgraph]
+(defn validate-concept-edges
+  "Given the Concept graph `cgraph`, return spec error data if the
+   graph edges are invalid according to the xAPI Profile spec, or
+   `nil` otherwise."
+  [cgraph]
   (s/explain-data ::concept-edges (get-edges cgraph)))

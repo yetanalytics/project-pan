@@ -126,6 +126,9 @@
     (graph/create-graph tnodes tedges)))
 
 (defn create-graph
+  "Create a graph of Statement Template relations from `profile` and
+   possibly `extra-profiles` that can then be used in validation.
+   Relations can include those between Templates and Concepts."
   ([profile]
    (let [{:keys [concepts
                  templates]} (get-graph-concept-templates profile nil)]
@@ -139,6 +142,10 @@
                                   extra-profiles)]
      (create-graph* (concat concepts templates ext-templates)
                     templates))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Statement Template Graph Specs
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn get-edges
   "Return a sequence of edge maps, with the following keys:
@@ -162,10 +169,6 @@
             :dest-version (graph/attr tgraph dest :inScheme)
             :type         (graph/attr tgraph edge :type)}))
        (graph/edges tgraph)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Statement Template Graph Specs
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Is the source a Statement Template?
 (s/def ::template-src
@@ -278,5 +281,9 @@
 (s/def ::template-edges (s/coll-of ::template-edge))
 
 ;; Putting it all together
-(defn validate-template-edges [tgraph]
+(defn validate-template-edges
+  "Given the Statement Template graph `tgraph`, return spec error data
+   if the graph edges are invalid according to the xAPI Profile spec, or
+   `nil` otherwise."
+  [tgraph]
   (s/explain-data ::template-edges (get-edges tgraph)))

@@ -86,11 +86,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (def pattern-iri-keys
-  [:sequence
-   :alternates
-   :optional
-   :oneOrMore
-   :zeroOrMore])
+  [:sequence :alternates :optional :oneOrMore :zeroOrMore])
+
+;; ;;;;; Node and Edge Creation ;;;;;
 
 ;; Get the IRIs of a Pattern (within a sequence), depending on its property
 (defn- dispatch-on-pattern [pattern]
@@ -101,9 +99,9 @@
 
 (defmulti get-pattern-edges dispatch-on-pattern)
 
-;; Use non-terse destructuring syntax because "sequence" is already a Clojure
-;; core function
 (defmethod get-pattern-edges '(:sequence) [{:keys [id] :as pattern}]
+  ;; Use non-terse destructuring syntax because `sequence` is already a
+  ;; Clojure core function
   (mapv #(vector id % {:type :sequence}) (:sequence pattern)))
 
 (defmethod get-pattern-edges '(:alternates) [{:keys [id alternates]}]
@@ -130,6 +128,8 @@
 ;; Return a vector of pattern edges in the form [src dest {:type kword}] 
 (defmethod graph/edges-with-attrs "Pattern" [pattern]
   (get-pattern-edges pattern))
+
+;; ;;;;; Graph Creation ;;;;;
 
 (defn- empty-queue []
   #?(:clj clojure.lang.PersistentQueue/EMPTY
@@ -192,18 +192,24 @@
       (graph/create-graph pnodes pedges))))
 
 (defn create-graph
+  "Create a graph of Pattern relations from `profile` and possibly
+   `extra-profiles` that can then be used in validation. Relations
+   can include those between Patterns and Statement Templates. If
+   `extra-profiles` is provided, those profiles are traversed in order
+   to add Patterns and Templates that are connected to the nodes
+   of the main Profile's Pattern graph."
   ([profile]
-   (let [{:keys
-          [patterns
-           templates]} profile]
+   (let [{:keys [patterns templates]} profile]
      (create-graph* patterns templates nil nil)))
   ([profile extra-profiles]
-   (let [{:keys
-          [patterns
-           templates]} profile
-         ext-pats      (mapcat :patterns extra-profiles)
-         ext-tmps      (mapcat :templates extra-profiles)]
+   (let [{:keys [patterns templates]} profile
+         ext-pats (mapcat :patterns extra-profiles)
+         ext-tmps (mapcat :templates extra-profiles)]
      (create-graph* patterns templates ext-pats ext-tmps))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Pattern Graph Specs
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn get-edges
   "Return a sequence of edges in the form of maps, with the following keys:
@@ -231,10 +237,6 @@
             :dest-property (graph/attr pgraph dest :property)
             :type          (graph/attr pgraph edge :type)}))
        (graph/edges pgraph)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Pattern Graph Specs
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Is the destination not nil?
 (s/def ::valid-dest
@@ -339,14 +341,15 @@
          (s/or :pattern ::pattern-dest
                :template ::template-dest)))
 
-;; Is one edge valid?
 (s/def ::pattern-edge (s/multi-spec valid-edge? :type))
 
-;; Are all the edges valid?
 (s/def ::pattern-edges (s/coll-of ::pattern-edge))
 
-;; Edge validation
-(defn validate-pattern-edges [pgraph]
+(defn validate-pattern-edges
+  "Given the Pattern graph `pgraph`, return spec error data if the
+   graph edges are invalid according to the xAPI Profile spec, or
+   `nil` otherwise."
+  [pgraph]
   (s/explain-data ::pattern-edges (get-edges pgraph)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -355,5 +358,9 @@
 
 ;; MUST NOT include any Pattern within itself, at any depth.
 ;; In other words, no cycles (including self loops)
-(defn validate-pattern-tree [pgraph]
+(defn validate-pattern-tree
+  "Given the Pattern graph `pgraph`, return spec error data if `pgraph`
+   has non-singleton strongly connected components (indicating that
+   a cycle was detected and `pgraph` is not a tree), `nil` otherwise."
+  [pgraph]
   (s/explain-data ::graph/singleton-sccs (graph/scc pgraph)))

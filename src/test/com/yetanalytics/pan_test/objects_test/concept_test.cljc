@@ -126,8 +126,6 @@
      (assoc act-ext-fix :type :recommendedVerbs)
      (assoc act-ext-fix :dest-type "Verb" :type :recommendedVerbs))))
 
-;; TODO Add graph integration tests
-
 (def cprof
   {:concepts [{:id       "https://foo.org/verb1"
                :type     "Verb"

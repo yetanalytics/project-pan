@@ -43,27 +43,22 @@
   (context/validate-contexts profile))
 
 (defn validate-profile
-  "Validate a profile from the top down. Takes in a Profile and
-   validates it, printing or returning errors on completion.
-   Supports multiple levels of validation based on the following
-   boolean arguments:
-
-   - Default On:
-     `:print-errs?`  Print errors if true; return spec error data
-                     only if false.
-     `:syntax?`      Basic syntax validation only.
-
-   - Default Off:
-     `:ids?`            Validate object and versioning IDs.
-     `:relations?`      Validate IRI-given relations between Concepts,
-                        Statement Templates and Patterns.
-     `:contexts?`       Validate @context values and that all keys
-                        expand to absolute IRIs using @context.
-     `:external-iris?`  Allow the profile to access external links
-                        (HAS YET TO BE IMPLEMENTED).
-
-  More information can be found in the README."
-  ;; TODO: Implement :external-iris
+  "Validate `profile` from the top down, printing or returning errors
+   on completion. Supports multiple levels of validation based on the
+   following keyword arguments:
+   - `:print-errs?`    Print errors if `true`; return spec error data
+                         only if `false`. Default `true`.
+   - `:syntax?`        Basic syntax validation only. Default `true`.
+   - `:ids?`           Validate object and versioning IDs. Default
+                         `false`.
+   - `:relations?`     Validate IRI-given relations between Concepts,
+                         Statement Templates and Patterns. Default
+                         `false`.
+   - `:contexts?`      Validate \"@context\" values and that Profile keys
+                         expand to absolute IRIs using RDF contexts. Default
+                         `false.`
+   - `:extra-profiles` Extra profiles from which Concepts, Templates, and
+                         Patterns can be referenced from. Default `[]`."
   [profile & {:keys [syntax?
                      ids?
                      relations?
@@ -89,15 +84,18 @@
                      contexts?  (merge (find-context-errors profile))))
         no-errs? (every? nil? (vals errors))]
     (if print-errs?
-      ;; Print monolithic error message, exactly like spec/explain
       (if no-errs?
-        (println "Success!")
+        (println "Success!") ; Exactly like `spec/explain`
         (errors/expound-errors errors))
-      ;; Return the map of errors
       (when-not no-errs?
         errors))))
 
 (defn validate-profiles
+  "Like `validate-profile`, but takes a coll of `profiles` instead of a
+   single Profile. Each Profile can reference objects in other Profiles
+   (as well as those in `:extra-profiles`) and must not share object
+   IDs with those in other Profiles. Keyword arguments are the same as
+   in `validate-profile`."
   [profiles & {:keys [syntax?
                       ids?
                       relations?
