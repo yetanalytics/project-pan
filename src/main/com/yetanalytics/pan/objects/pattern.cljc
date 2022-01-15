@@ -188,8 +188,8 @@
                            (ids/filter-by-ids out-ids))
             inits     (concat patterns templates)
             [pn pe]   (append-bfs pat-map pnodes pedges init-exts inits)]
-        (graph/create-graph pn pe))
-      (graph/create-graph pnodes pedges))))
+        (graph/create-graph* pn pe))
+      (graph/create-graph* pnodes pedges))))
 
 (defn create-graph
   "Create a graph of Pattern relations from `profile` and possibly

@@ -57,26 +57,17 @@
     {:concepts     concepts
      :ext-concepts ext-cons}))
 
-(defn- create-graph*
-  [node-concepts edge-concepts]
-  (let [cnodes (->> node-concepts
-                    (mapv graph/node-with-attrs))
-        cedges (->> edge-concepts
-                    (mapv graph/edges-with-attrs)
-                    graph/collect-edges)]
-    (graph/create-graph cnodes cedges)))
-
 (defn create-graph
   "Create a graph of Concept relations from `profile` and possibly
    `extra-profiles` that can then be used in validation."
   ([profile]
    (let [{:keys [concepts]} profile]
-     (create-graph* concepts concepts)))
+     (graph/create-graph concepts concepts)))
   ([profile extra-profiles]
-   (let [{:keys [concepts
-                 ext-concepts]} (get-graph-concepts profile extra-profiles)]
-     (create-graph* (concat concepts ext-concepts)
-                    concepts))))
+   (let [{:keys [concepts ext-concepts]} (get-graph-concepts profile
+                                                             extra-profiles)]
+     (graph/create-graph (concat concepts ext-concepts)
+                         concepts))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Concept Graph Specs

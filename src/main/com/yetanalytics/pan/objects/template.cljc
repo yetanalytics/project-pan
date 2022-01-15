@@ -116,15 +116,6 @@
              :templates templates}
       ext-tmps (assoc :ext-templates ext-tmps))))
 
-(defn- create-graph*
-  [node-objs edge-objs]
-  (let [tnodes (->> node-objs
-                    (mapv graph/node-with-attrs))
-        tedges (->> edge-objs
-                    (mapv graph/edges-with-attrs)
-                    graph/collect-edges)]
-    (graph/create-graph tnodes tedges)))
-
 (defn create-graph
   "Create a graph of Statement Template relations from `profile` and
    possibly `extra-profiles` that can then be used in validation.
@@ -132,16 +123,16 @@
   ([profile]
    (let [{:keys [concepts
                  templates]} (get-graph-concept-templates profile nil)]
-     (create-graph* (concat concepts templates)
-                    templates)))
+     (graph/create-graph (concat concepts templates)
+                         templates)))
   ([profile extra-profiles]
    (let [{:keys [concepts
                  templates
                  ext-templates]} (get-graph-concept-templates
                                   profile
                                   extra-profiles)]
-     (create-graph* (concat concepts templates ext-templates)
-                    templates))))
+     (graph/create-graph (concat concepts templates ext-templates)
+                         templates))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Statement Template Graph Specs

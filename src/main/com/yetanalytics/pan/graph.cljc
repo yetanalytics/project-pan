@@ -71,12 +71,24 @@
           g
           edges))
 
-(defn create-graph
+(defn create-graph*
   "Create a graph with `nodes` and `edges`."
   [nodes edges]
   (-> (new-digraph)
       (add-nodes nodes)
       (add-edges edges)))
+
+(defn create-graph
+  "Create a graph with `node-objs` and `edge-objs`, which should be
+   coerceable by `node-with-attrs` and `edges-with-attrs`,
+   respectively."
+  [node-objs edge-objs]
+  (let [cnodes (->> node-objs
+                    (mapv node-with-attrs))
+        cedges (->> edge-objs
+                    (mapv edges-with-attrs)
+                    collect-edges)]
+    (create-graph* cnodes cedges)))
 
 (defn src
   "Return the source node of a directed edge."
