@@ -28,26 +28,36 @@
 (def activity-context
   (read-json-resource "context/activity-context.json" "at/"))
 
-(defn- uri->context*
-  "Get a context and parse it from JSON to EDN.
-   If a @context is one of two contexts given by the profile spec, call them
-   from local resources."
-  [context]
-  (case context
-    "https://w3id.org/xapi/profiles/context"
-    profile-context
-    "https://w3id.org/xapi/profiles/activity-context"
-    activity-context
-    ;; TODO get other contexts from the Internet; currently throws exception
-    (throw (ex-info "Unable to read from URI"
-                    {:type ::unknown-context-uri
-                     :url   context}))))
+;; (defn- uri->context*
+;;   "Get a context and parse it from JSON to EDN.
+;;    If a @context is one of two contexts given by the profile spec, call them
+;;    from local resources."
+;;   [context]
+;;   (case context
+;;     "https://w3id.org/xapi/profiles/context"
+;;     profile-context
+;;     "https://w3id.org/xapi/profiles/activity-context"
+;;     activity-context
+;;     ;; TODO get other contexts from the Internet; currently throws exception
+;;     (throw (ex-info "Unable to read from URI"
+;;                     {:type ::unknown-context-uri
+;;                      :url   context}))))
+
+;; (defn uri->context
+;;   "Get a raw context, then parse it from JSON to EDN.
+;;   Return the JSON object given by the @context key"
+;;   [context-uri]
+;;   (-> context-uri uri->context* :at/context))
+
+(def default-context-map
+  {"https://w3id.org/xapi/profiles/context"          profile-context
+   "https://w3id.org/xapi/profiles/activity-context" activity-context})
 
 (defn uri->context
-  "Get a raw context, then parse it from JSON to EDN.
-  Return the JSON object given by the @context key"
-  [context-uri]
-  (-> context-uri uri->context* :at/context))
+  [context-map context-uri]
+  (if-some [context-val (get context-map context-uri)]
+    (:at/context context-val)
+    {}))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Validate context 
@@ -168,7 +178,7 @@
 (defn push-context
   "If there exists a @context key at the current node, add it to the stack.
   Recall that @context may be either a URI string or an array of URIs."
-  [context-stack location]
+  [context-map context-stack location]
   (let [curr-path (-> location zip/path vec)
         context-val (-> location zip/node :_context)]
     (letfn [(push-context*
@@ -183,10 +193,10 @@
       (cond
         ;; @context is URI valued
         (s/valid? ::ax/iri context-val)
-        (push-context* context-stack (uri->context context-val))
+        (push-context* context-stack (uri->context context-map context-val))
         ;; @context is array valued
         (s/valid? ::ax/array-of-iri context-val)
-        (reduce push-context* context-stack (map uri->context context-val))
+        (reduce push-context* context-stack (map (partial uri->context context-map) context-val))
         ;; @context is inline (not allowed by spec, but good for debug)
         (map? context-val)
         (push-context* context-stack context-val)
@@ -279,9 +289,8 @@
         (dissoc :index)
         (update ::s/value (comp vec reverse)))))
 
-(defn validate-contexts
-  "Validate all the contexts in a Profile."
-  [profile]
+(defn- validate-contexts*
+  [context-map profile]
   (loop [profile-loc (profile-to-zipper profile)
          context-stack []
          ;; For contexts themselves that are bad
@@ -291,7 +300,7 @@
     (if-not (zip/end? profile-loc)
       (let [curr-node (zip/node profile-loc)
             popped-stack (pop-contexts context-stack profile-loc)
-            pushed-stack (push-context context-stack profile-loc)]
+            pushed-stack (push-context context-map context-stack profile-loc)]
         (if (-> pushed-stack peek :context nil?)
           ;; If latest context is erroneous
           (let [new-cerrors (update-context-errors popped-stack
@@ -315,3 +324,12 @@
             profile-err-map (error-seq->map ::jsonld-node profile-err-seq)]
         {:context-errors     context-err-map
          :context-key-errors profile-err-map}))))
+
+(defn validate-contexts
+  "Validate all the contexts in a Profile."
+  ([profile]
+   (validate-contexts* default-context-map
+                       profile))
+  ([profile extra-context-map]
+   (validate-contexts* (merge default-context-map extra-context-map)
+                       profile)))

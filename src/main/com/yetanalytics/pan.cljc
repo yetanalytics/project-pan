@@ -39,8 +39,10 @@
      (find-graph-errors* cgraph tgraph pgraph))))
 
 (defn- find-context-errors
-  [profile]
-  (context/validate-contexts profile))
+  [profile ?extra-contexts-map]
+  (if ?extra-contexts-map
+    (context/validate-contexts profile ?extra-contexts-map)
+    (context/validate-contexts profile)))
 
 (defn validate-profile
   "Validate `profile` from the top down, printing or returning errors
@@ -64,24 +66,26 @@
                      relations?
                      contexts?
                      print-errs?
-                     extra-profiles]
+                     extra-profiles
+                     extra-contexts]
               :or {syntax?        true
                    ids?           false
                    relations?     false
                    contexts?      false
                    print-errs?    true
-                   extra-profiles []}}]
+                   extra-profiles []
+                   extra-contexts {}}}]
   (let [errors   (if (not-empty extra-profiles)
                    (cond-> {}
                      syntax?    (merge (find-syntax-errors profile))
                      ids?       (merge (find-id-errors profile extra-profiles))
                      relations? (merge (find-graph-errors profile extra-profiles))
-                     contexts?  (merge (find-context-errors profile)))
+                     contexts?  (merge (find-context-errors profile extra-contexts)))
                    (cond-> {}
                      syntax?    (merge (find-syntax-errors profile))
                      ids?       (merge (find-id-errors profile))
                      relations? (merge (find-graph-errors profile))
-                     contexts?  (merge (find-context-errors profile))))
+                     contexts?  (merge (find-context-errors profile extra-contexts))))
         no-errs? (every? nil? (vals errors))]
     (if print-errs?
       (if no-errs?
@@ -97,17 +101,19 @@
    IDs with those in other Profiles. Keyword arguments are the same as
    in `validate-profile`."
   [profile-coll & {:keys [syntax?
-                      ids?
-                      relations?
-                      contexts?
-                      print-errs?
-                      extra-profiles]
-               :or {syntax?        true
-                    ids?           false
-                    relations?     false
-                    contexts?      false
-                    print-errs?    true
-                    extra-profiles []}}]
+                          ids?
+                          relations?
+                          contexts?
+                          print-errs?
+                          extra-profiles
+                          extra-contexts]
+                   :or {syntax?        true
+                        ids?           false
+                        relations?     false
+                        contexts?      false
+                        print-errs?    true
+                        extra-profiles []
+                        extra-contexts {}}}]
   (let [profiles-set (set profile-coll)
         profile-errs (map (fn [profile]
                             (let [extra-profiles*
@@ -121,6 +127,7 @@
                                :relations?     relations?
                                :contexts?      contexts?
                                :extra-profiles extra-profiles*
+                               :extra-contexts extra-contexts
                                :print-errs?    false)))
                           profile-coll)
         no-errs?     (every? (fn [perr] (every? nil? (vals perr)))

@@ -10,10 +10,14 @@
                              :refer [read-json-resource]])))
 
 (def profile-context
-  (c/uri->context "https://w3id.org/xapi/profiles/context"))
+  (->> "https://w3id.org/xapi/profiles/context"
+       (get c/default-context-map)
+       :at/context))
 
 (def activity-context
-  (c/uri->context "https://w3id.org/xapi/profiles/activity-context"))
+  (->> "https://w3id.org/xapi/profiles/activity-context"
+       (get c/default-context-map)
+       :at/context))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Parsing and validating context tests 
@@ -23,21 +27,31 @@
 (deftest uri->context-test
   (testing "uri->context function: Get @context and convert from JSON to EDN."
     (is (map? profile-context))
-    (is (= {:xapi "https://w3id.org/xapi/ontology#"
-            :type {:at/id "xapi:type" :at/type "@id"}
-            :name {:at/id "xapi:name" :at/container "@language"}
-            :description {:at/id "xapi:description" :at/container "@language"}
-            :moreInfo {:at/id "xapi:moreInfo" :at/type "@id"}
-            :extensions {:at/id "xapi:extensions" :at/container "@set"}
-            :interactionType {:at/id "xapi:interactionType"}
-            :correctResponsesPattern {:at/id "xapi:correctResponsesPattern"
+    (is (= {:xapi                    "https://w3id.org/xapi/ontology#"
+            :type                    {:at/id   "xapi:type"
+                                      :at/type "@id"}
+            :name                    {:at/id        "xapi:name"
+                                      :at/container "@language"}
+            :description             {:at/id        "xapi:description"
+                                      :at/container "@language"}
+            :moreInfo                {:at/id   "xapi:moreInfo"
+                                      :at/type "@id"}
+            :extensions              {:at/id        "xapi:extensions"
                                       :at/container "@set"}
-            :choices {:at/id "xapi:choices" :at/container "@list"}
-            :scale {:at/id "xapi:scale" :at/container "@list"}
-            :source {:at/id "xapi:source" :at/container "@list"}
-            :target {:at/id "xapi:target" :at/container "@list"}
-            :steps {:at/id "xapi:steps" :at/container "@list"}
-            :id {:at/id "xapi:interactionId"}}
+            :interactionType         {:at/id "xapi:interactionType"}
+            :correctResponsesPattern {:at/id        "xapi:correctResponsesPattern"
+                                      :at/container "@set"}
+            :choices                 {:at/id        "xapi:choices"
+                                      :at/container "@list"}
+            :scale                   {:at/id        "xapi:scale"
+                                      :at/container "@list"}
+            :source                  {:at/id        "xapi:source"
+                                      :at/container "@list"}
+            :target                  {:at/id        "xapi:target"
+                                      :at/container "@list"}
+            :steps                   {:at/id        "xapi:steps"
+                                      :at/container "@list"}
+            :id                      {:at/id "xapi:interactionId"}}
            activity-context))))
 
 (deftest prefix-spec-test
@@ -193,20 +207,25 @@
 (deftest push-context-test
   (testing "push-context function"
     (is (= [{:path [] :context activity-context :errors nil}]
-           (c/push-context [] (-> dummy-profile c/profile-to-zipper))))
+           (c/push-context c/default-context-map
+                           []
+                           (-> dummy-profile c/profile-to-zipper))))
     ;; Do not push if there is no @context key
     (is (= [{:path [] :context activity-context :errors nil}]
-           (c/push-context [{:path [] :context activity-context :errors nil}]
+           (c/push-context c/default-context-map
+                           [{:path [] :context activity-context :errors nil}]
                            (-> dummy-profile c/profile-to-zipper zip/down))))
     ;; Push if we have a vector as an @context value
     (is (= [{:path [] :context activity-context :errors nil}
             {:path [] :context profile-context :errors nil}]
-           (c/push-context
-            [] (c/profile-to-zipper
-                {:foo {:bar "b1" :baz "b2"}
-                 :nums [{:one 1} {:two 2} {:three 3}]
-                 :_context ["https://w3id.org/xapi/profiles/activity-context"
-                            "https://w3id.org/xapi/profiles/context"]}))))))
+           (c/push-context c/default-context-map
+                           []
+                           (c/profile-to-zipper
+                            {:foo      {:bar "b1"
+                                        :baz "b2"}
+                             :nums     [{:one 1} {:two 2} {:three 3}]
+                             :_context ["https://w3id.org/xapi/profiles/activity-context"
+                                        "https://w3id.org/xapi/profiles/context"]}))))))
 
 (deftest update-context-errors-test
   (testing "update-context-errors function"
