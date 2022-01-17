@@ -333,3 +333,123 @@
   ([profile extra-context-map]
    (validate-contexts* (merge default-context-map extra-context-map)
                        profile)))
+
+;;;;;;;;;;;
+
+(defn expand-compact-iri
+  [context compact-iri]
+  (when-some [[_ pre post] (re-matches #"(.*):(.*)" compact-iri)]
+    (when-some [exp-pre (get context pre)]
+      (str exp-pre post))))
+
+(defn expand-key
+  [context k]
+  (let [kname (name k)]
+    (cond
+      ;; compact or expanded IRI
+      (or (s/valid? ::ax/iri kname) (string/includes? kname ":"))
+      (or (expand-compact-iri context kname)
+          kname)
+      ;; simple or expanded term definition
+      (contains? context kname)
+      (let [term-def (get context kname)]
+        (or (and (string? term-def)
+                 (expand-compact-iri context term-def))
+            (and (map? term-def)
+                 (expand-compact-iri context (:_id term-def)))
+            ;; fail
+            kname))
+      ;; @vocab IRI prefix
+      (:_vocab context)
+      (str (:_vocab context) kname)
+      ;; fail
+      :else
+      kname)))
+
+(defn lang-map-key?
+  [context k]
+  (let [term-def (get context k)]
+    (boolean (and (map? term-def)
+                  (#{"@language"} (get :_container term-def))))))
+
+(defn- new-context
+  [contexts-map context]
+  (cond
+    (string? context)
+    (get contexts-map context)
+    (map? context)
+    context
+    (seq? context)
+    (->> context
+         (map (partial new-context contexts-map))
+         (apply merge))
+    :else
+    (throw (ex-info "Invalid @context value!"
+                    {:type    ::invalid-context
+                     :context context}))))
+
+(defn- expand-profile-keys
+  [contexts-map context profile]
+  (let [context* (if-some [ctx (some->> profile
+                                        :_context
+                                        (new-context contexts-map))]
+                   (merge context ctx)
+                   context)]
+    (reduce-kv (fn [m k v]
+                 (let [k* (expand-key context* k)
+                       v* (cond
+                            ;; Need to treat language maps specially
+                            ;; Otherwise they'd be treated as node objects
+                            (lang-map-key? context k)
+                            (mapv (fn [[ltag lval]]
+                                    {:_language ltag :_value lval})
+                                  v)
+                            (map? v)
+                            (expand-profile-keys contexts-map context* v)
+                            (seq? v)
+                            (mapv (partial expand-profile-keys
+                                           contexts-map
+                                           context*)
+                                  v)
+                            :else
+                            v)]
+                   (assoc m k* v*)))
+               {}
+               (dissoc profile :_context))))
+
+;; All JSON-LD keywords except those exclusive to context maps
+;; https://www.w3.org/TR/json-ld11/#keywords
+(def jsonld-keywords
+  #{:_context
+    :_direction
+    :_graph
+    :_id
+    :_included
+    :_index
+    :_json
+    :_language
+    :_list
+    :_nest
+    :_none
+    :_reverse
+    :_set
+    :_type
+    :_value})
+
+(s/def ::expanded-key
+  (s/or :iri ::ax/iri
+        :keyword jsonld-keywords))
+
+(s/def ::expanded-key-profile
+  (s/map-of ::expanded-key
+            (s/or :object ::expanded-key-profile
+                  :array (s/coll-of ::expanded-key-profile)
+                  :scalar any?)))
+
+(defn validate-contexts-2
+  "Validate that all keys in `profile` are able to be expanded into IRIs
+   using \"@context\" maps. NOTE: Does not attempt to validate the values."
+  [contexts-map profile]
+  (->> profile
+       (expand-profile-keys contexts-map {})
+       (s/explain-data ::expanded-key-profile)))
