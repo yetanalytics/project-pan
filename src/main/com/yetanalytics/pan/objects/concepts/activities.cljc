@@ -34,6 +34,14 @@
     (if-some [_ (:target m)] (update m :target stringify-keys) m)
     (if-some [_ (:steps m)] (update m :steps stringify-keys) m)))
 
+;; ;; Important to stringify lang maps to work with xapi-schema.
+;; ;; Top-level keys don't have to be stringified, however.
+;; (defn stringify-submaps
+;;   "Stringify keys in maps that exist below the top level, i.e.
+;;    `{:foo {:bar 1}}` becomes `{:foo {\"bar\" 1}}`."
+;;   [m]
+;;   (into {} (map (fn [[k v]] [k (stringify-keys v)]) m)))
+
 ;; Need to use this function instead of s/merge because of restrict-keys in
 ;; xapi-schema function.
 (s/def ::activity-definition-keys
@@ -43,8 +51,24 @@
   (s/valid? :activity/definition
             (stringify-lang-keys (dissoc adef :_context))))
 
+;; (s/def ::extension
+;;   (s/or :object (s/keys :req-un [::_context])
+;;         :array (s/coll-of (s/or :object (s/keys :req-un [::_context])
+;;                                 :non-object (comp not map?)))
+;;         :scalar (comp not coll?)))
+
+;; (s/def ::extensions
+;;   (s/map-of :ax/iri ::extension))
+
 (s/def ::activityDefinition
   (s/and ::activity-definition-keys activity-def?))
+
+;; (s/def ::activityDefinition
+;;   (s/and (s/nonconforming (s/keys :req-un [::_context]
+;;                                   :opt-un [::extensions]))
+;;          (s/conformer #(dissoc % :_context))
+;;          (s/conformer stringify-submaps)
+;;          :activity/definition))
 
 (s/def ::activity
   (s/keys :req-un [::id ::type ::inScheme ::activityDefinition]
