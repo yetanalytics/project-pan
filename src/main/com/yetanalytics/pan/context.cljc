@@ -453,3 +453,38 @@
   (->> profile
        (expand-profile-keys contexts-map {})
        (s/explain-data ::expanded-key-profile)))
+
+(def context-keywords
+  #{:_base :_import :_language :_propagate :_protected :_type :_version :_vocab})
+
+(s/def :context.term-def/id (partial re-matches #".*:.*"))
+
+(s/def ::_base ::ax/iri)
+(s/def ::_import ::ax/iri)
+(s/def ::_language ::ax/language-tag)
+(s/def ::_propagate ::ax/boolean)
+(s/def ::_protected ::ax/boolean)
+(s/def ::_type (s/keys :req-un [::_container]))
+(s/def ::_version #{1.1})
+(s/def ::_vocab ::ax/iri)
+
+;; Currently only @vocab value is used
+;; TODO: Apply other context properties
+(def context-spec
+  (s/and (s/keys :opt-un [::_vocab])
+   (s/conformer #(apply dissoc % context-keywords))
+         (s/map-of
+          keyword?
+          (s/or :iri
+                ::ax/iri
+                :simple-term-def
+                :context.term-def/id
+                :expanded-term-def
+                (s/keys :req-un [:context.term-def/id])))))
+
+(s/def ::_context
+  (s/or :iri ::ax/iri
+        :inline context-spec
+        :array (s/coll-of (s/or :iri ::ax/iri
+                                :inline context-spec)
+                          :min-count 1)))
