@@ -147,26 +147,22 @@
 
 ;; This profile has two invalid contexts
 (def bad-profile-3a
-  {:id       "https://foo.org/profile"
-   :type     "Profile"
-   :_context {:type                "@type"
-              :id                  "@id"
-              :prov                "http://www.w3.org/ns/prov#"
-              :skos                "http://www.w3.org/2004/02/skos/core#"
-              :profile             "https://w3id.org/xapi/profiles/ontology#"
-              :Profile             "profile:Profile"
-              :Verb                "xapi:Verb"
-              :ActivityType        "xapi:ActivityType"
-              :AttachmentUsageType "xapi:AttachmentUsageType"}
-   :concepts [{:id       "https://foo.org/activity/1"
-               :type     "Activity"
-               :_context {:type    "@type"
-                          :id      "@id"
-                          :prov    "http://www.w3.org/ns/prov#"
-                          :skos    "http://www.w3.org/2004/02/skos/core#"
-                          :Profile "profile:Profile"}}]})
+  (assoc good-profile-1
+         :concepts
+         [{:id       "https://foo.org/activity/1"
+           :type     "Activity"
+           :inScheme "https://w3id.org/xapi/catch/v1"
+           :activityDefinition
+           {:_context "https://w3id.org/xapi/profiles/activity-context"
+            :extensions
+            {"http://foo.org"
+             {:_context {:type    "@type"
+                         :id      "@id"
+                         :prov    "http://www.w3.org/ns/prov#"
+                         :skos    "http://www.w3.org/2004/02/skos/core#"
+                         :Profile {:id "bee"}}}}}}]))
 
-;; This profile has two instances where keys cannot be expanded via @context
+;; This profile has three instances where keys cannot be expanded via @context
 (def bad-profile-3b
   {:id       "https://foo.org/profile"
    :type     "Profile"
@@ -175,8 +171,11 @@
    :baz      "Qux"
    :concepts [{:id       "https://foo.org/activity/1"
                :type     "Activity"
-               :_context "https://w3id.org/xapi/profiles/activity-context"
-               :hello    "World"}]})
+               :activityDefinition
+               {:_context "https://w3id.org/xapi/profiles/activity-context"
+                :id       "https://foo.org/activity-name-1"
+                :type     "https://foo.org/activity-type-1"
+                :hello    "World"}}]})
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Tests
@@ -207,7 +206,9 @@
       fix/err-msg-9 {:pattern-edge-errors
                      (pt/validate-pattern-edges
                       (pt/create-graph bad-profile-2h))}
-      fix/err-msg-10 {:context-errors
+      fix/err-msg-10 {:syntax-errors
+                      (p/validate bad-profile-3a)}
+      fix/err-msg-11 {:context-errors
                       (ctx/validate-contexts bad-profile-3b)}))
   (testing "combining error messages"
     (is (= (str fix/err-msg-4 fix/err-msg-5)

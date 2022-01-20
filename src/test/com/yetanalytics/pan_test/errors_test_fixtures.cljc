@@ -446,9 +446,123 @@ should not refer to itself
 Detected 1 error
 ")
 
-;; Context key errors
+;; Context errors
 
 (def err-msg-10
+  "
+**** Syntax Errors ****
+
+-- Spec failed --------------------
+
+Value:
+{:type \"@type\",
+ :id \"@id\",
+ :prov \"http://www.w3.org/ns/prov#\",
+ :skos \"http://www.w3.org/2004/02/skos/core#\",
+ :Profile {:id \"bee\"}}
+
+of property:
+:_context
+
+in object:
+{:id \"https://foo.org/activity/1\",
+ :type \"Activity\",
+ :inScheme \"https://w3id.org/xapi/catch/v1\",
+ :activityDefinition
+ {:_context \"https://w3id.org/xapi/profiles/activity-context\",
+  :extensions
+  {\"http://foo.org\"
+   {:_context
+    {:type \"@type\",
+     :id \"@id\",
+     :prov \"http://www.w3.org/ns/prov#\",
+     :skos \"http://www.w3.org/2004/02/skos/core#\",
+     :Profile {:id \"bee\"}}}}}}
+
+should be a non-empty string
+
+or
+
+should be a valid inline context
+
+-- Spec failed --------------------
+
+Value:
+{:id \"bee\"}
+
+of property:
+:Profile
+
+in object:
+{:id \"https://foo.org/activity/1\",
+ :type \"Activity\",
+ :inScheme \"https://w3id.org/xapi/catch/v1\",
+ :activityDefinition
+ {:_context \"https://w3id.org/xapi/profiles/activity-context\",
+  :extensions
+  {\"http://foo.org\"
+   {:_context
+    {:type \"@type\",
+     :id \"@id\",
+     :prov \"http://www.w3.org/ns/prov#\",
+     :skos \"http://www.w3.org/2004/02/skos/core#\",
+     :Profile {:id \"bee\"}}}}}}
+
+should be one of: \"@id\", \"@type\"
+
+or
+
+should satisfy
+
+  string?
+
+or
+
+should be a non-empty string
+
+or
+
+should contain key: :_id
+
+| key  | spec                                              |
+|======+===================================================|
+| :_id | <can't find spec for unqualified spec identifier> |
+
+-- Spec failed --------------------
+
+Value:
+{:_context
+ {:type \"@type\",
+  :id \"@id\",
+  :prov \"http://www.w3.org/ns/prov#\",
+  :skos \"http://www.w3.org/2004/02/skos/core#\",
+  :Profile {:id \"bee\"}}}
+
+of property:
+:extensions
+
+in object:
+{:id \"https://foo.org/activity/1\",
+ :type \"Activity\",
+ :inScheme \"https://w3id.org/xapi/catch/v1\",
+ :activityDefinition
+ {:_context \"https://w3id.org/xapi/profiles/activity-context\",
+  :extensions
+  {\"http://foo.org\"
+   {:_context
+    {:type \"@type\",
+     :id \"@id\",
+     :prov \"http://www.w3.org/ns/prov#\",
+     :skos \"http://www.w3.org/2004/02/skos/core#\",
+     :Profile {:id \"bee\"}}}}}}
+
+should be a valid Activity extension
+
+-------------------------
+Detected 3 errors
+")
+
+(def err-msg-11
   "
 **** Context Errors ****
 
@@ -496,8 +610,9 @@ Key:
 in object:
 {:hello \"World\",
  \"https://w3id.org/xapi/ontology#interactionId\"
- \"https://foo.org/activity/1\",
- \"https://w3id.org/xapi/ontology#type\" \"Activity\"}
+ \"https://foo.org/activity-name-1\",
+ \"https://w3id.org/xapi/ontology#type\"
+ \"https://foo.org/activity-type-1\"}
 
 should be a non-empty string
 

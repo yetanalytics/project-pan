@@ -48,21 +48,23 @@
 (s/def ::_version #{1.1})
 (s/def ::_vocab ::ax/iri)
 
+(s/def ::context-value
+  (s/or
+   :keyword #{"@id" "@type"}
+   :iri ::ax/iri
+   :simple-term-def :context.term-def/_id
+   :expanded-term-def (s/keys :req-un [:context.term-def/_id]
+                              :opt-un [:context.term-def/_container])))
+
 (def context-spec
-  (s/map-of
-   keyword?
-   (s/or
-    :keyword #{"@id" "@type"}
-    :iri ::ax/iri
-    :simple-term-def :context.term-def/_id
-    :expanded-term-def (s/keys :req-un [:context.term-def/_id]
-                               :opt-un [:context.term-def/_container]))))
+  (s/map-of keyword? ::context-value))
 
 (s/def ::_context
   (s/or :iri ::ax/iri
         :inline context-spec
         :array (s/coll-of (s/or :iri ::ax/iri
                                 :inline context-spec)
+                          :kind vector?
                           :min-count 1)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

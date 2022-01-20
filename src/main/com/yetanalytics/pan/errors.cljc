@@ -145,7 +145,7 @@
 ;; Context spec messages
 
 (exp/defmsg ::ctx/_context
-  "should be a valid IRI or inline context")
+  "should be a valid inline context")
 (exp/defmsg ::ctx/expanded-key
   "should be a JSON-LD keyword or language tag")
 
