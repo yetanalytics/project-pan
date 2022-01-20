@@ -50,9 +50,5 @@
 ;; validation which requires external calls
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; TODO: json-ld context validation
-;; context - valid json-ld context
-
 ;; TODO: get string from iri
-
 ;; schema - json-schema string at other end of iri
