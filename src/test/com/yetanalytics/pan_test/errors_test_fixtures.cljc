@@ -446,7 +446,7 @@ should not refer to itself
 Detected 1 error
 ")
 
-;; Context errors
+;; Context key errors
 
 (def err-msg-10
   "
@@ -454,184 +454,56 @@ Detected 1 error
 
 -- Spec failed --------------------
 
-Value:
-\"profile:Profile\"
-
-in context:
-{:id \"@id\",
- :type \"@type\",
- :Profile \"profile:Profile\",
- :prov \"http://www.w3.org/ns/prov#\",
- :skos \"http://www.w3.org/2004/02/skos/core#\"}
-
-should be a JSON-LD context keyword
-
-or
-
-should be a JSON-LD prefix
-
-or
-
-should be a simple term definition with a valid prefix
-
-or
-
-should be an expanded term definition with a valid prefix
-
--- Spec failed --------------------
-
-Value:
-\"xapi:Verb\"
-
-in context:
-{:id \"@id\",
- :type \"@type\",
- :ActivityType \"xapi:ActivityType\",
- :AttachmentUsageType \"xapi:AttachmentUsageType\",
- :Profile \"profile:Profile\",
- :Verb \"xapi:Verb\",
- :profile \"https://w3id.org/xapi/profiles/ontology#\",
- :prov \"http://www.w3.org/ns/prov#\",
- :skos \"http://www.w3.org/2004/02/skos/core#\"}
-
-should be a JSON-LD context keyword
-
-or
-
-should be a JSON-LD prefix
-
-or
-
-should be a simple term definition with a valid prefix
-
-or
-
-should be an expanded term definition with a valid prefix
-
--- Spec failed --------------------
-
-Value:
-\"xapi:ActivityType\"
-
-in context:
-{:id \"@id\",
- :type \"@type\",
- :ActivityType \"xapi:ActivityType\",
- :AttachmentUsageType \"xapi:AttachmentUsageType\",
- :Profile \"profile:Profile\",
- :Verb \"xapi:Verb\",
- :profile \"https://w3id.org/xapi/profiles/ontology#\",
- :prov \"http://www.w3.org/ns/prov#\",
- :skos \"http://www.w3.org/2004/02/skos/core#\"}
-
-should be a JSON-LD context keyword
-
-or
-
-should be a JSON-LD prefix
-
-or
-
-should be a simple term definition with a valid prefix
-
-or
-
-should be an expanded term definition with a valid prefix
-
--- Spec failed --------------------
-
-Value:
-\"xapi:AttachmentUsageType\"
-
-in context:
-{:id \"@id\",
- :type \"@type\",
- :ActivityType \"xapi:ActivityType\",
- :AttachmentUsageType \"xapi:AttachmentUsageType\",
- :Profile \"profile:Profile\",
- :Verb \"xapi:Verb\",
- :profile \"https://w3id.org/xapi/profiles/ontology#\",
- :prov \"http://www.w3.org/ns/prov#\",
- :skos \"http://www.w3.org/2004/02/skos/core#\"}
-
-should be a JSON-LD context keyword
-
-or
-
-should be a JSON-LD prefix
-
-or
-
-should be a simple term definition with a valid prefix
-
-or
-
-should be an expanded term definition with a valid prefix
-
--------------------------
-Detected 4 errors
-")
-
-;; Context key errors
-
-(def err-msg-11
-  "
-**** Context Key Errors ****
-
--- Spec failed --------------------
-
-Value:
-:hello
-
-in object:
-{:id \"https://foo.org/activity/1\",
- :type \"Activity\",
- :_context \"https://w3id.org/xapi/profiles/activity-context\",
- :hello \"World\"}
-
-should be expandable into an absolute IRI
-
-or
-
-should be a JSON-LD keyword
-
--- Spec failed --------------------
-
-Value:
+Key:
 :foo
 
 in object:
-{:id \"https://foo.org/profile\",
- :type \"Profile\",
- :_context \"https://w3id.org/xapi/profiles/context\",
- :concepts [...],
+{\"@id\" \"https://foo.org/profile\",
+ \"@type\" \"Profile\",
  :baz \"Qux\",
- :foo \"Bar\"}
+ :foo \"Bar\",
+ \"https://w3id.org/xapi/profiles/ontology#concepts\" [...]}
 
-should be expandable into an absolute IRI
+should be a non-empty string
 
 or
 
-should be a JSON-LD keyword
+should be a JSON-LD keyword or language tag
 
 -- Spec failed --------------------
 
-Value:
+Key:
 :baz
 
 in object:
-{:id \"https://foo.org/profile\",
- :type \"Profile\",
- :_context \"https://w3id.org/xapi/profiles/context\",
- :concepts [...],
+{\"@id\" \"https://foo.org/profile\",
+ \"@type\" \"Profile\",
  :baz \"Qux\",
- :foo \"Bar\"}
+ :foo \"Bar\",
+ \"https://w3id.org/xapi/profiles/ontology#concepts\" [...]}
 
-should be expandable into an absolute IRI
+should be a non-empty string
 
 or
 
-should be a JSON-LD keyword
+should be a JSON-LD keyword or language tag
+
+-- Spec failed --------------------
+
+Key:
+:hello
+
+in object:
+{:hello \"World\",
+ \"https://w3id.org/xapi/ontology#interactionId\"
+ \"https://foo.org/activity/1\",
+ \"https://w3id.org/xapi/ontology#type\" \"Activity\"}
+
+should be a non-empty string
+
+or
+
+should be a JSON-LD keyword or language tag
 
 -------------------------
 Detected 3 errors

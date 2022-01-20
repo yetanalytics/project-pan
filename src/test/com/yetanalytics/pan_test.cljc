@@ -44,8 +44,7 @@
 (deftest error-tests
   (are [profile-name profile res]
        (testing (str "the " profile-name ", without printing")
-         (let [[correct-syntax? correct-ids? correct-graph? correct-ctxt?]
-               res
+         (let [[correct-syntax? correct-ids? correct-graph? correct-ctxt?] res
                syntax-errs (validate-profile profile
                                              :print-errs? false)
                id-errs     (validate-profile profile

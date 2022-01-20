@@ -207,8 +207,8 @@
       fix/err-msg-9 {:pattern-edge-errors
                      (pt/validate-pattern-edges
                       (pt/create-graph bad-profile-2h))}
-      fix/err-msg-10 (ctx/validate-contexts bad-profile-3a)
-      fix/err-msg-11 (ctx/validate-contexts bad-profile-3b)))
+      fix/err-msg-10 {:context-errors
+                      (ctx/validate-contexts bad-profile-3b)}))
   (testing "combining error messages"
     (is (= (str fix/err-msg-4 fix/err-msg-5)
            (-> {:id-errors (id/validate-ids bad-profile-2c)
