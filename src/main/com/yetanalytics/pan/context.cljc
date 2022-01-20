@@ -182,24 +182,38 @@
     :_type
     :_value})
 
+(defn- jsonld-keyword? [x]
+  (#{"@id" "@type"} x))
+
+(defn- lang-tag? [x]
+  (and (keyword? x)
+       (->> x name (re-matches #"_LANGTAG_.*"))))
+
 (s/def ::expanded-key
   (s/or :iri ::ax/iri
-        :keyword #{"@id" "@type"}
-        :lang-tag (s/and keyword?
-                         #(->> % name (re-matches #"_LANGTAG_.*")))))
+        :keyword jsonld-keyword?
+        :lang-tag lang-tag?))
 
 (s/def ::expanded-key-profile
-  (s/map-of ::expanded-key
-            (s/or :object ::expanded-key-profile
-                  :array (s/coll-of ::expanded-key-profile)
-                  :scalar any?)))
+  (s/or :scalar (comp not coll?)
+        :vector (s/coll-of ::expanded-key-profile :kind vector?)
+        :object (s/map-of ::expanded-key ::expanded-key-profile)))
+
+(defn- filter-problems
+  [problems]
+  (filter (fn [{:keys [via]}]
+            (#{::expanded-key ::ax/iri ::ax/string} (last via)))
+          problems))
+
+(defn- validate-contexts*
+  [exp-profile]
+  (when-some [ed (s/explain-data ::expanded-key-profile exp-profile)]
+    (update ed ::s/problems filter-problems)))
 
 (defn validate-contexts
   "Validate that all keys in `profile` are able to be expanded into IRIs
    using \"@context\" maps. NOTE: Does not attempt to validate the values."
   ([profile]
-   (->> (expand-profile-keys profile)
-        (s/explain-data ::expanded-key-profile)))
+   (validate-contexts* (expand-profile-keys profile)))
   ([profile contexts-map]
-   (->> (expand-profile-keys profile contexts-map)
-        (s/explain-data ::expanded-key-profile))))
+   (validate-contexts* (expand-profile-keys profile contexts-map))))

@@ -140,19 +140,8 @@
 
 ;; Context spec messages
 
-(exp/defmsg ::ctx/context-keyword
-  "should be a JSON-LD context keyword")
-(exp/defmsg ::ctx/context-prefix
-  "should be a JSON-LD prefix")
-(exp/defmsg ::ctx/simple-term-def
-  "should be a simple term definition with a valid prefix")
-(exp/defmsg ::ctx/expanded-term-def
-  "should be an expanded term definition with a valid prefix")
-
-(exp/defmsg ::ctx/iri-key
-  "should be expandable into an absolute IRI")
-(exp/defmsg ::ctx/keyword-key
-  "should be a JSON-LD keyword")
+(exp/defmsg ::ctx/expanded-key
+  "should have expanded to an IRI or a JSON-LD keyword.")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Property orderings

@@ -41,8 +41,8 @@
 (defn- find-context-errors
   [profile ?extra-contexts-map]
   (if ?extra-contexts-map
-    (context/validate-contexts profile ?extra-contexts-map)
-    (context/validate-contexts profile)))
+    {:context-errors (context/validate-contexts profile ?extra-contexts-map)}
+    {:context-errors (context/validate-contexts profile)}))
 
 (defn validate-profile
   "Validate `profile` from the top down, printing or returning errors

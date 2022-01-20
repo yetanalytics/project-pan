@@ -1,6 +1,7 @@
 (ns com.yetanalytics.pan-test.context-test
   (:require [clojure.test :refer [deftest is testing]]
             [clojure.spec.alpha :as s]
+            [com.yetanalytics.pan.axioms :as ax]
             [com.yetanalytics.pan.context :as c])
   #?(:clj (:require [com.yetanalytics.pan.utils.resources
                      :refer [read-json-resource]])
@@ -61,7 +62,7 @@
                 :type  "StatementTemplate"
                 :rules [{:location "$.verb"
                          :any      [{:_context "http://example.org/context"
-                                     :id       "http://exampel.org/verb"
+                                     :id       "http://example.org/verb"
                                      :display  {:en-US "Foo"}}]}]}]})
 
 (def catch-profile
@@ -101,7 +102,7 @@
               [{"https://w3id.org/xapi/profiles/ontology#location"
                 "$.verb"
                 "https://w3id.org/xapi/profiles/ontology#any"
-                [{"@id" "http://exampel.org/verb"
+                [{"@id" "http://example.org/verb"
                   "http://example.org/ontology/display"
                   {:_LANGTAG_en-US "Foo"}}]}]}]}
            (c/expand-profile-keys ex-profile
@@ -112,4 +113,14 @@
   (testing "validate-contexts function"
     (is (nil? (c/validate-contexts ex-profile
                                    {"http://example.org/context" ex-context})))
-    (is (nil? (c/validate-contexts catch-profile)))))
+    (is (nil? (c/validate-contexts catch-profile)))
+    (testing "on spec error"
+      (let [err (c/validate-contexts {:_context "http://example.org/context"
+                                      :id       "http://example.org/verb"
+                                      :display  {:en-US "Foo"}})]
+        (is (some? err))
+        (is (= #{:id :display :en-US}
+               (->> err ::s/problems (map :val) set)))
+        (is (= #{`ax/non-empty-string? `c/jsonld-keyword? `c/lang-tag?}
+               (->> err ::s/problems (map :pred) set))))
+      (is (some? (c/validate-contexts ex-profile))))))
