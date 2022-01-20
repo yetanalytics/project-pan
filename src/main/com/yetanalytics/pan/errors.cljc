@@ -56,6 +56,10 @@
   "should not use recommended activity type on a Result Extension")
 (exp/defmsg ::act/activityDefinition
   "should be a valid activity definition")
+(exp/defmsg ::act/extensions
+  "should be valid Activity extensions")
+(exp/defmsg ::act/extension
+  "should be a valid Activity extension")
 
 (exp/defmsg ::t/type-or-reference
   "should not contain both objectActivityType and objectStatementRefTemplate")
@@ -140,6 +144,8 @@
 
 ;; Context spec messages
 
+(exp/defmsg ::ctx/_context
+  "should be a valid IRI or inline context")
 (exp/defmsg ::ctx/expanded-key
   "should be a JSON-LD keyword or language tag")
 
@@ -321,7 +327,7 @@
            (ppr-str value)
            (pr-str (get-prop-from-path path))
            (ppr-str obj)))
-    ;; Error occured on Profile metadata
+    ;; Error occured on Profile metadata or some other nested object
     :else
     (let [obj (-> profile elide-arrs map->sorted-map)]
       (fmt (str "Value:\n"

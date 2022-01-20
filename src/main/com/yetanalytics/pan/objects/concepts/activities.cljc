@@ -3,6 +3,7 @@
             [clojure.walk :refer [stringify-keys]]
             [xapi-schema.spec]
             [com.yetanalytics.pan.axioms :as ax]
+            [com.yetanalytics.pan.context :as ctx]
             [com.yetanalytics.pan.graph :as graph]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -22,53 +23,32 @@
         :context-array (s/and ::ax/array-of-uri
                               ::has-context-url)))
 
-;; Turn language map keys back into strings
-(defn stringify-lang-keys
-  [kmap]
-  (as-> kmap m
-    (if-some [_ (:name m)] (update m :name stringify-keys) m)
-    (if-some [_ (:description m)] (update m :description stringify-keys) m)
-    (if-some [_ (:scale m)] (update m :scale stringify-keys) m)
-    (if-some [_ (:choices m)] (update m :choices stringify-keys) m)
-    (if-some [_ (:source m)] (update m :source stringify-keys) m)
-    (if-some [_ (:target m)] (update m :target stringify-keys) m)
-    (if-some [_ (:steps m)] (update m :steps stringify-keys) m)))
+;; Important to stringify lang maps to work with xapi-schema.
+;; Top-level keys don't have to be stringified, however.
+(defn stringify-submaps
+  "Stringify keys in maps that exist below the top level, i.e.
+   `{:foo {:bar 1}}` becomes `{:foo {\"bar\" 1}}`."
+  [m]
+  (into {} (map (fn [[k v]] [k (stringify-keys v)]) m)))
 
-;; ;; Important to stringify lang maps to work with xapi-schema.
-;; ;; Top-level keys don't have to be stringified, however.
-;; (defn stringify-submaps
-;;   "Stringify keys in maps that exist below the top level, i.e.
-;;    `{:foo {:bar 1}}` becomes `{:foo {\"bar\" 1}}`."
-;;   [m]
-;;   (into {} (map (fn [[k v]] [k (stringify-keys v)]) m)))
+;; MUST include a JSON-LD @context in all top-level objects of extensions,
+;; or in every top-level object if array-valued.
+(s/def ::extension
+  (s/or :object (s/keys :req-un [::ctx/_context])
+        :array  (s/coll-of (s/or :object (s/keys :req-un [::ctx/_context])
+                                 :non-object (comp not map?))
+                           :kind vector?)
+        :scalar (comp not coll?)))
 
-;; Need to use this function instead of s/merge because of restrict-keys in
-;; xapi-schema function.
-(s/def ::activity-definition-keys
-       (s/keys :req-un [::_context]))
-
-(defn- activity-def? [adef]
-  (s/valid? :activity/definition
-            (stringify-lang-keys (dissoc adef :_context))))
-
-;; (s/def ::extension
-;;   (s/or :object (s/keys :req-un [::_context])
-;;         :array (s/coll-of (s/or :object (s/keys :req-un [::_context])
-;;                                 :non-object (comp not map?)))
-;;         :scalar (comp not coll?)))
-
-;; (s/def ::extensions
-;;   (s/map-of :ax/iri ::extension))
+(s/def ::extensions
+  (s/map-of ::ax/iri ::extension))
 
 (s/def ::activityDefinition
-  (s/and ::activity-definition-keys activity-def?))
-
-;; (s/def ::activityDefinition
-;;   (s/and (s/nonconforming (s/keys :req-un [::_context]
-;;                                   :opt-un [::extensions]))
-;;          (s/conformer #(dissoc % :_context))
-;;          (s/conformer stringify-submaps)
-;;          :activity/definition))
+  (s/and (s/nonconforming (s/keys :req-un [::_context]
+                                  :opt-un [::extensions]))
+         (s/conformer #(dissoc % :_context))
+         (s/conformer stringify-submaps)
+         :activity/definition))
 
 (s/def ::activity
   (s/keys :req-un [::id ::type ::inScheme ::activityDefinition]
