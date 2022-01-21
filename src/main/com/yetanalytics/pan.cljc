@@ -7,6 +7,19 @@
             [com.yetanalytics.pan.context :as context]
             [com.yetanalytics.pan.errors :as errors]))
 
+(defn get-external-iris
+  "Return a map of keys to IRI collections, where the IRIs reference
+   objects that do not exist in `profile`. Values include IRIs
+   from Concepts, Statement Templates, and Patterns as well as
+   \"@context\" IRI values."
+  [profile]
+  (let [iris-m (merge (concept/get-external-iris profile)
+                      (template/get-external-iris profile)
+                      (pattern/get-external-iris profile))]
+    (if-some [ctx-iris (not-empty (context/get-context-iris profile))]
+      (assoc iris-m :_context ctx-iris)
+      iris-m)))
+
 (defn- find-syntax-errors
   [profile]
   {:syntax-errors (profile/validate profile)})

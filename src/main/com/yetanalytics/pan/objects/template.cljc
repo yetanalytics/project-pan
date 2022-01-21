@@ -102,6 +102,14 @@
    :objectStatementRefTemplate
    :contextStatementRefTemplate])
 
+(defn get-external-iris
+  "Return the external IRIs from the Statement Templates of `profile`."
+  [profile]
+  (let [{:keys [concepts templates]} profile
+        id-filter-set (set (concat (ids/objs->ids concepts)
+                                   (ids/objs->ids templates)))]
+    (ids/objs->out-ids-map templates template-iri-keys id-filter-set)))
+
 (defn get-graph-concept-templates
   [profile ?extra-profiles]
   (let [templates (:templates profile)

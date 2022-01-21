@@ -88,6 +88,14 @@
 (def pattern-iri-keys
   [:sequence :alternates :optional :oneOrMore :zeroOrMore])
 
+(defn get-external-iris
+  "Return the external IRIs from the Patterns of `profile`."
+  [profile]
+  (let [{:keys [templates patterns]} profile
+        id-filter-set (set (concat (ids/objs->ids templates)
+                                   (ids/objs->ids patterns)))]
+    (ids/objs->out-ids-map patterns pattern-iri-keys id-filter-set)))
+
 ;; ;;;;; Node and Edge Creation ;;;;;
 
 ;; Get the IRIs of a Pattern (within a sequence), depending on its property

@@ -12,13 +12,34 @@
 
 (defn objs->out-ids
   "Given `obj-coll` of maps with IRI/IRI-array valued keys (defined by
-   `selected-keys`), return a set of all such IRI values."
+   `selected-keys`), return a set of all such IRI values. Does not check
+   whether or not the IDs already exist in `obj-coll`."
   [obj-coll selected-keys]
   (set (reduce
         (fn [acc obj]
           (-> obj (select-keys selected-keys) vals flatten (concat acc)))
         []
         obj-coll)))
+
+(defn- conj-set
+  [coll v]
+  (if coll (conj coll v) #{v}))
+
+(defn objs->out-ids-map
+  "Like `obj->out-ids`, but returns a map from keys to sets of IRI values.
+   Passing in the optional `filter-id-set` arg removes IRI values form
+   the result that are in that set."
+  ([obj-coll selected-keys]
+   (objs->out-ids-map obj-coll selected-keys #{}))
+  ([obj-coll selected-keys filter-id-set]
+   (reduce
+    (fn [m obj]
+      (->> (select-keys obj selected-keys)
+           (mapcat (fn [[k v]] (if (coll? v) (map (fn [x] [k x]) v) [[k v]])))
+           (filter (fn [[_ v]] (not (contains? filter-id-set v))))
+           (reduce (fn [m* [k v]] (update m* k conj-set v)) m)))
+    {}
+    obj-coll)))
 
 (defn filter-by-ids
   "Given `obj-coll` of maps with the `:id` key, filter such that only those

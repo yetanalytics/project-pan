@@ -29,6 +29,19 @@
                             activity-context])))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Context IRI retrieval tests
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(deftest get-context-iris-test
+  (testing "get-context-iris function"
+    (is (= ["http://foo.org" "http://bar.org"]
+           (c/get-context-iris
+            {:_context "http://foo.org"
+             :children [{:_context ["http://bar.org"
+                                    "https://w3id.org/xapi/profiles/context"
+                                    {}]}]})))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Profile context tests
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

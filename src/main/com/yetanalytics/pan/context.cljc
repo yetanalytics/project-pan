@@ -1,6 +1,6 @@
 (ns com.yetanalytics.pan.context
   (:require [clojure.spec.alpha :as s]
-            [clojure.string :as string]
+            [clojure.string     :as cstr]
             [com.yetanalytics.pan.axioms :as ax])
   #?(:clj (:require [com.yetanalytics.pan.utils.resources
                      :refer [read-json-resource]])
@@ -72,6 +72,28 @@
                           :min-count 1)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Context IRI retrieval
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; Nested map `get` based on:
+;; https://stackoverflow.com/a/28097404
+(defn get-context-iris
+  "Retrieve all \"@context\" IRIs (with the exception of the Profile and
+   Activity context IRIs) from within `profile`."
+  [profile]
+  ;; Note the chaining of lazy seq operations
+  (->> profile
+       (tree-seq coll? (fn [x] (if (map? x) (vals x) x)))
+       (filter map?)
+       (keep :_context)
+       (mapcat (fn [ctx]
+                 (cond
+                   (coll? ctx)   (filter string? ctx)
+                   (string? ctx) [ctx]
+                   :else         nil)))
+       (filter (fn [ctx] (not (contains? default-context-map ctx))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Context Expansion and Validation
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -86,7 +108,7 @@
   (cond
     ;; compact or expanded IRI
     (or (s/valid? ::ax/iri k)
-        (and (string? k) (string/includes? k ":")))
+        (and (string? k) (cstr/includes? k ":")))
     (or (expand-compact-iri context k)
         k)
     ;; simple or expanded term definition
