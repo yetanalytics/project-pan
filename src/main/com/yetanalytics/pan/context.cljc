@@ -30,6 +30,10 @@
   {"https://w3id.org/xapi/profiles/context"          profile-context
    "https://w3id.org/xapi/profiles/activity-context" activity-context})
 
+;; NOT all JSON-LD keywords, but just ones that are commonly aliased
+;; in contexts.
+(def jsonld-keywords #{"@id" "@type"})
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Context Spec
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -38,19 +42,21 @@
 (s/def :context.term-def/_container #{"@list" "@set" "@language"})
 
 ;; Unimplemented context keyword specs, but kept here for reference
-(s/def ::_base ::ax/iri)
-(s/def ::_import ::ax/iri)
-(s/def ::_language ::ax/language-tag)
-(s/def ::_propagate ::ax/boolean)
-(s/def ::_protected ::ax/boolean)
-(s/def ::_container #{"@set"})
-(s/def ::_type (s/keys :req-un [::_container]))
-(s/def ::_version #{1.1})
-(s/def ::_vocab ::ax/iri)
+;; TODO: Implement when we want full JSON-LD expansion.
+(comment
+  (s/def ::_base ::ax/iri)
+  (s/def ::_import ::ax/iri)
+  (s/def ::_language ::ax/language-tag)
+  (s/def ::_propagate ::ax/boolean)
+  (s/def ::_protected ::ax/boolean)
+  (s/def ::_container #{"@set"})
+  (s/def ::_type (s/keys :req-un [::_container]))
+  (s/def ::_version #{1.1})
+  (s/def ::_vocab ::ax/iri))
 
 (s/def ::context-value
   (s/or
-   :keyword #{"@id" "@type"}
+   :keyword jsonld-keywords
    :iri ::ax/iri
    :simple-term-def :context.term-def/_id
    :expanded-term-def (s/keys :req-un [:context.term-def/_id]
@@ -80,12 +86,12 @@
 (defn- expand-key
   [context k]
   (cond
-      ;; compact or expanded IRI
+    ;; compact or expanded IRI
     (or (s/valid? ::ax/iri k)
         (and (string? k) (string/includes? k ":")))
     (or (expand-compact-iri context k)
         k)
-      ;; simple or expanded term definition
+    ;; simple or expanded term definition
     (contains? context k)
     (let [term-def (get context k)]
       (or (and (string? term-def)
@@ -96,7 +102,7 @@
                (expand-compact-iri context (:_id term-def)))
           ;; fail
           k))
-      ;; fail
+    ;; fail
     :else
     k))
 
@@ -122,70 +128,49 @@
                     {:type    ::invalid-context
                      :context context}))))
 
-(defn expand-profile-keys*
+(defn- expand-profile-keys*
   [contexts-map context profile]
   (let [context* (if-some [ctx (some->> profile
                                         :_context
                                         (new-context contexts-map))]
                    (merge context ctx)
                    context)]
-    (reduce-kv (fn [m k v]
-                 (let [k* (expand-key context* k)
-                       v* (cond
-                            ;; Need to treat language maps specially
-                            ;; Otherwise they'd be treated as node objects
-                            (lang-map-key? context* k)
-                            (into {}
-                                  (map (fn [[ltag lval]]
-                                         [(keyword (str "_LANGTAG_" (name ltag)))
-                                          lval])
-                                       v))
-                            (map? v)
-                            (expand-profile-keys* contexts-map
-                                                  context*
-                                                  v)
-                            (coll? v)
-                            (mapv (fn [x]
-                                    (if (map? x)
-                                      (expand-profile-keys*
-                                       contexts-map
-                                       context*
-                                       x)
-                                      x))
-                                  v)
-                            :else
-                            v)]
-                   (assoc m k* v*)))
-               {}
-               (dissoc profile :_context))))
+    (reduce-kv
+     (fn [m k v]
+       (let [k* (expand-key context* k)
+             v* (cond
+                  ;; Need to treat language maps specially
+                  ;; Otherwise they'd be treated as node objects
+                  (lang-map-key? context* k)
+                  (into {}
+                        (map (fn [[ltag lval]]
+                               [(keyword (str "_LANGTAG_" (name ltag)))
+                                lval])
+                             v))
+                  ;; Object
+                  (map? v)
+                  (expand-profile-keys* contexts-map context* v)
+                  ;; Array
+                  (coll? v)
+                  (mapv (fn [x]
+                          (if (map? x)
+                            (expand-profile-keys* contexts-map context* x)
+                            x))
+                        v)
+                  ;; Scalar
+                  :else
+                  v)]
+         (assoc m k* v*)))
+     {}
+     (dissoc profile :_context))))
 
 (defn expand-profile-keys
+  "Expand all keys in `profile` using contexts (by default the xAPI Profile
+   and Activity contexts)."
   ([profile]
    (expand-profile-keys* default-context-map {} profile))
   ([profile contexts-map]
    (expand-profile-keys* (merge default-context-map contexts-map) {} profile)))
-
-;; All JSON-LD keywords except those exclusive to context maps
-;; https://www.w3.org/TR/json-ld11/#keywords
-(def jsonld-keywords
-  #{:_context
-    :_direction
-    :_graph
-    :_id
-    :_included
-    :_index
-    :_json
-    :_language
-    :_list
-    :_nest
-    :_none
-    :_reverse
-    :_set
-    :_type
-    :_value})
-
-(defn- jsonld-keyword? [x]
-  (#{"@id" "@type"} x))
 
 (defn- lang-tag? [x]
   (and (keyword? x)
@@ -193,7 +178,7 @@
 
 (s/def ::expanded-key
   (s/or :iri ::ax/iri
-        :keyword jsonld-keyword?
+        :keyword jsonld-keywords
         :lang-tag lang-tag?))
 
 (s/def ::expanded-key-profile
@@ -202,6 +187,7 @@
         :object (s/map-of ::expanded-key ::expanded-key-profile)))
 
 (defn- filter-problems
+  "Filter such that non-leaf specs do not clutter the error data map."
   [problems]
   (filter (fn [{:keys [via]}]
             (#{::expanded-key ::ax/iri ::ax/string} (last via)))
