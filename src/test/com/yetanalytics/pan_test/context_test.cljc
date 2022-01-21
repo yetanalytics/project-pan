@@ -121,6 +121,6 @@
         (is (some? err))
         (is (= #{:id :display :en-US}
                (->> err ::s/problems (map :val) set)))
-        (is (= #{`ax/non-empty-string? `c/jsonld-keyword? `c/lang-tag?}
+        (is (= #{`ax/non-empty-string? `c/lang-tag? #{"@id" "@type"}}
                (->> err ::s/problems (map :pred) set))))
       (is (some? (c/validate-contexts ex-profile))))))

@@ -30,9 +30,7 @@
   {"https://w3id.org/xapi/profiles/context"          profile-context
    "https://w3id.org/xapi/profiles/activity-context" activity-context})
 
-;; NOT all JSON-LD keywords, but just ones that are commonly aliased
-;; in contexts.
-(def jsonld-keywords #{"@id" "@type"})
+(s/def ::jsonld-keyword #{"@id" "@type"})
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Context Spec
@@ -56,7 +54,7 @@
 
 (s/def ::context-value
   (s/or
-   :keyword jsonld-keywords
+   :keyword ::jsonld-keyword
    :iri ::ax/iri
    :simple-term-def :context.term-def/_id
    :expanded-term-def (s/keys :req-un [:context.term-def/_id]
@@ -176,10 +174,12 @@
   (and (keyword? x)
        (->> x name (re-matches #"_LANGTAG_.*"))))
 
+(s/def ::language-tag lang-tag?)
+
 (s/def ::expanded-key
   (s/or :iri ::ax/iri
-        :keyword jsonld-keywords
-        :lang-tag lang-tag?))
+        :keyword ::jsonld-keyword
+        :lang-tag ::language-tag))
 
 (s/def ::expanded-key-profile
   (s/or :scalar (comp not coll?)
@@ -190,7 +190,8 @@
   "Filter such that non-leaf specs do not clutter the error data map."
   [problems]
   (filter (fn [{:keys [via]}]
-            (#{::expanded-key ::ax/iri ::ax/string} (last via)))
+            (#{::language-tag ::jsonld-keyword ::ax/iri ::ax/string}
+             (last via)))
           problems))
 
 (defn- validate-contexts*

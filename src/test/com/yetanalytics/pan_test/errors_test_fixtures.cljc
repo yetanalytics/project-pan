@@ -582,7 +582,11 @@ should be a non-empty string
 
 or
 
-should be a JSON-LD keyword or language tag
+should be a language tag
+
+or
+
+should be one of: \"@id\", \"@type\"
 
 -- Spec failed --------------------
 
@@ -600,7 +604,11 @@ should be a non-empty string
 
 or
 
-should be a JSON-LD keyword or language tag
+should be a language tag
+
+or
+
+should be one of: \"@id\", \"@type\"
 
 -- Spec failed --------------------
 
@@ -618,7 +626,11 @@ should be a non-empty string
 
 or
 
-should be a JSON-LD keyword or language tag
+should be a language tag
+
+or
+
+should be one of: \"@id\", \"@type\"
 
 -------------------------
 Detected 3 errors

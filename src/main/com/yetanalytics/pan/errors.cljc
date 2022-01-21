@@ -146,8 +146,8 @@
 
 (exp/defmsg ::ctx/_context
   "should be a valid inline context")
-(exp/defmsg ::ctx/expanded-key
-  "should be a JSON-LD keyword or language tag")
+(exp/defmsg ::ctx/language-tag
+  "should be a language tag")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Property orderings
