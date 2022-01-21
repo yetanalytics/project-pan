@@ -23,6 +23,7 @@ Arguments may be supplied for different levels of validation strictness, which a
 
 Other keyword arguments include:
 - `:external-profiles` - Extra Profiles from which to reference Concepts, Statement Templates, and Patterns from. Unlike the Profiles passed into `validate-profile-coll`, these Profiles are not validated (though will be treated as part of the same scope in terms of ID distinctiveness validation).
+- `:external-contexts` - Extra `@context` values (other than the xAPI Profile and Activity contexts) that `@context` IRIs in `profile` can reference during context validation. During multi-profile validation, all Profiles refer to the same global `:external-contexts` map. Default `{}`.
 - `:print-errs?` - Print validation errors out if true; otherwise return spec error data (or nil, if the profile is valid) without printing. Default `true`.
 
 Besides validating whole Profiles, you can also use library methods and specs to validate parts of Profiles, such as individual  Concepts, Templates and Patterns).

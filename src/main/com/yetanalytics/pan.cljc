@@ -60,7 +60,11 @@
                          expand to absolute IRIs using RDF contexts. Default
                          `false.`
    - `:extra-profiles` Extra profiles from which Concepts, Templates, and
-                         Patterns can be referenced from. Default `[]`."
+                         Patterns can be referenced from. Default `[]`.
+   - `:extra-contexts` Extra \"@context\" values (other than the xAPI Profile
+                         and Activity contexts) that \"@context\" IRIs in
+                         `profile` can reference during context validation.
+                         Default `{}`."
   [profile & {:keys [syntax?
                      ids?
                      relations?
@@ -98,8 +102,9 @@
   "Like `validate-profile`, but takes a `profile-coll` instead of a
    single Profile. Each Profile can reference objects in other Profiles
    (as well as those in `:extra-profiles`) and must not share object
-   IDs with those in other Profiles. Keyword arguments are the same as
-   in `validate-profile`."
+   IDs with those in other Profiles. During context validation, all
+   Profiles reference the global `:extra-contexts` map. Keyword
+   arguments are the same as in `validate-profile`."
   [profile-coll & {:keys [syntax?
                           ids?
                           relations?
