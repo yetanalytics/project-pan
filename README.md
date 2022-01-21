@@ -26,6 +26,8 @@ Other keyword arguments include:
 - `:external-contexts` - Extra `@context` values (other than the xAPI Profile and Activity contexts) that `@context` IRIs in `profile` can reference during context validation. During multi-profile validation, all Profiles refer to the same global `:external-contexts` map. Default `{}`.
 - `:print-errs?` - Print validation errors out if true; otherwise return spec error data (or nil, if the profile is valid) without printing. Default `true`.
 
+The `get-external-iris` function is provided in the API in order to retrieve IRI values that refer to external objects, JSON-LD contexts, etc. (i.e. objects that do _not_ exist in the Profile). This allows the user to more easily retrieve external Profiles and contexts in their application from the Internet or their data store.
+
 Besides validating whole Profiles, you can also use library methods and specs to validate parts of Profiles, such as individual  Concepts, Templates and Patterns).
 
 ## TODO

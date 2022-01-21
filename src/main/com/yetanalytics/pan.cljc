@@ -8,7 +8,7 @@
             [com.yetanalytics.pan.errors :as errors]))
 
 (defn get-external-iris
-  "Return a map of keys to IRI collections, where the IRIs reference
+  "Return a map of keys to sets of IRIs, where the IRIs reference
    objects that do not exist in `profile`. Values include IRIs
    from Concepts, Statement Templates, and Patterns as well as
    \"@context\" IRI values."
