@@ -82,16 +82,16 @@
                      ids?
                      relations?
                      contexts?
-                     print-errs?
                      extra-profiles
-                     extra-contexts]
+                     extra-contexts
+                     result]
               :or {syntax?        true
                    ids?           false
                    relations?     false
                    contexts?      false
-                   print-errs?    true
                    extra-profiles []
-                   extra-contexts {}}}]
+                   extra-contexts {}
+                   result         :data}}]
   (let [errors   (if (not-empty extra-profiles)
                    (cond-> {}
                      syntax?    (merge (find-syntax-errors profile))
@@ -104,12 +104,13 @@
                      relations? (merge (find-graph-errors profile))
                      contexts?  (merge (find-context-errors profile extra-contexts))))
         no-errs? (every? nil? (vals errors))]
-    (if print-errs?
+    (case result
+      :data
+      (when-not no-errs? errors)
+      :print
       (if no-errs?
-        (println "Success!") ; Exactly like `spec/explain`
-        (errors/expound-errors errors))
-      (when-not no-errs?
-        errors))))
+        (println "Success!")
+        (errors/expound-errors errors)))))
 
 (defn validate-profile-coll
   "Like `validate-profile`, but takes a `profile-coll` instead of a
@@ -122,16 +123,16 @@
                           ids?
                           relations?
                           contexts?
-                          print-errs?
                           extra-profiles
-                          extra-contexts]
+                          extra-contexts
+                          result]
                    :or {syntax?        true
                         ids?           false
                         relations?     false
                         contexts?      false
-                        print-errs?    true
                         extra-profiles []
-                        extra-contexts {}}}]
+                        extra-contexts {}
+                        result         :data}}]
   (let [profiles-set (set profile-coll)
         profile-errs (map (fn [profile]
                             (let [extra-profiles*
@@ -146,13 +147,14 @@
                                :contexts?      contexts?
                                :extra-profiles extra-profiles*
                                :extra-contexts extra-contexts
-                               :print-errs?    false)))
+                               :result         :data)))
                           profile-coll)
         no-errs?     (every? (fn [perr] (every? nil? (vals perr)))
                              profile-errs)]
-    (if print-errs?
+    (case result
+      :data
+      (when-not no-errs? profile-errs)
+      :print
       (if no-errs?
         (println "Success!")
-        (map errors/expound-errors profile-errs))
-      (when-not no-errs?
-        profile-errs))))
+        (dorun (map errors/expound-errors profile-errs))))))

@@ -1,7 +1,8 @@
 (ns com.yetanalytics.pan.errors
   (:require #?(:clj [clojure.core :refer [format]]
                :cljs [goog.string :as gstring]
-                     [goog.string.format :as format])
+               [goog.string.format :as format])
+            [clojure.spec.alpha :as s]
             [clojure.pprint :as pprint]
             [clojure.string :as string]
             [expound.alpha :as exp]
@@ -307,7 +308,8 @@
   [_ profile path value]
   (cond
     ;; Error occured over the entire Profile, Concept, Template, or Pattern
-    (or (= [] path) (#{[:concepts] [:templates] [:patterns]} (butlast path)))
+    (or (= [] path)
+        (#{[:concepts] [:templates] [:patterns]} (butlast path)))
     (let [obj (-> value elide-arrs map->sorted-map)]
       (fmt (str "Object:\n"
                 "%s")
@@ -485,6 +487,15 @@
    (let [print-fn (custom-printer error-type)]
      (println (str "\n**** " error-label " ****\n"))
      (print-fn error-map))))
+
+;; (defn errors->str-list
+;;   [error-map error-label error-type]
+;;   (let [{error-probs ::s/problems} error-map
+;;         error-map-list (->> error-probs
+;;                             (group-by :in)
+;;                             vals
+;;                             (map (partial assoc error-map ::s/problems)))]
+;;     (mapv #(with-out-str (expound-error % error-label error-type)) error-map-list)))
 
 (defn expound-errors
   "Print errors from profile validation using Expound. Available keys:
