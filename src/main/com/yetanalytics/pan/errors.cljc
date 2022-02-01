@@ -56,6 +56,10 @@
   "should not use recommended activity type on a Result Extension")
 (exp/defmsg ::act/activityDefinition
   "should be a valid activity definition")
+(exp/defmsg ::act/extensions
+  "should be valid Activity extensions")
+(exp/defmsg ::act/extension
+  "should be a valid Activity extension")
 
 (exp/defmsg ::t/type-or-reference
   "should not contain both objectActivityType and objectStatementRefTemplate")
@@ -140,19 +144,10 @@
 
 ;; Context spec messages
 
-(exp/defmsg ::ctx/context-keyword
-  "should be a JSON-LD context keyword")
-(exp/defmsg ::ctx/context-prefix
-  "should be a JSON-LD prefix")
-(exp/defmsg ::ctx/simple-term-def
-  "should be a simple term definition with a valid prefix")
-(exp/defmsg ::ctx/expanded-term-def
-  "should be an expanded term definition with a valid prefix")
-
-(exp/defmsg ::ctx/iri-key
-  "should be expandable into an absolute IRI")
-(exp/defmsg ::ctx/keyword-key
-  "should be a JSON-LD keyword")
+(exp/defmsg ::ctx/_context
+  "should be a valid inline context")
+(exp/defmsg ::ctx/language-tag
+  "should be a language tag")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Property orderings
@@ -265,6 +260,12 @@
   [m]
   (into (sorted-map-by cmp-properties) m))
 
+(defn- expanded-map->sorted-map
+  "Sort the keys of an object with nameable keys (strings, keywords, etc)."
+  [m]
+  (into (sorted-map-by (fn [x y] (compare (name x) (name y))))
+        m))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Value display
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -279,6 +280,16 @@
     (:concepts obj) (assoc :concepts ['...])
     (:templates obj) (assoc :templates ['...])
     (:patterns obj) (assoc :patterns ['...])))
+
+(defn- elide-arrs-2
+  [obj]
+  (reduce-kv (fn [m k v]
+               (if (and (coll? v)
+                        (every? coll? v))
+                 (assoc m k '[...])
+                 (assoc m k v)))
+             {}
+             obj))
 
 (defn- ppr-str
   "Format `obj` according to clojure.core/pprint and returns a
@@ -316,7 +327,7 @@
            (ppr-str value)
            (pr-str (get-prop-from-path path))
            (ppr-str obj)))
-    ;; Error occured on Profile metadata
+    ;; Error occured on Profile metadata or some other nested object
     :else
     (let [obj (-> profile elide-arrs map->sorted-map)]
       (fmt (str "Value:\n"
@@ -330,18 +341,6 @@
            (ppr-str value)
            (pr-str (get-prop-from-path path))
            (ppr-str obj)))))
-
-(defn- value-str-obj-key
-  "Similar to `value-str-obj` but when the value is a map key."
-  [_ profile path value]
-  (let [obj (->> path butlast (get-in profile) elide-arrs map->sorted-map)]
-    (fmt (str "Value:\n"
-              "%s\n"
-              "\n"
-              "in object:\n"
-              "%s")
-         (ppr-str value)
-         (ppr-str obj))))
 
 (defn- value-str-id
   "Custom value string fn for duplicate ID errors"
@@ -436,16 +435,21 @@
             "%s")
        (->> value sort (map pr-str) (string/join "\n"))))
 
-(defn- value-str-context
-  "Custom value string fn to print errors on contexts."
-  [_ contexts path value]
-  (fmt (str "Value:\n"
-            "%s\n"
-            "\n"
-            "in context:\n"
-            "%s")
-       (ppr-str value)
-       (ppr-str (->> path butlast (get-in contexts) map->sorted-map))))
+(defn- value-str-context-key
+  "Custom value string fn to print errors on context expanded keys."
+  [_ profile path value]
+  (let [object (->> path
+                    butlast
+                    (get-in profile)
+                    elide-arrs-2
+                    expanded-map->sorted-map)]
+    (fmt (str "Key:\n"
+              "%s\n"
+              "\n"
+              "in object:\n"
+              "%s")
+         (ppr-str value)
+         (ppr-str object))))
 
 (defn- custom-printer
   "Returns a printer based on `error-type`. A `nil` value will
@@ -463,9 +467,7 @@
       :cycle
       (exp/custom-printer (make-opts value-str-scc))
       :context
-      (exp/custom-printer (make-opts value-str-context))
-      :context-key
-      (exp/custom-printer (make-opts value-str-obj-key))
+      (exp/custom-printer (make-opts value-str-context-key))
       :else
       (exp/custom-printer (make-opts value-str-obj)))))
 
@@ -493,8 +495,7 @@
   :template-errors       Template relation/link errors
   :pattern-errors        Pattern relation/link errors
   :pattern-cycle-errors  Cyclical pattern errors
-  :context-errors        Errors in @context maps
-  :context-key-errors    Errors in expanding keys via @context maps"
+  :context-errors        Errors in expanding keys via @context maps"
   [{:keys [syntax-errors
            id-errors
            in-scheme-errors
@@ -502,8 +503,7 @@
            template-edge-errors
            pattern-edge-errors
            pattern-cycle-errors
-           context-errors
-           context-key-errors]}]
+           context-errors]}]
   (when syntax-errors
     (expound-error syntax-errors "Syntax Errors"))
   (when id-errors
@@ -519,6 +519,4 @@
   (when pattern-cycle-errors
     (expound-error pattern-cycle-errors "Pattern Cycle Errors" :cycle))
   (when context-errors
-    (expound-error context-errors "Context Errors" :context))
-  (when context-key-errors
-    (expound-error context-key-errors "Context Key Errors" :context-key)))
+    (expound-error context-errors "Context Errors" :context)))

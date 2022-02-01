@@ -30,7 +30,7 @@
             :name {"en" "Blah"}
             :description {"en" "Blah Blah Blah"}
             :type "https://w3id.org/xapi/catch/activitytypes/blah"}
-           (activities/stringify-lang-keys
+           (activities/stringify-submaps
             {:_context "https://w3id.org/xapi/profiles/activity-context"
              :name {:en "Blah"}
              :description {:en "Blah Blah Blah"}
@@ -42,7 +42,27 @@
                   {:_context "https://w3id.org/xapi/profiles/activity-context"
                    :name {:en "Cross Linguistic Connections"}
                    :description {"en" "The cross linguistic connections competency as described by the EPISD Dual Language Competency Framework"}
-                   :type "https://w3id.org/xapi/catch/activitytypes/competency"}))))
+                   :type "https://w3id.org/xapi/catch/activitytypes/competency"}))
+    (testing "with extension object"
+      (is (s/valid? ::activities/activityDefinition
+                    {:_context "https://w3id.org/xapi/profiles/activity-context"
+                     :name {:en "Cross Linguistic Connections"}
+                     :description {"en" "The cross linguistic connections competency as described by the EPISD Dual Language Competency Framework"}
+                     :type "https://w3id.org/xapi/catch/activitytypes/competency"
+                     :extensions {"http://foo.org/extension-1"
+                                  {:_context {:foo "http://foo.org/"
+                                              :display {:_id        "foo:display"
+                                                        :_container "@language"}}
+                                   :display {:en-US "My Extension"}}
+                                  "http://foo.org/extension-2" 2}}))
+      (is (not (s/valid? ::activities/activityDefinition
+                         {:_context "https://w3id.org/xapi/profiles/activity-context"
+                          :name {:en "Cross Linguistic Connections"}
+                          :description {"en" "The cross linguistic connections competency as described by the EPISD Dual Language Competency Framework"}
+                          :type "https://w3id.org/xapi/catch/activitytypes/competency"
+                          :extensions {"http://foo.org/extension-1"
+                                       {:display {:en-US "My Extension"}}
+                                       "http://foo.org/extension-2" 2}}))))))
 
 (deftest activity-test
   (testing "Activity concept"

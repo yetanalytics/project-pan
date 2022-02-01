@@ -450,188 +450,187 @@ Detected 1 error
 
 (def err-msg-10
   "
-**** Context Errors ****
+**** Syntax Errors ****
 
 -- Spec failed --------------------
 
 Value:
-\"profile:Profile\"
-
-in context:
-{:id \"@id\",
- :type \"@type\",
- :Profile \"profile:Profile\",
+{:type \"@type\",
+ :id \"@id\",
  :prov \"http://www.w3.org/ns/prov#\",
- :skos \"http://www.w3.org/2004/02/skos/core#\"}
+ :skos \"http://www.w3.org/2004/02/skos/core#\",
+ :Profile {:id \"bee\"}}
 
-should be a JSON-LD context keyword
-
-or
-
-should be a JSON-LD prefix
-
-or
-
-should be a simple term definition with a valid prefix
-
-or
-
-should be an expanded term definition with a valid prefix
-
--- Spec failed --------------------
-
-Value:
-\"xapi:Verb\"
-
-in context:
-{:id \"@id\",
- :type \"@type\",
- :ActivityType \"xapi:ActivityType\",
- :AttachmentUsageType \"xapi:AttachmentUsageType\",
- :Profile \"profile:Profile\",
- :Verb \"xapi:Verb\",
- :profile \"https://w3id.org/xapi/profiles/ontology#\",
- :prov \"http://www.w3.org/ns/prov#\",
- :skos \"http://www.w3.org/2004/02/skos/core#\"}
-
-should be a JSON-LD context keyword
-
-or
-
-should be a JSON-LD prefix
-
-or
-
-should be a simple term definition with a valid prefix
-
-or
-
-should be an expanded term definition with a valid prefix
-
--- Spec failed --------------------
-
-Value:
-\"xapi:ActivityType\"
-
-in context:
-{:id \"@id\",
- :type \"@type\",
- :ActivityType \"xapi:ActivityType\",
- :AttachmentUsageType \"xapi:AttachmentUsageType\",
- :Profile \"profile:Profile\",
- :Verb \"xapi:Verb\",
- :profile \"https://w3id.org/xapi/profiles/ontology#\",
- :prov \"http://www.w3.org/ns/prov#\",
- :skos \"http://www.w3.org/2004/02/skos/core#\"}
-
-should be a JSON-LD context keyword
-
-or
-
-should be a JSON-LD prefix
-
-or
-
-should be a simple term definition with a valid prefix
-
-or
-
-should be an expanded term definition with a valid prefix
-
--- Spec failed --------------------
-
-Value:
-\"xapi:AttachmentUsageType\"
-
-in context:
-{:id \"@id\",
- :type \"@type\",
- :ActivityType \"xapi:ActivityType\",
- :AttachmentUsageType \"xapi:AttachmentUsageType\",
- :Profile \"profile:Profile\",
- :Verb \"xapi:Verb\",
- :profile \"https://w3id.org/xapi/profiles/ontology#\",
- :prov \"http://www.w3.org/ns/prov#\",
- :skos \"http://www.w3.org/2004/02/skos/core#\"}
-
-should be a JSON-LD context keyword
-
-or
-
-should be a JSON-LD prefix
-
-or
-
-should be a simple term definition with a valid prefix
-
-or
-
-should be an expanded term definition with a valid prefix
-
--------------------------
-Detected 4 errors
-")
-
-;; Context key errors
-
-(def err-msg-11
-  "
-**** Context Key Errors ****
-
--- Spec failed --------------------
-
-Value:
-:hello
+of property:
+:_context
 
 in object:
 {:id \"https://foo.org/activity/1\",
  :type \"Activity\",
- :_context \"https://w3id.org/xapi/profiles/activity-context\",
- :hello \"World\"}
+ :inScheme \"https://w3id.org/xapi/catch/v1\",
+ :activityDefinition
+ {:_context \"https://w3id.org/xapi/profiles/activity-context\",
+  :extensions
+  {\"http://foo.org\"
+   {:_context
+    {:type \"@type\",
+     :id \"@id\",
+     :prov \"http://www.w3.org/ns/prov#\",
+     :skos \"http://www.w3.org/2004/02/skos/core#\",
+     :Profile {:id \"bee\"}}}}}}
 
-should be expandable into an absolute IRI
+should be a non-empty string
 
 or
 
-should be a JSON-LD keyword
+should be a valid inline context
 
 -- Spec failed --------------------
 
 Value:
+{:id \"bee\"}
+
+of property:
+:Profile
+
+in object:
+{:id \"https://foo.org/activity/1\",
+ :type \"Activity\",
+ :inScheme \"https://w3id.org/xapi/catch/v1\",
+ :activityDefinition
+ {:_context \"https://w3id.org/xapi/profiles/activity-context\",
+  :extensions
+  {\"http://foo.org\"
+   {:_context
+    {:type \"@type\",
+     :id \"@id\",
+     :prov \"http://www.w3.org/ns/prov#\",
+     :skos \"http://www.w3.org/2004/02/skos/core#\",
+     :Profile {:id \"bee\"}}}}}}
+
+should be one of: \"@id\", \"@type\"
+
+or
+
+should satisfy
+
+  string?
+
+or
+
+should be a non-empty string
+
+or
+
+should contain key: :_id
+
+| key  | spec                                              |
+|======+===================================================|
+| :_id | <can't find spec for unqualified spec identifier> |
+
+-- Spec failed --------------------
+
+Value:
+{:_context
+ {:type \"@type\",
+  :id \"@id\",
+  :prov \"http://www.w3.org/ns/prov#\",
+  :skos \"http://www.w3.org/2004/02/skos/core#\",
+  :Profile {:id \"bee\"}}}
+
+of property:
+:extensions
+
+in object:
+{:id \"https://foo.org/activity/1\",
+ :type \"Activity\",
+ :inScheme \"https://w3id.org/xapi/catch/v1\",
+ :activityDefinition
+ {:_context \"https://w3id.org/xapi/profiles/activity-context\",
+  :extensions
+  {\"http://foo.org\"
+   {:_context
+    {:type \"@type\",
+     :id \"@id\",
+     :prov \"http://www.w3.org/ns/prov#\",
+     :skos \"http://www.w3.org/2004/02/skos/core#\",
+     :Profile {:id \"bee\"}}}}}}
+
+should be a valid Activity extension
+
+-------------------------
+Detected 3 errors
+")
+
+(def err-msg-11
+  "
+**** Context Errors ****
+
+-- Spec failed --------------------
+
+Key:
 :foo
 
 in object:
-{:id \"https://foo.org/profile\",
- :type \"Profile\",
- :_context \"https://w3id.org/xapi/profiles/context\",
- :concepts [...],
+{\"@id\" \"https://foo.org/profile\",
+ \"@type\" \"Profile\",
  :baz \"Qux\",
- :foo \"Bar\"}
+ :foo \"Bar\",
+ \"https://w3id.org/xapi/profiles/ontology#concepts\" [...]}
 
-should be expandable into an absolute IRI
+should be a non-empty string
 
 or
 
-should be a JSON-LD keyword
+should be a language tag
+
+or
+
+should be one of: \"@id\", \"@type\"
 
 -- Spec failed --------------------
 
-Value:
+Key:
 :baz
 
 in object:
-{:id \"https://foo.org/profile\",
- :type \"Profile\",
- :_context \"https://w3id.org/xapi/profiles/context\",
- :concepts [...],
+{\"@id\" \"https://foo.org/profile\",
+ \"@type\" \"Profile\",
  :baz \"Qux\",
- :foo \"Bar\"}
+ :foo \"Bar\",
+ \"https://w3id.org/xapi/profiles/ontology#concepts\" [...]}
 
-should be expandable into an absolute IRI
+should be a non-empty string
 
 or
 
-should be a JSON-LD keyword
+should be a language tag
+
+or
+
+should be one of: \"@id\", \"@type\"
+
+-- Spec failed --------------------
+
+Key:
+:hello
+
+in object:
+{:hello \"World\",
+ \"https://w3id.org/xapi/ontology#interactionId\"
+ \"https://foo.org/activity-name-1\",
+ \"https://w3id.org/xapi/ontology#type\"
+ \"https://foo.org/activity-type-1\"}
+
+should be a non-empty string
+
+or
+
+should be a language tag
+
+or
+
+should be one of: \"@id\", \"@type\"
 
 -------------------------
 Detected 3 errors

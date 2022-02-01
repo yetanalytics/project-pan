@@ -25,17 +25,16 @@
 ;; NOTE: Need to separate out logic due to weird bug in Expound that causes
 ;; it to crash when `or` is used in s/keys.
 (s/def ::rule-keywords
-       (fn has-rule-keyword? [rule]
-         (or (contains? rule :presence)
-             (contains? rule :any)
-             (contains? rule :all)
-             (contains? rule :none))))
+  (fn has-rule-keyword? [rule]
+    (or (contains? rule :presence)
+        (contains? rule :any)
+        (contains? rule :all)
+        (contains? rule :none))))
 
 (s/def ::rule
-       (s/and ::rule-keys ::rule-keywords))
+  (s/and ::rule-keys ::rule-keywords))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; validation which requires external calls
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;; TODO: rule-must:context 
+;; The following MUST is validated during context validation:
+;; A Profile Author MUST include the keys of any non-primitive objects in `any`,
+;; `all`, and `none` in additional `@context` beyond the ones provided by
+;; this specification.

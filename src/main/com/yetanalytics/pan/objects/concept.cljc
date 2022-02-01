@@ -48,6 +48,18 @@
    :recommendedActivityTypes
    :recommendedVerbs])
 
+(def external-iri-keys
+  [:broadMatch :narrowMatch :relatedMatch :exactMatch
+   :recommendedActivityTypes :recommendedVerbs
+   :context :schema])
+
+(defn get-external-iris
+  "Return the external IRIs from the Concepts of `profile`."
+  [profile]
+  (let [{:keys [concepts]} profile
+        id-filter-set      (set (ids/objs->ids concepts))]
+    (ids/objs->out-ids-map concepts external-iri-keys id-filter-set)))
+
 (defn- get-graph-concepts
   [profile extra-profiles]
   (let [concepts (:concepts profile)

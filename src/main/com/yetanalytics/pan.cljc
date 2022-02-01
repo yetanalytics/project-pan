@@ -7,6 +7,19 @@
             [com.yetanalytics.pan.context :as context]
             [com.yetanalytics.pan.errors :as errors]))
 
+(defn get-external-iris
+  "Return a map of keys to sets of IRIs, where the IRIs reference
+   objects that do not exist in `profile`. Values include IRIs
+   from Concepts, Statement Templates, and Patterns as well as
+   \"@context\" IRI values."
+  [profile]
+  (let [iris-m (merge (concept/get-external-iris profile)
+                      (template/get-external-iris profile)
+                      (pattern/get-external-iris profile))]
+    (if-some [ctx-iris (not-empty (context/get-context-iris profile))]
+      (assoc iris-m :_context ctx-iris)
+      iris-m)))
+
 (defn- find-syntax-errors
   [profile]
   {:syntax-errors (profile/validate profile)})
@@ -39,8 +52,10 @@
      (find-graph-errors* cgraph tgraph pgraph))))
 
 (defn- find-context-errors
-  [profile]
-  (context/validate-contexts profile))
+  [profile ?extra-contexts-map]
+  (if ?extra-contexts-map
+    {:context-errors (context/validate-contexts profile ?extra-contexts-map)}
+    {:context-errors (context/validate-contexts profile)}))
 
 (defn validate-profile
   "Validate `profile` from the top down, printing or returning errors
@@ -58,30 +73,36 @@
                          expand to absolute IRIs using RDF contexts. Default
                          `false.`
    - `:extra-profiles` Extra profiles from which Concepts, Templates, and
-                         Patterns can be referenced from. Default `[]`."
+                         Patterns can be referenced from. Default `[]`.
+   - `:extra-contexts` Extra \"@context\" values (other than the xAPI Profile
+                         and Activity contexts) that \"@context\" IRIs in
+                         `profile` can reference during context validation.
+                         Default `{}`."
   [profile & {:keys [syntax?
                      ids?
                      relations?
                      contexts?
                      print-errs?
-                     extra-profiles]
+                     extra-profiles
+                     extra-contexts]
               :or {syntax?        true
                    ids?           false
                    relations?     false
                    contexts?      false
                    print-errs?    true
-                   extra-profiles []}}]
+                   extra-profiles []
+                   extra-contexts {}}}]
   (let [errors   (if (not-empty extra-profiles)
                    (cond-> {}
                      syntax?    (merge (find-syntax-errors profile))
                      ids?       (merge (find-id-errors profile extra-profiles))
                      relations? (merge (find-graph-errors profile extra-profiles))
-                     contexts?  (merge (find-context-errors profile)))
+                     contexts?  (merge (find-context-errors profile extra-contexts)))
                    (cond-> {}
                      syntax?    (merge (find-syntax-errors profile))
                      ids?       (merge (find-id-errors profile))
                      relations? (merge (find-graph-errors profile))
-                     contexts?  (merge (find-context-errors profile))))
+                     contexts?  (merge (find-context-errors profile extra-contexts))))
         no-errs? (every? nil? (vals errors))]
     (if print-errs?
       (if no-errs?
@@ -94,20 +115,23 @@
   "Like `validate-profile`, but takes a `profile-coll` instead of a
    single Profile. Each Profile can reference objects in other Profiles
    (as well as those in `:extra-profiles`) and must not share object
-   IDs with those in other Profiles. Keyword arguments are the same as
-   in `validate-profile`."
+   IDs with those in other Profiles. During context validation, all
+   Profiles reference the global `:extra-contexts` map. Keyword
+   arguments are the same as in `validate-profile`."
   [profile-coll & {:keys [syntax?
-                      ids?
-                      relations?
-                      contexts?
-                      print-errs?
-                      extra-profiles]
-               :or {syntax?        true
-                    ids?           false
-                    relations?     false
-                    contexts?      false
-                    print-errs?    true
-                    extra-profiles []}}]
+                          ids?
+                          relations?
+                          contexts?
+                          print-errs?
+                          extra-profiles
+                          extra-contexts]
+                   :or {syntax?        true
+                        ids?           false
+                        relations?     false
+                        contexts?      false
+                        print-errs?    true
+                        extra-profiles []
+                        extra-contexts {}}}]
   (let [profiles-set (set profile-coll)
         profile-errs (map (fn [profile]
                             (let [extra-profiles*
@@ -121,6 +145,7 @@
                                :relations?     relations?
                                :contexts?      contexts?
                                :extra-profiles extra-profiles*
+                               :extra-contexts extra-contexts
                                :print-errs?    false)))
                           profile-coll)
         no-errs?     (every? (fn [perr] (every? nil? (vals perr)))

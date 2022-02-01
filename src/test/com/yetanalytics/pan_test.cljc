@@ -1,8 +1,8 @@
 (ns com.yetanalytics.pan-test
   (:require [clojure.test :refer [deftest testing is are]]
             [clojure.spec.alpha :as s]
-            [com.yetanalytics.pan :refer [validate-profile
-                                          validate-profile-coll]]
+            [com.yetanalytics.pan :as p :refer [validate-profile
+                                                validate-profile-coll]]
             [com.yetanalytics.pan.objects.profile :as profile]
             [com.yetanalytics.pan.errors :as e]
             [com.yetanalytics.pan-test-fixtures :as fix])
@@ -44,8 +44,7 @@
 (deftest error-tests
   (are [profile-name profile res]
        (testing (str "the " profile-name ", without printing")
-         (let [[correct-syntax? correct-ids? correct-graph? correct-ctxt?]
-               res
+         (let [[correct-syntax? correct-ids? correct-graph? correct-ctxt?] res
                syntax-errs (validate-profile profile
                                              :print-errs? false)
                id-errs     (validate-profile profile
@@ -204,3 +203,27 @@
                                                 :syntax? true
                                                 :ids? true
                                                 :context? true))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; External IRI retrieval tests
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(deftest get-external-iri-test
+  (testing "get-external-iris function"
+    (is (= {:exactMatch
+            #{"https://w3id.org/xapi/profiles/ontology#Profile"
+              "https://w3id.org/xapi/cmi5/activities/course"
+              "http://activitystrea.ms/schema/terminate"
+              "http://activitystrea.ms/schema/complete"}
+            :context
+            #{"https://raw.githubusercontent.com/adlnet/xAPI-SCORM-Profile/master/context/attempt-state-context.jsonld"}
+            :schema
+            #{"https://raw.githubusercontent.com/adlnet/xAPI-SCORM-Profile/master/document-schemas/scorm.profile.agent.profile.schema.json"
+              "https://w3id.org/xapi/scorm/activity-profile/scorm.profile.activity.profile.schema"
+              "https://raw.githubusercontent.com/adlnet/xAPI-SCORM-Profile/master/document-schemas/scorm.profile.attempt.state.schema.json"
+              "https://raw.githubusercontent.com/adlnet/xAPI-SCORM-Profile/master/document-schemas/scorm.profile.activity.state.schema.json"}
+            :verb
+            #{"http://adlnet.gov/expapi/verbs/commented"}
+            :objectActivityType
+            #{"http://adlnet.gov/expapi/activities/cmi.interaction"}}
+           (p/get-external-iris scorm-profile-raw)))))
