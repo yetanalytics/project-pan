@@ -359,7 +359,46 @@
     :inScheme "https://foo.org/v1" :primary true
     :zeroOrMore "https://foo.org/template5"}])
 
-(def pgraph (pattern/create-graph ex-templates ex-patterns))
+(def ex-profile
+  {:templates ex-templates
+   :patterns  ex-patterns})
+
+(def pgraph (pattern/create-graph ex-profile))
+
+(def ex-profile-2
+  {:patterns [{:id         "https://foo.org/pattern1"
+               :type       "Pattern"
+               :inScheme   "https://foo.org/v1"
+               :primary    true
+               :alternates ["https://foo.org/pattern2"
+                            "https://foo.org/template1"]}
+              {:id       "https://foo.org/pattern3"
+               :type     "Pattern"
+               :inScheme "https://foo.org/v1"
+               :optional "https://foo.org/template3"}]
+   :templates [{:id       "https://foo.org/template1"
+                :type     "StatementTemplate"
+                :inScheme "https://foo.org/v1"}
+               {:id       "https://foo.org/template3"
+                :type     "StatementTemplate"
+                :inScheme "https://foo.org/v1"}]})
+
+(def ex-profile-2a
+  {:patterns [{:id       "https://foo.org/pattern2"
+               :type     "Pattern"
+               :inScheme "https://foo.org/v1"
+               :primary  true
+               :sequence ["https://foo.org/template2"
+                          "https://foo.org/pattern3"
+                          "https://foo.org/pattern1"]}]})
+
+(def ex-profile-2b
+  {:templates [{:id       "https://foo.org/template2"
+                :type     "StatementTemplate"
+                :inScheme "https://foo.org/v1"}]})
+
+(def pgraph-2 (pattern/create-graph ex-profile-2
+                                      [ex-profile-2a ex-profile-2b]))
 
 (deftest graph-test
   (testing "Pattern graph should satisfy various properties"
@@ -404,34 +443,69 @@
     (should-satisfy ::pattern/pattern-edges (pattern/get-edges pgraph))
     (should-satisfy ::graph/singleton-sccs (graph/scc pgraph))
     (is (nil? (pattern/validate-pattern-edges pgraph)))
-    (is (nil? (pattern/validate-pattern-tree pgraph)))))
+    (is (nil? (pattern/validate-pattern-tree pgraph))))
+  (testing "Cyclic graphs can satisfy some properties and fail others"
+    (is (= 6 (count (graph/nodes pgraph-2))))
+    (is (= 6 (count (graph/edges pgraph-2))))
+    (is (nil? (pattern/validate-pattern-edges pgraph-2)))
+    (is (some? (pattern/validate-pattern-tree pgraph-2)))))
 
-(def cyclic-patterns-1
-  [{:id "https://foo.org/pattern-one"
-    :type "Pattern"
-    :primary true
-    :oneOrMore "https://foo.org/pattern-two"}
-   {:id "https://foo.org/pattern-two"
-    :type "Pattern"
-    :primary true
-    :oneOrMore "https://foo.org/pattern-one"}])
+(def cyclic-profile-1
+  {:patterns [{:id "https://foo.org/pattern-one"
+               :type "Pattern"
+               :primary true
+               :oneOrMore "https://foo.org/pattern-two"}
+              {:id "https://foo.org/pattern-two"
+               :type "Pattern"
+               :primary true
+               :oneOrMore "https://foo.org/pattern-one"}]})
 
-(def cyclic-patterns-2
-  [{:id "https://foo.org/pattern-three"
-    :type "Pattern"
-    :primary true
-    :oneOrMore "https://foo.org/pattern-three"}])
+(def cyclic-profile-2
+  {:patterns [{:id "https://foo.org/pattern-three"
+               :type "Pattern"
+               :primary true
+               :oneOrMore "https://foo.org/pattern-three"}]})
 
-(def cyclic-pgraph-1 (pattern/create-graph [] cyclic-patterns-1))
+(def cyclic-profile-3
+  {:patterns  [{:id       "http://foo.org"
+                :type     "Pattern"
+                :primary  true
+                :sequence ["http://bar.org"
+                           "http://qux.org"]}
+               {:id       "http://bar.org"
+                :type     "Pattern"
+                :optional "http://foo.org"}]
+   :templates [{:id   "http://baz.org"
+                :type "StatementTemplate"}
+               {:id   "http://qux.org"
+                :type "StatementTemplate"}]})
 
-(def cyclic-pgraph-2 (pattern/create-graph [] cyclic-patterns-2))
+(def non-cyclic-profile
+  {:patterns [{:id "http://foo.org"
+               :type "Pattern"
+               :primary true
+               :sequence ["http://bar.org"
+                          "http://qux.org"]}
+              {:id "http://bar.org"
+               :type "Pattern"
+               :optional "http://baz.org"}
+              {:id "http://baz.org"
+               :type "StatementTemplate"}
+              {:id "http://qux.org"
+               :type "StatementTemplate"}]})
+
+(def cyclic-pgraph-1 (pattern/create-graph cyclic-profile-1))
+
+(def cyclic-pgraph-2 (pattern/create-graph cyclic-profile-2))
+
+(def cyclic-pgraph-3 (pattern/create-graph cyclic-profile-3))
+
+(def non-cyclic-pgraph (pattern/create-graph non-cyclic-profile))
 
 (deftest no-cycles-test
   (testing "MUST not have any cycles in graph"
-    ;; No cycles
     (is (some? (pattern/validate-pattern-tree cyclic-pgraph-1)))
-    ;; No self loops
-    ;; Note: Self loops are NOT caught by explain-graph-cycles, but are
-    ;; caught by the edge validation specs
-    (is (some? (pattern/validate-pattern-edges cyclic-pgraph-2)))
-    (is (nil? (pattern/validate-pattern-tree cyclic-pgraph-2)))))
+    (is (some? (pattern/validate-pattern-tree cyclic-pgraph-3)))    
+    (is (nil? (pattern/validate-pattern-tree non-cyclic-pgraph)))
+    (testing "(does not detect self-loops)"
+      (is (nil? (pattern/validate-pattern-tree cyclic-pgraph-2))))))

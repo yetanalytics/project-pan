@@ -1,10 +1,11 @@
 (ns com.yetanalytics.pan.objects.pattern
   (:require [clojure.spec.alpha :as s]
             [com.yetanalytics.pan.axioms :as ax]
-            [com.yetanalytics.pan.graph :as graph]))
+            [com.yetanalytics.pan.graph :as graph]
+            [com.yetanalytics.pan.identifiers :as ids]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Patterns 
+;; Pattern Specs
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Basic properties
@@ -81,24 +82,26 @@
   (s/coll-of ::pattern :kind vector? :min-count 1))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Strict validation
+;; Pattern Graph Creation
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; Graph creation functions
+(def pattern-iri-keys
+  [:sequence :alternates :optional :oneOrMore :zeroOrMore])
+
+;; ;;;;; Node and Edge Creation ;;;;;
 
 ;; Get the IRIs of a Pattern (within a sequence), depending on its property
-(defn dispatch-on-pattern [pattern]
-  (keys (dissoc pattern :id :type :prefLabel :definition
-                :primary :inScheme :deprecated)))
+(defn- dispatch-on-pattern [pattern]
+  (keys (select-keys pattern pattern-iri-keys)))
 
 ;; Obtain a vector of edges originating from a pattern.
 ;; The multimethod dispatches on what regex property the pattern has.
 
 (defmulti get-pattern-edges dispatch-on-pattern)
 
-;; Use non-terse destructuring syntax because "sequence" is already a Clojure
-;; core function
 (defmethod get-pattern-edges '(:sequence) [{:keys [id] :as pattern}]
+  ;; Use non-terse destructuring syntax because `sequence` is already a
+  ;; Clojure core function
   (mapv #(vector id % {:type :sequence}) (:sequence pattern)))
 
 (defmethod get-pattern-edges '(:alternates) [{:keys [id alternates]}]
@@ -117,8 +120,8 @@
 
 ;; Return a vector of nodes of the form [id attribute-map]
 (defmethod graph/node-with-attrs "Pattern" [{id :id :as pattern}]
-  (let [attrs {:type "Pattern"
-               :primary (get pattern :primary false)
+  (let [attrs {:type     "Pattern"
+               :primary  (get pattern :primary false)
                :property (first (dispatch-on-pattern pattern))}]
     (vector id attrs)))
 
@@ -126,20 +129,87 @@
 (defmethod graph/edges-with-attrs "Pattern" [pattern]
   (get-pattern-edges pattern))
 
+;; ;;;;; Graph Creation ;;;;;
+
+(defn- empty-queue []
+  #?(:clj clojure.lang.PersistentQueue/EMPTY
+     :cljs cljs.core/PersistentQueue.EMPTY))
+
+(defn- pattern-children
+  "Return the children of the Pattern given by `pat-id`."
+  [patterns-m pat-id]
+  (let [{pat-type :type :as pat} (get patterns-m pat-id)]
+    (when (= "Pattern" pat-type)
+      (let [child-iris (or (some-> pat :sequence)
+                           (some-> pat :alternates)
+                           (some-> pat :optional vector)
+                           (some-> pat :oneOrMore vector)
+                           (some-> pat :zeroOrMore vector))]
+        (map #(get patterns-m %) child-iris)))))
+
+(defn- append-bfs
+  "Perform a breadth-first traversal through the Profile Patterns
+   such that all nodes and edges connected to those in the original
+   Profile are found."
+  [pat-map init-pnodes init-pedges queue-objs visit-objs]
+  (loop [;; Start with the nodes and edges from the main Profile
+         pnodes init-pnodes
+         pedges init-pedges
+         ;; Add to queue the Patterns/Templates adjacent to the main
+         ;; Profile nodes
+         pqueue (->> queue-objs (apply conj (empty-queue)))
+         pvisit (->> visit-objs (map :id) set)]
+    (if-some [{pat-id :id
+               :as    pat} (peek pqueue)]
+      (if (contains? pvisit pat-id)
+        [pnodes pedges]
+        (let [new-pnode  (graph/node-with-attrs pat)
+              new-pedges (graph/edges-with-attrs pat)
+              next-pats  (pattern-children pat-map pat-id)]
+          (recur (conj pnodes new-pnode)
+                 (concat pedges new-pedges)
+                 (apply conj (pop pqueue) next-pats)
+                 (conj pvisit pat-id))))
+      [pnodes pedges])))
+
+(defn- create-graph*
+  [patterns templates ?ext-pats ?ext-tmps]
+  (let [out-ids    (ids/objs->out-ids patterns pattern-iri-keys)
+        templates* (ids/filter-by-ids out-ids templates)
+        pnodes     (->> (concat patterns templates*)
+                        (mapv graph/node-with-attrs))
+        pedges     (->> patterns
+                        (mapv graph/edges-with-attrs)
+                        graph/collect-edges)]
+    (if (and ?ext-pats ?ext-pats)
+      (let [pat-coll  (concat patterns templates ?ext-pats ?ext-tmps)
+            pat-map   (zipmap (map :id pat-coll) pat-coll)
+            init-exts (->> (concat ?ext-pats ?ext-tmps)
+                           (ids/filter-by-ids out-ids))
+            inits     (concat patterns templates)
+            [pn pe]   (append-bfs pat-map pnodes pedges init-exts inits)]
+        (graph/create-graph* pn pe))
+      (graph/create-graph* pnodes pedges))))
+
 (defn create-graph
-  "Create a graph of links between Patterns and other Patterns and Templates."
-  [templates patterns]
-  (let [pgraph (graph/new-digraph)
-        ;; Nodes
-        tnodes (mapv (partial graph/node-with-attrs) templates)
-        pnodes (mapv (partial graph/node-with-attrs) patterns)
-        ;; Edges 
-        pedges (graph/collect-edges
-                (mapv (partial graph/edges-with-attrs) patterns))]
-    (-> pgraph
-        (graph/add-nodes tnodes)
-        (graph/add-nodes pnodes)
-        (graph/add-edges pedges))))
+  "Create a graph of Pattern relations from `profile` and possibly
+   `extra-profiles` that can then be used in validation. Relations
+   can include those between Patterns and Statement Templates. If
+   `extra-profiles` is provided, those profiles are traversed in order
+   to add Patterns and Templates that are connected to the nodes
+   of the main Profile's Pattern graph."
+  ([profile]
+   (let [{:keys [patterns templates]} profile]
+     (create-graph* patterns templates nil nil)))
+  ([profile extra-profiles]
+   (let [{:keys [patterns templates]} profile
+         ext-pats (mapcat :patterns extra-profiles)
+         ext-tmps (mapcat :templates extra-profiles)]
+     (create-graph* patterns templates ext-pats ext-tmps))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Pattern Graph Specs
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn get-edges
   "Return a sequence of edges in the form of maps, with the following keys:
@@ -167,8 +237,6 @@
             :dest-property (graph/attr pgraph dest :property)
             :type          (graph/attr pgraph edge :type)}))
        (graph/edges pgraph)))
-
-;; Edge property specs
 
 ;; Is the destination not nil?
 (s/def ::valid-dest
@@ -273,19 +341,26 @@
          (s/or :pattern ::pattern-dest
                :template ::template-dest)))
 
-;; Is one edge valid?
 (s/def ::pattern-edge (s/multi-spec valid-edge? :type))
 
-;; Are all the edges valid?
 (s/def ::pattern-edges (s/coll-of ::pattern-edge))
 
-;; Edge validation
-(defn validate-pattern-edges [pgraph]
+(defn validate-pattern-edges
+  "Given the Pattern graph `pgraph`, return spec error data if the
+   graph edges are invalid according to the xAPI Profile spec, or
+   `nil` otherwise."
+  [pgraph]
   (s/explain-data ::pattern-edges (get-edges pgraph)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Pattern Cycle Specs
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; MUST NOT include any Pattern within itself, at any depth.
 ;; In other words, no cycles (including self loops)
-(defn validate-pattern-tree [pgraph]
+(defn validate-pattern-tree
+  "Given the Pattern graph `pgraph`, return spec error data if `pgraph`
+   has non-singleton strongly connected components (indicating that
+   a cycle was detected and `pgraph` is not a tree), `nil` otherwise."
+  [pgraph]
   (s/explain-data ::graph/singleton-sccs (graph/scc pgraph)))
-
-;; TODO: MAY re-use Statement Templates and Patterns from other Profiles

@@ -1,23 +1,21 @@
 (ns com.yetanalytics.pan.objects.concept
-  (:require [clojure.spec.alpha :as s]
-            [com.yetanalytics.pan.graph :as graph]
-            [com.yetanalytics.pan.objects.concepts.verbs :as v]
-            [com.yetanalytics.pan.objects.concepts.activities :as a]
-            [com.yetanalytics.pan.objects.concepts.activity-types :as at]
-            [com.yetanalytics.pan.objects.concepts.extensions.result :as re]
-            [com.yetanalytics.pan.objects.concepts.extensions.context :as ce]
-            [com.yetanalytics.pan.objects.concepts.extensions.activity :as ae]
-            [com.yetanalytics.pan.objects.concepts.attachment-usage-types
-             :as a-ut]
-            [com.yetanalytics.pan.objects.concepts.document-resources.state
-             :as s-pr]
-            [com.yetanalytics.pan.objects.concepts.document-resources.agent-profile
-             :as ag-pr]
-            [com.yetanalytics.pan.objects.concepts.document-resources.activity-profile
-             :as act-pr]))
+  (:require
+   [clojure.spec.alpha               :as s]
+   [com.yetanalytics.pan.graph       :as graph]
+   [com.yetanalytics.pan.identifiers :as ids]
+   [com.yetanalytics.pan.objects.concepts.verbs          :as v]
+   [com.yetanalytics.pan.objects.concepts.activities     :as a]
+   [com.yetanalytics.pan.objects.concepts.activity-types :as at]
+   [com.yetanalytics.pan.objects.concepts.attachment-usage-types :as a-ut]
+   [com.yetanalytics.pan.objects.concepts.extensions.result      :as re]
+   [com.yetanalytics.pan.objects.concepts.extensions.context     :as ce]
+   [com.yetanalytics.pan.objects.concepts.extensions.activity    :as ae]
+   [com.yetanalytics.pan.objects.concepts.document-resources.state            :as s-pr]
+   [com.yetanalytics.pan.objects.concepts.document-resources.agent-profile    :as ag-pr]
+   [com.yetanalytics.pan.objects.concepts.document-resources.activity-profile :as act-pr]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Concepts 
+;; Concept Specs
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defmulti concept? :type)
@@ -39,23 +37,41 @@
 (s/def ::concepts (s/coll-of ::concept :type vector? :min-count 1))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Strict validation
+;; Concept Graph Creation
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; TODO make broadMatch, narrowMatch, relatedMatch and exactMatch work
+(def concept-iri-keys
+  [:broader :broadMatch
+   :narrower :narrowMatch
+   :related :relatedMatch
+   :exactMatch
+   :recommendedActivityTypes
+   :recommendedVerbs])
 
-;; Graph creation functions
+(defn- get-graph-concepts
+  [profile extra-profiles]
+  (let [concepts (:concepts profile)
+        out-ids  (ids/objs->out-ids concepts concept-iri-keys)
+        ext-cons (->> (mapcat :concepts extra-profiles)
+                      (ids/filter-by-ids out-ids))]
+    {:concepts     concepts
+     :ext-concepts ext-cons}))
 
 (defn create-graph
-  "Create a digraph out of the vector of concepts"
-  [concepts]
-  (let [cgraph (graph/new-digraph)
-        cnodes (mapv (partial graph/node-with-attrs) concepts)
-        cedges (graph/collect-edges
-                (mapv (partial graph/edges-with-attrs) concepts))]
-    (-> cgraph
-        (graph/add-nodes cnodes)
-        (graph/add-edges cedges))))
+  "Create a graph of Concept relations from `profile` and possibly
+   `extra-profiles` that can then be used in validation."
+  ([profile]
+   (let [{:keys [concepts]} profile]
+     (graph/create-graph concepts concepts)))
+  ([profile extra-profiles]
+   (let [{:keys [concepts ext-concepts]} (get-graph-concepts profile
+                                                             extra-profiles)]
+     (graph/create-graph (concat concepts ext-concepts)
+                         concepts))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Concept Graph Specs
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn get-edges
   "Returns a sequence of edge maps, with the following keys:
@@ -79,8 +95,6 @@
             :dest-version (graph/attr cgraph dest :inScheme)
             :type         (graph/attr cgraph edge :type)}))
        (graph/edges cgraph)))
-
-;; Edge property specs
 
 ;; Is the destination not nil?
 (s/def ::valid-dest
@@ -127,6 +141,11 @@
   (fn same-version? [{:keys [src-version dest-version]}]
     (= src-version dest-version)))
 
+;; Are both the source and destination from different version/Profile?
+(s/def ::diff-version
+  (fn diff-version? [{:keys [src-version dest-version]}]
+    (not= src-version dest-version)))
+
 ;; Edge validation multimethod 
 
 (defmulti valid-edge? :type)
@@ -161,36 +180,37 @@
 ;; broadMatch, narrowMatch, relatedMatch, and exactMatch MUST point to same-type
 ;; Concepts from a different Profile
 
-;; TODO: Currently never used due to lack of external Profiles
+(defmethod valid-edge? :broadMatch [_]
+  (s/and ::relatable-src
+         ::valid-dest
+         ::graph/not-self-loop
+         ::relatable-dest
+         ::same-concept
+         ::diff-version))
 
-(comment
-  (defmethod valid-edge? :broadMatch [_]
-    (s/and ::relatable-src
-           ::valid-dest
-           ::graph/not-self-loop
-           ::relatable-dest
-           ::same-concept))
+(defmethod valid-edge? :narrowMatch [_]
+  (s/and ::relatable-src
+         ::valid-dest
+         ::graph/not-self-loop
+         ::relatable-dest
+         ::same-concept
+         ::diff-version))
 
-  (defmethod valid-edge? :narrowMatch [_]
-    (s/and ::relatable-src
-           ::valid-dest
-           ::graph/not-self-loop
-           ::relatable-dest
-           ::same-concept))
+(defmethod valid-edge? :relatedMatch [_]
+  (s/and ::relatable-src
+         ::valid-dest
+         ::graph/not-self-loop
+         ::relatable-dest
+         ::same-concept
+         ::diff-version))
 
-  (defmethod valid-edge? :relatedMatch [_]
-    (s/and ::relatable-src
-           ::valid-dest
-           ::graph/not-self-loop
-           ::relatable-dest
-           ::same-concept))
-
-  (defmethod valid-edge? :exactMatch [_]
-    (s/and ::relatable-src
-           ::valid-dest
-           ::graph/not-self-loop
-           ::relatable-dest
-           ::same-concept)))
+(defmethod valid-edge? :exactMatch [_]
+  (s/and ::relatable-src
+         ::valid-dest
+         ::graph/not-self-loop
+         ::relatable-dest
+         ::same-concept
+         ::diff-version))
 
 ;; recommendedActivityTypes MUST point to ActivityType Concepts
 (defmethod valid-edge? :recommendedActivityTypes [_]
@@ -212,5 +232,9 @@
 ;; Are all edges valid?
 (s/def ::concept-edges (s/coll-of ::concept-edge))
 
-(defn validate-graph-edges [cgraph]
+(defn validate-concept-edges
+  "Given the Concept graph `cgraph`, return spec error data if the
+   graph edges are invalid according to the xAPI Profile spec, or
+   `nil` otherwise."
+  [cgraph]
   (s/explain-data ::concept-edges (get-edges cgraph)))

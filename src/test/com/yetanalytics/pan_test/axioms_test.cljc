@@ -28,7 +28,6 @@
     (is (not (s/valid? ::ax/media-type "what the pineapple")))))
 
 ;; Language Maps
-;; TODO Language tag spec is broken; fix in xapi-schema
 (deftest test-language-maps
   (testing "Language maps"
     (is (s/valid? ::ax/language-map {"en" "Foo Bar"}))

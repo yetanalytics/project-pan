@@ -5,80 +5,129 @@
             [com.yetanalytics.pan.objects.pattern :as pattern]
             [com.yetanalytics.pan.identifiers :as id]
             [com.yetanalytics.pan.context :as context]
-            [com.yetanalytics.pan.errors :as errors]
-            [com.yetanalytics.pan.utils.json :as json]))
+            [com.yetanalytics.pan.errors :as errors]))
 
-;; TODO Add conversion from Turtle and XML formats
-;; Currently only supports JSON-LD
-
-(defn- convert-profile
-  "Converts profile, if it is a JSON-LD string, into EDN format. Otherwise keeps it in EDN format.
-   - Note that all instances of @ in keywords are replaced by '_'"
+(defn- find-syntax-errors
   [profile]
-  (if (string? profile)
-    (try (json/convert-json profile "_")
-         (catch #?(:clj Exception :cljs js/Error) e
-           (ex-info "JSON parsing error!" (ex-data e))))
-    profile))
+  {:syntax-errors (profile/validate profile)})
+
+(defn- find-id-errors
+  ([profile]
+   {:id-errors        (id/validate-ids profile)
+    :in-scheme-errors (id/validate-in-schemes profile)})
+  ([profile extra-profiles]
+   {:id-errors        (id/validate-ids profile extra-profiles)
+    :in-scheme-errors (id/validate-in-schemes profile)}))
+
+(defn- find-graph-errors*
+  [cgraph tgraph pgraph]
+  {:concept-edge-errors  (concept/validate-concept-edges cgraph)
+   :template-edge-errors (template/validate-template-edges tgraph)
+   :pattern-edge-errors  (pattern/validate-pattern-edges pgraph)
+   :pattern-cycle-errors (pattern/validate-pattern-tree pgraph)})
+
+(defn- find-graph-errors
+  ([profile]
+   (let [cgraph (concept/create-graph profile)
+         tgraph (template/create-graph profile)
+         pgraph (pattern/create-graph profile)]
+     (find-graph-errors* cgraph tgraph pgraph)))
+  ([profile extra-profiles]
+   (let [cgraph (concept/create-graph profile extra-profiles)
+         tgraph (template/create-graph profile extra-profiles)
+         pgraph (pattern/create-graph profile extra-profiles)]
+     (find-graph-errors* cgraph tgraph pgraph))))
+
+(defn- find-context-errors
+  [profile]
+  (context/validate-contexts profile))
 
 (defn validate-profile
-  "Validate a profile from the top down. Takes in a Profile and
-   validates it, printing or returning errors on completion.
-   Supports multiple levels of validation based on the following
-   boolean arguments:
-
-   - Default On:
-     `:print-errs?`  Print errors if true; return spec error data
-                     only if false.
-     `:syntax?`      Basic syntax validation only.
-
-   - Default Off:
-     `:ids?`            Validate object and versioning IDs.
-     `:relations?`      Validate IRI-given relations between Concepts,
-                        Statement Templates and Patterns.
-     `:contexts?`       Validate @context values and that all keys
-                        expand to absolute IRIs using @context.
-     `:external-iris?`  Allow the profile to access external links
-                        (HAS YET TO BE IMPLEMENTED).
-
-  More information can be found in the README."
-  ;; TODO: Implement :external-iris
-  [profile & {:keys [syntax? ids? relations? contexts? external-iris? print-errs?]
-              :or {syntax? true
-                   ids? false
-                   relations? false
-                   contexts? false
-                   external-iris? false
-                   print-errs? true}}]
-  (let [profile (convert-profile profile)
-        errors  (cond-> {}
-                  syntax?
-                  (assoc :syntax-errors (profile/validate profile))
-                  ids? ; ID duplicate and inScheme errors
-                  (assoc :id-errors (id/validate-ids profile)
-                         :in-scheme-errors (id/validate-in-schemes profile))
-                  relations? ; URI errors
-                  (merge
-                   (let [{:keys [concepts templates patterns]} profile
-                         ;; Graphs
-                         cgraph (concept/create-graph concepts)
-                         tgraph (template/create-graph concepts templates)
-                         pgraph (pattern/create-graph templates patterns)
-                         ;; Errors
-                         cerrors   (concept/validate-graph-edges cgraph)
-                         terrors   (template/validate-template-edges tgraph)
-                         perrors   (pattern/validate-pattern-edges pgraph)
-                         pc-errors (pattern/validate-pattern-tree pgraph)]
-                     {:concept-edge-errors  cerrors
-                      :template-edge-errors terrors
-                      :pattern-edge-errors  perrors
-                      :pattern-cycle-errors pc-errors}))
-                  contexts? ; @context errors
-                  (merge (context/validate-contexts profile)))
-        no-errors? (every? nil? (vals errors))]
+  "Validate `profile` from the top down, printing or returning errors
+   on completion. Supports multiple levels of validation based on the
+   following keyword arguments:
+   - `:print-errs?`    Print errors if `true`; return spec error data
+                         only if `false`. Default `true`.
+   - `:syntax?`        Basic syntax validation only. Default `true`.
+   - `:ids?`           Validate object and versioning IDs. Default
+                         `false`.
+   - `:relations?`     Validate IRI-given relations between Concepts,
+                         Statement Templates and Patterns. Default
+                         `false`.
+   - `:contexts?`      Validate \"@context\" values and that Profile keys
+                         expand to absolute IRIs using RDF contexts. Default
+                         `false.`
+   - `:extra-profiles` Extra profiles from which Concepts, Templates, and
+                         Patterns can be referenced from. Default `[]`."
+  [profile & {:keys [syntax?
+                     ids?
+                     relations?
+                     contexts?
+                     print-errs?
+                     extra-profiles]
+              :or {syntax?        true
+                   ids?           false
+                   relations?     false
+                   contexts?      false
+                   print-errs?    true
+                   extra-profiles []}}]
+  (let [errors   (if (not-empty extra-profiles)
+                   (cond-> {}
+                     syntax?    (merge (find-syntax-errors profile))
+                     ids?       (merge (find-id-errors profile extra-profiles))
+                     relations? (merge (find-graph-errors profile extra-profiles))
+                     contexts?  (merge (find-context-errors profile)))
+                   (cond-> {}
+                     syntax?    (merge (find-syntax-errors profile))
+                     ids?       (merge (find-id-errors profile))
+                     relations? (merge (find-graph-errors profile))
+                     contexts?  (merge (find-context-errors profile))))
+        no-errs? (every? nil? (vals errors))]
     (if print-errs?
-      (if no-errors?
-        (println "Success!") ; Exactly like spec/explain
+      (if no-errs?
+        (println "Success!") ; Exactly like `spec/explain`
         (errors/expound-errors errors))
-      (when-not no-errors?
+      (when-not no-errs?
         errors))))
+
+(defn validate-profile-coll
+  "Like `validate-profile`, but takes a `profile-coll` instead of a
+   single Profile. Each Profile can reference objects in other Profiles
+   (as well as those in `:extra-profiles`) and must not share object
+   IDs with those in other Profiles. Keyword arguments are the same as
+   in `validate-profile`."
+  [profile-coll & {:keys [syntax?
+                      ids?
+                      relations?
+                      contexts?
+                      print-errs?
+                      extra-profiles]
+               :or {syntax?        true
+                    ids?           false
+                    relations?     false
+                    contexts?      false
+                    print-errs?    true
+                    extra-profiles []}}]
+  (let [profiles-set (set profile-coll)
+        profile-errs (map (fn [profile]
+                            (let [extra-profiles*
+                                  (-> profiles-set
+                                      (disj profile)
+                                      (concat extra-profiles))]
+                              (validate-profile
+                               profile
+                               :syntax?        syntax?
+                               :ids?           ids?
+                               :relations?     relations?
+                               :contexts?      contexts?
+                               :extra-profiles extra-profiles*
+                               :print-errs?    false)))
+                          profile-coll)
+        no-errs?     (every? (fn [perr] (every? nil? (vals perr)))
+                             profile-errs)]
+    (if print-errs?
+      (if no-errs?
+        (println "Success!")
+        (map errors/expound-errors profile-errs))
+      (when-not no-errs?
+        profile-errs))))

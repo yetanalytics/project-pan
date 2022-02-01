@@ -48,15 +48,3 @@
                     (map #(vector id % {:type :related}) related)
                     (map #(vector id % {:type :relatedMatch}) relatedMatch)
                     (map #(vector id % {:type :exactMatch}) exactMatch)))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; validation which requires external profile
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; 
-
-;; TODO: outside of profile validation
-;; - broadMatch
-;; - narrowMatch
-;; - relatedMatch
-;; - exactMatch
-;; TODO: relatedMatch should
-;; TODO: exactMatch should;

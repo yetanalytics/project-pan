@@ -1,11 +1,12 @@
 (ns com.yetanalytics.pan.objects.template
   (:require [clojure.spec.alpha :as s]
-            [com.yetanalytics.pan.axioms :as ax]
-            [com.yetanalytics.pan.graph :as graph]
+            [com.yetanalytics.pan.axioms      :as ax]
+            [com.yetanalytics.pan.graph       :as graph]
+            [com.yetanalytics.pan.identifiers :as ids]
             [com.yetanalytics.pan.objects.templates.rules :as rules]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Statement Template
+;; Statement Template Specs
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (s/def ::id ::ax/uri)
@@ -54,10 +55,8 @@
 (s/def ::templates (s/coll-of ::template :kind vector? :min-count 1))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Strict validation
+;; Statement Template Graph Creation
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;; Graph creation functions
 
 ;; From a single StatementTemplate, return a 1D vector of edge vectors of 
 ;; form [src dest {:type type-kword}]
@@ -72,42 +71,72 @@
            attachmentUsageType
            objectStatementRefTemplate
            contextStatementRefTemplate]}]
-  (into [] (filter #(some? (second %))
-                   (concat
-                    (vector (vector id verb {:type :verb}))
-                    (vector (vector id objectActivityType
-                                    {:type :objectActivityType}))
-                    (map #(vector id % {:type :contextGroupingActivityType})
-                         contextGroupingActivityType)
-                    (map #(vector id % {:type :contextParentActivityType})
-                         contextParentActivityType)
-                    (map #(vector id % {:type :contextOtherActivityType})
-                         contextOtherActivityType)
-                    (map #(vector id % {:type :contextCategoryActivityType})
-                         contextCategoryActivityType)
-                    (map #(vector id % {:type :attachmentUsageType})
-                         attachmentUsageType)
-                    (map #(vector id % {:type :objectStatementRefTemplate})
-                         objectStatementRefTemplate)
-                    (map #(vector id % {:type :contextStatementRefTemplate})
-                         contextStatementRefTemplate)))))
+  (->> (concat
+        (vector (vector id verb {:type :verb}))
+        (vector (vector id objectActivityType
+                        {:type :objectActivityType}))
+        (map #(vector id % {:type :contextGroupingActivityType})
+             contextGroupingActivityType)
+        (map #(vector id % {:type :contextParentActivityType})
+             contextParentActivityType)
+        (map #(vector id % {:type :contextOtherActivityType})
+             contextOtherActivityType)
+        (map #(vector id % {:type :contextCategoryActivityType})
+             contextCategoryActivityType)
+        (map #(vector id % {:type :attachmentUsageType})
+             attachmentUsageType)
+        (map #(vector id % {:type :objectStatementRefTemplate})
+             objectStatementRefTemplate)
+        (map #(vector id % {:type :contextStatementRefTemplate})
+             contextStatementRefTemplate))
+       (filter #(some? (second %)))
+       (into [])))
+
+(def template-iri-keys
+  [:verb
+   :objectActivityType
+   :contextGroupingActivityType
+   :contextParentActivityType
+   :contextOtherActivityType
+   :attachmentUsageType
+   :objectStatementRefTemplate
+   :contextStatementRefTemplate])
+
+(defn get-graph-concept-templates
+  [profile ?extra-profiles]
+  (let [templates (:templates profile)
+        out-ids   (ids/objs->out-ids templates template-iri-keys)
+        concepts  (->> (concat [profile] ?extra-profiles)
+                       (mapcat :concepts)
+                       (ids/filter-by-ids out-ids))
+        ext-tmps  (some->> ?extra-profiles
+                           (mapcat :templates)
+                           (ids/filter-by-ids out-ids))]
+    (cond-> {:concepts  concepts
+             :templates templates}
+      ext-tmps (assoc :ext-templates ext-tmps))))
 
 (defn create-graph
-  "Create a template graph from its constituent concepts and templates.
-  Returns a digraph with connections between templates to concepts (and each
-  other)."
-  [concepts templates]
-  (let [tgraph (graph/new-digraph)
-        ;; Nodes
-        cnodes (mapv (partial graph/node-with-attrs) concepts)
-        tnodes (mapv (partial graph/node-with-attrs) templates)
-        ;; Edges
-        tedges (graph/collect-edges
-                (mapv (partial graph/edges-with-attrs) templates))]
-    (-> tgraph
-        (graph/add-nodes cnodes)
-        (graph/add-nodes tnodes)
-        (graph/add-edges tedges))))
+  "Create a graph of Statement Template relations from `profile` and
+   possibly `extra-profiles` that can then be used in validation.
+   Relations can include those between Templates and Concepts."
+  ([profile]
+   (let [{:keys [concepts
+                 templates]} (get-graph-concept-templates profile nil)]
+     (graph/create-graph (concat concepts templates)
+                         templates)))
+  ([profile extra-profiles]
+   (let [{:keys [concepts
+                 templates
+                 ext-templates]} (get-graph-concept-templates
+                                  profile
+                                  extra-profiles)]
+     (graph/create-graph (concat concepts templates ext-templates)
+                         templates))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Statement Template Graph Specs
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn get-edges
   "Return a sequence of edge maps, with the following keys:
@@ -131,8 +160,6 @@
             :dest-version (graph/attr tgraph dest :inScheme)
             :type         (graph/attr tgraph edge :type)}))
        (graph/edges tgraph)))
-
-;; Edge property specs
 
 ;; Is the source a Statement Template?
 (s/def ::template-src
@@ -245,7 +272,9 @@
 (s/def ::template-edges (s/coll-of ::template-edge))
 
 ;; Putting it all together
-(defn validate-template-edges [tgraph]
+(defn validate-template-edges
+  "Given the Statement Template graph `tgraph`, return spec error data
+   if the graph edges are invalid according to the xAPI Profile spec, or
+   `nil` otherwise."
+  [tgraph]
   (s/explain-data ::template-edges (get-edges tgraph)))
-
-;; TODO Validate links that are external to this Profile

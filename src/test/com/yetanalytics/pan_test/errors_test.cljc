@@ -195,20 +195,18 @@
                      :pattern-edge-errors nil
                      :template-edge-errors
                      (t/validate-template-edges
-                      (t/create-graph [] (:templates bad-profile-2e)))}
+                      (t/create-graph bad-profile-2e))}
       fix/err-msg-7 {:concept-edge-errors nil
                      :pattern-edge-errors nil
                      :template-edge-errors
                      (t/validate-template-edges
-                      (t/create-graph [] (:templates bad-profile-2f)))}
+                      (t/create-graph bad-profile-2f))}
       fix/err-msg-8 {:pattern-cycle-errors
                      (pt/validate-pattern-tree
-                      (pt/create-graph (:templates bad-profile-2g)
-                                       (:patterns bad-profile-2g)))}
+                      (pt/create-graph bad-profile-2g))}
       fix/err-msg-9 {:pattern-edge-errors
                      (pt/validate-pattern-edges
-                      (pt/create-graph (:templates bad-profile-2h)
-                                       (:patterns bad-profile-2h)))}
+                      (pt/create-graph bad-profile-2h))}
       fix/err-msg-10 (ctx/validate-contexts bad-profile-3a)
       fix/err-msg-11 (ctx/validate-contexts bad-profile-3b)))
   (testing "combining error messages"
@@ -221,14 +219,12 @@
            (-> {:concept-edge-errors nil
                 :template-edge-errors
                 (t/validate-template-edges
-                 (t/create-graph [] (:templates bad-profile-2f)))
+                 (t/create-graph bad-profile-2f))
                 :pattern-edge-errors
                 (pt/validate-pattern-edges
-                 (pt/create-graph (:templates bad-profile-2h)
-                                  (:patterns bad-profile-2h)))
+                 (pt/create-graph bad-profile-2h))
                 :pattern-cycle-errors
                 (pt/validate-pattern-tree
-                 (pt/create-graph (:templates bad-profile-2g)
-                                  (:patterns bad-profile-2g)))}
+                 (pt/create-graph bad-profile-2g))}
                e/expound-errors
                with-out-str)))))
