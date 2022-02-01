@@ -181,6 +181,9 @@
 ;; Tests
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(comment
+  (println
+   (e/expound-errors {:syntax-errors (p/validate bad-profile-2b)})))
 (deftest expound-test
   (testing "error messages"
     (are [expected-str err-map] (= expected-str
@@ -209,7 +212,8 @@
       fix/err-msg-10 {:syntax-errors
                       (p/validate bad-profile-3a)}
       fix/err-msg-11 {:context-errors
-                      (ctx/validate-contexts bad-profile-3b)}))
+                      (ctx/validate-contexts bad-profile-3b)}
+      ))
   (testing "combining error messages"
     (is (= (str fix/err-msg-4 fix/err-msg-5)
            (-> {:id-errors (id/validate-ids bad-profile-2c)

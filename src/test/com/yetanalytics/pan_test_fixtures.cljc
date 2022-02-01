@@ -21,7 +21,7 @@ in object:
  :definition {:en \"This is a pattern for someone looking at a rubric\"},
  :optional {:id \"https://w3id.org/xapi/catch/templates#view-rubric\"}}
 
-should be a non-empty string
+should be a valid IRI
 
 -- Spec failed --------------------
 
@@ -137,13 +137,13 @@ Object:
 
 should contain key: :definition
 
-| key         | spec                                          |
-|=============+===============================================|
-| :definition | (map-of                                       |
-|             |  :com.yetanalytics.pan.axioms/language-tag    |
-|             |  :com.yetanalytics.pan.axioms/lang-map-string |
-|             |  :min-count                                   |
-|             |  1)                                           |
+| key         | spec                                       |
+|=============+============================================|
+| :definition | (map-of                                    |
+|             |  com.yetanalytics.pan.axioms/language-tag? |
+|             |  string?                                   |
+|             |  :min-count                                |
+|             |  1)                                        |
 
 -- Spec failed --------------------
 
@@ -286,13 +286,9 @@ Object:
 
 should contain key: :inScheme
 
-| key       | spec                                        |
-|===========+=============================================|
-| :inScheme | (and                                        |
-|           |  :com.yetanalytics.pan.axioms/string        |
-|           |  (partial                                   |
-|           |   re-matches                                |
-|           |   xapi-schema.spec.regex/AbsoluteIRIRegEx)) |
+| key       | spec                                 |
+|===========+======================================|
+| :inScheme | com.yetanalytics.pan.axioms/iri-str? |
 
 -- Spec failed --------------------
 

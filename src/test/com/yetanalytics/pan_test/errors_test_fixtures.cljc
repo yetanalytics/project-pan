@@ -111,11 +111,9 @@ Detected 2 errors
 ")
 
 ;; Statement Template error
-;; Note: cljs version differs from clj by having an extra column in the table
 
 (def err-msg-3
-  #?(:clj
-     "
+  "
 **** Syntax Errors ****
 
 -- Spec failed --------------------
@@ -125,25 +123,21 @@ Object:
 
 should contain keys: :definition, :inScheme, :prefLabel
 
-| key         | spec                                          |
-|=============+===============================================|
-| :definition | (map-of                                       |
-|             |  :com.yetanalytics.pan.axioms/language-tag    |
-|             |  :com.yetanalytics.pan.axioms/lang-map-string |
-|             |  :min-count                                   |
-|             |  1)                                           |
-|-------------+-----------------------------------------------|
-| :inScheme   | (and                                          |
-|             |  :com.yetanalytics.pan.axioms/string          |
-|             |  (partial                                     |
-|             |   re-matches                                  |
-|             |   xapi-schema.spec.regex/AbsoluteIRIRegEx))   |
-|-------------+-----------------------------------------------|
-| :prefLabel  | (map-of                                       |
-|             |  :com.yetanalytics.pan.axioms/language-tag    |
-|             |  :com.yetanalytics.pan.axioms/lang-map-string |
-|             |  :min-count                                   |
-|             |  1)                                           |
+| key         | spec                                       |
+|=============+============================================|
+| :definition | (map-of                                    |
+|             |  com.yetanalytics.pan.axioms/language-tag? |
+|             |  string?                                   |
+|             |  :min-count                                |
+|             |  1)                                        |
+|-------------+--------------------------------------------|
+| :inScheme   | com.yetanalytics.pan.axioms/iri-str?       |
+|-------------+--------------------------------------------|
+| :prefLabel  | (map-of                                    |
+|             |  com.yetanalytics.pan.axioms/language-tag? |
+|             |  string?                                   |
+|             |  :min-count                                |
+|             |  1)                                        |
 
 -- Spec failed --------------------
 
@@ -173,67 +167,7 @@ should be: \"StatementTemplate\"
 
 -------------------------
 Detected 3 errors
-"
-     :cljs
-     "
-**** Syntax Errors ****
-
--- Spec failed --------------------
-
-Object:
-{:id \"this-template-is-invalid\", :type \"FooBar\"}
-
-should contain keys: :definition, :inScheme, :prefLabel
-
-| key         | spec                                           |
-|=============+================================================|
-| :definition | (map-of                                        |
-|             |  :com.yetanalytics.pan.axioms/language-tag     |
-|             |  :com.yetanalytics.pan.axioms/lang-map-string  |
-|             |  :min-count                                    |
-|             |  1)                                            |
-|-------------+------------------------------------------------|
-| :inScheme   | (and                                           |
-|             |  :com.yetanalytics.pan.axioms/string           |
-|             |  (partial                                      |
-|             |   re-matches                                   |
-|             |   xapi-schema.spec.regex/AbsoluteIRIRegEx))    |
-|-------------+------------------------------------------------|
-| :prefLabel  | (map-of                                        |
-|             |  :com.yetanalytics.pan.axioms/language-tag     |
-|             |  :com.yetanalytics.pan.axioms/lang-map-string  |
-|             |  :min-count                                    |
-|             |  1)                                            |
-
--- Spec failed --------------------
-
-Value:
-\"this-template-is-invalid\"
-
-of property:
-:id
-
-in object:
-{:id \"this-template-is-invalid\", :type \"FooBar\"}
-
-should be a valid URI
-
--- Spec failed --------------------
-
-Value:
-\"FooBar\"
-
-of property:
-:type
-
-in object:
-{:id \"this-template-is-invalid\", :type \"FooBar\"}
-
-should be: \"StatementTemplate\"
-
--------------------------
-Detected 3 errors
-"))
+")
 
 ;; ID Error
 
@@ -479,7 +413,7 @@ in object:
      :skos \"http://www.w3.org/2004/02/skos/core#\",
      :Profile {:id \"bee\"}}}}}}
 
-should be a non-empty string
+should be a valid IRI
 
 or
 
@@ -518,7 +452,7 @@ should satisfy
 
 or
 
-should be a non-empty string
+should be a valid IRI
 
 or
 
@@ -578,7 +512,7 @@ in object:
  :foo \"Bar\",
  \"https://w3id.org/xapi/profiles/ontology#concepts\" [...]}
 
-should be a non-empty string
+should be a valid IRI
 
 or
 
@@ -600,7 +534,7 @@ in object:
  :foo \"Bar\",
  \"https://w3id.org/xapi/profiles/ontology#concepts\" [...]}
 
-should be a non-empty string
+should be a valid IRI
 
 or
 
@@ -622,7 +556,7 @@ in object:
  \"https://w3id.org/xapi/ontology#type\"
  \"https://foo.org/activity-type-1\"}
 
-should be a non-empty string
+should be a valid IRI
 
 or
 

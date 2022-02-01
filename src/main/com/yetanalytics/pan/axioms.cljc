@@ -16,11 +16,10 @@
 
 ;; Arbitrary strings
 ;; By the xAPI-Profile specification, they cannot be empty (except Lang Maps)
-(defn- non-empty-string? [s]
+(defn- non-empty-str? [s]
   (and (string? s) (not-empty s)))
 
-(s/def ::string non-empty-string?)
-(s/def ::lang-map-string string?) ;; Language maps only
+(s/def ::string non-empty-str?)
 
 ;; Timestamps
 ;; Example: "2010-01-14T12:13:14Z"
@@ -32,11 +31,18 @@
   (fn language-tag? [t]
     (or (and (keyword? t)
              (re-matches xsr/LanguageTagRegEx (name t)))
-        (and (non-empty-string? t)
+        (and (non-empty-str? t)
              (re-matches xsr/LanguageTagRegEx t)))))
 
+(defn- language-tag?
+  [t]
+  (or (and (keyword? t)
+           (re-matches xsr/LanguageTagRegEx (name t)))
+      (and (non-empty-str? t)
+           (re-matches xsr/LanguageTagRegEx t))))
+
 (s/def ::language-map
-  (s/map-of ::language-tag ::lang-map-string :min-count 1))
+  (s/map-of language-tag? string? :min-count 1))
 
 ;; RFC 2046 media types, as defined by the IANA.
 ;; Example: "application/json"
@@ -74,7 +80,7 @@
                         (string/split paths JSONPathSplitRegEx)))))
 
 (s/def ::json-path
-  (s/and ::string json-path?))
+  (s/and string? json-path?))
 
 ;; JSON Schema
 ;; Example: "{\"type\":\"array\", \"uniqueItems\":true}"
@@ -106,12 +112,16 @@
 ;; IRIs/IRLs/URIs/URLs
 ;; Example: "https://yetanalytics.io"
 
-(s/def ::iri (s/and ::string (partial re-matches xsr/AbsoluteIRIRegEx)))
-(s/def ::irl (s/and ::string (partial re-matches xsr/AbsoluteIRIRegEx)))
-#_{:clj-kondo/ignore [:unresolved-var]} ; kondo doesn't see regex for some reason
-(s/def ::uri (s/and ::string (partial re-matches xsr/AbsoluteURIRegEx)))
-#_{:clj-kondo/ignore [:unresolved-var]}
-(s/def ::url (s/and ::string (partial re-matches xsr/AbsoluteURIRegEx)))
+(defn- iri-str? [s]
+  (and (non-empty-str? s) (re-matches xsr/AbsoluteIRIRegEx s)))
+
+(defn- uri-str? [s]
+  (and (non-empty-str? s) (re-matches xsr/AbsoluteURIRegEx s)))
+
+(s/def ::iri iri-str?)
+(s/def ::irl iri-str?)
+(s/def ::uri uri-str?)
+(s/def ::url uri-str?)
 
 ;; Array of identifiers
 ;; Example: ["https://foo.org" "https://bar.org"]
