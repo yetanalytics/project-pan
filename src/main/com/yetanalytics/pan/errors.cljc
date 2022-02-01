@@ -4,7 +4,7 @@
                [goog.string.format :as format])
             [clojure.spec.alpha :as s]
             [clojure.pprint :as pprint]
-            [clojure.string :as string]
+            [clojure.string :as cstr]
             [expound.alpha :as exp]
             [com.yetanalytics.pan.axioms :as ax]
             [com.yetanalytics.pan.context :as ctx]
@@ -368,7 +368,7 @@
             "%s")
        (pr-str inScheme)
        (pr-str id)
-       (->> version-ids sort (map pr-str) (string/join "\n"))))
+       (->> version-ids sort (map pr-str) (cstr/join "\n"))))
 
 (defn- value-str-edge
   "Custom value string fn for IRI link error messages."
@@ -435,7 +435,7 @@
   [_ _ _ value]
   (fmt (str "The following Patterns:\n"
             "%s")
-       (->> value sort (map pr-str) (string/join "\n"))))
+       (->> value sort (map pr-str) (cstr/join "\n"))))
 
 (defn- value-str-context-key
   "Custom value string fn to print errors on context expanded keys."
@@ -460,6 +460,24 @@
   (let [error-type (if (nil? error-type) :else error-type)
         make-opts  (fn [f] {:print-specs? false :value-str-fn f})]
     (case error-type
+      ;; New
+      :syntax-errors
+      (exp/custom-printer (make-opts value-str-obj))
+      :id-errors
+      (exp/custom-printer (make-opts value-str-id))
+      :in-scheme-errors
+      (exp/custom-printer (make-opts value-str-version))
+      :concept-edge-errors
+      (exp/custom-printer (make-opts value-str-edge))
+      :template-edge-errors
+      (exp/custom-printer (make-opts value-str-edge))
+      :pattern-edge-errors
+      (exp/custom-printer (make-opts value-str-edge))
+      :pattern-cycle-errors
+      (exp/custom-printer (make-opts value-str-scc))
+      :context-errors
+      (exp/custom-printer (make-opts value-str-context-key))
+      ;; Old
       :id
       (exp/custom-printer (make-opts value-str-id))
       :in-scheme
@@ -474,7 +492,62 @@
       (exp/custom-printer (make-opts value-str-obj)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Expounding functions
+;; Transform error map
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn error->str
+  [error-map error-type]
+  (let [print-fn (custom-printer error-type)]
+    (with-out-str (print-fn error-map))))
+
+(defn- regroup-exp-data
+  "Conver the explain-data map into a list of mini-explain-data maps,
+   grouped together by the `:in` key (a simplified version of how
+   Expound groups related errors)."
+  [{problems ::s/problems :as exp-data-map}]
+  (->> problems
+       (group-by :in)
+       vals
+       (map (partial assoc exp-data-map ::s/problems))))
+
+(defn- kw->header
+  [k]
+  (case k
+    :id-errors "ID Errors"
+    :in-scheme-errors "Version Errors"
+    (->> (-> k name (cstr/split #"-"))
+         (map cstr/capitalize)
+         (cstr/join " "))))
+
+(defn errors->string-list-map
+  [errors-map]
+  (reduce-kv (fn [m k v]
+               (cond-> m
+                 (some? v)
+                 (assoc k (-> v regroup-exp-data (error->str k)))))
+             {}
+             errors-map))
+
+(defn errors->string-map
+  [errors-map]
+  (reduce-kv (fn [m k v]
+               (cond-> m
+                 (some? v)
+                 (assoc k (-> v (error->str k)))))
+             {}
+             errors-map))
+
+(defn errors->string
+  [errors-map]
+  (reduce-kv (fn [s k v]
+               (cond-> s
+                 (some? v)
+                 (str "\n**** " (kw->header k) " ****\n\n" (error->str v k))))
+             ""
+             errors-map))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Expounding entire error map
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn expound-error
@@ -488,16 +561,7 @@
      (println (str "\n**** " error-label " ****\n"))
      (print-fn error-map))))
 
-;; (defn errors->str-list
-;;   [error-map error-label error-type]
-;;   (let [{error-probs ::s/problems} error-map
-;;         error-map-list (->> error-probs
-;;                             (group-by :in)
-;;                             vals
-;;                             (map (partial assoc error-map ::s/problems)))]
-;;     (mapv #(with-out-str (expound-error % error-label error-type)) error-map-list)))
-
-(defn expound-errors
+(defn print-errors
   "Print errors from profile validation using Expound. Available keys:
   :syntax-errors         Basic syntax validation (always present)
   :id-errors             Duplicate ID errors

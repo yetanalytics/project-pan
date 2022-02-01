@@ -183,11 +183,11 @@
 
 (comment
   (println
-   (e/expound-errors {:syntax-errors (p/validate bad-profile-2b)})))
+   (e/print-errors {:syntax-errors (p/validate bad-profile-2b)})))
 (deftest expound-test
   (testing "error messages"
     (are [expected-str err-map] (= expected-str
-                                   (with-out-str (e/expound-errors err-map)))
+                                   (with-out-str (e/print-errors err-map)))
       fix/err-msg-1 {:syntax-errors (p/validate bad-profile-1b)}
       fix/err-msg-2 {:syntax-errors (p/validate bad-profile-2a)}
       fix/err-msg-3 {:syntax-errors (p/validate bad-profile-2b)}
@@ -212,14 +212,12 @@
       fix/err-msg-10 {:syntax-errors
                       (p/validate bad-profile-3a)}
       fix/err-msg-11 {:context-errors
-                      (ctx/validate-contexts bad-profile-3b)}
-      ))
+                      (ctx/validate-contexts bad-profile-3b)}))
   (testing "combining error messages"
     (is (= (str fix/err-msg-4 fix/err-msg-5)
            (-> {:id-errors (id/validate-ids bad-profile-2c)
                 :in-scheme-errors (id/validate-in-schemes bad-profile-2d)}
-               e/expound-errors
-               with-out-str)))
+               e/errors->string)))
     (is (= (str fix/err-msg-7 fix/err-msg-9 fix/err-msg-8)
            (-> {:concept-edge-errors nil
                 :template-edge-errors
@@ -231,5 +229,4 @@
                 :pattern-cycle-errors
                 (pt/validate-pattern-tree
                  (pt/create-graph bad-profile-2g))}
-               e/expound-errors
-               with-out-str)))))
+               e/errors->string)))))

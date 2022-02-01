@@ -91,26 +91,32 @@
                    contexts?      false
                    extra-profiles []
                    extra-contexts {}
-                   result         :data}}]
-  (let [errors   (if (not-empty extra-profiles)
-                   (cond-> {}
-                     syntax?    (merge (find-syntax-errors profile))
-                     ids?       (merge (find-id-errors profile extra-profiles))
-                     relations? (merge (find-graph-errors profile extra-profiles))
-                     contexts?  (merge (find-context-errors profile extra-contexts)))
-                   (cond-> {}
-                     syntax?    (merge (find-syntax-errors profile))
-                     ids?       (merge (find-id-errors profile))
-                     relations? (merge (find-graph-errors profile))
-                     contexts?  (merge (find-context-errors profile extra-contexts))))
-        no-errs? (every? nil? (vals errors))]
+                   result         :explain-data-map}}]
+  (let [errors     (if (not-empty extra-profiles)
+                     (cond-> {}
+                       syntax?    (merge (find-syntax-errors profile))
+                       ids?       (merge (find-id-errors profile extra-profiles))
+                       relations? (merge (find-graph-errors profile extra-profiles))
+                       contexts?  (merge (find-context-errors profile extra-contexts)))
+                     (cond-> {}
+                       syntax?    (merge (find-syntax-errors profile))
+                       ids?       (merge (find-id-errors profile))
+                       relations? (merge (find-graph-errors profile))
+                       contexts?  (merge (find-context-errors profile extra-contexts))))
+        errors?    (not (every? nil? (vals errors)))]
     (case result
-      :data
-      (when-not no-errs? errors)
+      :explain-data-map
+      (when errors? errors)
+      :string-list-map
+      (cond-> errors errors? errors/errors->string-list-map)
+      :string-map
+      (cond-> errors errors? errors/errors->string-map)
+      :string
+      (cond-> errors errors? errors/errors->string)
       :print
-      (if no-errs?
+      (if-not errors?
         (println "Success!")
-        (errors/expound-errors errors)))))
+        (println (errors/errors->string errors))))))
 
 (defn validate-profile-coll
   "Like `validate-profile`, but takes a `profile-coll` instead of a
@@ -132,7 +138,7 @@
                         contexts?      false
                         extra-profiles []
                         extra-contexts {}
-                        result         :data}}]
+                        result         :explain-data-map}}]
   (let [profiles-set (set profile-coll)
         profile-errs (map (fn [profile]
                             (let [extra-profiles*
@@ -147,14 +153,20 @@
                                :contexts?      contexts?
                                :extra-profiles extra-profiles*
                                :extra-contexts extra-contexts
-                               :result         :data)))
+                               :result         :explain-data-map)))
                           profile-coll)
-        no-errs?     (every? (fn [perr] (every? nil? (vals perr)))
-                             profile-errs)]
+        errors?      (not (every? (fn [perr] (every? nil? (vals perr)))
+                                  profile-errs))]
     (case result
-      :data
-      (when-not no-errs? profile-errs)
+      :explain-data-map
+      (when errors? profile-errs)
+      :string-list-map
+      (cond->> profile-errs errors? (map errors/errors->string-list-map))
+      :string-map
+      (cond->> profile-errs errors? (map errors/errors->string-map))
+      :string
+      (cond->> profile-errs errors? (map errors/errors->string))
       :print
-      (if no-errs?
+      (if-not errors?
         (println "Success!")
-        (dorun (map errors/expound-errors profile-errs))))))
+        (dorun (map (comp println errors/errors->string) profile-errs))))))

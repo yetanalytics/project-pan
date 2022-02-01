@@ -123,7 +123,7 @@
 
 (defn- expound-to-str
   [err-data]
-  (-> err-data distinct-problems e/expound-errors with-out-str))
+  (-> err-data distinct-problems e/errors->string))
 
 (deftest err-msg-tests
   (testing "syntax error messages"
