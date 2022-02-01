@@ -159,13 +159,16 @@
                                   profile-errs))]
     (case result
       :explain-data-map
-      (when errors? profile-errs)
+      (when errors? (vec profile-errs))
       :string-vec-map
-      (cond->> profile-errs errors? (map errors/errors->string-vec-map))
+      (cond->> profile-errs
+        errors? (mapv (comp not-empty errors/errors->string-vec-map)))
       :string-map
-      (cond->> profile-errs errors? (map errors/errors->string-map))
+      (cond->> profile-errs
+        errors? (mapv (comp not-empty errors/errors->string-map)))
       :string
-      (cond->> profile-errs errors? (map errors/errors->string))
+      (cond->> profile-errs
+        errors? (mapv (comp not-empty errors/errors->string)))
       :print
       (if-not errors?
         (println "Success!")
