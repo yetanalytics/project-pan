@@ -519,12 +519,12 @@
          (map cstr/capitalize)
          (cstr/join " "))))
 
-(defn errors->string-list-map
+(defn errors->string-vec-map
   [errors-map]
   (reduce-kv (fn [m k v]
                (cond-> m
                  (some? v)
-                 (assoc k (-> v regroup-exp-data (error->str k)))))
+                 (assoc k (->> v regroup-exp-data (mapv #(error->str % k))))))
              {}
              errors-map))
 

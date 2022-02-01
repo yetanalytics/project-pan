@@ -107,8 +107,8 @@
     (case result
       :explain-data-map
       (when errors? errors)
-      :string-list-map
-      (cond-> errors errors? errors/errors->string-list-map)
+      :string-vec-map
+      (cond-> errors errors? errors/errors->string-vec-map)
       :string-map
       (cond-> errors errors? errors/errors->string-map)
       :string
@@ -160,8 +160,8 @@
     (case result
       :explain-data-map
       (when errors? profile-errs)
-      :string-list-map
-      (cond->> profile-errs errors? (map errors/errors->string-list-map))
+      :string-vec-map
+      (cond->> profile-errs errors? (map errors/errors->string-vec-map))
       :string-map
       (cond->> profile-errs errors? (map errors/errors->string-map))
       :string
