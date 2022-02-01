@@ -1,5 +1,6 @@
 (ns com.yetanalytics.pan-test.errors-test
   (:require [clojure.test :refer [deftest testing is are]]
+            [clojure.string :as cstr]
             [com.yetanalytics.pan.context :as ctx]
             [com.yetanalytics.pan.errors :as e]
             [com.yetanalytics.pan.objects.profile :as p]
@@ -181,9 +182,6 @@
 ;; Tests
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(comment
-  (println
-   (e/print-errors {:syntax-errors (p/validate bad-profile-2b)})))
 (deftest expound-test
   (testing "error messages"
     (are [expected-str err-map] (= expected-str
@@ -230,3 +228,21 @@
                 (pt/validate-pattern-tree
                  (pt/create-graph bad-profile-2g))}
                e/errors->string)))))
+
+(deftest error-data-structures
+  (testing "error string list map"
+    (is (= {:syntax-errors fix/err-msg-1-list}
+           (e/errors->string-vec-map {:syntax-errors (p/validate bad-profile-1b)})))
+    (is (= {}
+           (e/errors->string-vec-map nil))))
+  (testing "error string map"
+    (is (= {:syntax-errors
+            (cstr/replace fix/err-msg-1 #"\s\*+ Syntax Errors \*+\s*" "")}
+           (e/errors->string-map {:syntax-errors (p/validate bad-profile-1b)})))
+    (is (= {}
+           (e/errors->string-map nil))))
+  (testing "error string"
+    (is (= fix/err-msg-1
+           (e/errors->string {:syntax-errors (p/validate bad-profile-1b)})))
+    (is (= ""
+           (e/errors->string nil)))))

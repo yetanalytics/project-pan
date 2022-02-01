@@ -166,7 +166,25 @@
                (validate-profile-coll :syntax? false
                                       :relations? true)
                first
-               expound-to-str)))))
+               expound-to-str))))
+  (testing "string and string vec maps"
+    (is (every? vector? (-> [will-profile-raw scorm-profile-raw]
+                            (validate-profile-coll :syntax? false
+                                                   :relations? true
+                                                   :result :string-vec-map)
+                            first
+                            vals)))
+    (is (every? string? (-> [will-profile-raw scorm-profile-raw]
+                            (validate-profile-coll :syntax? false
+                                                   :relations? true
+                                                   :result :string-map)
+                            first
+                            vals)))
+    (is (string? (-> [will-profile-raw scorm-profile-raw]
+                     (validate-profile-coll :syntax? false
+                                            :relations? true
+                                            :result :string)
+                     first)))))
 
 (deftest success-msg-test
   (testing "error messages on fixed profiles"

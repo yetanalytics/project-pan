@@ -62,6 +62,66 @@ should be: \"Profile\"
 Detected 2 errors
 ")
 
+(def err-msg-1-list
+  ["-- Spec failed --------------------
+
+Value:
+\"not an id\"
+
+of property:
+:id
+
+in object:
+{:id \"not an id\",
+ :type \"FooBar\",
+ :prefLabel {\"en\" \"Catch\"},
+ :definition
+ {\"en\" \"The profile for the trinity education application CATCH\"},
+ :_context \"https://w3id.org/xapi/profiles/context\",
+ :conformsTo \"https://w3id.org/xapi/profiles#1.0\",
+ :author
+ {:url \"https://www.yetanalytics.io\",
+  :type \"Organization\",
+  :name \"Yet Analytics\"},
+ :versions
+ [{:id \"https://w3id.org/xapi/catch/v1\",
+   :generatedAtTime \"2017-12-22T22:30:00-07:00\"}]}
+
+should be a valid IRI
+
+-------------------------
+Detected 1 error
+"
+   "-- Spec failed --------------------
+
+Value:
+\"FooBar\"
+
+of property:
+:type
+
+in object:
+{:id \"not an id\",
+ :type \"FooBar\",
+ :prefLabel {\"en\" \"Catch\"},
+ :definition
+ {\"en\" \"The profile for the trinity education application CATCH\"},
+ :_context \"https://w3id.org/xapi/profiles/context\",
+ :conformsTo \"https://w3id.org/xapi/profiles#1.0\",
+ :author
+ {:url \"https://www.yetanalytics.io\",
+  :type \"Organization\",
+  :name \"Yet Analytics\"},
+ :versions
+ [{:id \"https://w3id.org/xapi/catch/v1\",
+   :generatedAtTime \"2017-12-22T22:30:00-07:00\"}]}
+
+should be: \"Profile\"
+
+-------------------------
+Detected 1 error
+"])
+
 ;; Concept error
 
 (def err-msg-2
