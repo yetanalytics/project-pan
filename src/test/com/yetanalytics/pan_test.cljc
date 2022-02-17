@@ -168,16 +168,16 @@
                first
                expound-to-str))))
   (testing "string and string vec maps"
-    (is (every? vector? (-> [will-profile-raw scorm-profile-raw]
-                            (validate-profile-coll :syntax? false
-                                                   :relations? true
-                                                   :result :string-vec-map)
-                            first
-                            vals)))
+    (is (every? map? (-> [will-profile-raw scorm-profile-raw]
+                         (validate-profile-coll :syntax? false
+                                                :relations? true
+                                                :result :type-path-string)
+                         first
+                         vals)))
     (is (every? string? (-> [will-profile-raw scorm-profile-raw]
                             (validate-profile-coll :syntax? false
                                                    :relations? true
-                                                   :result :string-map)
+                                                   :result :type-string)
                             first
                             vals)))
     (is (string? (-> [will-profile-raw scorm-profile-raw]

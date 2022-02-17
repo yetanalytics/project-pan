@@ -501,14 +501,17 @@
     (with-out-str (print-fn error-map))))
 
 (defn- regroup-exp-data
-  "Conver the explain-data map into a list of mini-explain-data maps,
+  "Convert the explain-data map into a list of mini-explain-data maps,
    grouped together by the `:in` key (a simplified version of how
    Expound groups related errors)."
   [{problems ::s/problems :as exp-data-map}]
   (->> problems
        (group-by :in)
-       vals
-       (map (partial assoc exp-data-map ::s/problems))))
+       (reduce-kv (fn [m k v]
+                    (->> v
+                         (assoc exp-data-map ::s/problems)
+                         (assoc m k)))
+                  {})))
 
 (defn- kw->header
   [k]
@@ -519,25 +522,32 @@
          (map cstr/capitalize)
          (cstr/join " "))))
 
-(defn errors->string-vec-map
-  [errors-map]
+(defn errors->type-path-str-m
+  "Return a map of the form {:error-type {:path err-str}}"
+  [spec-errs-map]
   (reduce-kv (fn [m k v]
-               (cond-> m
-                 (some? v)
-                 (assoc k (->> v regroup-exp-data (mapv #(error->str % k))))))
+               (if (some? v)
+                 (->> (regroup-exp-data v)
+                      (reduce-kv (fn [m' k' v']
+                                   (assoc m' k' (error->str v' k)))
+                                 {})
+                      (assoc m k))
+                 m))
              {}
-             errors-map))
+             spec-errs-map))
 
-(defn errors->string-map
-  [errors-map]
+(defn errors->type-str-m
+  "Return a map of the form `{:error-type err-str}"
+  [spec-errs-map]
   (reduce-kv (fn [m k v]
                (cond-> m
                  (some? v)
                  (assoc k (-> v (error->str k)))))
              {}
-             errors-map))
+             spec-errs-map))
 
 (defn errors->string
+  "Return an error string."
   [errors-map]
   (reduce-kv (fn [s k v]
                (cond-> s

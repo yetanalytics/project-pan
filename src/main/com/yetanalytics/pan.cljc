@@ -91,7 +91,7 @@
                    contexts?      false
                    extra-profiles []
                    extra-contexts {}
-                   result         :explain-data-map}}]
+                   result         :spec-error-data}}]
   (let [errors     (if (not-empty extra-profiles)
                      (cond-> {}
                        syntax?    (merge (find-syntax-errors profile))
@@ -105,12 +105,12 @@
                        contexts?  (merge (find-context-errors profile extra-contexts))))
         errors?    (not (every? nil? (vals errors)))]
     (case result
-      :explain-data-map
+      :spec-error-data
       (when errors? errors)
-      :string-vec-map
-      (cond-> errors errors? errors/errors->string-vec-map)
-      :string-map
-      (cond-> errors errors? errors/errors->string-map)
+      :type-path-string
+      (cond-> errors errors? errors/errors->type-path-str-m)
+      :type-string
+      (cond-> errors errors? errors/errors->type-str-m)
       :string
       (cond-> errors errors? errors/errors->string)
       :print
@@ -138,7 +138,7 @@
                         contexts?      false
                         extra-profiles []
                         extra-contexts {}
-                        result         :explain-data-map}}]
+                        result         :spec-error-data}}]
   (let [profiles-set (set profile-coll)
         profile-errs (map (fn [profile]
                             (let [extra-profiles*
@@ -153,19 +153,19 @@
                                :contexts?      contexts?
                                :extra-profiles extra-profiles*
                                :extra-contexts extra-contexts
-                               :result         :explain-data-map)))
+                               :result         :spec-error-data)))
                           profile-coll)
         errors?      (not (every? (fn [perr] (every? nil? (vals perr)))
                                   profile-errs))]
     (case result
-      :explain-data-map
+      :spec-error-data
       (when errors? (vec profile-errs))
-      :string-vec-map
+      :type-path-string
       (cond->> profile-errs
-        errors? (mapv (comp not-empty errors/errors->string-vec-map)))
-      :string-map
+        errors? (mapv (comp not-empty errors/errors->type-path-str-m)))
+      :type-string
       (cond->> profile-errs
-        errors? (mapv (comp not-empty errors/errors->string-map)))
+        errors? (mapv (comp not-empty errors/errors->type-str-m)))
       :string
       (cond->> profile-errs
         errors? (mapv (comp not-empty errors/errors->string)))

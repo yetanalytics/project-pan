@@ -230,17 +230,18 @@
                e/errors->string)))))
 
 (deftest error-data-structures
-  (testing "error string list map"
-    (is (= {:syntax-errors fix/err-msg-1-list}
-           (e/errors->string-vec-map {:syntax-errors (p/validate bad-profile-1b)})))
+  (testing "path-type-string map"
+    (is (= {:syntax-errors {[:id]   fix/err-msg-1a
+                            [:type] fix/err-msg-1b}}
+           (e/errors->type-path-str-m {:syntax-errors (p/validate bad-profile-1b)})))
     (is (= {}
-           (e/errors->string-vec-map nil))))
-  (testing "error string map"
+           (e/errors->type-path-str-m nil))))
+  (testing "type-string map"
     (is (= {:syntax-errors
             (cstr/replace fix/err-msg-1 #"\s\*+ Syntax Errors \*+\s*" "")}
-           (e/errors->string-map {:syntax-errors (p/validate bad-profile-1b)})))
+           (e/errors->type-str-m {:syntax-errors (p/validate bad-profile-1b)})))
     (is (= {}
-           (e/errors->string-map nil))))
+           (e/errors->type-str-m nil))))
   (testing "error string"
     (is (= fix/err-msg-1
            (e/errors->string {:syntax-errors (p/validate bad-profile-1b)})))

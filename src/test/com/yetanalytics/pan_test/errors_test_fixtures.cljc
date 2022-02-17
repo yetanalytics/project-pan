@@ -62,8 +62,8 @@ should be: \"Profile\"
 Detected 2 errors
 ")
 
-(def err-msg-1-list
-  ["-- Spec failed --------------------
+(def err-msg-1a
+  "-- Spec failed --------------------
 
 Value:
 \"not an id\"
@@ -91,8 +91,10 @@ should be a valid IRI
 
 -------------------------
 Detected 1 error
-"
-   "-- Spec failed --------------------
+")
+
+(def err-msg-1b
+  "-- Spec failed --------------------
 
 Value:
 \"FooBar\"
@@ -120,7 +122,7 @@ should be: \"Profile\"
 
 -------------------------
 Detected 1 error
-"])
+")
 
 ;; Concept error
 
