@@ -28,6 +28,8 @@ Other keyword arguments include:
 
 The `get-external-iris` function is provided in the API in order to retrieve IRI values that refer to external objects, JSON-LD contexts, etc. (i.e. objects that do _not_ exist in the Profile). This allows the user to more easily retrieve external Profiles and contexts in their application from the Internet or their data store.
 
+The `json-profile->edn` function is provided in the API to provide for convenient coercion of JSON profile strings into an EDN format that Pan recognizes.
+
 Besides validating whole Profiles, you can also use library methods and specs to validate parts of Profiles, such as individual  Concepts, Templates and Patterns).
 
 ## TODO
