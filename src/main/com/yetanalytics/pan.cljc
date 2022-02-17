@@ -3,9 +3,17 @@
             [com.yetanalytics.pan.objects.concept :as concept]
             [com.yetanalytics.pan.objects.template :as template]
             [com.yetanalytics.pan.objects.pattern :as pattern]
+            [com.yetanalytics.pan.utils.json :as json]
             [com.yetanalytics.pan.identifiers :as id]
             [com.yetanalytics.pan.context :as context]
             [com.yetanalytics.pan.errors :as errors]))
+
+(defn json-profile->edn
+  "Convert an JSON string xAPI Profile into an EDN data structure,
+   where all keys are keywordized (and `@`s, e.g. in `@context`, are
+   converted into `_`)."
+  [json-profile]
+  (json/convert-json json-profile))
 
 (defn get-external-iris
   "Return a map of keys to sets of IRIs, where the IRIs reference
