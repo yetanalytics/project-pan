@@ -33,8 +33,8 @@
 
 (defmacro read-json-resource
   "Read a file from \"resources/\" during compilation. Returns JSON.
-   Optional at-replacement arg is what replaces the \"@\" symbol during JSON
-   parsing. Removes spaces in keywords."
+   Optional at-replacement arg is what replaces the `@` symbol during JSON
+   parsing (`_` by default). Removes spaces in keywords."
   ([path]
    (assert-extension path "json")
    (-> path resource slurp json/convert-json))

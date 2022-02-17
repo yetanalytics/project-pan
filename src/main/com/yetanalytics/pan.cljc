@@ -84,8 +84,7 @@
    - `:type-path-string` Return a `{:err-type {:err-path err-string}}` map.
    - `:type-string`      Return a `{:err-type err-string}` map.
    - `:string`           Return the Expound-generated error string.
-   - `:print`            Print the error string to standard output.
-   "
+   - `:print`            Print the error string to standard output."
   [profile & {:keys [syntax?
                      ids?
                      relations?
