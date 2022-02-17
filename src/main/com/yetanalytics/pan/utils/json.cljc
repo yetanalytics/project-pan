@@ -33,9 +33,9 @@
 
 (defn convert-json
   "Convert a JSON string into an EDN data structure.
-   Optional `at-replacement` arg is the string that should replace the \"@\"
-   character (the empty string by default). Removes spaces in keywords."
-  ([json-str] (convert-json json-str ""))
+   Optional `at-replacement` arg is the string that should replace the `@`
+   character (`_` by default). Removes spaces in keywords."
+  ([json-str] (convert-json json-str "_"))
   ([json-str at-replacement]
    #?(:clj (convert-json-java json-str at-replacement)
       :cljs (convert-json-js json-str at-replacement))))

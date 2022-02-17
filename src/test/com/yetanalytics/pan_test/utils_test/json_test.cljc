@@ -9,4 +9,6 @@
     (is (= {:foo 1 :bar {:baz 2}}
            (json/convert-json "{\"@foo\" : 1, \"@bar\" : {\"@baz\" : 2}}" "")))
     (is (= {:_foo 1 :_bar {:_baz 2}}
-           (json/convert-json "{\"@foo\" : 1, \"@bar\" : {\"@baz\" : 2}}" "_")))))
+           (json/convert-json "{\"@foo\" : 1, \"@bar\" : {\"@baz\" : 2}}" "_")))
+    (is (= {:_foo 1 :_bar {:_baz 2}}
+           (json/convert-json "{\"@foo\" : 1, \"@bar\" : {\"@baz\" : 2}}")))))
