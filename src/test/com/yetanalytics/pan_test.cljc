@@ -16,26 +16,26 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (def will-profile-raw
-  (read-json-resource "sample_profiles/catch.json" "_"))
+  (read-json-resource "sample_profiles/catch.json"))
 (def cmi-profile-raw
-  (read-json-resource "sample_profiles/cmi5.json" "_"))
+  (read-json-resource "sample_profiles/cmi5.json"))
 (def acrossx-profile-raw
-  (read-json-resource "sample_profiles/acrossx.json" "_"))
+  (read-json-resource "sample_profiles/acrossx.json"))
 (def activity-stream-profile-raw
-  (read-json-resource "sample_profiles/activity_stream.json" "_"))
+  (read-json-resource "sample_profiles/activity_stream.json"))
 (def tincan-profile-raw
-  (read-json-resource "sample_profiles/tincan.json" "_"))
+  (read-json-resource "sample_profiles/tincan.json"))
 (def video-profile-raw
-  (read-json-resource "sample_profiles/video.json" "_"))
+  (read-json-resource "sample_profiles/video.json"))
 (def mom-profile-raw
-  (read-json-resource "sample_profiles/mom.json" "_"))
+  (read-json-resource "sample_profiles/mom.json"))
 (def scorm-profile-raw
-  (read-json-resource "sample_profiles/scorm.json" "_"))
+  (read-json-resource "sample_profiles/scorm.json"))
 
 (def will-profile-fix
-  (read-json-resource "sample_profiles/catch-fixed.json" "_"))
+  (read-json-resource "sample_profiles/catch-fixed.json"))
 (def cmi-profile-fix
-  (read-json-resource "sample_profiles/cmi5-fixed.json" "_"))
+  (read-json-resource "sample_profiles/cmi5-fixed.json"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Profile error tests
