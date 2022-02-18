@@ -61,55 +61,69 @@
   "Validate `profile` from the top down, printing or returning errors
    on completion. Supports multiple levels of validation based on the
    following keyword arguments:
-   - `:print-errs?`    Print errors if `true`; return spec error data
-                         only if `false`. Default `true`.
    - `:syntax?`        Basic syntax validation only. Default `true`.
-   - `:ids?`           Validate object and versioning IDs. Default
-                         `false`.
+   - `:ids?`           Validate object and versioning IDs. Default `false`.
    - `:relations?`     Validate IRI-given relations between Concepts,
-                         Statement Templates and Patterns. Default
-                         `false`.
+                       Statement Templates and Patterns. Default
+                       `false`.
    - `:contexts?`      Validate \"@context\" values and that Profile keys
-                         expand to absolute IRIs using RDF contexts. Default
-                         `false.`
+                       expand to absolute IRIs using RDF contexts. Default
+                       `false.`
+
+   Also supports multiple resources with the following:
    - `:extra-profiles` Extra profiles from which Concepts, Templates, and
                          Patterns can be referenced from. Default `[]`.
    - `:extra-contexts` Extra \"@context\" values (other than the xAPI Profile
                          and Activity contexts) that \"@context\" IRIs in
                          `profile` can reference during context validation.
-                         Default `{}`."
+                         Default `{}`.
+   
+   The `:result` keyword argument affects the return data, and can take one
+   of the following values:
+   - `:spec-error-data`  Return a `{:error-type spec-error-data}` map.
+   - `:type-path-string` Return a `{:err-type {:err-path err-string}}` map.
+   - `:type-string`      Return a `{:err-type err-string}` map.
+   - `:string`           Return the Expound-generated error string.
+   - `:print`            Print the error string to standard output."
   [profile & {:keys [syntax?
                      ids?
                      relations?
                      contexts?
-                     print-errs?
                      extra-profiles
-                     extra-contexts]
+                     extra-contexts
+                     result]
               :or {syntax?        true
                    ids?           false
                    relations?     false
                    contexts?      false
-                   print-errs?    true
                    extra-profiles []
-                   extra-contexts {}}}]
-  (let [errors   (if (not-empty extra-profiles)
-                   (cond-> {}
-                     syntax?    (merge (find-syntax-errors profile))
-                     ids?       (merge (find-id-errors profile extra-profiles))
-                     relations? (merge (find-graph-errors profile extra-profiles))
-                     contexts?  (merge (find-context-errors profile extra-contexts)))
-                   (cond-> {}
-                     syntax?    (merge (find-syntax-errors profile))
-                     ids?       (merge (find-id-errors profile))
-                     relations? (merge (find-graph-errors profile))
-                     contexts?  (merge (find-context-errors profile extra-contexts))))
-        no-errs? (every? nil? (vals errors))]
-    (if print-errs?
-      (if no-errs?
-        (println "Success!") ; Exactly like `spec/explain`
-        (errors/expound-errors errors))
-      (when-not no-errs?
-        errors))))
+                   extra-contexts {}
+                   result         :spec-error-data}}]
+  (let [errors  (if (not-empty extra-profiles)
+                  (cond-> {}
+                    syntax?    (merge (find-syntax-errors profile))
+                    ids?       (merge (find-id-errors profile extra-profiles))
+                    relations? (merge (find-graph-errors profile extra-profiles))
+                    contexts?  (merge (find-context-errors profile extra-contexts)))
+                  (cond-> {}
+                    syntax?    (merge (find-syntax-errors profile))
+                    ids?       (merge (find-id-errors profile))
+                    relations? (merge (find-graph-errors profile))
+                    contexts?  (merge (find-context-errors profile extra-contexts))))
+        errors? (not (every? nil? (vals errors)))]
+    (case result
+      :spec-error-data
+      (when errors? errors)
+      :type-path-string
+      (cond-> errors errors? errors/errors->type-path-str-m)
+      :type-string
+      (cond-> errors errors? errors/errors->type-str-m)
+      :string
+      (cond-> errors errors? errors/errors->string)
+      :print
+      (if-not errors?
+        (println "Success!")
+        (println (errors/errors->string errors))))))
 
 (defn validate-profile-coll
   "Like `validate-profile`, but takes a `profile-coll` instead of a
@@ -117,21 +131,22 @@
    (as well as those in `:extra-profiles`) and must not share object
    IDs with those in other Profiles. During context validation, all
    Profiles reference the global `:extra-contexts` map. Keyword
-   arguments are the same as in `validate-profile`."
+   arguments are the same as in `validate-profile`, though the error
+   result (except for `:print`) are now all vectors."
   [profile-coll & {:keys [syntax?
                           ids?
                           relations?
                           contexts?
-                          print-errs?
                           extra-profiles
-                          extra-contexts]
+                          extra-contexts
+                          result]
                    :or {syntax?        true
                         ids?           false
                         relations?     false
                         contexts?      false
-                        print-errs?    true
                         extra-profiles []
-                        extra-contexts {}}}]
+                        extra-contexts {}
+                        result         :spec-error-data}}]
   (let [profiles-set (set profile-coll)
         profile-errs (map (fn [profile]
                             (let [extra-profiles*
@@ -146,13 +161,23 @@
                                :contexts?      contexts?
                                :extra-profiles extra-profiles*
                                :extra-contexts extra-contexts
-                               :print-errs?    false)))
+                               :result         :spec-error-data)))
                           profile-coll)
-        no-errs?     (every? (fn [perr] (every? nil? (vals perr)))
-                             profile-errs)]
-    (if print-errs?
-      (if no-errs?
+        errors?      (not (every? (fn [perr] (every? nil? (vals perr)))
+                                  profile-errs))]
+    (case result
+      :spec-error-data
+      (when errors? (vec profile-errs))
+      :type-path-string
+      (cond->> profile-errs
+        errors? (mapv (comp not-empty errors/errors->type-path-str-m)))
+      :type-string
+      (cond->> profile-errs
+        errors? (mapv (comp not-empty errors/errors->type-str-m)))
+      :string
+      (cond->> profile-errs
+        errors? (mapv (comp not-empty errors/errors->string)))
+      :print
+      (if-not errors?
         (println "Success!")
-        (map errors/expound-errors profile-errs))
-      (when-not no-errs?
-        profile-errs))))
+        (dorun (map (comp println errors/errors->string) profile-errs))))))

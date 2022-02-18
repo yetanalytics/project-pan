@@ -1,5 +1,6 @@
 (ns com.yetanalytics.pan-test.errors-test
   (:require [clojure.test :refer [deftest testing is are]]
+            [clojure.string :as cstr]
             [com.yetanalytics.pan.context :as ctx]
             [com.yetanalytics.pan.errors :as e]
             [com.yetanalytics.pan.objects.profile :as p]
@@ -184,7 +185,7 @@
 (deftest expound-test
   (testing "error messages"
     (are [expected-str err-map] (= expected-str
-                                   (with-out-str (e/expound-errors err-map)))
+                                   (with-out-str (e/print-errors err-map)))
       fix/err-msg-1 {:syntax-errors (p/validate bad-profile-1b)}
       fix/err-msg-2 {:syntax-errors (p/validate bad-profile-2a)}
       fix/err-msg-3 {:syntax-errors (p/validate bad-profile-2b)}
@@ -214,8 +215,7 @@
     (is (= (str fix/err-msg-4 fix/err-msg-5)
            (-> {:id-errors (id/validate-ids bad-profile-2c)
                 :in-scheme-errors (id/validate-in-schemes bad-profile-2d)}
-               e/expound-errors
-               with-out-str)))
+               e/errors->string)))
     (is (= (str fix/err-msg-7 fix/err-msg-9 fix/err-msg-8)
            (-> {:concept-edge-errors nil
                 :template-edge-errors
@@ -227,5 +227,23 @@
                 :pattern-cycle-errors
                 (pt/validate-pattern-tree
                  (pt/create-graph bad-profile-2g))}
-               e/expound-errors
-               with-out-str)))))
+               e/errors->string)))))
+
+(deftest error-data-structures
+  (testing "path-type-string map"
+    (is (= {:syntax-errors {[:id]   fix/err-msg-1a
+                            [:type] fix/err-msg-1b}}
+           (e/errors->type-path-str-m {:syntax-errors (p/validate bad-profile-1b)})))
+    (is (= {}
+           (e/errors->type-path-str-m nil))))
+  (testing "type-string map"
+    (is (= {:syntax-errors
+            (cstr/replace fix/err-msg-1 #"\s\*+ Syntax Errors \*+\s*" "")}
+           (e/errors->type-str-m {:syntax-errors (p/validate bad-profile-1b)})))
+    (is (= {}
+           (e/errors->type-str-m nil))))
+  (testing "error string"
+    (is (= fix/err-msg-1
+           (e/errors->string {:syntax-errors (p/validate bad-profile-1b)})))
+    (is (= ""
+           (e/errors->string nil)))))
