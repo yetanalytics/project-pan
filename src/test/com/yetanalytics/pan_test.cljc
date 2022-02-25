@@ -6,9 +6,11 @@
             [com.yetanalytics.pan.errors          :as e]
             [com.yetanalytics.pan-test-fixtures   :as fix])
   #?(:clj (:require [com.yetanalytics.pan.utils.resources
-                     :refer [read-json-resource]])
+                     :refer [read-resource
+                             read-json-resource]])
      :cljs (:require-macros [com.yetanalytics.pan.utils.resources
-                             :refer [read-json-resource]])))
+                             :refer [read-resource
+                                     read-json-resource]])))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Profiles to test
@@ -35,6 +37,18 @@
   (read-json-resource "sample_profiles/catch-fixed.json"))
 (def cmi-profile-fix
   (read-json-resource "sample_profiles/cmi5-fixed.json"))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; JSON parse tests
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(def will-profile-json-str
+  (read-resource "sample_profiles/catch.json"))
+
+(deftest json-parse-test
+  (testing "json-profile->edn function"
+    (is (= will-profile-raw
+           (p/json-profile->edn will-profile-json-str)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Profile error tests

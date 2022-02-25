@@ -32,7 +32,7 @@
   (-> path resource slurp edn/read-string))
 
 (defmacro read-json-resource
-  "Read a file from \"resources/\" during compilation. Returns JSON.
+  "Read a file from \"resources/\" during compilation. Returns EDN.
    Optional at-replacement arg is what replaces the `@` symbol during JSON
    parsing (`_` by default). Removes spaces in keywords."
   ([path]
