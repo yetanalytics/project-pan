@@ -1,7 +1,7 @@
 # Change Log
 All notable changes to this project will be documented in this file. This change log follows the conventions of [keepachangelog.com](http://keepachangelog.com/).
 
-## 0.4.0 - 2022-02-225
+## 0.4.0 - 2022-02-25
 - Add multi-profile support
   - Extra API function `validate-profile-coll` that accepts a collection of Profiles to validate.
   - `:extra-profiles` keyword arg to reference Profiles with external Concepts, Templates, and Patterns.
@@ -10,7 +10,7 @@ All notable changes to this project will be documented in this file. This change
 - Overhaul internal logic for identifier, graph and context validation.
 - Rename various internal namespaces.
 
-See Pull Requests #23, #24, #25, #26, and #27 for more details.
+See [Pull Requests #23 to #27](https://github.com/yetanalytics/project-pan/pulls?q=is%3Apr+is%3Aclosed) for more details.
 
 ## 0.3.0 - 2021-04-07
 - Upgrade to latest Expound version and clean up internal error logic.
