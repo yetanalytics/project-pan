@@ -3,7 +3,7 @@
             [clojure.string :as string]
             [xapi-schema.spec :as xs]
             [xapi-schema.spec.regex :as xsr]
-            [com.yetanalytics.pan.utils.json-schema :as jsn-schema]
+            [com.yetanalytics.pan.json-schema :as jsn-schema]
             #?(:clj [clojure.data.json :as json]))
   #?(:clj (:require
            [com.yetanalytics.pan.utils.resources :refer [read-edn-resource]])

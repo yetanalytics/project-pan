@@ -1,4 +1,4 @@
-(ns com.yetanalytics.pan.utils.json-schema
+(ns com.yetanalytics.pan.json-schema
   (:require [clojure.spec.alpha :as s]
             [xapi-schema.spec.regex :as xsr]))
 
