@@ -1,4 +1,4 @@
-(ns com.yetanalytics.pan.objects.concepts.document-resources.state
+(ns com.yetanalytics.pan.objects.concepts.resources.state
   (:require [clojure.spec.alpha :as s]
             [com.yetanalytics.pan.axioms :as ax]
             [com.yetanalytics.pan.graph :as graph]
