@@ -1,6 +1,6 @@
 (ns com.yetanalytics.pan.context
-  (:require [clojure.spec.alpha :as s]
-            [clojure.string     :as cstr]
+  (:require [clojure.spec.alpha          :as s]
+            [clojure.string              :as cstr]
             [com.yetanalytics.pan.axioms :as ax])
   #?(:clj (:require [com.yetanalytics.pan.utils.resources
                      :refer [read-json-resource]])

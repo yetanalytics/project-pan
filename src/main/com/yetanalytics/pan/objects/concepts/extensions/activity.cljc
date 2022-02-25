@@ -1,8 +1,8 @@
 (ns com.yetanalytics.pan.objects.concepts.extensions.activity
-  (:require [clojure.spec.alpha :as s]
-            [com.yetanalytics.pan.axioms :as ax]
-            [com.yetanalytics.pan.graph :as graph]
-            [com.yetanalytics.pan.utils.spec :as util]))
+  (:require [clojure.spec.alpha                         :as s]
+            [com.yetanalytics.pan.axioms                :as ax]
+            [com.yetanalytics.pan.graph                 :as graph]
+            [com.yetanalytics.pan.objects.concepts.util :as cu]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Activity Extensions
@@ -31,7 +31,7 @@
 
 (s/def ::extension
   (s/and ::extension-keys
-         ::util/inline-or-iri
+         ::cu/inline-or-iri
          ::no-recommended-verbs))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

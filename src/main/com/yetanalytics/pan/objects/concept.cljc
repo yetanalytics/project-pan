@@ -3,16 +3,16 @@
    [clojure.spec.alpha               :as s]
    [com.yetanalytics.pan.graph       :as graph]
    [com.yetanalytics.pan.identifiers :as ids]
-   [com.yetanalytics.pan.objects.concepts.verbs          :as v]
-   [com.yetanalytics.pan.objects.concepts.activities     :as a]
-   [com.yetanalytics.pan.objects.concepts.activity-types :as at]
-   [com.yetanalytics.pan.objects.concepts.attachment-usage-types :as a-ut]
-   [com.yetanalytics.pan.objects.concepts.extensions.result      :as re]
-   [com.yetanalytics.pan.objects.concepts.extensions.context     :as ce]
-   [com.yetanalytics.pan.objects.concepts.extensions.activity    :as ae]
-   [com.yetanalytics.pan.objects.concepts.document-resources.state            :as s-pr]
-   [com.yetanalytics.pan.objects.concepts.document-resources.agent-profile    :as ag-pr]
-   [com.yetanalytics.pan.objects.concepts.document-resources.activity-profile :as act-pr]))
+   [com.yetanalytics.pan.objects.concepts.verb                       :as v]
+   [com.yetanalytics.pan.objects.concepts.activity                   :as a]
+   [com.yetanalytics.pan.objects.concepts.activity-type              :as at]
+   [com.yetanalytics.pan.objects.concepts.attachment-usage-type      :as aut]
+   [com.yetanalytics.pan.objects.concepts.extensions.result          :as re]
+   [com.yetanalytics.pan.objects.concepts.extensions.context         :as ce]
+   [com.yetanalytics.pan.objects.concepts.extensions.activity        :as ae]
+   [com.yetanalytics.pan.objects.concepts.resources.state            :as sr]
+   [com.yetanalytics.pan.objects.concepts.resources.agent-profile    :as agr]
+   [com.yetanalytics.pan.objects.concepts.resources.activity-profile :as acr]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Concept Specs
@@ -23,13 +23,13 @@
 (defmethod concept? "Verb" [_] ::v/verb)
 (defmethod concept? "Activity" [_] ::a/activity)
 (defmethod concept? "ActivityType" [_] ::at/activity-type)
-(defmethod concept? "AttachmentUsageType" [_] ::a-ut/attachment-usage-type)
+(defmethod concept? "AttachmentUsageType" [_] ::aut/attachment-usage-type)
 (defmethod concept? "ActivityExtension" [_] ::ae/extension)
 (defmethod concept? "ContextExtension" [_] ::ce/extension)
 (defmethod concept? "ResultExtension" [_] ::re/extension)
-(defmethod concept? "ActivityProfileResource" [_] ::act-pr/document-resource)
-(defmethod concept? "AgentProfileResource" [_] ::ag-pr/document-resource)
-(defmethod concept? "StateResource" [_] ::s-pr/document-resource)
+(defmethod concept? "ActivityProfileResource" [_] ::acr/document-resource)
+(defmethod concept? "AgentProfileResource" [_] ::agr/document-resource)
+(defmethod concept? "StateResource" [_] ::sr/document-resource)
 (defmethod concept? :default [_] (constantly false))
 
 (s/def ::concept (s/multi-spec concept? :type))

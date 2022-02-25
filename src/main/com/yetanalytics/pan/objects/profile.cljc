@@ -1,11 +1,11 @@
 (ns com.yetanalytics.pan.objects.profile
-  (:require [clojure.spec.alpha :as s]
+  (:require [clojure.spec.alpha          :as s]
             [com.yetanalytics.pan.axioms :as ax]
-            [com.yetanalytics.pan.objects.profiles.versions :as versions]
-            [com.yetanalytics.pan.objects.profiles.author :as author]
-            [com.yetanalytics.pan.objects.concept :as concept]
-            [com.yetanalytics.pan.objects.template :as template]
-            [com.yetanalytics.pan.objects.pattern :as pattern]))
+            [com.yetanalytics.pan.objects.profiles.version :as versions]
+            [com.yetanalytics.pan.objects.profiles.author  :as author]
+            [com.yetanalytics.pan.objects.concept          :as concept]
+            [com.yetanalytics.pan.objects.template         :as template]
+            [com.yetanalytics.pan.objects.pattern          :as pattern]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Profile metadata

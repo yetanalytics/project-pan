@@ -1,11 +1,11 @@
 (ns com.yetanalytics.pan
-  (:require [com.yetanalytics.pan.objects.profile :as profile]
-            [com.yetanalytics.pan.objects.concept :as concept]
+  (:require [com.yetanalytics.pan.objects.profile  :as profile]
+            [com.yetanalytics.pan.objects.concept  :as concept]
             [com.yetanalytics.pan.objects.template :as template]
-            [com.yetanalytics.pan.objects.pattern :as pattern]
-            [com.yetanalytics.pan.identifiers :as id]
-            [com.yetanalytics.pan.context :as context]
-            [com.yetanalytics.pan.errors :as errors]))
+            [com.yetanalytics.pan.objects.pattern  :as pattern]
+            [com.yetanalytics.pan.identifiers      :as id]
+            [com.yetanalytics.pan.context          :as context]
+            [com.yetanalytics.pan.errors           :as errors]))
 
 (defn get-external-iris
   "Return a map of keys to sets of IRIs, where the IRIs reference

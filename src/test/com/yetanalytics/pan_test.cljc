@@ -1,11 +1,10 @@
 (ns com.yetanalytics.pan-test
   (:require [clojure.test :refer [deftest testing is are]]
-            [clojure.spec.alpha :as s]
-            [com.yetanalytics.pan :as p :refer [validate-profile
-                                                validate-profile-coll]]
+            [clojure.spec.alpha                   :as s]
+            [com.yetanalytics.pan                 :as p]
             [com.yetanalytics.pan.objects.profile :as profile]
-            [com.yetanalytics.pan.errors :as e]
-            [com.yetanalytics.pan-test-fixtures :as fix])
+            [com.yetanalytics.pan.errors          :as e]
+            [com.yetanalytics.pan-test-fixtures   :as fix])
   #?(:clj (:require [com.yetanalytics.pan.utils.resources
                      :refer [read-json-resource]])
      :cljs (:require-macros [com.yetanalytics.pan.utils.resources
@@ -45,14 +44,14 @@
   (are [profile-name profile res]
        (testing (str "the " profile-name ", without printing")
          (let [[correct-syntax? correct-ids? correct-graph? correct-ctxt?] res
-               syntax-errs (validate-profile profile)
-               id-errs     (validate-profile profile
+               syntax-errs (p/validate-profile profile)
+               id-errs     (p/validate-profile profile
                                              :syntax? false
                                              :ids? true)
-               graph-errs  (validate-profile profile
+               graph-errs  (p/validate-profile profile
                                              :syntax? false
                                              :relations? true)
-               ctxt-errs   (validate-profile profile
+               ctxt-errs   (p/validate-profile profile
                                              :syntax? false
                                              :context? true)]
            (if correct-syntax?
@@ -81,26 +80,26 @@
 
 (deftest catch-err-data-test
   (testing "the CATCH profile error data"
-    (is (= 24 (-> (validate-profile will-profile-raw)
+    (is (= 24 (-> (p/validate-profile will-profile-raw)
                   :syntax-errors
                   ::s/problems
                   count)))
     (is (= ::profile/profile
-           (-> (validate-profile will-profile-raw)
+           (-> (p/validate-profile will-profile-raw)
                :syntax-errors
                ::s/spec)))
-    (is (nil? (validate-profile will-profile-raw
+    (is (nil? (p/validate-profile will-profile-raw
                                 :syntax? false
                                 :contexts? true)))))
 
 (deftest cmi5-err-data-test
   (testing "the cmi5 profile error data"
-    (is (= 32 (-> (validate-profile cmi-profile-raw)
+    (is (= 32 (-> (p/validate-profile cmi-profile-raw)
                   :syntax-errors
                   ::s/problems
                   count)))
     (is (= ::profile/profile
-           (-> (validate-profile cmi-profile-raw)
+           (-> (p/validate-profile cmi-profile-raw)
                :syntax-errors
                ::s/spec)))))
 
@@ -128,86 +127,86 @@
 (deftest err-msg-tests
   (testing "syntax error messages"
     (is (= fix/catch-err-msg
-           (expound-to-str (validate-profile will-profile-raw))))
+           (expound-to-str (p/validate-profile will-profile-raw))))
     (is (= fix/acrossx-err-msg
-           (expound-to-str (validate-profile acrossx-profile-raw))))
+           (expound-to-str (p/validate-profile acrossx-profile-raw))))
     (is (= fix/activity-stream-err-msg
-           (expound-to-str (validate-profile activity-stream-profile-raw))))
+           (expound-to-str (p/validate-profile activity-stream-profile-raw))))
     (is (= fix/scorm-err-msg
-           (expound-to-str (validate-profile scorm-profile-raw))))
+           (expound-to-str (p/validate-profile scorm-profile-raw))))
     ;; cljs err msg tables are wider by one column
     #?(:clj (is (= fix/cmi-err-msg
-                   (expound-to-str (validate-profile cmi-profile-raw))))))
+                   (expound-to-str (p/validate-profile cmi-profile-raw))))))
   (testing "id error messages"
     (is (= fix/catch-id-err-msg
-           (expound-to-str (validate-profile will-profile-raw
-                                             :syntax? false
-                                             :ids? true))))
+           (expound-to-str (p/validate-profile will-profile-raw
+                                               :syntax? false
+                                               :ids? true))))
     (is (= fix/cmi-id-err-msg
-           (expound-to-str (validate-profile cmi-profile-raw
-                                             :syntax? false
-                                             :ids? true))))
+           (expound-to-str (p/validate-profile cmi-profile-raw
+                                               :syntax? false
+                                               :ids? true))))
     (is (= fix/activity-stream-id-err-msg
-           (expound-to-str (validate-profile activity-stream-profile-raw
-                                             :syntax? false
-                                             :ids? true)))))
+           (expound-to-str (p/validate-profile activity-stream-profile-raw
+                                               :syntax? false
+                                               :ids? true)))))
   (testing "edge error messages"
     (is (= fix/catch-graph-err-msg
-           (expound-to-str (validate-profile will-profile-raw
-                                             :syntax? false
-                                             :relations? true))))
+           (expound-to-str (p/validate-profile will-profile-raw
+                                               :syntax? false
+                                               :relations? true))))
     (is (= fix/catch-graph-err-msg-2
-           (expound-to-str (validate-profile will-profile-raw
-                                             :syntax? false
-                                             :relations? true
-                                             :extra-profiles [scorm-profile-raw]))))
+           (expound-to-str (p/validate-profile will-profile-raw
+                                               :syntax? false
+                                               :relations? true
+                                               :extra-profiles [scorm-profile-raw]))))
     (is (= fix/catch-graph-err-msg-2
            (-> [will-profile-raw scorm-profile-raw]
-               (validate-profile-coll :syntax? false
-                                      :relations? true)
+               (p/validate-profile-coll :syntax? false
+                                        :relations? true)
                first
                expound-to-str))))
   (testing "string and string vec maps"
     (is (every? map? (-> [will-profile-raw scorm-profile-raw]
-                         (validate-profile-coll :syntax? false
-                                                :relations? true
-                                                :result :type-path-string)
+                         (p/validate-profile-coll :syntax? false
+                                                  :relations? true
+                                                  :result :type-path-string)
                          first
                          vals)))
     (is (every? string? (-> [will-profile-raw scorm-profile-raw]
-                            (validate-profile-coll :syntax? false
-                                                   :relations? true
-                                                   :result :type-string)
+                            (p/validate-profile-coll :syntax? false
+                                                     :relations? true
+                                                     :result :type-string)
                             first
                             vals)))
     (is (string? (-> [will-profile-raw scorm-profile-raw]
-                     (validate-profile-coll :syntax? false
-                                            :relations? true
-                                            :result :string)
+                     (p/validate-profile-coll :syntax? false
+                                              :relations? true
+                                              :result :string)
                      first)))))
 
 (deftest success-msg-test
   (testing "error messages on fixed profiles"
     (is (= "Success!\n"
-           (with-out-str (validate-profile will-profile-fix
-                                           :syntax? true
-                                           :ids? true
-                                           :relations? true
-                                           :context? true
-                                           :result :print))))
+           (with-out-str (p/validate-profile will-profile-fix
+                                             :syntax? true
+                                             :ids? true
+                                             :relations? true
+                                             :context? true
+                                             :result :print))))
     (is (= "Success!\n"
-           (with-out-str (validate-profile cmi-profile-fix
-                                           :syntax? true
-                                           :ids? true
-                                           :context? true
-                                           :result :print))))
+           (with-out-str (p/validate-profile cmi-profile-fix
+                                             :syntax? true
+                                             :ids? true
+                                             :context? true
+                                             :result :print))))
     (is (= "Success!\n"
-           (with-out-str (validate-profile-coll [will-profile-fix
-                                                 cmi-profile-fix]
-                                                :syntax? true
-                                                :ids? true
-                                                :context? true
-                                                :result :print))))))
+           (with-out-str (p/validate-profile-coll [will-profile-fix
+                                                   cmi-profile-fix]
+                                                  :syntax? true
+                                                  :ids? true
+                                                  :context? true
+                                                  :result :print))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; External IRI retrieval tests
