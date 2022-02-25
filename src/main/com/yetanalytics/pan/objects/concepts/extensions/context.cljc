@@ -1,7 +1,7 @@
 (ns com.yetanalytics.pan.objects.concepts.extensions.context
-  (:require [clojure.spec.alpha :as s]
-            [com.yetanalytics.pan.axioms :as ax]
-            [com.yetanalytics.pan.graph :as graph]
+  (:require [clojure.spec.alpha                         :as s]
+            [com.yetanalytics.pan.axioms                :as ax]
+            [com.yetanalytics.pan.graph                 :as graph]
             [com.yetanalytics.pan.objects.concepts.util :as cu]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

@@ -2,14 +2,14 @@
   (:require [clojure.test :refer [deftest is testing]]
             [clojure.spec.alpha :as s]
             [com.yetanalytics.pan.graph :as graph]
-            [com.yetanalytics.test-utils
-             :refer [should-satisfy should-satisfy+ should-not-satisfy]]
-            [com.yetanalytics.pan.objects.concepts.extensions.context
-             :as context-extension]))
+            [com.yetanalytics.pan.objects.concepts.extensions.context :as ce]
+            [com.yetanalytics.test-utils :refer [should-satisfy
+                                                 should-satisfy+
+                                                 should-not-satisfy]]))
 
 (deftest type-test
   (testing "type property"
-    (should-satisfy+ ::context-extension/type
+    (should-satisfy+ ::ce/type
                      "ContextExtension"
                      :bad
                      "ActivityExtension"
@@ -18,7 +18,7 @@
 
 (deftest recommended-verbs-test
   (testing "recommendedVerbs property"
-    (should-satisfy+ ::context-extension/recommendedVerbs
+    (should-satisfy+ ::ce/recommendedVerbs
                      ["https://w3id.org/xapi/catch/contexttypes/lesson-plan"]
                      :bad
                      []
@@ -35,23 +35,23 @@
 
 (deftest context-test
   (testing "context property"
-    (should-satisfy ::context-extension/context
+    (should-satisfy ::ce/context
                     "https://w3id.org/xapi/some-context")))
 
 (deftest schema-test
   (testing "(JSON) schema property"
     ; Example taken from the SCORM profile
-    (should-satisfy ::context-extension/schema
+    (should-satisfy ::ce/schema
                     "https://w3id.org/xapi/scorm/activity-state/scorm.profile.activity.state.schema")
-    (should-not-satisfy ::context-extension/schema "what the pineapple")))
+    (should-not-satisfy ::ce/schema "what the pineapple")))
 
 (deftest inline-schema-test
   (testing "inline (JSON) schema property"
-    (should-satisfy ::context-extension/inlineSchema
+    (should-satisfy ::ce/inlineSchema
                     "{\"type\":\"array\",
                       \"items\":{\"type\":\"string\"},
                       \"uniqueItems\":true}")
-    (should-satisfy ::context-extension/inlineSchema
+    (should-satisfy ::ce/inlineSchema
                     "{\"type\":\"object\",
                       \"properties\":{
                         \"application\":{\"type\":\"string\"},
@@ -72,11 +72,11 @@
                              \"type\":\"string\",
                              \"uniqueItems\":true}},
                           \"linguistic-cognitive-scaffolds\":{\"type\":\"string\"}}}")
-    (should-not-satisfy ::context-extension/inlineSchema "what the pineapple")))
+    (should-not-satisfy ::ce/inlineSchema "what the pineapple")))
 
 (deftest context-extension-test
   (testing "ContextExtension extension"
-    (is (s/valid? ::context-extension/extension
+    (is (s/valid? ::ce/extension
                   {:id "https://w3id.org/xapi/catch/context-extensions/communication-with-families-criteria"
                    :type "ContextExtension"
                    :inScheme "https://w3id.org/xapi/catch/v1"
@@ -90,7 +90,7 @@
                    :inlineSchema
                    "{\"type\":\"array\",\"items\":{\"type\":\"string\"},\"uniqueItems\":true}"}))
     ;; Cannot both have schema and inlineSchema
-    (is (not (s/valid? ::context-extension/extension
+    (is (not (s/valid? ::ce/extension
                        {:id "https://foo.org/bar"
                         :type "ContextExtension"
                         :inScheme "https://foo.org/"
@@ -99,7 +99,7 @@
                         :schema "https://some.schema"
                         :inlineSchema "{\"some\" : \"schema\"}"})))
     ;; Cannot have recommended activity types
-    (is (not (s/valid? ::context-extension/extension
+    (is (not (s/valid? ::ce/extension
                        {:id "https://foo.org/bar"
                         :type "ContextExtension"
                         :inScheme "https://foo.org/"

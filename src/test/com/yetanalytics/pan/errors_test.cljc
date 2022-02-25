@@ -1,12 +1,12 @@
 (ns com.yetanalytics.pan.errors-test
   (:require [clojure.test :refer [deftest testing is are]]
-            [clojure.string :as cstr]
+            [clojure.string               :as cstr]
             [com.yetanalytics.pan.context :as ctx]
-            [com.yetanalytics.pan.errors :as e]
-            [com.yetanalytics.pan.objects.profile :as p]
-            [com.yetanalytics.pan.objects.template :as t]
-            [com.yetanalytics.pan.objects.pattern :as pt]
-            [com.yetanalytics.pan.identifiers :as id]
+            [com.yetanalytics.pan.errors  :as e]
+            [com.yetanalytics.pan.objects.profile      :as p]
+            [com.yetanalytics.pan.objects.template     :as t]
+            [com.yetanalytics.pan.objects.pattern      :as pt]
+            [com.yetanalytics.pan.identifiers          :as id]
             [com.yetanalytics.pan.errors-test-fixtures :as fix]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

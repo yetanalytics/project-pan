@@ -1,9 +1,9 @@
 (ns com.yetanalytics.pan.objects.templates.rule-test
   (:require [clojure.test :refer [deftest is testing]]
             [clojure.spec.alpha :as s]
-            [com.yetanalytics.test-utils
-             :refer [should-satisfy should-satisfy+]]
-            [com.yetanalytics.pan.objects.templates.rule :as r]))
+            [com.yetanalytics.pan.objects.templates.rule :as r]
+            [com.yetanalytics.test-utils :refer [should-satisfy
+                                                 should-satisfy+]]))
 
 (deftest location-test
   (testing "location property"

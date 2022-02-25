@@ -1,6 +1,6 @@
 (ns com.yetanalytics.pan.axioms-test
   (:require [clojure.test :refer [deftest is testing]]
-            [clojure.spec.alpha :as s]
+            [clojure.spec.alpha          :as s]
             [com.yetanalytics.pan.axioms :as ax]
             [com.yetanalytics.test-utils :refer [should-satisfy+]]))
 

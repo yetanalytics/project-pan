@@ -3,22 +3,22 @@
                :cljs [goog.string :as gstring]
                [goog.string.format :as format])
             [clojure.spec.alpha :as s]
-            [clojure.pprint :as pprint]
-            [clojure.string :as cstr]
-            [expound.alpha :as exp]
-            [com.yetanalytics.pan.axioms :as ax]
-            [com.yetanalytics.pan.context :as ctx]
+            [clojure.pprint     :as pprint]
+            [clojure.string     :as cstr]
+            [expound.alpha      :as exp]
+            [com.yetanalytics.pan.axioms      :as ax]
+            [com.yetanalytics.pan.context     :as ctx]
             [com.yetanalytics.pan.identifiers :as id]
             [com.yetanalytics.pan.graph :as graph]
-            [com.yetanalytics.pan.objects.concept :as c]
-            [com.yetanalytics.pan.objects.template :as t]
-            [com.yetanalytics.pan.objects.pattern :as p]
-            [com.yetanalytics.pan.objects.concepts.util :as cu]
+            [com.yetanalytics.pan.objects.concept                      :as c]
+            [com.yetanalytics.pan.objects.concepts.util                :as cu]
             [com.yetanalytics.pan.objects.concepts.extensions.activity :as ae]
-            [com.yetanalytics.pan.objects.concepts.extensions.context :as ce]
-            [com.yetanalytics.pan.objects.concepts.extensions.result :as re]
-            [com.yetanalytics.pan.objects.concepts.activity :as act]
-            [com.yetanalytics.pan.objects.templates.rule :as r]))
+            [com.yetanalytics.pan.objects.concepts.extensions.context  :as ce]
+            [com.yetanalytics.pan.objects.concepts.extensions.result   :as re]
+            [com.yetanalytics.pan.objects.concepts.activity            :as act]
+            [com.yetanalytics.pan.objects.template                     :as t]
+            [com.yetanalytics.pan.objects.templates.rule               :as r]
+            [com.yetanalytics.pan.objects.pattern                      :as p]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Spec messages

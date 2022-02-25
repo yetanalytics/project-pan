@@ -1,5 +1,5 @@
 (ns com.yetanalytics.pan.json-schema
-  (:require [clojure.spec.alpha :as s]
+  (:require [clojure.spec.alpha     :as s]
             [xapi-schema.spec.regex :as xsr]))
 
 ;; Based on the draft 7 meta-schema.

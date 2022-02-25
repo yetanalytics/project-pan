@@ -2,14 +2,14 @@
   (:require [clojure.test :refer [deftest is testing]]
             [clojure.spec.alpha :as s]
             [com.yetanalytics.pan.graph :as graph]
-            [com.yetanalytics.test-utils
-             :refer [should-satisfy should-satisfy+ should-not-satisfy]]
-            [com.yetanalytics.pan.objects.concepts.extensions.activity
-             :as activity-extension]))
+            [com.yetanalytics.pan.objects.concepts.extensions.activity :as ae]
+            [com.yetanalytics.test-utils :refer [should-satisfy
+                                                 should-satisfy+
+                                                 should-not-satisfy]]))
 
 (deftest type-test
   (testing "type property"
-    (should-satisfy+ ::activity-extension/type
+    (should-satisfy+ ::ae/type
                      "ActivityExtension"
                      :bad
                      "ContextExtension"
@@ -18,7 +18,7 @@
 
 (deftest recommended-activity-types-test
   (testing "recommendedActivityTypes property"
-    (should-satisfy+ ::activity-extension/recommendedActivityTypes
+    (should-satisfy+ ::ae/recommendedActivityTypes
                      ["https://w3id.org/xapi/catch/activitytypes/lesson-plan"]
                      :bad
                      []
@@ -35,23 +35,23 @@
 
 (deftest context-test
   (testing "context property"
-    (should-satisfy ::activity-extension/context
+    (should-satisfy ::ae/context
                     "https://w3id.org/xapi/some-context")))
 
 (deftest schema-test
   (testing "(JSON) schema property"
     ; Example taken from the SCORM profile
-    (should-satisfy ::activity-extension/schema
+    (should-satisfy ::ae/schema
                     "https://w3id.org/xapi/scorm/activity-state/scorm.profile.activity.state.schema")
-    (should-not-satisfy ::activity-extension/schema "what the pineapple")))
+    (should-not-satisfy ::ae/schema "what the pineapple")))
 
 (deftest inline-schema-test
   (testing "inline (JSON) schema property"
-    (should-satisfy ::activity-extension/inlineSchema
+    (should-satisfy ::ae/inlineSchema
                     "{\"type\":\"array\",
                       \"items\":{\"type\":\"string\"},
                       \"uniqueItems\":true}")
-    (should-satisfy ::activity-extension/inlineSchema
+    (should-satisfy ::ae/inlineSchema
                     "{\"type\":\"object\",
                       \"properties\":{
                         \"application\":{\"type\":\"string\"},
@@ -72,11 +72,11 @@
                              \"type\":\"string\",
                              \"uniqueItems\":true}},
                           \"linguistic-cognitive-scaffolds\":{\"type\":\"string\"}}}")
-    (should-not-satisfy ::activity-extension/inlineSchema "what the pineapple")))
+    (should-not-satisfy ::ae/inlineSchema "what the pineapple")))
 
 (deftest activity-extension-test
   (testing "ActivityExtension extension"
-    (is (s/valid? ::activity-extension/extension
+    (is (s/valid? ::ae/extension
                   {:id "https://w3id.org/xapi/catch/activity-extensions/lesson-plan/design"
                    :type "ActivityExtension"
                    :inScheme "https://w3id.org/xapi/catch/v1"
@@ -107,7 +107,7 @@
                              \"uniqueItems\":true}},
                           \"linguistic-cognitive-scaffolds\":{\"type\":\"string\"}}}"}))
     ;; Cannot both have schema and inlineSchema
-    (is (not (s/valid? ::activity-extension/extension
+    (is (not (s/valid? ::ae/extension
                        {:id "https://foo.org/bar"
                         :type "ActivityExtension"
                         :inScheme "https://foo.org/"
@@ -116,7 +116,7 @@
                         :schema "https://some.schema"
                         :inlineSchema "{\"some\" : \"schema\"}"})))
     ;; Cannot have recommended verbs
-    (is (not (s/valid? ::activity-extension/extension
+    (is (not (s/valid? ::ae/extension
                        {:id "https://foo.org/bar"
                         :type "ActivityExtension"
                         :inScheme "https://foo.org/"

@@ -1,8 +1,8 @@
 (ns com.yetanalytics.pan.objects.profile-test
   (:require [clojure.test :refer [deftest is testing]]
             [clojure.spec.alpha :as s]
-            [com.yetanalytics.test-utils :refer [should-satisfy+]]
-            [com.yetanalytics.pan.objects.profile :as profile]))
+            [com.yetanalytics.pan.objects.profile :as profile]
+            [com.yetanalytics.test-utils :refer [should-satisfy+]]))
 
 (deftest id-test
   (testing "profile ID"

@@ -1,14 +1,13 @@
 (ns com.yetanalytics.pan.objects.concepts.resources.agent-profile-test
   (:require [clojure.test :refer [deftest is testing]]
             [clojure.spec.alpha :as s]
-            [com.yetanalytics.test-utils
-             :refer [should-satisfy should-satisfy+]]
-            [com.yetanalytics.pan.objects.concepts.resources.agent-profile
-             :as agent-profile]))
+            [com.yetanalytics.pan.objects.concepts.resources.agent-profile :as agr]
+            [com.yetanalytics.test-utils :refer [should-satisfy
+                                                 should-satisfy+]]))
 
 (deftest type-test
   (testing "type property"
-    (should-satisfy+ ::agent-profile/type
+    (should-satisfy+ ::agr/type
                      "AgentProfileResource"
                      :bad
                      "ActivityProfileResource"
@@ -19,7 +18,7 @@
 
 (deftest content-type-test
   (testing "contentType property"
-    (should-satisfy+ ::agent-profile/contentType
+    (should-satisfy+ ::agr/contentType
                      "application/json"
                      :bad
                      74)))
@@ -28,12 +27,12 @@
 
 (deftest schema-test
   (testing "schema property"
-    (should-satisfy ::agent-profile/schema
+    (should-satisfy ::agr/schema
                     "https://raw.githubusercontent.com/adlnet/xAPI-SCORM-Profile/master/document-schemas/scorm.profile.agent.profile.schema.json")))
 
 (deftest agent-profile-resource-test
   (testing "ActivityProfileResource document resource"
-    (is (s/valid? ::agent-profile/document-resource
+    (is (s/valid? ::agr/document-resource
                   {:id "https://w3id.org/xapi/scorm/agent-profile"
                    :type "AgentProfileResource"
                    :inScheme "https://w3id.org/xapi/scorm/v1.0"

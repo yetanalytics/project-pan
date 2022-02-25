@@ -1,14 +1,13 @@
 (ns com.yetanalytics.pan.objects.concepts.resources.state-test
   (:require [clojure.test :refer [deftest is testing]]
             [clojure.spec.alpha :as s]
-            [com.yetanalytics.test-utils
-             :refer [should-satisfy should-satisfy+]]
-            [com.yetanalytics.pan.objects.concepts.resources.state
-             :as state]))
+            [com.yetanalytics.pan.objects.concepts.resources.state :as sr]
+            [com.yetanalytics.test-utils :refer [should-satisfy
+                                                 should-satisfy+]]))
 
 (deftest type-test
   (testing "type property"
-    (should-satisfy+ ::state/type
+    (should-satisfy+ ::sr/type
                      "StateResource"
                      :bad
                      "AgentProfileResource"
@@ -18,7 +17,7 @@
 ;; TODO: RFC 2046 valid content types
 (deftest content-type-test
   (testing "contentType property"
-    (should-satisfy+ ::state/contentType
+    (should-satisfy+ ::sr/contentType
                      "application/json"
                      :bad
                      74)))
@@ -27,12 +26,12 @@
 
 (deftest schema-test
   (testing "schema property"
-    (should-satisfy ::state/schema
+    (should-satisfy ::sr/schema
                     "https://w3id.org/xapi/scorm/state/scorm.profile.activity.profile.schema")))
 
 (deftest state-resource-test
   (testing "ActivityProfileResource document resource"
-    (is (s/valid? ::state/document-resource
+    (is (s/valid? ::sr/document-resource
                   {:id "https://w3id.org/xapi/scorm/attempt-state"
                    :type "StateResource"
                    :inScheme "https://w3id.org/xapi/scorm/v1.0"

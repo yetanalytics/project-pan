@@ -1,7 +1,7 @@
 (ns com.yetanalytics.pan.utils.resources
   (:require [clojure.java.io :refer [resource]]
-            [clojure.edn :as edn]
-            [clojure.string :as string]
+            [clojure.edn     :as edn]
+            [clojure.string  :as string]
             [com.yetanalytics.pan.utils.json :as json]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

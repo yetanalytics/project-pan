@@ -2,8 +2,8 @@
   (:require [clojure.test :refer [deftest is testing]]
             [loom.attr]
             [com.yetanalytics.pan.graph :as graph]
-            [com.yetanalytics.test-utils :refer [should-satisfy+]]
-            [com.yetanalytics.pan.objects.concept :as concept]))
+            [com.yetanalytics.pan.objects.concept :as concept]
+            [com.yetanalytics.test-utils :refer [should-satisfy+]]))
 
 ;; TODO Add test for testing a complete vector of concepts
 

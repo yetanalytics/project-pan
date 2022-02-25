@@ -1,7 +1,7 @@
 (ns com.yetanalytics.pan.context-test
   (:require [clojure.test :refer [deftest is testing]]
-            [clojure.spec.alpha :as s]
-            [com.yetanalytics.pan.axioms :as ax]
+            [clojure.spec.alpha           :as s]
+            [com.yetanalytics.pan.axioms  :as ax]
             [com.yetanalytics.pan.context :as c])
   #?(:clj (:require [com.yetanalytics.pan.utils.resources
                      :refer [read-json-resource]])

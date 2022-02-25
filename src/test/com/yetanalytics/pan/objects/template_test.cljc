@@ -2,9 +2,10 @@
   (:require [clojure.test :refer [deftest is testing]]
             [clojure.spec.alpha :as s]
             [com.yetanalytics.pan.graph :as graph]
-            [com.yetanalytics.test-utils
-             :refer [should-satisfy should-satisfy+ should-not-satisfy]]
-            [com.yetanalytics.pan.objects.template :as template]))
+            [com.yetanalytics.pan.objects.template :as template]
+            [com.yetanalytics.test-utils :refer [should-satisfy
+                                                 should-satisfy+
+                                                 should-not-satisfy]]))
 
 (deftest id-test
   (testing "id property"
