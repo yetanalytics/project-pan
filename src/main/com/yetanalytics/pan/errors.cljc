@@ -13,12 +13,12 @@
             [com.yetanalytics.pan.objects.concept :as c]
             [com.yetanalytics.pan.objects.template :as t]
             [com.yetanalytics.pan.objects.pattern :as p]
+            [com.yetanalytics.pan.objects.concepts.util :as cu]
             [com.yetanalytics.pan.objects.concepts.extensions.activity :as ae]
             [com.yetanalytics.pan.objects.concepts.extensions.context :as ce]
             [com.yetanalytics.pan.objects.concepts.extensions.result :as re]
             [com.yetanalytics.pan.objects.concepts.activity :as act]
-            [com.yetanalytics.pan.objects.templates.rule :as r]
-            [com.yetanalytics.pan.utils.spec :as u]))
+            [com.yetanalytics.pan.objects.templates.rule :as r]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Spec messages
@@ -42,9 +42,9 @@
 (exp/defmsg ::ax/array-of-iri "should be an array of IRIs")
 (exp/defmsg ::ax/array-of-uri "should be an array of URIs")
 
-(exp/defmsg ::u/inline-or-iri
+(exp/defmsg ::cu/inline-or-iri
   "should not contain both linked and inline JSON schema")
-(exp/defmsg ::u/related-only-deprecated
+(exp/defmsg ::cu/related-only-deprecated
   "should not use related property in a non-deprecated Concept")
 
 (exp/defmsg ::c/concept
