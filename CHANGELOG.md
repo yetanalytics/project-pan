@@ -1,6 +1,9 @@
 # Change Log
 All notable changes to this project will be documented in this file. This change log follows the conventions of [keepachangelog.com](http://keepachangelog.com/).
 
+## 0.4.1 - 2022-02-25
+- Add `json-profile->edn` API function.
+
 ## 0.4.0 - 2022-02-25
 - Add multi-profile support
   - Extra API function `validate-profile-coll` that accepts a collection of Profiles to validate.

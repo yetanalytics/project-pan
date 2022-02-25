@@ -5,7 +5,8 @@
             [com.yetanalytics.pan.objects.pattern  :as pattern]
             [com.yetanalytics.pan.identifiers      :as id]
             [com.yetanalytics.pan.context          :as context]
-            [com.yetanalytics.pan.errors           :as errors]))
+            [com.yetanalytics.pan.errors           :as errors]
+            [com.yetanalytics.pan.utils.json       :as json]))
 
 (defn get-external-iris
   "Return a map of keys to sets of IRIs, where the IRIs reference
@@ -19,6 +20,13 @@
     (if-some [ctx-iris (not-empty (context/get-context-iris profile))]
       (assoc iris-m :_context ctx-iris)
       iris-m)))
+
+(defn json-profile->edn
+  "Convert an JSON string xAPI Profile into an EDN data structure,
+   where all keys are keywordized (and `@`s, e.g. in `@context`, are
+   converted into `_`)."
+  [json-profile]
+  (json/convert-json json-profile))
 
 (defn- find-syntax-errors
   [profile]
