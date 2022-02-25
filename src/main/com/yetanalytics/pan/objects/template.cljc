@@ -3,7 +3,7 @@
             [com.yetanalytics.pan.axioms      :as ax]
             [com.yetanalytics.pan.graph       :as graph]
             [com.yetanalytics.pan.identifiers :as ids]
-            [com.yetanalytics.pan.objects.templates.rules :as rules]))
+            [com.yetanalytics.pan.objects.templates.rule :as rules]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Statement Template Specs

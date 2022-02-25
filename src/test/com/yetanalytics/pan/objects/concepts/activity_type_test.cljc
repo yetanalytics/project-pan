@@ -4,12 +4,11 @@
             [com.yetanalytics.pan.graph :as graph]
             [com.yetanalytics.test-utils
              :refer [should-satisfy should-satisfy+ should-not-satisfy]]
-            [com.yetanalytics.pan.objects.concepts.activity-types
-             :as activity-types]))
+            [com.yetanalytics.pan.objects.concepts.activity-type :as at]))
 
 (deftest type-test
   (testing "type property"
-    (should-satisfy+ ::activity-types/type
+    (should-satisfy+ ::at/type
                      "ActivityType"
                      :bad
                      "Verb"
@@ -19,66 +18,66 @@
 
 (deftest broader-test
   (testing "broader property"
-    (should-satisfy ::activity-types/broader
+    (should-satisfy ::at/broader
                     ["https://w3id.org/xapi/catch/activity-types/submitted"
                      "https://w3id.org/xapi/catch/activity-types/provided"])
-    (should-not-satisfy ::activity-types/broader
+    (should-not-satisfy ::at/broader
                         "https://w3id.org/xapi/catch/activity-types/submitted")
-    (should-not-satisfy ::activity-types/broader [])))
+    (should-not-satisfy ::at/broader [])))
 
 (deftest broad-match-test
   (testing "broadMatch property"
-    (should-satisfy ::activity-types/broadMatch
+    (should-satisfy ::at/broadMatch
                     ["http://adlnet.gov/expapi/activity-types/shared"])
-    (should-not-satisfy ::activity-types/broadMatch
+    (should-not-satisfy ::at/broadMatch
                         "http://adlnet.gov/expapi/activity-types/shared")
-    (should-not-satisfy ::activity-types/broadMatch [])))
+    (should-not-satisfy ::at/broadMatch [])))
 
 (deftest narrower-test
   (testing "narrower property"
-    (should-satisfy ::activity-types/narrower
+    (should-satisfy ::at/narrower
                     ["https://w3id.org/xapi/catch/activity-types/submitted"
                      "https://w3id.org/xapi/catch/activity-types/provided"])
-    (should-not-satisfy ::activity-types/narrower
+    (should-not-satisfy ::at/narrower
                         "https://w3id.org/xapi/catch/activity-types/submitted")
-    (should-not-satisfy ::activity-types/narrower [])))
+    (should-not-satisfy ::at/narrower [])))
 
 (deftest narrow-match-test
   (testing "narrowMatch property"
-    (should-satisfy ::activity-types/narrowMatch
+    (should-satisfy ::at/narrowMatch
                     ["http://adlnet.gov/expapi/activity-types/shared"])
-    (should-not-satisfy ::activity-types/narrowMatch
+    (should-not-satisfy ::at/narrowMatch
                         "http://adlnet.gov/expapi/activity-types/shared")
-    (should-not-satisfy ::activity-types/narrowMatch [])))
+    (should-not-satisfy ::at/narrowMatch [])))
 
 (deftest related-test
   (testing "related property"
-    (should-satisfy ::activity-types/related
+    (should-satisfy ::at/related
                     ["https://w3id.org/xapi/catch/activity-types/submitted"
                      "https://w3id.org/xapi/catch/activity-types/provided"])
-    (should-not-satisfy ::activity-types/related
+    (should-not-satisfy ::at/related
                         "https://w3id.org/xapi/catch/activity-types/provided")
-    (should-not-satisfy ::activity-types/related [])))
+    (should-not-satisfy ::at/related [])))
 
 (deftest related-match-test
   (testing "relatedMatch property"
-    (should-satisfy ::activity-types/relatedMatch
+    (should-satisfy ::at/relatedMatch
                     ["http://adlnet.gov/expapi/activity-types/shared"])
-    (should-not-satisfy ::activity-types/relatedMatch
+    (should-not-satisfy ::at/relatedMatch
                         "http://adlnet.gov/expapi/activity-types/shared")
-    (should-not-satisfy ::activity-types/relatedMatch [])))
+    (should-not-satisfy ::at/relatedMatch [])))
 
 (deftest exact-match-test
   (testing "exactMatch property"
-    (should-satisfy ::activity-types/exactMatch
+    (should-satisfy ::at/exactMatch
                     ["http://activitystrea.ms/schema/1.0/article"])
-    (should-not-satisfy ::activity-types/exactMatch
+    (should-not-satisfy ::at/exactMatch
                         "http://activitystrea.ms/schema/1.0/article")
-    (should-not-satisfy ::activity-types/exactMatch [])))
+    (should-not-satisfy ::at/exactMatch [])))
 
 (deftest activity-type-test
   (testing "activityType concept"
-    (is (s/valid? ::activity-types/activity-type
+    (is (s/valid? ::at/activity-type
                   {:id "https://w3id.org/xapi/catch/activitytypes/check-in"
                    :type "ActivityType"
                    :inScheme "https://w3id.org/xapi/catch/v1"

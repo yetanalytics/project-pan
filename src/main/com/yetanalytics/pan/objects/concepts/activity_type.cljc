@@ -1,15 +1,15 @@
-(ns com.yetanalytics.pan.objects.concepts.verbs
+(ns com.yetanalytics.pan.objects.concepts.activity-type
   (:require [clojure.spec.alpha :as s]
             [com.yetanalytics.pan.axioms :as ax]
             [com.yetanalytics.pan.graph :as graph]
             [com.yetanalytics.pan.utils.spec :as u]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Verb
+;; Activity Type
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (s/def ::id ::ax/iri)
-(s/def ::type #{"Verb"})
+(s/def ::type #{"ActivityType"})
 (s/def ::inScheme ::ax/iri)
 (s/def ::prefLabel ::ax/language-map)
 (s/def ::definition ::ax/language-map)
@@ -22,13 +22,13 @@
 (s/def ::relatedMatch ::ax/array-of-iri)
 (s/def ::exactMatch ::ax/array-of-iri)
 
-(s/def ::verb-keys
+(s/def ::activity-type-keys
   (s/keys :req-un [::id ::type ::inScheme ::prefLabel ::definition]
           :opt-un [::deprecated ::broader ::broadMatch ::narrower
                    ::narrowMatch ::related ::relatedMatch ::exactMatch]))
 
-(s/def ::verb
-  (s/and ::verb-keys
+(s/def ::activity-type
+  (s/and ::activity-type-keys
          ::u/related-only-deprecated))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -36,7 +36,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Return a vector of edges in the form [src dest {:type kword}]
-(defmethod graph/edges-with-attrs "Verb"
+(defmethod graph/edges-with-attrs "ActivityType"
   [{:keys [id broader broadMatch narrower narrowMatch related relatedMatch
            exactMatch]}]
   (into [] (filter #(some? (second %))

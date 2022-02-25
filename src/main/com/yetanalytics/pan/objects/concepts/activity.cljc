@@ -1,4 +1,4 @@
-(ns com.yetanalytics.pan.objects.concepts.activities
+(ns com.yetanalytics.pan.objects.concepts.activity
   (:require [clojure.spec.alpha :as s]
             [clojure.walk :refer [stringify-keys]]
             [xapi-schema.spec]

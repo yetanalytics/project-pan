@@ -4,12 +4,11 @@
             [com.yetanalytics.pan.graph :as graph]
             [com.yetanalytics.test-utils
              :refer [should-satisfy should-satisfy+ should-not-satisfy]]
-            [com.yetanalytics.pan.objects.concepts.attachment-usage-types
-             :as attachment-usage-types]))
+            [com.yetanalytics.pan.objects.concepts.attachment-usage-type :as aut]))
 
 (deftest type-test
   (testing "type property"
-    (should-satisfy+ ::attachment-usage-types/type
+    (should-satisfy+ ::aut/type
                      "AttachmentUsageType"
                      :bad
                      "ActivityType"
@@ -19,66 +18,66 @@
 
 (deftest broader-test
   (testing "broader property"
-    (should-satisfy ::attachment-usage-types/broader
+    (should-satisfy ::aut/broader
                     ["https://w3id.org/xapi/catch/attachment-usage-types/submitted"
                      "https://w3id.org/xapi/catch/attachment-usage-types/provided"])
-    (should-not-satisfy ::attachment-usage-types/broader
+    (should-not-satisfy ::aut/broader
                         "https://w3id.org/xapi/catch/attachment-usage-types/submitted")
-    (should-not-satisfy ::attachment-usage-types/broader [])))
+    (should-not-satisfy ::aut/broader [])))
 
 (deftest broad-match-test
   (testing "broadMatch property"
-    (should-satisfy ::attachment-usage-types/broadMatch
+    (should-satisfy ::aut/broadMatch
                     ["http://adlnet.gov/expapi/attachment-usage-types/shared"])
-    (should-not-satisfy ::attachment-usage-types/broadMatch
+    (should-not-satisfy ::aut/broadMatch
                         "http://adlnet.gov/expapi/attachment-usage-types/shared")
-    (should-not-satisfy ::attachment-usage-types/broadMatch [])))
+    (should-not-satisfy ::aut/broadMatch [])))
 
 (deftest narrower-test
   (testing "narrower property"
-    (should-satisfy ::attachment-usage-types/narrower
+    (should-satisfy ::aut/narrower
                     ["https://w3id.org/xapi/catch/attachment-usage-types/submitted"
                      "https://w3id.org/xapi/catch/attachment-usage-types/provided"])
-    (should-not-satisfy ::attachment-usage-types/narrower
+    (should-not-satisfy ::aut/narrower
                         "https://w3id.org/xapi/catch/attachment-usage-types/submitted")
-    (should-not-satisfy ::attachment-usage-types/narrower [])))
+    (should-not-satisfy ::aut/narrower [])))
 
 (deftest narrow-match-test
   (testing "narrowMatch property"
-    (should-satisfy ::attachment-usage-types/narrowMatch
+    (should-satisfy ::aut/narrowMatch
                     ["http://adlnet.gov/expapi/attachment-usage-types/shared"])
-    (should-not-satisfy ::attachment-usage-types/narrowMatch
+    (should-not-satisfy ::aut/narrowMatch
                         "http://adlnet.gov/expapi/attachment-usage-types/shared")
-    (should-not-satisfy ::attachment-usage-types/narrowMatch [])))
+    (should-not-satisfy ::aut/narrowMatch [])))
 
 (deftest related-test
   (testing "related property"
-    (should-satisfy ::attachment-usage-types/related
+    (should-satisfy ::aut/related
                     ["https://w3id.org/xapi/catch/attachment-usage-types/submitted"
                      "https://w3id.org/xapi/catch/attachment-usage-types/provided"])
-    (should-not-satisfy ::attachment-usage-types/related
+    (should-not-satisfy ::aut/related
                         "https://w3id.org/xapi/catch/attachment-usage-types/provided")
-    (should-not-satisfy ::attachment-usage-types/related [])))
+    (should-not-satisfy ::aut/related [])))
 
 (deftest related-match-test
   (testing "relatedMatch property"
-    (should-satisfy ::attachment-usage-types/relatedMatch
+    (should-satisfy ::aut/relatedMatch
                     ["http://adlnet.gov/expapi/attachment-usage-types/shared"])
-    (should-not-satisfy ::attachment-usage-types/relatedMatch
+    (should-not-satisfy ::aut/relatedMatch
                         "http://adlnet.gov/expapi/attachment-usage-types/shared")
-    (should-not-satisfy ::attachment-usage-types/relatedMatch [])))
+    (should-not-satisfy ::aut/relatedMatch [])))
 
 (deftest exact-match-test
   (testing "exactMatch property"
-    (should-satisfy ::attachment-usage-types/exactMatch
+    (should-satisfy ::aut/exactMatch
                     ["http://activitystrea.ms/schema/1.0/article"])
-    (should-not-satisfy ::attachment-usage-types/exactMatch
+    (should-not-satisfy ::aut/exactMatch
                         "http://activitystrea.ms/schema/1.0/article")
-    (should-not-satisfy ::attachment-usage-types/exactMatch [])))
+    (should-not-satisfy ::aut/exactMatch [])))
 
 (deftest attachment-usage-types-test
   (testing "attachmentUsageType concept"
-    (is (s/valid? ::attachment-usage-types/attachment-usage-type
+    (is (s/valid? ::aut/attachment-usage-type
                   {:id "https://w3id.org/xapi/catch/attachment-usage-types/supporting-documents"
                    :type "AttachmentUsageType"
                    :inScheme "https://w3id.org/xapi/catch/v1"

@@ -16,8 +16,8 @@
             [com.yetanalytics.pan.objects.concepts.extensions.activity :as ae]
             [com.yetanalytics.pan.objects.concepts.extensions.context :as ce]
             [com.yetanalytics.pan.objects.concepts.extensions.result :as re]
-            [com.yetanalytics.pan.objects.concepts.activities :as act]
-            [com.yetanalytics.pan.objects.templates.rules :as r]
+            [com.yetanalytics.pan.objects.concepts.activity :as act]
+            [com.yetanalytics.pan.objects.templates.rule :as r]
             [com.yetanalytics.pan.utils.spec :as u]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

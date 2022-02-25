@@ -3,11 +3,11 @@
             [clojure.spec.alpha :as s]
             [com.yetanalytics.test-utils
              :refer [should-satisfy should-satisfy+ should-not-satisfy]]
-            [com.yetanalytics.pan.objects.concepts.activities :as activities]))
+            [com.yetanalytics.pan.objects.concepts.activity :as a]))
 
 (deftest type-test
   (testing "type property"
-    (should-satisfy+ ::activities/type
+    (should-satisfy+ ::a/type
                      "Activity"
                      :bad
                      "Profile"
@@ -16,13 +16,13 @@
 
 (deftest context-test
   (testing "@context property"
-    (should-satisfy ::activities/_context
+    (should-satisfy ::a/_context
                     "https://w3id.org/xapi/profiles/activity-context")
-    (should-satisfy ::activities/_context "https://some-other-context")
-    (should-satisfy ::activities/_context
+    (should-satisfy ::a/_context "https://some-other-context")
+    (should-satisfy ::a/_context
                     ["https://w3id.org/xapi/profiles/activity-context"])
-    (should-not-satisfy ::activities/_context ["https://some-other-context"])
-    (should-not-satisfy ::activities/_context "foo bar")))
+    (should-not-satisfy ::a/_context ["https://some-other-context"])
+    (should-not-satisfy ::a/_context "foo bar")))
 
 (deftest stringify-lang-keys-test
   (testing "turning keys in the name and description language maps into strings"
@@ -30,7 +30,7 @@
             :name {"en" "Blah"}
             :description {"en" "Blah Blah Blah"}
             :type "https://w3id.org/xapi/catch/activitytypes/blah"}
-           (activities/stringify-submaps
+           (a/stringify-submaps
             {:_context "https://w3id.org/xapi/profiles/activity-context"
              :name {:en "Blah"}
              :description {:en "Blah Blah Blah"}
@@ -38,13 +38,13 @@
 
 (deftest activity-definition
   (testing "activityDefinition property"
-    (is (s/valid? ::activities/activityDefinition
+    (is (s/valid? ::a/activityDefinition
                   {:_context "https://w3id.org/xapi/profiles/activity-context"
                    :name {:en "Cross Linguistic Connections"}
                    :description {"en" "The cross linguistic connections competency as described by the EPISD Dual Language Competency Framework"}
                    :type "https://w3id.org/xapi/catch/activitytypes/competency"}))
     (testing "with extension object"
-      (is (s/valid? ::activities/activityDefinition
+      (is (s/valid? ::a/activityDefinition
                     {:_context "https://w3id.org/xapi/profiles/activity-context"
                      :name {:en "Cross Linguistic Connections"}
                      :description {"en" "The cross linguistic connections competency as described by the EPISD Dual Language Competency Framework"}
@@ -55,7 +55,7 @@
                                                         :_container "@language"}}
                                    :display {:en-US "My Extension"}}
                                   "http://foo.org/extension-2" 2}}))
-      (is (not (s/valid? ::activities/activityDefinition
+      (is (not (s/valid? ::a/activityDefinition
                          {:_context "https://w3id.org/xapi/profiles/activity-context"
                           :name {:en "Cross Linguistic Connections"}
                           :description {"en" "The cross linguistic connections competency as described by the EPISD Dual Language Competency Framework"}
@@ -66,7 +66,7 @@
 
 (deftest activity-test
   (testing "Activity concept"
-    (is (s/valid? ::activities/activity
+    (is (s/valid? ::a/activity
                   {:id "https://w3id.org/xapi/catch/activities/competency/cross-linguistic-connections"
                    :type "Activity"
                    :inScheme "https://w3id.org/xapi/catch/v1"

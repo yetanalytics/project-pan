@@ -4,11 +4,11 @@
             [com.yetanalytics.pan.graph :as graph]
             [com.yetanalytics.test-utils
              :refer [should-satisfy should-satisfy+ should-not-satisfy]]
-            [com.yetanalytics.pan.objects.concepts.verbs :as verbs]))
+            [com.yetanalytics.pan.objects.concepts.verb :as v]))
 
 (deftest type-test
   (testing "type property"
-    (should-satisfy+ ::verbs/type
+    (should-satisfy+ ::v/type
                      "Verb"
                      :bad
                      "ActivityType"
@@ -18,73 +18,73 @@
 
 (deftest broader-test
   (testing "broader property"
-    (should-satisfy ::verbs/broader
+    (should-satisfy ::v/broader
                     ["https://w3id.org/xapi/catch/verbs/submitted"
                      "https://w3id.org/xapi/catch/verbs/provided"])
-    (should-not-satisfy ::verbs/broader
+    (should-not-satisfy ::v/broader
                         "https://w3id.org/xapi/catch/verbs/submitted")
-    (should-not-satisfy ::verbs/broader [])))
+    (should-not-satisfy ::v/broader [])))
 
 (deftest broad-match-test
   (testing "broadMatch property"
-    (should-satisfy ::verbs/broadMatch
+    (should-satisfy ::v/broadMatch
                     ["http://adlnet.gov/expapi/verbs/shared"])
-    (should-not-satisfy ::verbs/broadMatch
+    (should-not-satisfy ::v/broadMatch
                         "http://adlnet.gov/expapi/verbs/shared")
-    (should-not-satisfy ::verbs/broadMatch [])))
+    (should-not-satisfy ::v/broadMatch [])))
 
 (deftest narrower-test
   (testing "narrower property"
-    (should-satisfy ::verbs/narrower
+    (should-satisfy ::v/narrower
                     ["https://w3id.org/xapi/catch/verbs/submitted"
                      "https://w3id.org/xapi/catch/verbs/provided"])
-    (should-not-satisfy ::verbs/narrower
+    (should-not-satisfy ::v/narrower
                         "https://w3id.org/xapi/catch/verbs/submitted")
-    (should-not-satisfy ::verbs/narrower [])))
+    (should-not-satisfy ::v/narrower [])))
 
 (deftest narrow-match-test
   (testing "narrowMatch property"
-    (should-satisfy ::verbs/narrowMatch
+    (should-satisfy ::v/narrowMatch
                     ["http://adlnet.gov/expapi/verbs/shared"])
-    (should-not-satisfy ::verbs/narrowMatch
+    (should-not-satisfy ::v/narrowMatch
                         "http://adlnet.gov/expapi/verbs/shared")
-    (should-not-satisfy ::verbs/narrowMatch [])))
+    (should-not-satisfy ::v/narrowMatch [])))
 
 (deftest related-test
   (testing "related property"
-    (should-satisfy ::verbs/related
+    (should-satisfy ::v/related
                     ["https://w3id.org/xapi/catch/verbs/submitted"
                      "https://w3id.org/xapi/catch/verbs/provided"])
-    (should-not-satisfy ::verbs/related
+    (should-not-satisfy ::v/related
                         "https://w3id.org/xapi/catch/verbs/provided")
-    (should-not-satisfy ::verbs/related [])))
+    (should-not-satisfy ::v/related [])))
 
 (deftest related-match-test
   (testing "relatedMatch property"
-    (should-satisfy ::verbs/relatedMatch
+    (should-satisfy ::v/relatedMatch
                     ["http://adlnet.gov/expapi/verbs/shared"])
-    (should-not-satisfy ::verbs/relatedMatch
+    (should-not-satisfy ::v/relatedMatch
                         "http://adlnet.gov/expapi/verbs/shared")
-    (should-not-satisfy ::verbs/relatedMatch [])))
+    (should-not-satisfy ::v/relatedMatch [])))
 
 (deftest exact-match-test
   (testing "exactMatch property"
-    (should-satisfy ::verbs/exactMatch
+    (should-satisfy ::v/exactMatch
                     ["http://activitystrea.ms/schema/1.0/article"])
-    (should-not-satisfy ::verbs/exactMatch
+    (should-not-satisfy ::v/exactMatch
                         "http://activitystrea.ms/schema/1.0/article")
-    (should-not-satisfy ::verbs/exactMatch [])))
+    (should-not-satisfy ::v/exactMatch [])))
 
 (deftest verb-test
   (testing "Verb concept"
-    (is (s/valid? ::verbs/verb
+    (is (s/valid? ::v/verb
                   {:id "https://w3id.org/xapi/catch/verbs/presented"
                    :type "Verb"
                    :inScheme "https://w3id.org/xapi/catch/v1"
                    :prefLabel {"en" "presented"}
                    :definition {"en" "leading a discussion at an advocacy event"}}))
     ;; Related ONLY on deprecated
-    (is (not (s/valid? ::verbs/verb
+    (is (not (s/valid? ::v/verb
                        {:id "https://foo.org/verb"
                         :type "Verb"
                         :inScheme "https://w3id.org/xapi/catch/v1"
