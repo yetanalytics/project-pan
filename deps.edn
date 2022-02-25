@@ -13,10 +13,11 @@
                                                      org.clojure/data.json]}}
  :aliases
  {:test
-  {:extra-paths ["src/test"]
+  {:extra-paths ["dev-resources" "src/test"]
    :extra-deps  {org.clojure/test.check {:mvn/version "1.1.0"}}}
   :dev
-  {:extra-deps {cider/piggieback {:mvn/version "0.5.2"}}}
+  {:extra-paths ["dev-resources"]
+   :extra-deps  {cider/piggieback {:mvn/version "0.5.2"}}}
   :runner-clj
   {:extra-deps {com.cognitect/test-runner ;; Latest commit: 9/30/20
                 {:git/url "https://github.com/cognitect-labs/test-runner"
