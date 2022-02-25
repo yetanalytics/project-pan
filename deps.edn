@@ -7,11 +7,10 @@
          aysylu/loom                  {:mvn/version "1.0.2"
                                        :exclusions  [org.clojure/clojurescript]}
          expound/expound              {:mvn/version "0.8.9"}
-         com.yetanalytics/xapi-schema ;; Latest commit: 1/29/21
-         {:git/url    "https://github.com/yetanalytics/xapi-schema"
-          :sha        "77f78d1713e50e7b8610f58b5137695b0fccddaa"
-          :exclusions [org.clojure/clojurescript
-                       org.clojure/data.json]}}
+         com.yetanalytics/xapi-schema {:mvn/version "1.2.0"
+                                       :exclusions  [org.clojure/clojure
+                                                     org.clojure/clojurescript
+                                                     org.clojure/data.json]}}
  :aliases
  {:test
   {:extra-paths ["src/test"]
