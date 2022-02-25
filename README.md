@@ -4,6 +4,16 @@
 
 A Clojure library for validating xAPI Profiles, according to the [xAPI Profile specification](https://github.com/adlnet/xapi-profiles).
 
+## Installation
+
+Add the following to the `:deps` map in your `deps.edn` file:
+
+```clojure
+com.yetanalytics/project-pan {:mvn/version "0.4.0"
+                              :exclusions [org.clojure/clojure
+                                           org.clojure/clojurescript]}
+```
+
 ## Usage
 
 To use the library to validate a whole Profile, call `validate-profile` in the `pan` namespace. This method takes in an entire Profile as an EDN data structure and prints either a success message on success (obviously) or an error message on failure.
