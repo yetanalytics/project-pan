@@ -29,6 +29,7 @@ Arguments may be supplied for different levels of validation strictness, which a
     - the `recommendedVerbs` property for Context and Result Extensions
     - Determining Properties, `objectStatementRefTemplate` property and the `contextStatementRefTemplate` properties for Statement Templates.
     - `sequence`, `alternates`, `optional`, `oneOrMore` and `zeroOrMore` properties for Patterns.
+- `:concept-rels?`, `:template-rels?`, `:pattern-rels?` - Similar to `:relations?`, except that each only validates relations specific to Concept, Statement Template, and Pattern properties, respectively. Each are default `false`, and are overridden when `:relations?` are `true`.
 - `:contexts?` - Validate that all instances of `@context` resolve to valid JSON-LD contexts and that they allow all properties to expand out to absolute IRIs during JSON-LD processing. The `@context` property is always found in the Profile metadata and in Activity Definitions, though they can also be found in Extensions for said Activity Definitions.
 
 Other keyword arguments include:
