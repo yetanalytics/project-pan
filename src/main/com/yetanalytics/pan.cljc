@@ -41,23 +41,27 @@
     :in-scheme-errors (id/validate-in-schemes profile)}))
 
 (defn- find-graph-errors*
-  [cgraph tgraph pgraph]
-  {:concept-edge-errors  (concept/validate-concept-edges cgraph)
-   :template-edge-errors (template/validate-template-edges tgraph)
-   :pattern-edge-errors  (pattern/validate-pattern-edges pgraph)
-   :pattern-cycle-errors (pattern/validate-pattern-tree pgraph)})
+  [?cgraph ?tgraph ?pgraph]
+  (cond-> {}
+    ?cgraph
+    (assoc :concept-edge-errors (concept/validate-concept-edges ?cgraph))
+    ?tgraph
+    (assoc :template-edge-errors (template/validate-template-edges ?tgraph))
+    ?pgraph
+    (assoc :pattern-edge-errors (pattern/validate-pattern-edges ?pgraph)
+           :pattern-cycle-errors (pattern/validate-pattern-tree ?pgraph))))
 
 (defn- find-graph-errors
-  ([profile]
-   (let [cgraph (concept/create-graph profile)
-         tgraph (template/create-graph profile)
-         pgraph (pattern/create-graph profile)]
-     (find-graph-errors* cgraph tgraph pgraph)))
-  ([profile extra-profiles]
-   (let [cgraph (concept/create-graph profile extra-profiles)
-         tgraph (template/create-graph profile extra-profiles)
-         pgraph (pattern/create-graph profile extra-profiles)]
-     (find-graph-errors* cgraph tgraph pgraph))))
+  ([profile {:keys [concepts? templates? patterns?]}]
+   (let [?cgraph (when concepts? (concept/create-graph profile))
+         ?tgraph (when templates? (template/create-graph profile))
+         ?pgraph (when patterns? (pattern/create-graph profile))]
+     (find-graph-errors* ?cgraph ?tgraph ?pgraph)))
+  ([profile extra-profiles {:keys [concepts? templates? patterns?]}]
+   (let [?cgraph (when concepts? (concept/create-graph profile extra-profiles))
+         ?tgraph (when templates? (template/create-graph profile extra-profiles))
+         ?pgraph (when patterns? (pattern/create-graph profile extra-profiles))]
+     (find-graph-errors* ?cgraph ?tgraph ?pgraph))))
 
 (defn- find-context-errors
   [profile ?extra-contexts-map]
@@ -74,6 +78,14 @@
    - `:relations?`     Validate IRI-given relations between Concepts,
                        Statement Templates and Patterns. Default
                        `false`.
+   - `:concept-rels?`  Validate Concept-specific relations. Default `false`,
+                       and is overridden if `:relations?` is `true`.
+   - `:template-rels?` Validate Statement Template-specific relations (incl.
+                       Concept-Template relations). Default `false`, and is
+                       overridden if `:relations?` is `true`.
+   - `:pattern-rels`?  Validate Pattern-specific relations (incl. Pattern and
+                       Statement Template relations). Default `false`, and is
+                       overridden if `:relations?` is `true`.
    - `:contexts?`      Validate \"@context\" values and that Profile keys
                        expand to absolute IRIs using RDF contexts. Default
                        `false.`
@@ -96,6 +108,9 @@
   [profile & {:keys [syntax?
                      ids?
                      relations?
+                     concept-rels?
+                     template-rels?
+                     pattern-rels?
                      contexts?
                      extra-profiles
                      extra-contexts
@@ -103,21 +118,37 @@
               :or {syntax?        true
                    ids?           false
                    relations?     false
+                   concept-rels?  false
+                   template-rels? false
+                   pattern-rels?  false
                    contexts?      false
                    extra-profiles []
                    extra-contexts {}
                    result         :spec-error-data}}]
-  (let [errors  (if (not-empty extra-profiles)
-                  (cond-> {}
-                    syntax?    (merge (find-syntax-errors profile))
-                    ids?       (merge (find-id-errors profile extra-profiles))
-                    relations? (merge (find-graph-errors profile extra-profiles))
-                    contexts?  (merge (find-context-errors profile extra-contexts)))
-                  (cond-> {}
-                    syntax?    (merge (find-syntax-errors profile))
-                    ids?       (merge (find-id-errors profile))
-                    relations? (merge (find-graph-errors profile))
-                    contexts?  (merge (find-context-errors profile extra-contexts))))
+  (let [?rel-opts (not-empty
+                   (cond-> {}
+                     (or relations? concept-rels?)  (assoc :concepts? true)
+                     (or relations? template-rels?) (assoc :templates? true)
+                     (or relations? pattern-rels?)  (assoc :patterns? true)))
+        errors (if (not-empty extra-profiles)
+                 (cond-> {}
+                   syntax?
+                   (merge (find-syntax-errors profile))
+                   ids?
+                   (merge (find-id-errors profile extra-profiles))
+                   ?rel-opts
+                   (merge (find-graph-errors profile extra-profiles ?rel-opts))
+                   contexts?
+                   (merge (find-context-errors profile extra-contexts)))
+                 (cond-> {}
+                   syntax?
+                   (merge (find-syntax-errors profile))
+                   ids?
+                   (merge (find-id-errors profile))
+                   ?rel-opts
+                   (merge (find-graph-errors profile ?rel-opts))
+                   contexts?
+                   (merge (find-context-errors profile extra-contexts))))
         errors? (not (every? nil? (vals errors)))]
     (case result
       :spec-error-data
@@ -144,6 +175,9 @@
   [profile-coll & {:keys [syntax?
                           ids?
                           relations?
+                          concept-rels?
+                          template-rels?
+                          pattern-rels?
                           contexts?
                           extra-profiles
                           extra-contexts
@@ -151,6 +185,9 @@
                    :or {syntax?        true
                         ids?           false
                         relations?     false
+                        concept-rels?  false
+                        template-rels? false
+                        pattern-rels?  false
                         contexts?      false
                         extra-profiles []
                         extra-contexts {}
@@ -166,6 +203,9 @@
                                :syntax?        syntax?
                                :ids?           ids?
                                :relations?     relations?
+                               :concept-rels?  concept-rels?
+                               :template-rels? template-rels?
+                               :pattern-rels?  pattern-rels?
                                :contexts?      contexts?
                                :extra-profiles extra-profiles*
                                :extra-contexts extra-contexts

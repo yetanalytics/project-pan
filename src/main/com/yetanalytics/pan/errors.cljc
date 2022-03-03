@@ -523,7 +523,8 @@
          (cstr/join " "))))
 
 (defn errors->type-path-str-m
-  "Return a map of the form {:error-type {:path err-str}}"
+  "Given a map `{:err-type spec-err}`, return a map of the form
+   `{:err-type {:spec-path err-str}}`"
   [spec-errs-map]
   (reduce-kv (fn [m k v]
                (if (some? v)
@@ -537,7 +538,8 @@
              spec-errs-map))
 
 (defn errors->type-str-m
-  "Return a map of the form `{:error-type err-str}"
+  "Given a map `{:err-type spec-err}`, return a map of the form
+   `{:err-type err-str}`."
   [spec-errs-map]
   (reduce-kv (fn [m k v]
                (cond-> m
@@ -547,14 +549,14 @@
              spec-errs-map))
 
 (defn errors->string
-  "Return an error string."
-  [errors-map]
+  "Given a map `{:err-type spec-err}`, return an error string."
+  [spec-errors-map]
   (reduce-kv (fn [s k v]
                (cond-> s
                  (some? v)
                  (str "\n**** " (kw->header k) " ****\n\n" (error->str v k))))
              ""
-             errors-map))
+             spec-errors-map))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Expounding entire error map

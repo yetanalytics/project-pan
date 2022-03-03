@@ -60,14 +60,14 @@
          (let [[correct-syntax? correct-ids? correct-graph? correct-ctxt?] res
                syntax-errs (p/validate-profile profile)
                id-errs     (p/validate-profile profile
-                                             :syntax? false
-                                             :ids? true)
+                                               :syntax? false
+                                               :ids? true)
                graph-errs  (p/validate-profile profile
-                                             :syntax? false
-                                             :relations? true)
+                                               :syntax? false
+                                               :relations? true)
                ctxt-errs   (p/validate-profile profile
-                                             :syntax? false
-                                             :context? true)]
+                                               :syntax? false
+                                               :context? true)]
            (if correct-syntax?
              (is (nil? syntax-errs))
              (is (some? syntax-errs)))
@@ -116,6 +116,93 @@
            (-> (p/validate-profile cmi-profile-raw)
                :syntax-errors
                ::s/spec)))))
+
+(deftest relation-error-tests
+  (testing "Different relation keyword args"
+    (is (= #{:concept-edge-errors
+             :template-edge-errors
+             :pattern-edge-errors
+             :pattern-cycle-errors}
+           (->> (p/validate-profile will-profile-raw
+                                    :syntax?        false
+                                    :relations?     true
+                                    :concept-rels?  false
+                                    :template-rels? false
+                                    :pattern-rels?  false)
+                keys
+                set)
+           (->> (p/validate-profile will-profile-raw
+                                    :syntax?        false
+                                    :relations?     true
+                                    :concept-rels?  true
+                                    :template-rels? true
+                                    :pattern-rels?  true)
+                keys
+                set)
+           (->> (p/validate-profile-coll [will-profile-raw]
+                                         :syntax?        false
+                                         :relations?     true
+                                         :concept-rels?  true
+                                         :template-rels? true
+                                         :pattern-rels?  true)
+                first
+                keys
+                set)))
+    (is (= #{:concept-edge-errors}
+           (->> (p/validate-profile will-profile-raw
+                                    :syntax?        false
+                                    :relations?     false
+                                    :concept-rels?  true
+                                    :template-rels? false
+                                    :pattern-rels?  false)
+                keys
+                set)
+           (->> (p/validate-profile-coll [will-profile-raw]
+                                         :syntax?        false
+                                         :relations?     false
+                                         :concept-rels?  true
+                                         :template-rels? false
+                                         :pattern-rels?  false)
+                first
+                keys
+                set)))
+    (is (= #{:template-edge-errors}
+           (->> (p/validate-profile will-profile-raw
+                                    :syntax?        false
+                                    :relations?     false
+                                    :concept-rels?  false
+                                    :template-rels? true
+                                    :pattern-rels?  false)
+                keys
+                set)
+           (->> (p/validate-profile-coll [will-profile-raw]
+                                         :syntax?        false
+                                         :relations?     false
+                                         :concept-rels?  false
+                                         :template-rels? true
+                                         :pattern-rels?  false)
+                first
+                keys
+                set)))
+    (is (= #{:pattern-edge-errors
+             :pattern-cycle-errors}
+           (->> (p/validate-profile will-profile-raw
+                                    :syntax?        false
+                                    :relations?     false
+                                    :concept-rels?  false
+                                    :template-rels? false
+                                    :pattern-rels?  true)
+                keys
+                set)
+           (->> (p/validate-profile-coll [will-profile-raw]
+                                         :syntax?        false
+                                         :relations?     false
+                                         :concept-rels?  false
+                                         :template-rels? false
+                                         :pattern-rels?  true)
+                first
+                keys
+                set)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Error message tests
