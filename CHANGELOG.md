@@ -1,6 +1,9 @@
 # Change Log
 All notable changes to this project will be documented in this file. This change log follows the conventions of [keepachangelog.com](http://keepachangelog.com/).
 
+## 0.4.2 - 2022-03-03
+- Add `:concept-rels?`, `:template-rels?`, and `:pattern-rels?`, keyword arguments.
+
 ## 0.4.1 - 2022-02-25
 - Add `json-profile->edn` API function.
 
