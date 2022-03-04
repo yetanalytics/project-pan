@@ -167,17 +167,18 @@
          ;; Profile nodes
          pqueue (->> queue-objs (apply conj (empty-queue)))
          pvisit (->> visit-objs (map :id) set)]
-    (if-some [{pat-id :id
-               :as    pat} (peek pqueue)]
-      (if (contains? pvisit pat-id)
+    (if-some [{pat-tmp-id :id :as pat-tmp} (peek pqueue)]
+      (if (contains? pvisit pat-tmp-id)
         [pnodes pedges]
-        (let [new-pnode  (graph/node-with-attrs pat)
-              new-pedges (graph/edges-with-attrs pat)
-              next-pats  (pattern-children pat-map pat-id)]
+        (let [new-pnode  (graph/node-with-attrs pat-tmp)
+              ;; Don't get outgoing edges of templates
+              new-pedges (when (= "Pattern" (:type pat-tmp))
+                           (graph/edges-with-attrs pat-tmp))
+              next-pats  (pattern-children pat-map pat-tmp-id)]
           (recur (conj pnodes new-pnode)
                  (concat pedges new-pedges)
                  (apply conj (pop pqueue) next-pats)
-                 (conj pvisit pat-id))))
+                 (conj pvisit pat-tmp-id))))
       [pnodes pedges])))
 
 (defn- create-graph*
