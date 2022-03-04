@@ -1,6 +1,9 @@
 # Change Log
 All notable changes to this project will be documented in this file. This change log follows the conventions of [keepachangelog.com](http://keepachangelog.com/).
 
+## 0.4.3 - 2022-03-04
+- Fix bug where outgoing edges of profile-external StatementTemplates were incorrectly included in the Pattern graph.
+
 ## 0.4.2 - 2022-03-03
 - Add `:concept-rels?`, `:template-rels?`, and `:pattern-rels?`, keyword arguments.
 
