@@ -202,7 +202,21 @@
                                          :pattern-rels?  true)
                 first
                 keys
-                set)))))
+                set))))
+  (testing "Pattern relations only"
+    ;; Test case borrowed from DATASIM
+    (let [profile-coll
+          [cmi-profile-fix
+           (-> video-profile-raw
+               (assoc-in [:patterns 0 :sequence 0]
+                         "https://w3id.org/xapi/cmi5#initialized")
+               (assoc-in [:patterns 0 :sequence 2]
+                         "https://w3id.org/xapi/cmi5#terminated")
+               (assoc-in [:patterns 1 :alternates 6]
+                         "https://w3id.org/xapi/cmi5#completed"))]]
+      (is (nil? (p/validate-profile-coll profile-coll
+                                         :syntax? true
+                                         :pattern-rels? true))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Error message tests
