@@ -1,6 +1,11 @@
 # Change Log
 All notable changes to this project will be documented in this file. This change log follows the conventions of [keepachangelog.com](http://keepachangelog.com/).
 
+## 0.5.0 - TBD
+- TODO: Add API function to individually validate Concepts, StatementTemplates, and Patterns.
+- TODO: Change get `get-external-iris` to return _all_ IRIS, and in a more useful format.
+- TODO: Relax ID validation constraints to allow different versions of the same Profile to reuse IDs (with the exception of changed StatementTemplates and Patterns).
+
 ## 0.4.3 - 2022-03-04
 - Fix bug where outgoing edges of profile-external StatementTemplates were incorrectly included in the Pattern graph.
 
