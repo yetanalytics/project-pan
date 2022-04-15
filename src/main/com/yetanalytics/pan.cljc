@@ -1,5 +1,6 @@
 (ns com.yetanalytics.pan
-  (:require [com.yetanalytics.pan.objects.profile  :as profile]
+  (:require [clojure.spec.alpha                    :as s]
+            [com.yetanalytics.pan.objects.profile  :as profile]
             [com.yetanalytics.pan.objects.concept  :as concept]
             [com.yetanalytics.pan.objects.template :as template]
             [com.yetanalytics.pan.objects.pattern  :as pattern]
@@ -229,3 +230,39 @@
       (if-not errors?
         (println "Success!")
         (dorun (map (comp println errors/errors->string) profile-errs))))))
+
+(defn validate-object
+  "Perform syntax validation on `object` against the spec expected by
+   the `object-type` keyword. Other forms of validation are not (yet)
+   supported.
+   
+   Valid `object-type` keywords include
+   - `:concept`
+   - `:template`
+   - `:pattern`
+   
+   Valid `result` kwarg keywords include
+   - `:spec-error-data`
+   - `:path-string` (map of spec error path to error strings)
+   - `:string` (monolithic error string)
+   - `:println` (result of `:string` printed to stdout)"
+  [object object-type & {:keys [result] :or {result :spec-error-data}}]
+  (let [error-data (case object-type
+                     :concept
+                     (s/explain-data ::concept/concept object)
+                     :template
+                     (s/explain-data ::template/template object)
+                     :pattern
+                     (s/explain-data ::pattern/pattern object))]
+    (case result
+      :spec-error-data
+      error-data
+      :path-string
+      (:syntax-errors
+       (errors/errors->type-path-str-m {:syntax-errors error-data}))
+      :string
+      (errors/errors->string {:syntax-errors error-data})
+      :println
+      (if-not (some? error-data)
+        (println "Success!")
+        (println (errors/errors->string {:syntax-errors error-data}))))))
