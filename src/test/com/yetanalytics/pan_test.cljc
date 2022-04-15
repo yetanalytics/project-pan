@@ -337,24 +337,38 @@
 
 (deftest validate-object-test
   (testing "error messages on individual objects"
-    (is (nil? (p/validate-object sample-verb :concept)))
-    (is (some? (p/validate-object sample-verb :template)))
-    (is (some? (p/validate-object sample-verb :pattern)))
-    (is (string? (get (p/validate-object sample-verb :pattern
+    (is (nil? (p/validate-object sample-verb :type :concept)))
+    (is (some? (p/validate-object sample-verb :type :template)))
+    (is (some? (p/validate-object sample-verb :type :pattern)))
+    (testing "defaults to concept"
+      (is (nil? (p/validate-object sample-verb)))
+      (is (some? (p/validate-object (assoc sample-verb :type "Pattern")))))
+    (is (string? (get (p/validate-object sample-verb
+                                         :type :pattern
                                          :result :path-string)
                       [:type])))
     (is (= fix/verb-concept-error
            (p/validate-object (assoc sample-verb :type "FooBar")
-                              :concept
+                              :type :concept
+                              :result :string)
+           (p/validate-object (assoc sample-verb :type "FooBar")
                               :result :string)))
     (is (= fix/verb-template-error
-           (p/validate-object sample-verb :template :result :string)))
+           (p/validate-object sample-verb
+                              :type :template
+                              :result :string)))
     (is (= fix/verb-pattern-error
-           (p/validate-object sample-verb :pattern :result :string)))
-    (is (= (str (p/validate-object sample-verb :pattern :result :string)
+           (p/validate-object sample-verb
+                              :type :pattern
+                              :result :string)))
+    (is (= (str (p/validate-object sample-verb
+                                   :type :pattern
+                                   :result :string)
                 "\n") ; extra \n because of println
            (with-out-str
-             (p/validate-object sample-verb :pattern :result :println))))))
+             (p/validate-object sample-verb
+                                :type :pattern
+                                :result :println))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; External IRI retrieval tests

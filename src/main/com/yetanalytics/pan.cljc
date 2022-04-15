@@ -233,27 +233,39 @@
 
 (defn validate-object
   "Perform syntax validation on `object` against the spec expected by
-   the `object-type` keyword. Other forms of validation are not (yet)
-   supported.
+   the `:type` kwarg, or by its `:type` property if not provided
+   (ultimately defaulting to Concept). Other forms of validation are not
+   (yet) supported.
    
-   Valid `object-type` keywords include
+   Valid `:type` keywords include
    - `:concept`
    - `:template`
    - `:pattern`
    
-   Valid `result` kwarg keywords include
+   Valid `result` keywords include
    - `:spec-error-data`
    - `:path-string` (map of spec error path to error strings)
    - `:string` (monolithic error string)
    - `:println` (result of `:string` printed to stdout)"
-  [object object-type & {:keys [result] :or {result :spec-error-data}}]
-  (let [error-data (case object-type
-                     :concept
-                     (s/explain-data ::concept/concept object)
-                     :template
-                     (s/explain-data ::template/template object)
-                     :pattern
-                     (s/explain-data ::pattern/pattern object))]
+  [object & {object-type :type
+             result      :result
+             :or         {result :spec-error-data}}]
+  (let [error-data
+        (if (some? object-type)
+          (case object-type
+            :concept
+            (s/explain-data ::concept/concept object)
+            :template
+            (s/explain-data ::template/template object)
+            :pattern
+            (s/explain-data ::pattern/pattern object))
+          (case (:type object)
+            "StatementTemplate"
+            (s/explain-data ::template/template object)
+            "Pattern"
+            (s/explain-data ::pattern/pattern object)
+            ;; else default to Concept
+            (s/explain-data ::concept/concept object)))]
     (case result
       :spec-error-data
       error-data
