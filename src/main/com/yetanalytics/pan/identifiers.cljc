@@ -82,14 +82,31 @@
 ;; from the overall profile ID.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; Separate profile components by version
+(defn separate-profile-versions
+  [profile]
+  (let [{:keys [concepts templates patterns]} profile
+        profile*    (dissoc profile :versions :concepts :templates :patterns)
+        concepts-m  (group-by :inScheme concepts)
+        templates-m (group-by :inScheme templates)
+        patterns-m  (group-by :inScheme patterns)]
+    (reduce (fn [acc {version-id :id :as version}]
+              (->> (assoc profile*
+                          :versions  [version]
+                          :concepts  (vec (get concepts-m version-id))
+                          :templates (vec (get templates-m version-id))
+                          :patterns  (vec (get patterns-m version-id)))
+                   (conj acc version-id)))
+            []
+            (:versions profile))))
+
 ;; Validate that a single ID count is 1
 (s/def ::one-count (fn one? [n] (= 1 n)))
 
 ;; Validate that all ID counts are 1
 ;; Ideally IDs should be identifiers (IRIs, IRLs, etc.), but we do not check
 ;; for that here.
-(s/def ::distinct-ids
-  (s/map-of any? ::one-count))
+(s/def ::distinct-ids (s/map-of any? ::one-count))
 
 (defn validate-ids
   "Takes a Profile and validates that all ID values in it are distinct
