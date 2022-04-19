@@ -237,7 +237,7 @@
 
 (defn- expound-to-str
   [err-data]
-  (-> err-data distinct-problems e/errors->string))
+  (-> err-data distinct-problems (e/errors->string {:print-objects? true})))
 
 (deftest err-msg-tests
   (testing "syntax error messages"

@@ -154,15 +154,18 @@
       :spec-error-data
       (when errors? errors)
       :type-path-string
-      (cond-> errors errors? errors/errors->type-path-str-m)
+      (cond-> errors
+        errors? (errors/errors->type-path-str-m {:print-objects? true}))
       :type-string
-      (cond-> errors errors? errors/errors->type-str-m)
+      (cond-> errors
+        errors? (errors/errors->type-str-m {:print-objects? true}))
       :string
-      (cond-> errors errors? errors/errors->string)
+      (cond-> errors
+        errors? (errors/errors->string {:print-objects? true}))
       :print
       (if-not errors?
         (println "Success!")
-        (println (errors/errors->string errors))))))
+        (println (errors/errors->string errors {:print-objects? true}))))))
 
 (defn validate-profile-coll
   "Like `validate-profile`, but takes a `profile-coll` instead of a
@@ -218,13 +221,13 @@
       (when errors? (vec profile-errs))
       :type-path-string
       (cond->> profile-errs
-        errors? (mapv (comp not-empty errors/errors->type-path-str-m)))
+        errors? (mapv (comp not-empty #(errors/errors->type-path-str-m % {:print-objects? true}))))
       :type-string
       (cond->> profile-errs
-        errors? (mapv (comp not-empty errors/errors->type-str-m)))
+        errors? (mapv (comp not-empty #(errors/errors->type-str-m % {:print-objects? true}))))
       :string
       (cond->> profile-errs
-        errors? (mapv (comp not-empty errors/errors->string)))
+        errors? (mapv (comp not-empty #(errors/errors->string % {:print-objects? true}))))
       :print
       (if-not errors?
         (println "Success!")
