@@ -568,3 +568,101 @@ Detected 3 errors
        #?(:clj #"http\:\/\/adlnet\.gov\/expapi\/verbs\/completed"
           :cljs #"http\://adlnet\.gov/expapi/verbs/completed")
        "http://adlnet.gov/expapi/verbs/shared")))
+
+;; Object validation fixtures
+
+(def verb-concept-error
+  "
+**** Syntax Errors ****
+
+-- Spec failed --------------------
+
+Object:
+{:id \"https://w3id.org/xapi/adl/verbs/satisfied\",
+ :type \"FooBar\",
+ :inScheme \"https://w3id.org/xapi/cmi5/v1.0\",
+ :prefLabel {:en \"satisfied\"},
+ :definition
+ {:en
+  \"Indicates that the authority or activity provider determined the actor has fulfilled the criteria of the object or activity.\"}}
+
+should have a valid Concept type
+
+-------------------------
+Detected 1 error
+")
+
+(def verb-template-error
+  "
+**** Syntax Errors ****
+
+-- Spec failed --------------------
+
+Value:
+\"Verb\"
+
+of property:
+:type
+
+in object:
+{:id \"https://w3id.org/xapi/adl/verbs/satisfied\",
+ :type \"Verb\",
+ :inScheme \"https://w3id.org/xapi/cmi5/v1.0\",
+ :prefLabel {:en \"satisfied\"},
+ :definition
+ {:en
+  \"Indicates that the authority or activity provider determined the actor has fulfilled the criteria of the object or activity.\"}}
+
+should be: \"StatementTemplate\"
+
+-------------------------
+Detected 1 error
+")
+
+(def verb-pattern-error
+  "
+**** Syntax Errors ****
+
+-- Spec failed --------------------
+
+Value:
+\"Verb\"
+
+of property:
+:type
+
+in object:
+{:id \"https://w3id.org/xapi/adl/verbs/satisfied\",
+ :type \"Verb\",
+ :inScheme \"https://w3id.org/xapi/cmi5/v1.0\",
+ :prefLabel {:en \"satisfied\"},
+ :definition
+ {:en
+  \"Indicates that the authority or activity provider determined the actor has fulfilled the criteria of the object or activity.\"}}
+
+should be: \"Pattern\"
+
+-------------------------
+Detected 1 error
+")
+
+(def verb-pattern-error-no-obj
+  "
+**** Syntax Errors ****
+
+-- Spec failed --------------------
+
+Value:
+\"Verb\"
+
+of property:
+:type
+
+in object:
+\"https://w3id.org/xapi/adl/verbs/satisfied\"
+
+should be: \"Pattern\"
+
+-------------------------
+Detected 1 error
+")

@@ -1,5 +1,6 @@
 (ns com.yetanalytics.pan
-  (:require [com.yetanalytics.pan.objects.profile  :as profile]
+  (:require [clojure.spec.alpha                    :as s]
+            [com.yetanalytics.pan.objects.profile  :as profile]
             [com.yetanalytics.pan.objects.concept  :as concept]
             [com.yetanalytics.pan.objects.template :as template]
             [com.yetanalytics.pan.objects.pattern  :as pattern]
@@ -245,3 +246,55 @@
         (println "Success!")
         (dorun (map #(println (errors/errors->string % error-msg-opts))
                     profile-errs))))))
+
+(defn validate-object
+  "Perform syntax validation on `object` against the spec expected by
+   the `:type` kwarg, or by its `:type` property if not provided
+   (ultimately defaulting to Concept). Other forms of validation are not
+   (yet) supported.
+   
+   Valid `:type` keywords include
+   - `:concept`
+   - `:template`
+   - `:pattern`
+   
+   Valid `result` keywords include
+   - `:spec-error-data`
+   - `:path-string` (map of spec error path to error strings)
+   - `:string` (monolithic error string)
+   - `:println` (result of `:string` printed to stdout)"
+  [object & {object-type :type
+             :keys       [result error-msg-opts]
+             :or         {result         :spec-error-data
+                          error-msg-opts {:print-objects? true}}}]
+  (let [error-data
+        (if (some? object-type)
+          (case object-type
+            :concept
+            (s/explain-data ::concept/concept object)
+            :template
+            (s/explain-data ::template/template object)
+            :pattern
+            (s/explain-data ::pattern/pattern object))
+          (case (:type object)
+            "StatementTemplate"
+            (s/explain-data ::template/template object)
+            "Pattern"
+            (s/explain-data ::pattern/pattern object)
+            ;; else default to Concept
+            (s/explain-data ::concept/concept object)))]
+    (case result
+      :spec-error-data
+      error-data
+      :path-string
+      (:syntax-errors
+       (errors/errors->type-path-str-m {:syntax-errors error-data}
+                                       error-msg-opts))
+      :string
+      (errors/errors->string {:syntax-errors error-data}
+                             error-msg-opts)
+      :println
+      (if-not (some? error-data)
+        (println "Success!")
+        (println (errors/errors->string {:syntax-errors error-data}
+                                        error-msg-opts))))))
