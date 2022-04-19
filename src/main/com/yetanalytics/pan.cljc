@@ -104,7 +104,13 @@
    - `:type-path-string` Return a `{:err-type {:err-path err-string}}` map.
    - `:type-string`      Return a `{:err-type err-string}` map.
    - `:string`           Return the Expound-generated error string.
-   - `:print`            Print the error string to standard output."
+   - `:print`            Print the error string to standard output.
+                       
+   The `:error-msg-opts` keyword argument affects how error message strings are
+   formed. The argument is a map that takes the following key-val pairs:
+   - `:print-objects?` If `true` (default) display the entire object; if `false`
+                       only display the `:id` value. Affects both syntax and
+                       edge validation error messages."
   [profile & {:keys [syntax?
                      ids?
                      relations?
