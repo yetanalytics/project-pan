@@ -114,7 +114,8 @@
                      contexts?
                      extra-profiles
                      extra-contexts
-                     result]
+                     result
+                     error-msg-opts]
               :or {syntax?        true
                    ids?           false
                    relations?     false
@@ -124,7 +125,8 @@
                    contexts?      false
                    extra-profiles []
                    extra-contexts {}
-                   result         :spec-error-data}}]
+                   result         :spec-error-data
+                   error-msg-opts {:print-objects? true}}}]
   (let [?rel-opts (not-empty
                    (cond-> {}
                      (or relations? concept-rels?)  (assoc :concepts? true)
@@ -155,17 +157,17 @@
       (when errors? errors)
       :type-path-string
       (cond-> errors
-        errors? (errors/errors->type-path-str-m {:print-objects? true}))
+        errors? (errors/errors->type-path-str-m error-msg-opts))
       :type-string
       (cond-> errors
-        errors? (errors/errors->type-str-m {:print-objects? true}))
+        errors? (errors/errors->type-str-m error-msg-opts))
       :string
       (cond-> errors
-        errors? (errors/errors->string {:print-objects? true}))
+        errors? (errors/errors->string error-msg-opts))
       :print
       (if-not errors?
         (println "Success!")
-        (println (errors/errors->string errors {:print-objects? true}))))))
+        (println (errors/errors->string errors error-msg-opts))))))
 
 (defn validate-profile-coll
   "Like `validate-profile`, but takes a `profile-coll` instead of a
@@ -184,7 +186,8 @@
                           contexts?
                           extra-profiles
                           extra-contexts
-                          result]
+                          result
+                          error-msg-opts]
                    :or {syntax?        true
                         ids?           false
                         relations?     false
@@ -194,7 +197,8 @@
                         contexts?      false
                         extra-profiles []
                         extra-contexts {}
-                        result         :spec-error-data}}]
+                        result         :spec-error-data
+                        error-msg-opts {:print-objects? true}}}]
   (let [profiles-set (set profile-coll)
         profile-errs (map (fn [profile]
                             (let [extra-profiles*
@@ -211,8 +215,7 @@
                                :pattern-rels?  pattern-rels?
                                :contexts?      contexts?
                                :extra-profiles extra-profiles*
-                               :extra-contexts extra-contexts
-                               :result         :spec-error-data)))
+                               :extra-contexts extra-contexts)))
                           profile-coll)
         errors?      (not (every? (fn [perr] (every? nil? (vals perr)))
                                   profile-errs))]
@@ -221,14 +224,18 @@
       (when errors? (vec profile-errs))
       :type-path-string
       (cond->> profile-errs
-        errors? (mapv (comp not-empty #(errors/errors->type-path-str-m % {:print-objects? true}))))
+        errors?
+        (mapv #(not-empty (errors/errors->type-path-str-m % error-msg-opts))))
       :type-string
       (cond->> profile-errs
-        errors? (mapv (comp not-empty #(errors/errors->type-str-m % {:print-objects? true}))))
+        errors?
+        (mapv #(not-empty (errors/errors->type-str-m % error-msg-opts))))
       :string
       (cond->> profile-errs
-        errors? (mapv (comp not-empty #(errors/errors->string % {:print-objects? true}))))
+        errors?
+        (mapv #(not-empty (errors/errors->string % error-msg-opts))))
       :print
       (if-not errors?
         (println "Success!")
-        (dorun (map (comp println errors/errors->string) profile-errs))))))
+        (dorun (map #(println (errors/errors->string % error-msg-opts))
+                    profile-errs))))))
