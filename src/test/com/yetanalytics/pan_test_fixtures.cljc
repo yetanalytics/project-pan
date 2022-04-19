@@ -645,3 +645,24 @@ should be: \"Pattern\"
 -------------------------
 Detected 1 error
 ")
+
+(def verb-pattern-error-no-obj
+  "
+**** Syntax Errors ****
+
+-- Spec failed --------------------
+
+Value:
+\"Verb\"
+
+of property:
+:type
+
+in object:
+\"https://w3id.org/xapi/adl/verbs/satisfied\"
+
+should be: \"Pattern\"
+
+-------------------------
+Detected 1 error
+")

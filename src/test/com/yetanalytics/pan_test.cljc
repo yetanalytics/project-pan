@@ -368,6 +368,11 @@
            (p/validate-object sample-verb
                               :type :pattern
                               :result :string)))
+    (is (= fix/verb-pattern-error-no-obj
+           (p/validate-object sample-verb
+                              :type :pattern
+                              :result :string
+                              :error-msg-opts {:print-objects? false})))
     (is (= (str (p/validate-object sample-verb
                                    :type :pattern
                                    :result :string)
