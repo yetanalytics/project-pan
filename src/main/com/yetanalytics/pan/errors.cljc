@@ -294,9 +294,13 @@
 
 (defn- ppr-str
   "Format `obj` according to clojure.core/pprint and returns a
-   string."
-  [obj]
-  (pprint/write obj :stream nil))
+   string. If `id-only?` is true, then pprint the ID."
+  ([obj]
+   (ppr-str obj true))
+  ([obj print-obj?]
+   (if print-obj?
+     (pprint/write obj :stream nil)
+     (pprint/write (:id obj) :stream nil))))
 
 (defn- get-prop-from-path
   "Get the erroneous property from a error data path."
@@ -305,7 +309,11 @@
 
 (defn- value-str-obj
   "Custom value string fn for errors on objects."
-  [_ profile path value]
+  [{:keys [print-objects?]}
+   _
+   profile
+   path
+   value]
   (cond
     ;; Error occured over the entire Profile, Concept, Template, or Pattern
     (or (= [] path)
@@ -313,7 +321,7 @@
     (let [obj (-> value elide-arrs map->sorted-map)]
       (fmt (str "Object:\n"
                 "%s")
-           (ppr-str obj)))
+           (ppr-str obj print-objects?)))
     ;; Error occured inside a Concept, Template, or Pattern
     (#{:concepts :templates :patterns} (first path))
     (let [path' (subvec path 0 2)
@@ -328,7 +336,7 @@
                 "%s")
            (ppr-str value)
            (pr-str (get-prop-from-path path))
-           (ppr-str obj)))
+           (ppr-str obj print-objects?)))
     ;; Error occured on Profile metadata or some other nested object
     :else
     (let [obj (-> profile elide-arrs map->sorted-map)]
@@ -342,11 +350,11 @@
                 "%s")
            (ppr-str value)
            (pr-str (get-prop-from-path path))
-           (ppr-str obj)))))
+           (ppr-str obj print-objects?)))))
 
 (defn- value-str-id
   "Custom value string fn for duplicate ID errors"
-  [_ _ path value]
+  [_opts _ _ path value]
   (fmt (str "Identifier:\n"
             "%s\n"
             "\n"
@@ -357,7 +365,7 @@
 
 (defn- value-str-version
   "Custom value string fn for inScheme error messages."
-  [_ _ _ {:keys [id inScheme version-ids] :as _value}]
+  [_opts _ _ _ {:keys [id inScheme version-ids] :as _value}]
   (fmt (str "InScheme IRI:\n"
             "%s\n"
             "\n"
@@ -372,74 +380,109 @@
 
 (defn- value-str-edge
   "Custom value string fn for IRI link error messages."
-  [_ _ _ {:keys [src src-type dest dest-type] :as value}]
+  [{:keys [print-objects?] :as _opts}
+   _spec-name
+   _form
+   _path
+   {val-type :type ; Don't shadow clojure.core/type
+    :keys [src
+           src-type
+           dest
+           dest-type
+           ;; Concepts and Statement Templates
+           src-version
+           dest-version
+           ;; Patterns
+           src-primary
+           src-indegree
+           src-outdegree
+           dest-property] :as _value}]
   (if (= "Pattern" src-type)
     ;; Patterns
-    (let [{:keys [src-primary src-indegree src-outdegree dest-property]}
-          value]
+    (let [src-pl  (if (= 1 src-indegree) "" "s")
+          dst-pl  (if (= 1 src-outdegree) "" "s")
+          src-str (if print-objects?
+                    (fmt (str "{:id %s,\n"
+                              " :type %s,\n"
+                              " :primary %s,\n"
+                              " ...}")
+                         (pr-str src)
+                         (pr-str src-type)
+                         ;; cljs does not support "%b"
+                         (pr-str src-primary))
+                    (pr-str src))
+          dst-str (if print-objects?
+                    (fmt (str "{:id %s,\n"
+                              " :type %s,\n"
+                              " %s ...,\n"
+                              " ...}")
+                         (pr-str dest)
+                         (pr-str dest-type)
+                         (pr-str dest-property))
+                    (pr-str dest))]
       (fmt (str "Pattern:\n"
-                "{:id %s,\n"
-                " :type %s,\n"
-                " :primary %s,\n"
-                " ...}\n"
+                "%s\n"
                 "\n"
                 "that links to object:\n"
-                "{:id %s,\n"
-                " :type %s,\n"
-                " %s ...,\n"
-                " ...}\n"
+                "%s\n"
                 "\n"
                 "via the property:\n"
                 "%s\n"
                 "\n"
                 "and is used %d time%s to link out to %d object%s")
-           (pr-str src)
-           (pr-str src-type)
-           (pr-str src-primary) ; cljs does not support "%b"
-           (pr-str dest)
-           (pr-str dest-type)
-           (pr-str dest-property)
-           (pr-str (:type value)) ; Don't shadow clojure.core/type
+           src-str
+           dst-str
+           (pr-str val-type)
            src-indegree
-           (if (= 1 src-indegree) "" "s")
+           src-pl
            src-outdegree
-           (if (= 1 src-outdegree) "" "s")))
+           dst-pl))
     ;; Concepts and Statement Templates
-    (let [{:keys [src-version dest-version]} value]
+    (let [typ-str (if (= "StatementTemplate" src-type)
+                    "Statement Template"
+                    "Concept")
+          src-str (if print-objects?
+                    (fmt (str "{:id %s,\n"
+                              " :type %s,\n"
+                              " :inScheme %s,\n"
+                              " ...}")
+                         (pr-str src)
+                         (pr-str src-type)
+                         (pr-str src-version))
+                    (pr-str src))
+          dst-str (if print-objects?
+                    (fmt (str "{:id %s,\n"
+                              " :type %s,\n"
+                              " :inScheme %s,\n"
+                              " ...}")
+                         (pr-str dest)
+                         (pr-str dest-type)
+                         (pr-str dest-version))
+                    (pr-str dest))]
       (fmt (str "%s:\n"
-                "{:id %s,\n"
-                " :type %s,\n"
-                " :inScheme %s,\n"
-                " ...}\n"
+                "%s\n"
                 "\n"
                 "that links to object:\n"
-                "{:id %s,\n"
-                " :type %s,\n"
-                " :inScheme %s,\n"
-                " ...}\n"
+                "%s\n"
                 "\n"
                 "via the property:\n"
                 "%s")
-           (if (= "StatementTemplate" src-type) "Statement Template" "Concept")
-           (pr-str src)
-           (pr-str src-type)
-           (pr-str src-version)
-           (pr-str dest)
-           (pr-str dest-type)
-           (pr-str dest-version)
-           (pr-str (:type value))))))
+           typ-str
+           src-str
+           dst-str
+           (pr-str val-type)))))
 
 (defn- value-str-scc
   "Custom value string fn for strongly connected component errors.
    Used for pattern cycle errors."
-  [_ _ _ value]
+  [_opts _ _ _ value]
   (fmt (str "The following Patterns:\n"
             "%s")
        (->> value sort (map pr-str) (cstr/join "\n"))))
 
 (defn- value-str-context-key
   "Custom value string fn to print errors on context expanded keys."
-  [_ profile path value]
+  [_opts _ profile path value]
   (let [object (->> path
                     butlast
                     (get-in profile)
@@ -456,48 +499,48 @@
 (defn- custom-printer
   "Returns a printer based on `error-type`. A `nil` value will
   result in the default return value of `value-str-obj`."
-  [& [error-type]]
+  [error-type opts]
   (let [error-type (if (nil? error-type) :else error-type)
         make-opts  (fn [f] {:print-specs? false :value-str-fn f})]
     (case error-type
       ;; New
       :syntax-errors
-      (exp/custom-printer (make-opts value-str-obj))
+      (exp/custom-printer (make-opts (partial value-str-obj opts)))
       :id-errors
-      (exp/custom-printer (make-opts value-str-id))
+      (exp/custom-printer (make-opts (partial value-str-id opts)))
       :in-scheme-errors
-      (exp/custom-printer (make-opts value-str-version))
+      (exp/custom-printer (make-opts (partial value-str-version opts)))
       :concept-edge-errors
-      (exp/custom-printer (make-opts value-str-edge))
+      (exp/custom-printer (make-opts (partial value-str-edge opts)))
       :template-edge-errors
-      (exp/custom-printer (make-opts value-str-edge))
+      (exp/custom-printer (make-opts (partial value-str-edge opts)))
       :pattern-edge-errors
-      (exp/custom-printer (make-opts value-str-edge))
+      (exp/custom-printer (make-opts (partial value-str-edge opts)))
       :pattern-cycle-errors
-      (exp/custom-printer (make-opts value-str-scc))
+      (exp/custom-printer (make-opts (partial value-str-scc opts)))
       :context-errors
-      (exp/custom-printer (make-opts value-str-context-key))
+      (exp/custom-printer (make-opts (partial value-str-context-key opts)))
       ;; Old
       :id
-      (exp/custom-printer (make-opts value-str-id))
+      (exp/custom-printer (make-opts (partial value-str-id opts)))
       :in-scheme
-      (exp/custom-printer (make-opts value-str-version))
+      (exp/custom-printer (make-opts (partial value-str-version opts)))
       :edge
-      (exp/custom-printer (make-opts value-str-edge))
+      (exp/custom-printer (make-opts (partial value-str-edge opts)))
       :cycle
-      (exp/custom-printer (make-opts value-str-scc))
+      (exp/custom-printer (make-opts (partial value-str-scc opts)))
       :context
-      (exp/custom-printer (make-opts value-str-context-key))
+      (exp/custom-printer (make-opts (partial value-str-context-key opts)))
       :else
-      (exp/custom-printer (make-opts value-str-obj)))))
+      (exp/custom-printer (make-opts (partial value-str-obj opts))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Transform error map
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn error->str
-  [error-map error-type]
-  (let [print-fn (custom-printer error-type)]
+  [error-map error-type opts]
+  (let [print-fn (custom-printer error-type opts)]
     (with-out-str (print-fn error-map))))
 
 (defn- regroup-exp-data
@@ -525,12 +568,12 @@
 (defn errors->type-path-str-m
   "Given a map `{:err-type spec-err}`, return a map of the form
    `{:err-type {:spec-path err-str}}`"
-  [spec-errs-map]
+  [spec-errs-map opts]
   (reduce-kv (fn [m k v]
                (if (some? v)
                  (->> (regroup-exp-data v)
                       (reduce-kv (fn [m' k' v']
-                                   (assoc m' k' (error->str v' k)))
+                                   (assoc m' k' (error->str v' k opts)))
                                  {})
                       (assoc m k))
                  m))
@@ -540,21 +583,22 @@
 (defn errors->type-str-m
   "Given a map `{:err-type spec-err}`, return a map of the form
    `{:err-type err-str}`."
-  [spec-errs-map]
+  [spec-errs-map opts]
   (reduce-kv (fn [m k v]
                (cond-> m
                  (some? v)
-                 (assoc k (-> v (error->str k)))))
+                 (assoc k (-> v (error->str k opts)))))
              {}
              spec-errs-map))
 
 (defn errors->string
   "Given a map `{:err-type spec-err}`, return an error string."
-  [spec-errors-map]
+  [spec-errors-map opts]
   (reduce-kv (fn [s k v]
                (cond-> s
                  (some? v)
-                 (str "\n**** " (kw->header k) " ****\n\n" (error->str v k))))
+                 (str "\n**** " (kw->header k) " ****\n\n"
+                      (error->str v k opts))))
              ""
              spec-errors-map))
 
@@ -567,9 +611,11 @@
    printer is determined via `error-type`; if not supplied, it assumes
    that it is a syntax error. Prints `error-label` as the header."
   ([error-map error-label]
-   (expound-error error-map error-label nil))
+   (expound-error error-map error-label nil nil))
   ([error-map error-label error-type]
-   (let [print-fn (custom-printer error-type)]
+   (expound-error error-map error-label error-type nil))
+  ([error-map error-label error-type opts]
+   (let [print-fn (custom-printer error-type opts)]
      (println (str "\n**** " error-label " ****\n"))
      (print-fn error-map))))
 
@@ -590,20 +636,21 @@
            template-edge-errors
            pattern-edge-errors
            pattern-cycle-errors
-           context-errors]}]
+           context-errors]}
+   opts]
   (when syntax-errors
-    (expound-error syntax-errors "Syntax Errors"))
+    (expound-error syntax-errors "Syntax Errors" nil opts))
   (when id-errors
-    (expound-error id-errors "ID Errors" :id))
+    (expound-error id-errors "ID Errors" :id opts))
   (when in-scheme-errors
-    (expound-error in-scheme-errors "Version Errors" :in-scheme))
+    (expound-error in-scheme-errors "Version Errors" :in-scheme opts))
   (when concept-edge-errors
-    (expound-error concept-edge-errors "Concept Edge Errors" :edge))
+    (expound-error concept-edge-errors "Concept Edge Errors" :edge opts))
   (when template-edge-errors
-    (expound-error template-edge-errors "Template Edge Errors" :edge))
+    (expound-error template-edge-errors "Template Edge Errors" :edge opts))
   (when pattern-edge-errors
-    (expound-error pattern-edge-errors "Pattern Edge Errors" :edge))
+    (expound-error pattern-edge-errors "Pattern Edge Errors" :edge opts))
   (when pattern-cycle-errors
-    (expound-error pattern-cycle-errors "Pattern Cycle Errors" :cycle))
+    (expound-error pattern-cycle-errors "Pattern Cycle Errors" :cycle opts))
   (when context-errors
-    (expound-error context-errors "Context Errors" :context)))
+    (expound-error context-errors "Context Errors" :context opts)))
