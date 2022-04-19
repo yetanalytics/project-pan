@@ -237,7 +237,7 @@
 
 (defn- expound-to-str
   [err-data]
-  (-> err-data distinct-problems e/errors->string))
+  (-> err-data distinct-problems (e/errors->string {:print-objects? true})))
 
 (deftest err-msg-tests
   (testing "syntax error messages"
@@ -298,7 +298,14 @@
                      (p/validate-profile-coll :syntax? false
                                               :relations? true
                                               :result :string)
-                     first)))))
+                     first)))
+    (is (not= (-> [will-profile-raw scorm-profile-raw]
+                  (p/validate-profile-coll :result :string)
+                  first)
+              (-> [will-profile-raw scorm-profile-raw]
+                  (p/validate-profile-coll :result :string
+                                           :error-msg-opts {:print-objects? false})
+                  first)))))
 
 (deftest success-msg-test
   (testing "error messages on fixed profiles"
