@@ -17,3 +17,7 @@
       (true? deprecated)
       ;; Ignore if related property is not present
       true)))
+
+(defmulti get-iris
+  "Given an object, return a map of keys `:type/property` to IRI coll."
+  :type)

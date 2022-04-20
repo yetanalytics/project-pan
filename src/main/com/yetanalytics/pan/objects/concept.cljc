@@ -1,8 +1,10 @@
 (ns com.yetanalytics.pan.objects.concept
   (:require
    [clojure.spec.alpha               :as s]
+   [clojure.set                      :as cset]
    [com.yetanalytics.pan.graph       :as graph]
    [com.yetanalytics.pan.identifiers :as ids]
+   [com.yetanalytics.pan.utils.spec  :as u]
    [com.yetanalytics.pan.objects.concepts.verb                       :as v]
    [com.yetanalytics.pan.objects.concepts.activity                   :as a]
    [com.yetanalytics.pan.objects.concepts.activity-type              :as at]
@@ -12,7 +14,8 @@
    [com.yetanalytics.pan.objects.concepts.extensions.activity        :as ae]
    [com.yetanalytics.pan.objects.concepts.resources.state            :as sr]
    [com.yetanalytics.pan.objects.concepts.resources.agent-profile    :as agr]
-   [com.yetanalytics.pan.objects.concepts.resources.activity-profile :as acr]))
+   [com.yetanalytics.pan.objects.concepts.resources.activity-profile :as acr]
+   [com.yetanalytics.pan.objects.concepts.util                       :as cu]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Concept Specs
@@ -37,6 +40,32 @@
 (s/def ::concepts (s/coll-of ::concept :type vector? :min-count 1))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Concept IRIs
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn- get-internal-iris-set
+  [concepts]
+  (set (ids/objs->ids concepts)))
+
+(defn- get-iris-map*
+  [concepts]
+  (->> concepts
+       (map cu/get-iris)
+       (apply merge-with cset/union)))
+
+(defn get-iris-map
+  "Return a map between namespaced Concept properties and Concept IRI sets.
+   `?filter-set-fn`, if not `nil`, will filter each set using the set of
+   Concept IRIs internal to the Profile (`cset/difference` will filter out
+   internal IRIs, `cset/intersection` will filter out external ones)."
+  [{:keys [concepts] :as _profile} ?filter-set-fn]
+  (let [iris-map (get-iris-map* concepts)]
+    (if ?filter-set-fn
+      (let [filter-set (get-internal-iris-set concepts)]
+        (u/filter-map-set-values iris-map filter-set ?filter-set-fn))
+      iris-map)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Concept Graph Creation
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -47,18 +76,6 @@
    :exactMatch
    :recommendedActivityTypes
    :recommendedVerbs])
-
-(def external-iri-keys
-  [:broadMatch :narrowMatch :relatedMatch :exactMatch
-   :recommendedActivityTypes :recommendedVerbs
-   :context :schema])
-
-(defn get-external-iris
-  "Return the external IRIs from the Concepts of `profile`."
-  [profile]
-  (let [{:keys [concepts]} profile
-        id-filter-set      (set (ids/objs->ids concepts))]
-    (ids/objs->out-ids-map concepts external-iri-keys id-filter-set)))
 
 (defn- get-graph-concepts
   [profile extra-profiles]

@@ -48,3 +48,20 @@
                     (map #(vector id % {:type :related}) related)
                     (map #(vector id % {:type :relatedMatch}) relatedMatch)
                     (map #(vector id % {:type :exactMatch}) exactMatch)))))
+
+(defmethod cu/get-iris "AttachmentUsageType"
+  [{:keys [broader
+           broadMatch
+           narrower
+           narrowMatch
+           related
+           relatedMatch
+           exactMatch]}]
+  (cond-> {}
+    broader      (assoc :attachment-usage-type/broader (set broader))
+    broadMatch   (assoc :attachment-usage-type/broadMatch (set broadMatch))
+    narrower     (assoc :attachment-usage-type/narrower (set narrower))
+    narrowMatch  (assoc :attachment-usage-type/narrowMatch (set narrowMatch))
+    related      (assoc :attachment-usage-type/related (set related))
+    relatedMatch (assoc :attachment-usage-type/relatedMatch (set relatedMatch))
+    exactMatch   (assoc :attachment-usage-type/exactMatch (set exactMatch))))

@@ -48,3 +48,11 @@
 ;; TODO: LRS clients sending Document resources checks required by the spec
 ;; - id
 ;; - contentType
+
+(defmethod cu/get-iris "ActivityProfileResource"
+  [{:keys [context schema]}]
+  (cond-> {}
+    context
+    (assoc :context #{context})
+    schema
+    (assoc :schema #{schema})))

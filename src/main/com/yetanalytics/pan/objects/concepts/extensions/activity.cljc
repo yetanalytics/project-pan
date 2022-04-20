@@ -52,3 +52,14 @@
 
 ;; TODO: get string from iri
 ;; schema - json-schema string at other end of iri
+
+(defmethod cu/get-iris "ActivityExtension"
+  [{:keys [recommendedActivityTypes context schema]}]
+  (cond-> {}
+    recommendedActivityTypes
+    (assoc :activity-extension/recommendedActivityTypes
+           (set recommendedActivityTypes))
+    context
+    (assoc :context #{context})
+    schema
+    (assoc :schema #{schema})))

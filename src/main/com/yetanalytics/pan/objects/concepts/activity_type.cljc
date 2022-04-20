@@ -48,3 +48,20 @@
                     (map #(vector id % {:type :related}) related)
                     (map #(vector id % {:type :relatedMatch}) relatedMatch)
                     (map #(vector id % {:type :exactMatch}) exactMatch)))))
+
+(defmethod cu/get-iris "ActivityType"
+  [{:keys [broader
+           broadMatch
+           narrower
+           narrowMatch
+           related
+           relatedMatch
+           exactMatch]}]
+  (cond-> {}
+    broader      (assoc :activity-type/broader (set broader))
+    broadMatch   (assoc :activity-type/broadMatch (set broadMatch))
+    narrower     (assoc :activity-type/narrower (set narrower))
+    narrowMatch  (assoc :activity-type/narrowMatch (set narrowMatch))
+    related      (assoc :activity-type/related (set related))
+    relatedMatch (assoc :activity-type/relatedMatch (set relatedMatch))
+    exactMatch   (assoc :activity-type/exactMatch (set exactMatch))))

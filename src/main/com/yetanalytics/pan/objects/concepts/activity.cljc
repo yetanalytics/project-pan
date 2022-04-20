@@ -4,7 +4,8 @@
             [xapi-schema.spec]
             [com.yetanalytics.pan.axioms  :as ax]
             [com.yetanalytics.pan.context :as ctx]
-            [com.yetanalytics.pan.graph   :as graph]))
+            [com.yetanalytics.pan.graph   :as graph]
+            [com.yetanalytics.pan.objects.concepts.util :as cu]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Activity
@@ -65,3 +66,9 @@
 
 ;; Currently does nothing
 (defmethod graph/edges-with-attrs "Activity" [_] [])
+
+(defmethod cu/get-iris "Activity"
+  [activity]
+  (if-some [activity-type (get-in activity [:activityDefinition :type])]
+    {:activity/type [activity-type]}
+    {}))

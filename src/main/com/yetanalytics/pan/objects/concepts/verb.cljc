@@ -48,3 +48,20 @@
                     (map #(vector id % {:type :related}) related)
                     (map #(vector id % {:type :relatedMatch}) relatedMatch)
                     (map #(vector id % {:type :exactMatch}) exactMatch)))))
+
+(defmethod cu/get-iris "Verb"
+  [{:keys [broader
+           broadMatch
+           narrower
+           narrowMatch
+           related
+           relatedMatch
+           exactMatch]}]
+  (cond-> {}
+    broader      (assoc :verb/broader (set broader))
+    broadMatch   (assoc :verb/broadMatch (set broadMatch))
+    narrower     (assoc :verb/narrower (set narrower))
+    narrowMatch  (assoc :verb/narrowMatch (set narrowMatch))
+    related      (assoc :verb/related (set related))
+    relatedMatch (assoc :verb/relatedMatch (set relatedMatch))
+    exactMatch   (assoc :verb/exactMatch (set exactMatch))))

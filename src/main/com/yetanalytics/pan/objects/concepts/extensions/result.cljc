@@ -51,3 +51,14 @@
 
 ;; TODO: get string from iri
 ;; schema - json-schema string at other end of iri
+
+(defmethod cu/get-iris "ResultExtension"
+  [{:keys [recommendedVerbs context schema]}]
+  (cond-> {}
+    recommendedVerbs
+    (assoc :result-extension/recommendedVerbs
+           (set recommendedVerbs))
+    context
+    (assoc :context #{context})
+    schema
+    (assoc :schema #{schema})))
