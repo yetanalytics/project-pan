@@ -82,23 +82,39 @@
 ;; from the overall profile ID.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; Separate profile components by version
-(defn separate-profile-versions
-  [profile]
-  (let [{:keys [concepts templates patterns]} profile
-        profile*    (dissoc profile :versions :concepts :templates :patterns)
-        concepts-m  (group-by :inScheme concepts)
-        templates-m (group-by :inScheme templates)
-        patterns-m  (group-by :inScheme patterns)]
-    (reduce (fn [acc {version-id :id :as version}]
-              (->> (assoc profile*
-                          :versions  [version]
-                          :concepts  (vec (get concepts-m version-id))
-                          :templates (vec (get templates-m version-id))
-                          :patterns  (vec (get patterns-m version-id)))
-                   (conj acc version-id)))
-            []
-            (:versions profile))))
+(defn- dissoc-concept-props
+  "Remove Concept properties that may change across versions without
+   changing its fundamental nature."
+  [concept]
+  (dissoc concept :inScheme :deprecated))
+
+(defn- dissoc-template-props
+  "Remove StatementTemplate properties that may change across versions without
+   changing its fundamental nature, such as rule scopeNotes."
+  [{:keys [rules] :as template}]
+  (let [rules* (mapv (fn [rule] (dissoc rule :scopeNote)) rules)]
+    (-> template
+        (dissoc :inScheme :deprecated)
+        (assoc :rules rules*))))
+
+(defn- dissoc-pattern-props
+  "Remove Pattern properties that may change across versions without
+   changing its fundamental nature."
+  [pattern]
+  (dissoc pattern :inScheme :deprecated))
+
+(defn- dedupe-profile-objects
+  "Deduplicate Concepts, Templates, and Patterns that are identical
+   between Profile versions (other than their inScheme, deprecated,
+   and scopeNote properties)."
+  [{:keys [concepts templates patterns] :as profile}]
+  (let [concepts*  (-> concepts dissoc-concept-props distinct vec)
+        templates* (-> templates dissoc-template-props distinct vec)
+        patterns*  (-> patterns dissoc-pattern-props distinct vec)]
+    (assoc profile
+           :concepts concepts*
+           :templates templates*
+           :patterns patterns*)))
 
 ;; Validate that a single ID count is 1
 (s/def ::one-count (fn one? [n] (= 1 n)))
@@ -110,16 +126,20 @@
 
 (defn validate-ids
   "Takes a Profile and validates that all ID values in it are distinct
-   (including across the extra Profiles). Returns nil on success, or
-   spec error data on failure."
+   (including across the extra Profiles), excepting IDs of objects that
+   are identical save for inScheme, deprecated, or scopeNote properties.
+   Returns `nil` on success, or spec error data on failure."
   ([profile]
-   (let [profile-ids (profile->id-seq profile)
+   (let [profile*    (dedupe-profile-objects profile)
+         profile-ids (profile->id-seq profile*)
          counts      (count-ids profile-ids)]
      (s/explain-data ::distinct-ids counts)))
   ([profile extra-profiles]
-   (let [profile-ids (profile->id-seq profile)
+   (let [prof        (dedupe-profile-objects profile)
+         extra-profs (mapv dedupe-profile-objects extra-profiles) 
+         profile-ids (profile->id-seq prof)
          prof-id-set (set profile-ids)
-         extra-ids   (mapcat profile->id-seq extra-profiles)
+         extra-ids   (mapcat profile->id-seq extra-profs)
          ;; We count IDs in all the Profiles, but only validate the
          ;; counts in the main Profile.
          counts      (->> (concat profile-ids extra-ids)
