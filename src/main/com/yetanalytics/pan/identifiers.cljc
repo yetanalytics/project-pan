@@ -91,11 +91,10 @@
 (defn- dissoc-template-props
   "Remove StatementTemplate properties that may change across versions without
    changing its fundamental nature, such as rule scopeNotes."
-  [{:keys [rules] :as template}]
-  (let [rules* (mapv (fn [rule] (dissoc rule :scopeNote)) rules)]
-    (-> template
-        (dissoc :inScheme :deprecated)
-        (assoc :rules rules*))))
+  [template]
+  (cond-> (dissoc template :inScheme :deprecated)
+    (contains? template :rules)
+    (update :rules (fn [rules] (mapv #(dissoc % :scopeNote) rules)))))
 
 (defn- dissoc-pattern-props
   "Remove Pattern properties that may change across versions without
@@ -103,14 +102,14 @@
   [pattern]
   (dissoc pattern :inScheme :deprecated))
 
-(defn- dedupe-profile-objects
+(defn dedupe-profile-objects
   "Deduplicate Concepts, Templates, and Patterns that are identical
    between Profile versions (other than their inScheme, deprecated,
    and scopeNote properties)."
   [{:keys [concepts templates patterns] :as profile}]
-  (let [concepts*  (-> concepts dissoc-concept-props distinct vec)
-        templates* (-> templates dissoc-template-props distinct vec)
-        patterns*  (-> patterns dissoc-pattern-props distinct vec)]
+  (let [concepts*  (->> concepts (map dissoc-concept-props) distinct vec)
+        templates* (->> templates (map dissoc-template-props) distinct vec)
+        patterns*  (->> patterns (map dissoc-pattern-props) distinct vec)]
     (assoc profile
            :concepts concepts*
            :templates templates*

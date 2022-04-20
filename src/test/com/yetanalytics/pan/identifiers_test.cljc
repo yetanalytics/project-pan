@@ -84,6 +84,51 @@
            (id/filter-by-ids-kv #{"Taeyeon" "Taeyang"}
                                 (id/count-ids (id/objs->ids snsd-ot8)))))))
 
+(deftest dedupe-profile-objects-test
+  (testing "dedupe-profile-objects function"
+    (is (= {:id "https://w3id.org/xapi/catch"
+            :concepts [{:id "https://w3id.org/catch/v1/some-verb"}
+                       {:id "https://w3id.org/catch/v2/some-verb"
+                        :broader ["https://w3id.org/catch/a-verb"]}]
+            :templates [{:id "https://w3id.org/catch/v1/some-template"
+                         :verb ["https://w3id.org/catch/a-verb"]}
+                        {:id "https://w3id.org/catch/v2/some-template"
+                         :verb ["https://w3id.org/catch/a-verb"]
+                         :rules [{:location "$.foo"
+                                  :presence "included"}]}]
+            :patterns [{:id "https://w3id.org/catch/v1/some-pattern"
+                        :alternates ["https://w3id.org/catch/a-template"]}
+                       {:id "https://w3id.org/catch/v2/some-pattern"
+                        :alternates ["https://w3id.org/catch/a-template"]}]}
+           (id/dedupe-profile-objects
+            {:id "https://w3id.org/xapi/catch"
+             :concepts [{:id "https://w3id.org/catch/v1/some-verb"
+                         :inScheme "https://w3id.org/catch/v1"
+                         :deprecated false}
+                        {:id "https://w3id.org/catch/v2/some-verb"
+                         :inScheme "https://w3id.org/catch/v2"
+                         :deprecated true
+                         :broader ["https://w3id.org/catch/a-verb"]}]
+             :templates [{:id "https://w3id.org/catch/v1/some-template"
+                          :inScheme "https://w3id.org/catch/v1"
+                          :deprecated false
+                          :verb ["https://w3id.org/catch/a-verb"]}
+                         {:id "https://w3id.org/catch/v2/some-template"
+                          :inScheme "https://w3id.org/catch/v2"
+                          :deprecated true
+                          :verb ["https://w3id.org/catch/a-verb"]
+                          :rules [{:location "$.foo"
+                                   :presence "included"
+                                   :scopeNote ["Scope Note One"]}]}]
+             :patterns [{:id "https://w3id.org/catch/v1/some-pattern"
+                         :inScheme "https://w3id.org/catch/v1"
+                         :deprecated false
+                         :alternates ["https://w3id.org/catch/a-template"]}
+                        {:id "https://w3id.org/catch/v2/some-pattern"
+                         :inScheme "https://w3id.org/catch/v2"
+                         :deprecated true
+                         :alternates ["https://w3id.org/catch/a-template"]}]})))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Spec Tests 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -126,7 +171,25 @@
                  :concepts [{:id "https://w3id.org/xapi/catch/verb#duplicate"
                              :type "Verb"}
                             {:id "https://w3id.org/xapi/catch/verb#duplicate"
-                             :type "Verb"}]}))))
+                             :type "Verb"
+                             :broader ["https://w3id.org/xapi/catch/verb#1"]}]})))
+    (testing "- except when only inScheme or deprecated change"
+      (is (nil? (id/validate-ids
+                 {:id "https://w3id.org/xapi/catch"
+                  :concepts [{:id "https://w3id.org/xapi/catch/verb#duplicate"
+                              :type "Verb"}
+                             {:id "https://w3id.org/xapi/catch/verb#duplicate"
+                              :type "Verb"}]})))
+      (is (nil? (id/validate-ids
+                 {:id "https://w3id.org/xapi/catch"
+                  :concepts [{:id "https://w3id.org/xapi/catch/verb#duplicate"
+                              :type "Verb"
+                              :inScheme "https://w3id.org/xapi/catch/v1"
+                              :deprecated false}
+                             {:id "https://w3id.org/xapi/catch/verb#duplicate"
+                              :type "Verb"
+                              :inScheme "https://w3id.org/xapi/catch/v2"
+                              :deprecated true}]})))))
   (testing "Statement Template IDs MUST be distinct"
     (is (nil? (id/validate-ids
                {:id "https://w3id.org/xapi/catch"
@@ -139,7 +202,37 @@
                  :templates [{:id "https://w3id.org/xapi/catch/template#dup"
                               :type "StatementTemplate"}
                              {:id "https://w3id.org/xapi/catch/template#dup"
-                              :type "StatementTemplate"}]}))))
+                              :type "StatementTemplate"
+                              :verb ["https://w3id.org/xapi/catch/verb#1"]}]})))
+    (testing "- except when inScheme, deprecated, or scopeNotes change"
+      (is (nil? (id/validate-ids
+                 {:id "https://w3id.org/xapi/catch"
+                  :templates [{:id "https://w3id.org/xapi/catch/template#dup"
+                               :type "StatementTemplate"}
+                              {:id "https://w3id.org/xapi/catch/template#dup"
+                               :type "StatementTemplate"}]})))
+      (is (nil? (id/validate-ids
+                 {:id "https://w3id.org/xapi/catch"
+                  :templates [{:id "https://w3id.org/xapi/catch/template#dup"
+                               :type "StatementTemplate"
+                               :inScheme "https://w3id.org/xapi/catch/v1"
+                               :deprecated false}
+                              {:id "https://w3id.org/xapi/catch/template#dup"
+                               :type "StatementTemplate"
+                               :inScheme "https://w3id.org/xapi/catch/v2"
+                               :deprecated true}]})))
+      (is (nil? (id/validate-ids
+                 {:id "https://w3id.org/xapi/catch"
+                  :templates [{:id "https://w3id.org/xapi/catch/template#dup"
+                               :type "StatementTemplate"
+                               :rules [{:location "$.foo"
+                                        :presence "included"
+                                        :scopeNote ["Scope Note One"]}]}
+                              {:id "https://w3id.org/xapi/catch/template#dup"
+                               :type "StatementTemplate"
+                               :rules [{:location "$.foo"
+                                        :presence "included"
+                                        :scopeNote ["Scope Note Two"]}]}]})))))
   (testing "Pattern IDs MUST be distinct"
     (is (nil? (id/validate-ids
                {:id "https://w3id.org/xapi/catch"
@@ -152,7 +245,25 @@
                  :patterns [{:id "https://w3id.org/xapi/catch/pattern#dup"
                              :type "Pattern"}
                             {:id "https://w3id.org/xapi/catch/pattern#dup"
-                             :type "Pattern"}]}))))
+                             :type "Pattern"
+                             :sequence ["https://w3id.org/xapi/catch/pattern#1"]}]})))
+    (testing "- except when inScheme and deprecated change"
+      (is (nil? (id/validate-ids
+                 {:id "https://w3id.org/xapi/catch"
+                  :patterns [{:id "https://w3id.org/xapi/catch/pattern#dup"
+                              :type "Pattern"}
+                             {:id "https://w3id.org/xapi/catch/pattern#dup"
+                              :type "Pattern"}]})))
+      (is (nil? (id/validate-ids
+                 {:id "https://w3id.org/xapi/catch"
+                  :patterns [{:id "https://w3id.org/xapi/catch/pattern#dup"
+                              :type "Pattern"
+                              :inScheme "https://w3id.org/xapi/catch/v1"
+                              :deprecated false}
+                             {:id "https://w3id.org/xapi/catch/pattern#dup"
+                              :type "Pattern"
+                              :inScheme "https://w3id.org/xapi/catch/v2"
+                              :deprecated true}]})))))
   (testing "All IDs MUST be distinct"
     (is (nil? (id/validate-ids
                {:id "https://w3id.org/xapi/catch"
