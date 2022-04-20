@@ -25,3 +25,15 @@
   (let [len1 (count v1) len2 (count v2)]
     (and (<= len1 len2)
          (= v1 (subvec v2 0 len1)))))
+
+
+(defn filter-map-set-values
+  "Given a map `m` with set values and a `filter-set`, filter each value
+   as `(filter-set-fn value filter-set)`."
+  [m filter-set filter-set-fn]
+  (reduce-kv (fn [m' k v]
+               (if-some [v' (not-empty (filter-set-fn v filter-set))]
+                 (assoc m' k v')
+                 m'))
+             {}
+             m))

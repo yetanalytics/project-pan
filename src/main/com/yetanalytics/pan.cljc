@@ -1,5 +1,6 @@
 (ns com.yetanalytics.pan
   (:require [clojure.spec.alpha                    :as s]
+            [clojure.set                           :as cset]
             [com.yetanalytics.pan.objects.profile  :as profile]
             [com.yetanalytics.pan.objects.concept  :as concept]
             [com.yetanalytics.pan.objects.template :as template]
@@ -9,18 +10,35 @@
             [com.yetanalytics.pan.errors           :as errors]
             [com.yetanalytics.pan.utils.json       :as json]))
 
-(defn get-external-iris
-  "Return a map of keys to sets of IRIs, where the IRIs reference
-   objects that do not exist in `profile`. Values include IRIs
+(defn get-iris-map
+  "Return a map of keys to sets of IRIs. Values include IRIs
    from Concepts, Statement Templates, and Patterns as well as
-   \"@context\" IRI values."
-  [profile]
-  (let [iris-m (merge (concept/get-external-iris profile)
-                      (template/get-external-iris profile)
-                      (pattern/get-external-iris profile))]
-    (if-some [ctx-iris (not-empty (context/get-context-iris profile))]
-      (assoc iris-m :_context ctx-iris)
-      iris-m)))
+   \"@context\" IRI values. All keys except for `:_context`,
+   `:context`, and `:schema` are namespaced with the kebab form
+   of the object type string.
+   
+   The `iri-kind` kwarg can take the following values:
+   - `:all`      All IRIs are included in the return map. (Default)
+   - `:internal` Only IRIs internal to the profile are included.
+   - `:external` Only IRIs external to the profile are included."
+  [profile & {:keys [iri-kind]
+              :or {iri-kind :all}}]
+  (let [filter-set-fn  (case iri-kind
+                         :internal cset/intersection
+                         :external cset/difference
+                         :all nil)
+        concept-iri-m  (concept/get-iris-map profile filter-set-fn)
+        template-iri-m (template/get-iris-map profile filter-set-fn)
+        pattern-iri-m  (pattern/get-iris-map profile filter-set-fn)
+        iris-map       (merge-with cset/union
+                                   concept-iri-m
+                                   template-iri-m
+                                   pattern-iri-m)]
+    ;; Need to use if-let to fail on both false and nil.
+    (if-let [ctx-iris (and (not= :internal iri-kind)
+                           (not-empty (context/get-context-iris profile)))]
+      (assoc iris-map :_context (set ctx-iris))
+      iris-map)))
 
 (defn json-profile->edn
   "Convert an JSON string xAPI Profile into an EDN data structure,
