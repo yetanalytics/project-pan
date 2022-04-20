@@ -237,7 +237,7 @@
 
 (defn- expound-to-str
   [err-data]
-  (-> err-data distinct-problems e/errors->string))
+  (-> err-data distinct-problems (e/errors->string {:print-objects? true})))
 
 (deftest err-msg-tests
   (testing "syntax error messages"
@@ -298,7 +298,14 @@
                      (p/validate-profile-coll :syntax? false
                                               :relations? true
                                               :result :string)
-                     first)))))
+                     first)))
+    (is (not= (-> [will-profile-raw scorm-profile-raw]
+                  (p/validate-profile-coll :result :string)
+                  first)
+              (-> [will-profile-raw scorm-profile-raw]
+                  (p/validate-profile-coll :result :string
+                                           :error-msg-opts {:print-objects? false})
+                  first)))))
 
 (deftest success-msg-test
   (testing "error messages on fixed profiles"
@@ -322,6 +329,58 @@
                                                   :ids? true
                                                   :context? true
                                                   :result :print))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Object Validation
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; Taken from the cmi5 profile
+(def sample-verb
+  {:id         "https://w3id.org/xapi/adl/verbs/satisfied"
+   :inScheme   "https://w3id.org/xapi/cmi5/v1.0"
+   :type       "Verb"
+   :prefLabel  {:en "satisfied"}
+   :definition {:en "Indicates that the authority or activity provider determined the actor has fulfilled the criteria of the object or activity."}})
+
+(deftest validate-object-test
+  (testing "error messages on individual objects"
+    (is (nil? (p/validate-object sample-verb :type :concept)))
+    (is (some? (p/validate-object sample-verb :type :template)))
+    (is (some? (p/validate-object sample-verb :type :pattern)))
+    (testing "defaults to concept"
+      (is (nil? (p/validate-object sample-verb)))
+      (is (some? (p/validate-object (assoc sample-verb :type "Pattern")))))
+    (is (string? (get (p/validate-object sample-verb
+                                         :type :pattern
+                                         :result :path-string)
+                      [:type])))
+    (is (= fix/verb-concept-error
+           (p/validate-object (assoc sample-verb :type "FooBar")
+                              :type :concept
+                              :result :string)
+           (p/validate-object (assoc sample-verb :type "FooBar")
+                              :result :string)))
+    (is (= fix/verb-template-error
+           (p/validate-object sample-verb
+                              :type :template
+                              :result :string)))
+    (is (= fix/verb-pattern-error
+           (p/validate-object sample-verb
+                              :type :pattern
+                              :result :string)))
+    (is (= fix/verb-pattern-error-no-obj
+           (p/validate-object sample-verb
+                              :type :pattern
+                              :result :string
+                              :error-msg-opts {:print-objects? false})))
+    (is (= (str (p/validate-object sample-verb
+                                   :type :pattern
+                                   :result :string)
+                "\n") ; extra \n because of println
+           (with-out-str
+             (p/validate-object sample-verb
+                                :type :pattern
+                                :result :println))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; External IRI retrieval tests

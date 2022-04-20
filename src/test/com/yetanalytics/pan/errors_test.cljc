@@ -184,8 +184,10 @@
 
 (deftest expound-test
   (testing "error messages"
-    (are [expected-str err-map] (= expected-str
-                                   (with-out-str (e/print-errors err-map)))
+    (are [expected-str err-map]
+         (= expected-str
+            (with-out-str (e/print-errors err-map
+                                          {:print-objects? true})))
       fix/err-msg-1 {:syntax-errors (p/validate bad-profile-1b)}
       fix/err-msg-2 {:syntax-errors (p/validate bad-profile-2a)}
       fix/err-msg-3 {:syntax-errors (p/validate bad-profile-2b)}
@@ -211,11 +213,32 @@
                       (p/validate bad-profile-3a)}
       fix/err-msg-11 {:context-errors
                       (ctx/validate-contexts bad-profile-3b)}))
+  (testing "no-object error messages"
+    (are [expected-str err-map]
+         (= expected-str
+            (with-out-str (e/print-errors err-map
+                                          {:print-objects? false})))
+      fix/err-msg-1-no-obj {:syntax-errors (p/validate bad-profile-1b)}
+      fix/err-msg-2-no-obj {:syntax-errors (p/validate bad-profile-2a)}
+      fix/err-msg-3-no-obj {:syntax-errors (p/validate bad-profile-2b)}
+      fix/err-msg-6-no-obj {:concept-edge-errors nil
+                            :pattern-edge-errors nil
+                            :template-edge-errors
+                            (t/validate-template-edges
+                             (t/create-graph bad-profile-2e))}
+      fix/err-msg-7-no-obj {:concept-edge-errors nil
+                            :pattern-edge-errors nil
+                            :template-edge-errors
+                            (t/validate-template-edges
+                             (t/create-graph bad-profile-2f))}
+      fix/err-msg-9-no-obj {:pattern-edge-errors
+                            (pt/validate-pattern-edges
+                             (pt/create-graph bad-profile-2h))}))
   (testing "combining error messages"
     (is (= (str fix/err-msg-4 fix/err-msg-5)
            (-> {:id-errors (id/validate-ids bad-profile-2c)
                 :in-scheme-errors (id/validate-in-schemes bad-profile-2d)}
-               e/errors->string)))
+               (e/errors->string {:print-objects? true}))))
     (is (= (str fix/err-msg-7 fix/err-msg-9 fix/err-msg-8)
            (-> {:concept-edge-errors nil
                 :template-edge-errors
@@ -227,23 +250,29 @@
                 :pattern-cycle-errors
                 (pt/validate-pattern-tree
                  (pt/create-graph bad-profile-2g))}
-               e/errors->string)))))
+               (e/errors->string {:print-objects? true}))))))
 
 (deftest error-data-structures
   (testing "path-type-string map"
     (is (= {:syntax-errors {[:id]   fix/err-msg-1a
                             [:type] fix/err-msg-1b}}
-           (e/errors->type-path-str-m {:syntax-errors (p/validate bad-profile-1b)})))
+           (e/errors->type-path-str-m
+            {:syntax-errors (p/validate bad-profile-1b)}
+            {:print-objects? true})))
     (is (= {}
-           (e/errors->type-path-str-m nil))))
+           (e/errors->type-path-str-m nil {}))))
   (testing "type-string map"
     (is (= {:syntax-errors
             (cstr/replace fix/err-msg-1 #"\s\*+ Syntax Errors \*+\s*" "")}
-           (e/errors->type-str-m {:syntax-errors (p/validate bad-profile-1b)})))
+           (e/errors->type-str-m
+            {:syntax-errors (p/validate bad-profile-1b)}
+            {:print-objects? true})))
     (is (= {}
-           (e/errors->type-str-m nil))))
+           (e/errors->type-str-m nil {}))))
   (testing "error string"
     (is (= fix/err-msg-1
-           (e/errors->string {:syntax-errors (p/validate bad-profile-1b)})))
+           (e/errors->string
+            {:syntax-errors (p/validate bad-profile-1b)}
+            {:print-objects? true})))
     (is (= ""
-           (e/errors->string nil)))))
+           (e/errors->string nil {})))))

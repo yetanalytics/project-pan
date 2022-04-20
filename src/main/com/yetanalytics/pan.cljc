@@ -1,5 +1,6 @@
 (ns com.yetanalytics.pan
-  (:require [com.yetanalytics.pan.objects.profile  :as profile]
+  (:require [clojure.spec.alpha                    :as s]
+            [com.yetanalytics.pan.objects.profile  :as profile]
             [com.yetanalytics.pan.objects.concept  :as concept]
             [com.yetanalytics.pan.objects.template :as template]
             [com.yetanalytics.pan.objects.pattern  :as pattern]
@@ -104,7 +105,13 @@
    - `:type-path-string` Return a `{:err-type {:err-path err-string}}` map.
    - `:type-string`      Return a `{:err-type err-string}` map.
    - `:string`           Return the Expound-generated error string.
-   - `:print`            Print the error string to standard output."
+   - `:print`            Print the error string to standard output.
+                       
+   The `:error-msg-opts` keyword argument affects how error message strings are
+   formed. The argument is a map that takes the following key-val pairs:
+   - `:print-objects?` If `true` (default) display the entire object; if `false`
+                       only display the `:id` value. Affects both syntax and
+                       edge validation error messages."
   [profile & {:keys [syntax?
                      ids?
                      relations?
@@ -114,7 +121,8 @@
                      contexts?
                      extra-profiles
                      extra-contexts
-                     result]
+                     result
+                     error-msg-opts]
               :or {syntax?        true
                    ids?           false
                    relations?     false
@@ -124,7 +132,8 @@
                    contexts?      false
                    extra-profiles []
                    extra-contexts {}
-                   result         :spec-error-data}}]
+                   result         :spec-error-data
+                   error-msg-opts {:print-objects? true}}}]
   (let [?rel-opts (not-empty
                    (cond-> {}
                      (or relations? concept-rels?)  (assoc :concepts? true)
@@ -154,15 +163,18 @@
       :spec-error-data
       (when errors? errors)
       :type-path-string
-      (cond-> errors errors? errors/errors->type-path-str-m)
+      (cond-> errors
+        errors? (errors/errors->type-path-str-m error-msg-opts))
       :type-string
-      (cond-> errors errors? errors/errors->type-str-m)
+      (cond-> errors
+        errors? (errors/errors->type-str-m error-msg-opts))
       :string
-      (cond-> errors errors? errors/errors->string)
+      (cond-> errors
+        errors? (errors/errors->string error-msg-opts))
       :print
       (if-not errors?
         (println "Success!")
-        (println (errors/errors->string errors))))))
+        (println (errors/errors->string errors error-msg-opts))))))
 
 (defn validate-profile-coll
   "Like `validate-profile`, but takes a `profile-coll` instead of a
@@ -181,7 +193,8 @@
                           contexts?
                           extra-profiles
                           extra-contexts
-                          result]
+                          result
+                          error-msg-opts]
                    :or {syntax?        true
                         ids?           false
                         relations?     false
@@ -191,7 +204,8 @@
                         contexts?      false
                         extra-profiles []
                         extra-contexts {}
-                        result         :spec-error-data}}]
+                        result         :spec-error-data
+                        error-msg-opts {:print-objects? true}}}]
   (let [profiles-set (set profile-coll)
         profile-errs (map (fn [profile]
                             (let [extra-profiles*
@@ -208,8 +222,7 @@
                                :pattern-rels?  pattern-rels?
                                :contexts?      contexts?
                                :extra-profiles extra-profiles*
-                               :extra-contexts extra-contexts
-                               :result         :spec-error-data)))
+                               :extra-contexts extra-contexts)))
                           profile-coll)
         errors?      (not (every? (fn [perr] (every? nil? (vals perr)))
                                   profile-errs))]
@@ -218,14 +231,70 @@
       (when errors? (vec profile-errs))
       :type-path-string
       (cond->> profile-errs
-        errors? (mapv (comp not-empty errors/errors->type-path-str-m)))
+        errors?
+        (mapv #(not-empty (errors/errors->type-path-str-m % error-msg-opts))))
       :type-string
       (cond->> profile-errs
-        errors? (mapv (comp not-empty errors/errors->type-str-m)))
+        errors?
+        (mapv #(not-empty (errors/errors->type-str-m % error-msg-opts))))
       :string
       (cond->> profile-errs
-        errors? (mapv (comp not-empty errors/errors->string)))
+        errors?
+        (mapv #(not-empty (errors/errors->string % error-msg-opts))))
       :print
       (if-not errors?
         (println "Success!")
-        (dorun (map (comp println errors/errors->string) profile-errs))))))
+        (dorun (map #(println (errors/errors->string % error-msg-opts))
+                    profile-errs))))))
+
+(defn validate-object
+  "Perform syntax validation on `object` against the spec expected by
+   the `:type` kwarg, or by its `:type` property if not provided
+   (ultimately defaulting to Concept). Other forms of validation are not
+   (yet) supported.
+   
+   Valid `:type` keywords include
+   - `:concept`
+   - `:template`
+   - `:pattern`
+   
+   Valid `result` keywords include
+   - `:spec-error-data`
+   - `:path-string` (map of spec error path to error strings)
+   - `:string` (monolithic error string)
+   - `:println` (result of `:string` printed to stdout)"
+  [object & {object-type :type
+             :keys       [result error-msg-opts]
+             :or         {result         :spec-error-data
+                          error-msg-opts {:print-objects? true}}}]
+  (let [error-data
+        (if (some? object-type)
+          (case object-type
+            :concept
+            (s/explain-data ::concept/concept object)
+            :template
+            (s/explain-data ::template/template object)
+            :pattern
+            (s/explain-data ::pattern/pattern object))
+          (case (:type object)
+            "StatementTemplate"
+            (s/explain-data ::template/template object)
+            "Pattern"
+            (s/explain-data ::pattern/pattern object)
+            ;; else default to Concept
+            (s/explain-data ::concept/concept object)))]
+    (case result
+      :spec-error-data
+      error-data
+      :path-string
+      (:syntax-errors
+       (errors/errors->type-path-str-m {:syntax-errors error-data}
+                                       error-msg-opts))
+      :string
+      (errors/errors->string {:syntax-errors error-data}
+                             error-msg-opts)
+      :println
+      (if-not (some? error-data)
+        (println "Success!")
+        (println (errors/errors->string {:syntax-errors error-data}
+                                        error-msg-opts))))))
