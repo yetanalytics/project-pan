@@ -55,7 +55,16 @@ Other keyword arguments include:
 
 The `validate-object` function is provided in order to provide a way to validate individual Concepts, Templates, and Patterns without having to go deeper than the top level API. The `:type` and `:result` keyword args are used to fix the expected spec and to affect the function result, respectively; more details can be found in the docstring.
 
-The `get-external-iris` function is provided in the API in order to retrieve IRI values that refer to external objects, JSON-LD contexts, etc. (i.e. objects that do _not_ exist in the Profile). This allows the user to more easily retrieve external Profiles and contexts in their application from the Internet or their data store.
+The `get-iris-map` function is provided in the API in order to retrieve IRIs by property, including JSON-LD context IRIs, which may link to objects that do _not_ exist in the Profile. This allows the user to more easily retrieve external Profiles and contexts in their application from the Internet or their data store. The following is a sample return value of `get-iris-map`; notice the `:kebab-type/camelProperty` format of each key, and how `:_context`, `:context`, and `:schema` are _not_ namespaced:
+```clojure
+{:verb/exactMatch #{"http://example.com/verb1"
+                    "http://example.com/verb2"}
+ :statement-template/verb #{"http://example.com/verb1"
+                            "http://example.com/verb2"}
+ :_context #{"http://example.com/jsonld-context"}
+ :context #{"http://example.com/resource-context"}
+ :schema #{"http://example.com/json-schema"}}
+```
 
 The `json-profile->edn` function is provided in the API to provide for convenient coercion of JSON profile strings into an EDN format that Pan recognizes.
 
