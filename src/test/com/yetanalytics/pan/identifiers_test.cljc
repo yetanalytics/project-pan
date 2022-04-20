@@ -274,7 +274,72 @@
                 :templates [{:id "https://w3id.org/catch/some-template"
                              :inScheme "https://w3id.org/catch/v1"}]
                 :patterns [{:id "https://w3id.org/catch/some-pattern"
-                            :inScheme "https://w3id.org/catch/v2"}]}))))
+                            :inScheme "https://w3id.org/catch/v2"}]})))
+    (is (nil? (id/validate-ids
+               {:id "https://w3id.org/xapi/catch"
+                :versions [{:id "https://w3id.org/catch/v1"}
+                           {:id "https://w3id.org/catch/v2"}
+                           {:id "https://w3id.org/catch/v3"}]
+                :concepts [{:id "https://w3id.org/catch/some-verb"
+                            :inScheme "https://w3id.org/catch/v1"}
+                           {:id "https://w3id.org/catch/some-verb"
+                            :inScheme "https://w3id.org/catch/v2"}
+                           {:id "https://w3id.org/catch/some-verb"
+                            :inScheme "https://w3id.org/catch/v3"}]
+                :templates [{:id "https://w3id.org/catch/some-template"
+                             :inScheme "https://w3id.org/catch/v1"}
+                            {:id "https://w3id.org/catch/some-template"
+                             :inScheme "https://w3id.org/catch/v2"}
+                            {:id "https://w3id.org/catch/some-template"
+                             :inScheme "https://w3id.org/catch/v3"}]
+                :patterns [{:id "https://w3id.org/catch/some-pattern"
+                            :inScheme "https://w3id.org/catch/v1"}
+                           {:id "https://w3id.org/catch/some-pattern"
+                            :inScheme "https://w3id.org/catch/v2"}
+                           {:id "https://w3id.org/catch/some-pattern"
+                            :inScheme "https://w3id.org/catch/v3"}]})))
+    ;; Properties are the same
+    (is (nil? (id/validate-ids
+               {:id "https://w3id.org/xapi/catch"
+                :versions [{:id "https://w3id.org/catch/v1"}
+                           {:id "https://w3id.org/catch/v2"}]
+                :concepts [{:id "https://w3id.org/catch/some-verb"
+                            :inScheme "https://w3id.org/catch/v1"
+                            :broader ["http://example.org/verb-a"]}
+                           {:id "https://w3id.org/catch/some-verb"
+                            :inScheme "https://w3id.org/catch/v2"
+                            :broader ["http://example.org/verb-a"]}]
+                :templates [{:id "https://w3id.org/catch/some-template"
+                             :inScheme "https://w3id.org/catch/v1"
+                             :verb ["http://example.org/verb-a"]}
+                            {:id "https://w3id.org/catch/some-template"
+                             :inScheme "https://w3id.org/catch/v2"
+                             :verb ["http://example.org/verb-a"]}]
+                :patterns [{:id "https://w3id.org/catch/some-pattern"
+                            :inScheme "https://w3id.org/catch/v1"}
+                           {:id "https://w3id.org/catch/some-pattern"
+                            :inScheme "https://w3id.org/catch/v2"}]})))
+    ;; Properties are different
+    (is (some? (id/validate-ids
+                {:id "https://w3id.org/xapi/catch"
+                 :versions [{:id "https://w3id.org/catch/v1"}
+                            {:id "https://w3id.org/catch/v2"}]
+                 :concepts [{:id "https://w3id.org/catch/some-verb"
+                             :inScheme "https://w3id.org/catch/v1"
+                             :broader ["http://example.org/verb-a"]}
+                            {:id "https://w3id.org/catch/some-verb"
+                             :inScheme "https://w3id.org/catch/v2"
+                             :broader ["http://example.org/verb-b"]}]
+                 :templates [{:id "https://w3id.org/catch/some-template"
+                              :inScheme "https://w3id.org/catch/v1"
+                              :verb ["http://example.org/verb-a"]}
+                             {:id "https://w3id.org/catch/some-template"
+                              :inScheme "https://w3id.org/catch/v2"
+                              :verb ["http://example.org/verb-b"]}]
+                 :patterns [{:id "https://w3id.org/catch/some-pattern"
+                             :inScheme "https://w3id.org/catch/v1"}
+                            {:id "https://w3id.org/catch/some-pattern"
+                             :inScheme "https://w3id.org/catch/v2"}]}))))
   (testing "All IDs MUST be distinct across different profiles"
     (is (nil? (id/validate-ids
                {:id "https://w3id.org/xapi/catch"
