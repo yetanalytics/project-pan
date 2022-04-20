@@ -386,13 +386,16 @@
 ;; External IRI retrieval tests
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(deftest get-external-iri-test
-  (testing "get-external-iris function"
-    (is (= {:exactMatch
+(deftest get-iri-test
+  (testing "get-iris function"
+    (is (= {:verb/broader
+            #{"http://adlnet.gov/expapi/verbs/completed"}
+            :verb/exactMatch
+            #{"http://activitystrea.ms/schema/complete"
+              "http://activitystrea.ms/schema/terminate"}
+            :activity-type/exactMatch
             #{"https://w3id.org/xapi/profiles/ontology#Profile"
-              "https://w3id.org/xapi/cmi5/activities/course"
-              "http://activitystrea.ms/schema/terminate"
-              "http://activitystrea.ms/schema/complete"}
+              "https://w3id.org/xapi/cmi5/activities/course"}
             :context
             #{"https://raw.githubusercontent.com/adlnet/xAPI-SCORM-Profile/master/context/attempt-state-context.jsonld"}
             :schema
@@ -400,8 +403,83 @@
               "https://w3id.org/xapi/scorm/activity-profile/scorm.profile.activity.profile.schema"
               "https://raw.githubusercontent.com/adlnet/xAPI-SCORM-Profile/master/document-schemas/scorm.profile.attempt.state.schema.json"
               "https://raw.githubusercontent.com/adlnet/xAPI-SCORM-Profile/master/document-schemas/scorm.profile.activity.state.schema.json"}
-            :verb
+            :statement-template/verb
+            #{"http://adlnet.gov/expapi/verbs/resumed"
+              "http://adlnet.gov/expapi/verbs/suspended"
+              "http://adlnet.gov/expapi/verbs/completed"
+              "http://adlnet.gov/expapi/verbs/responded"
+              "http://adlnet.gov/expapi/verbs/initialized"
+              "http://adlnet.gov/expapi/verbs/terminated"
+              "http://adlnet.gov/expapi/verbs/commented"}
+            :statement-template/objectActivityType
+            #{"http://adlnet.gov/expapi/activities/lesson"
+              "http://adlnet.gov/expapi/activities/cmi.interaction"}
+            :pattern/sequence
+            #{"https://w3id.org/xapi/scorm#initialization"
+              "https://w3id.org/xapi/scorm#suspension"
+              "https://w3id.org/xapi/scorm#resumption"
+              "https://w3id.org/xapi/scorm#termination"
+              "https://w3id.org/xapi/scorm#middlestatements"
+              "https://w3id.org/xapi/scorm#optionallycontinue"}
+            :pattern/zeroOrMore
+            #{"https://w3id.org/xapi/scorm#suspendresume"
+              "https://w3id.org/xapi/scorm#activitystatements"}
+            :pattern/alternates
+            #{"https://w3id.org/xapi/scorm#commenting"
+              "https://w3id.org/xapi/scorm#otheractivity"
+              "https://w3id.org/xapi/scorm#interactionactivity"
+              "https://w3id.org/xapi/scorm#completing"
+              "https://w3id.org/xapi/scorm#scoactivity"}
+            ;; Bad value, ergo Pan splits it into chars
+            :statement-template/contextParentActivityType
+            #{\a \c \d \e \g \h \i \l \. \n \/ \o \p \s \t \v \x \:}}
+           (p/get-iris-map scorm-profile-raw)))
+    (is (= {:verb/exactMatch
+            #{"http://activitystrea.ms/schema/complete"
+              "http://activitystrea.ms/schema/terminate"}
+            :activity-type/exactMatch
+            #{"https://w3id.org/xapi/profiles/ontology#Profile"
+              "https://w3id.org/xapi/cmi5/activities/course"}
+            :context
+            #{"https://raw.githubusercontent.com/adlnet/xAPI-SCORM-Profile/master/context/attempt-state-context.jsonld"}
+            :schema
+            #{"https://raw.githubusercontent.com/adlnet/xAPI-SCORM-Profile/master/document-schemas/scorm.profile.agent.profile.schema.json"
+              "https://w3id.org/xapi/scorm/activity-profile/scorm.profile.activity.profile.schema"
+              "https://raw.githubusercontent.com/adlnet/xAPI-SCORM-Profile/master/document-schemas/scorm.profile.attempt.state.schema.json"
+              "https://raw.githubusercontent.com/adlnet/xAPI-SCORM-Profile/master/document-schemas/scorm.profile.activity.state.schema.json"}
+            :statement-template/verb
             #{"http://adlnet.gov/expapi/verbs/commented"}
-            :objectActivityType
-            #{"http://adlnet.gov/expapi/activities/cmi.interaction"}}
-           (p/get-external-iris scorm-profile-raw)))))
+            :statement-template/objectActivityType
+            #{"http://adlnet.gov/expapi/activities/cmi.interaction"}
+            ;; Bad value, ergo nothing can match
+            :statement-template/contextParentActivityType
+            #{\a \c \d \e \g \h \i \l \. \n \/ \o \p \s \t \v \x \:}}
+           (p/get-iris-map scorm-profile-raw :iri-kind :external)))
+    (is (= {:verb/broader
+            #{"http://adlnet.gov/expapi/verbs/completed"}
+            :statement-template/verb
+            #{"http://adlnet.gov/expapi/verbs/resumed"
+              "http://adlnet.gov/expapi/verbs/suspended"
+              "http://adlnet.gov/expapi/verbs/completed"
+              "http://adlnet.gov/expapi/verbs/responded"
+              "http://adlnet.gov/expapi/verbs/initialized"
+              "http://adlnet.gov/expapi/verbs/terminated"}
+            :statement-template/objectActivityType
+            #{"http://adlnet.gov/expapi/activities/lesson"}
+            :pattern/sequence
+            #{"https://w3id.org/xapi/scorm#initialization"
+              "https://w3id.org/xapi/scorm#suspension"
+              "https://w3id.org/xapi/scorm#resumption"
+              "https://w3id.org/xapi/scorm#termination"
+              "https://w3id.org/xapi/scorm#middlestatements"
+              "https://w3id.org/xapi/scorm#optionallycontinue"}
+            :pattern/zeroOrMore
+            #{"https://w3id.org/xapi/scorm#suspendresume"
+              "https://w3id.org/xapi/scorm#activitystatements"}
+            :pattern/alternates
+            #{"https://w3id.org/xapi/scorm#commenting"
+              "https://w3id.org/xapi/scorm#otheractivity"
+              "https://w3id.org/xapi/scorm#interactionactivity"
+              "https://w3id.org/xapi/scorm#completing"
+              "https://w3id.org/xapi/scorm#scoactivity"}}
+           (p/get-iris-map scorm-profile-raw :iri-kind :internal)))))
