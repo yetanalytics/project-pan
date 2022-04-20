@@ -326,16 +326,19 @@
                             {:id "https://w3id.org/catch/v2"}]
                  :concepts [{:id "https://w3id.org/catch/some-verb"
                              :inScheme "https://w3id.org/catch/v3"}]
-                 :templates [] :patterns []})))
+                 :templates []
+                 :patterns []})))
     (is (some? (id/validate-in-schemes
                 {:versions [{:id "https://w3id.org/catch/v1"}
                             {:id "https://w3id.org/catch/v2"}]
                  :templates [{:id "https://w3id.org/catch/some-template"
                               :inScheme "https://w3id.org/catch/v3"}]
-                 :concepts [] :patterns []})))
+                 :concepts []
+                 :patterns []})))
     (is (some? (id/validate-in-schemes
                 {:versions [{:id "https://w3id.org/catch/v1"}
                             {:id "https://w3id.org/catch/v2"}]
                  :patterns [{:id "https://w3id.org/catch/some-pattern"
                              :inScheme "https://w3id.org/catch/v3"}]
-                 :concepts [] :templates []})))))
+                 :concepts []
+                 :templates []})))))
