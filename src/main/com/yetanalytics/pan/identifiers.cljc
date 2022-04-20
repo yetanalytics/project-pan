@@ -134,11 +134,10 @@
          counts      (count-ids profile-ids)]
      (s/explain-data ::distinct-ids counts)))
   ([profile extra-profiles]
-   (let [prof        (dedupe-profile-objects profile)
-         extra-profs (mapv dedupe-profile-objects extra-profiles) 
-         profile-ids (profile->id-seq prof)
+   (let [profile*    (dedupe-profile-objects profile)
+         profile-ids (profile->id-seq profile*)
          prof-id-set (set profile-ids)
-         extra-ids   (mapcat profile->id-seq extra-profs)
+         extra-ids   (mapcat profile->id-seq extra-profiles)
          ;; We count IDs in all the Profiles, but only validate the
          ;; counts in the main Profile.
          counts      (->> (concat profile-ids extra-ids)

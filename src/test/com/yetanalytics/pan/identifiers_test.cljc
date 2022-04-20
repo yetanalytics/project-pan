@@ -355,6 +355,8 @@
                               :inScheme "https://w3id.org/catch/v4"}]}
                 {:patterns [{:id "https://w3id.org/catch/some-pattern-x"
                              :inScheme "https://w3id.org/catch/v5"}]}])))
+    ;; inSchemes and other props are NOT ignored when comparing
+    ;; across profiles
     (is (some? (id/validate-ids
                 {:id "https://w3id.org/xapi/catch"
                  :versions [{:id "https://w3id.org/catch/v1"}
