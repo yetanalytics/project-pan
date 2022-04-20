@@ -1,8 +1,10 @@
 (ns com.yetanalytics.pan.objects.template
   (:require [clojure.spec.alpha :as s]
+            [clojure.set        :as cset]
             [com.yetanalytics.pan.axioms      :as ax]
             [com.yetanalytics.pan.graph       :as graph]
             [com.yetanalytics.pan.identifiers :as ids]
+            [com.yetanalytics.pan.utils.spec  :as u]
             [com.yetanalytics.pan.objects.templates.rule :as rules]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -55,6 +57,73 @@
 (s/def ::templates (s/coll-of ::template :kind vector? :min-count 1))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Statement Template IRIs
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn get-template-iris
+  [{:keys [verb
+           objectActivityType
+           contextCategoryActivityType
+           contextGroupingActivityType
+           contextParentActivityType
+           contextOtherActivityType
+           attachmentUsageType
+           objectStatementRefTemplate
+           contextStatementRefTemplate]}]
+  (cond-> {}
+    verb
+    (assoc :statement-template/verb
+           #{verb})
+    objectActivityType
+    (assoc :statement-template/objectActivityType
+           #{objectActivityType})
+    contextCategoryActivityType
+    (assoc :statement-template/contextCategoryActivityType
+           (set contextCategoryActivityType))
+    contextGroupingActivityType
+    (assoc :statement-template/contextGroupingActivityType
+           (set contextGroupingActivityType))
+    contextParentActivityType
+    (assoc :statement-template/contextParentActivityType
+           (set contextParentActivityType))
+    contextOtherActivityType
+    (assoc :statement-template/contextOtherActivityType
+           (set contextOtherActivityType))
+    attachmentUsageType
+    (assoc :statement-template/attachmentUsageType
+           (set attachmentUsageType))
+    objectStatementRefTemplate
+    (assoc :statement-template/objectStatementRefTemplate
+           (set objectStatementRefTemplate))
+    contextStatementRefTemplate
+    (assoc :statement-template/contextStatementRefTemplate
+           (set contextStatementRefTemplate))))
+
+(defn- get-internal-iris-set
+  [concepts templates]
+  (set (concat (ids/objs->ids concepts)
+               (ids/objs->ids templates))))
+
+(defn- get-iris-map*
+  [templates]
+  (->> templates
+       (map get-template-iris)
+       (apply merge-with cset/union)))
+
+(defn get-iris-map
+  "Return a map between namespaced Pattern properties and Pattern IRI sets.
+   `?filter-set-fn`, if not `nil`, will filter each set using the set of
+   Template and Pattern IRIs internal to the Profile (`cset/difference` will
+   filter out internal IRIs, `cset/intersection` will filter out external
+   ones)."
+  [{:keys [concepts templates] :as _profile} ?filter-set-fn]
+  (let [iris-map (get-iris-map* templates)]
+    (if ?filter-set-fn
+      (let [filter-set (get-internal-iris-set concepts templates)]
+        (u/filter-map-set-values iris-map filter-set ?filter-set-fn))
+      iris-map)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Statement Template Graph Creation
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -101,14 +170,6 @@
    :attachmentUsageType
    :objectStatementRefTemplate
    :contextStatementRefTemplate])
-
-(defn get-external-iris
-  "Return the external IRIs from the Statement Templates of `profile`."
-  [profile]
-  (let [{:keys [concepts templates]} profile
-        id-filter-set (set (concat (ids/objs->ids concepts)
-                                   (ids/objs->ids templates)))]
-    (ids/objs->out-ids-map templates template-iri-keys id-filter-set)))
 
 (defn get-graph-concept-templates
   [profile ?extra-profiles]
