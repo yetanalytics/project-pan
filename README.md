@@ -65,6 +65,7 @@ The `get-iris-map` function is provided in the API in order to retrieve IRIs by 
  :context #{"http://example.com/resource-context"}
  :schema #{"http://example.com/json-schema"}}
 ```
+The `get-iris-map` function also accepts a `:iri-kind` keyword arg, which can be `:all`, `:internal`, or `:external` to set whether Profile-internal and/or external IRIs are returned.
 
 The `json-profile->edn` function is provided in the API to provide for convenient coercion of JSON profile strings into an EDN format that Pan recognizes.
 
