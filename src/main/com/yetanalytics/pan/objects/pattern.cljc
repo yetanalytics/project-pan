@@ -1,8 +1,10 @@
 (ns com.yetanalytics.pan.objects.pattern
   (:require [clojure.spec.alpha               :as s]
+            [clojure.set                      :as cset]
             [com.yetanalytics.pan.axioms      :as ax]
             [com.yetanalytics.pan.graph       :as graph]
-            [com.yetanalytics.pan.identifiers :as ids]))
+            [com.yetanalytics.pan.identifiers :as ids]
+            [com.yetanalytics.pan.utils.spec  :as u]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Pattern Specs
@@ -82,19 +84,52 @@
   (s/coll-of ::pattern :kind vector? :min-count 1))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Pattern IRIs
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn get-pattern-iris
+  [{?seq :sequence
+    ?alt :alternates
+    ?opt :optional
+    ?oom :oneOrMore
+    ?zom :zeroOrMore}]
+  (cond-> {}
+    ?seq (assoc :pattern/sequence (set ?seq))
+    ?alt (assoc :pattern/alternates (set ?alt))
+    ?opt (assoc :pattern/optional #{?opt})
+    ?oom (assoc :pattern/oneOrMore #{?oom})
+    ?zom (assoc :pattern/zeroOrMore #{?zom})))
+
+(defn- get-internal-iris-set
+  [templates patterns]
+  (set (concat (ids/objs->ids templates)
+               (ids/objs->ids patterns))))
+
+(defn- get-iris-map*
+  [patterns]
+  (->> patterns
+       (map get-pattern-iris)
+       (apply merge-with cset/union)))
+
+(defn get-iris-map
+  "Return a map between namespaced Template properties and Template IRI sets.
+   `?filter-set-fn`, if not `nil`, will filter each set using the set of
+   Template and Concept IRIs internal to the Profile (`cset/difference` will
+   filter out internal IRIs, `cset/intersection` will filter out external
+   ones)."
+  [{:keys [templates patterns] :as _profile} ?filter-set-fn]
+  (let [iris-map (get-iris-map* patterns)]
+    (if ?filter-set-fn
+      (let [filter-set (get-internal-iris-set templates patterns)]
+        (u/filter-map-set-values iris-map filter-set ?filter-set-fn))
+      iris-map)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Pattern Graph Creation
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (def pattern-iri-keys
   [:sequence :alternates :optional :oneOrMore :zeroOrMore])
-
-(defn get-external-iris
-  "Return the external IRIs from the Patterns of `profile`."
-  [profile]
-  (let [{:keys [templates patterns]} profile
-        id-filter-set (set (concat (ids/objs->ids templates)
-                                   (ids/objs->ids patterns)))]
-    (ids/objs->out-ids-map patterns pattern-iri-keys id-filter-set)))
 
 ;; ;;;;; Node and Edge Creation ;;;;;
 
