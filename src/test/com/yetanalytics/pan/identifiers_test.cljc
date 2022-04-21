@@ -409,3 +409,271 @@
                              :inScheme "https://w3id.org/catch/v3"}]
                  :concepts []
                  :templates []})))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(deftest test-unique-versions
+  (testing "validate-unique-versions function"
+    (is (nil? (id/validate-unique-versions
+               {:id       "http://example.com"
+                :versions [{:id "http://example.com/v1"}
+                           {:id "http://example.com/v2"}
+                           {:id "http://example.com/v3"}]})))
+    (is (some? (id/validate-unique-versions
+                {:id       "http://example.com"
+                 :versions [{:id "http://example.com/v1"}
+                            {:id "http://example.com/v1"}
+                            {:id "http://example.com/v3"}]})))
+    (is (some? (id/validate-unique-versions
+                {:id       "http://example.com/v1"
+                 :versions [{:id "http://example.com/v1"}
+                            {:id "http://example.com/v2"}
+                            {:id "http://example.com/v3"}]})))
+    (is (some? (id/validate-unique-versions
+                {:id       "http://example.com/v3"
+                 :versions [{:id "http://example.com/v3"}
+                            {:id "http://example.com/v3"}
+                            {:id "http://example.com/v3"}]})))))
+
+(deftest test-valid-object-ids
+  (testing "validate-object-ids function"
+    (is (nil? (id/validate-object-ids
+               {:id        "http://example.com"
+                :versions  [{:id "http://example.com/v1"}]
+                :concepts  [{:id       "http://example.com/concept"
+                             :inScheme "http://example.com/v1"}]
+                :templates [{:id       "http://example.com/template"
+                             :inScheme "http://example.com/v1"}]
+                :patterns  [{:id       "http://example.com/pattern"
+                             :inScheme "http://example.com/v1"}]})))
+    (testing "- reused profile ID"
+      (is (some? (id/validate-object-ids
+                  {:id        "http://example.com"
+                   :versions  [{:id "http://example.com/v1"}]
+                   :concepts  [{:id       "http://example.com"
+                                :inScheme "http://example.com/v1"}]
+                   :templates [{:id       "http://example.com/template"
+                                :inScheme "http://example.com/v1"}]
+                   :patterns  [{:id       "http://example.com/pattern"
+                                :inScheme "http://example.com/v1"}]})))
+      (is (some? (id/validate-object-ids
+                  {:id        "http://example.com"
+                   :versions  [{:id "http://example.com/v1"}]
+                   :concepts  [{:id       "http://example.com/concept"
+                                :inScheme "http://example.com/v1"}]
+                   :templates [{:id       "http://example.com"
+                                :inScheme "http://example.com/v1"}]
+                   :patterns  [{:id       "http://example.com/pattern"
+                                :inScheme "http://example.com/v1"}]})))
+      (is (some? (id/validate-object-ids
+                  {:id        "http://example.com"
+                   :versions  [{:id "http://example.com/v1"}]
+                   :concepts  [{:id       "http://example.com/concept"
+                                :inScheme "http://example.com/v1"}]
+                   :templates [{:id       "http://example.com/template"
+                                :inScheme "http://example.com/v1"}]
+                   :patterns  [{:id       "http://example.com"
+                                :inScheme "http://example.com/v1"}]}))))
+    (testing "- reused version ID"
+      (is (some? (id/validate-object-ids
+                  {:id        "http://example.com"
+                   :versions  [{:id "http://example.com/v1"}]
+                   :concepts  [{:id       "http://example.com/v1"
+                                :inScheme "http://example.com/v1"}]
+                   :templates [{:id       "http://example.com/template"
+                                :inScheme "http://example.com/v1"}]
+                   :patterns  [{:id       "http://example.com/pattern"
+                                :inScheme "http://example.com/v1"}]}))))
+    (testing "- inScheme not in version IDs"
+      (is (some? (id/validate-object-ids
+                  {:id        "http://example.com"
+                   :versions  [{:id "http://example.com/v1"}]
+                   :concepts  [{:id       "http://example.com/concept"
+                                :inScheme "http://example.com/v4"}]
+                   :templates [{:id       "http://example.com/template"
+                                :inScheme "http://example.com/v1"}]
+                   :patterns  [{:id       "http://example.com/pattern"
+                                :inScheme "http://example.com/v1"}]}))))))
+
+(deftest validate-ids-globally-test
+  (testing "validate-ids-globally function"
+    (is (nil? (id/validate-ids-globally
+               {:id        "http://example.com"
+                :versions  [{:id "http://example.com/v1"}]
+                :concepts  [{:id       "http://example.com/concept"
+                             :inScheme "http://example.com/v1"}]
+                :templates [{:id       "http://example.com/template"
+                             :inScheme "http://example.com/v1"}]
+                :patterns  [{:id       "http://example.com/pattern"
+                             :inScheme "http://example.com/v1"}]})))
+    (is (nil? (id/validate-ids-globally
+               {:id        "http://example.com"
+                :versions  [{:id "http://example.com/v1"}
+                            {:id "http://example.com/v2"}
+                            {:id "http://example.com/v3"}]
+                :concepts  [{:id       "http://example.com/concept"
+                             :inScheme "http://example.com/v1"}]
+                :templates [{:id       "http://example.com/template"
+                             :inScheme "http://example.com/v2"}]
+                :patterns  [{:id       "http://example.com/pattern"
+                             :inScheme "http://example.com/v3"}]})))
+    (is (some? (id/validate-ids-globally
+                {:id        "http://example.com"
+                 :versions  [{:id "http://example.com/v1"}]
+                 :concepts  [{:id       "http://example.com/x"
+                              :inScheme "http://example.com/v1"}]
+                 :templates [{:id       "http://example.com/x"
+                              :inScheme "http://example.com/v1"}]
+                 :patterns  [{:id       "http://example.com/x"
+                              :inScheme "http://example.com/v1"}]})))
+    (is (some? (id/validate-ids-globally
+                {:id        "http://example.com"
+                 :versions  [{:id "http://example.com/v1"}
+                             {:id "http://example.com/v2"}
+                             {:id "http://example.com/v3"}]
+                 :concepts  [{:id       "http://example.com/x"
+                              :inScheme "http://example.com/v1"}]
+                 :templates [{:id       "http://example.com/x"
+                              :inScheme "http://example.com/v2"}]
+                 :patterns  [{:id       "http://example.com/x"
+                              :inScheme "http://example.com/v3"}]})))
+    (is (some? (id/validate-ids-globally
+                {:id        "http://example.com"
+                 :versions  [{:id "http://example.com/v1"}
+                             {:id "http://example.com/v2"}
+                             {:id "http://example.com/v3"}]
+                 :concepts  [{:id       "http://example.com/x"
+                              :inScheme "http://example.com/v1"}
+                             {:id       "http://example.com/x"
+                              :inScheme "http://example.com/v2"}
+                             {:id       "http://example.com/x"
+                              :inScheme "http://example.com/v3"}]})))))
+
+(deftest validate-same-inscheme-test
+  (testing "validate-same-inscheme function"
+    (is (nil? (id/validate-same-inscheme
+               {:id        "http://example.com"
+                :versions  [{:id "http://example.com/v1"}]
+                :concepts  [{:id       "http://example.com/concept"
+                             :inScheme "http://example.com/v1"}]
+                :templates [{:id       "http://example.com/template"
+                             :inScheme "http://example.com/v1"}]
+                :patterns  [{:id       "http://example.com/pattern"
+                             :inScheme "http://example.com/v1"}]})))
+    (is (nil? (id/validate-same-inscheme
+               {:id        "http://example.com"
+                :versions  [{:id "http://example.com/v1"}
+                            {:id "http://example.com/v2"}
+                            {:id "http://example.com/v3"}]
+                :concepts  [{:id       "http://example.com/concept"
+                             :inScheme "http://example.com/v3"}]
+                :templates [{:id       "http://example.com/template"
+                             :inScheme "http://example.com/v3"}]
+                :patterns  [{:id       "http://example.com/pattern"
+                             :inScheme "http://example.com/v3"}]})))
+    (is (some? (id/validate-same-inscheme
+                {:id        "http://example.com"
+                 :versions  [{:id "http://example.com/v1"}
+                             {:id "http://example.com/v2"}
+                             {:id "http://example.com/v3"}]
+                 :concepts  [{:id       "http://example.com/concept"
+                              :inScheme "http://example.com/v1"}]
+                 :templates [{:id       "http://example.com/template"
+                              :inScheme "http://example.com/v2"}]
+                 :patterns  [{:id       "http://example.com/pattern"
+                              :inScheme "http://example.com/v3"}]})))))
+
+(deftest validate-ids-by-inscheme-test
+  (testing "validate-ids-by-inscheme function"
+    (is (nil? (id/validate-ids-by-inscheme
+               {:id        "http://example.com"
+                :versions  [{:id "http://example.com/v1"}]
+                :concepts  [{:id       "http://example.com/concept"
+                             :inScheme "http://example.com/v1"}]
+                :templates [{:id       "http://example.com/template"
+                             :inScheme "http://example.com/v1"}]
+                :patterns  [{:id       "http://example.com/pattern"
+                             :inScheme "http://example.com/v1"}]})))
+    (is (some? (id/validate-ids-by-inscheme
+                {:id        "http://example.com"
+                 :versions  [{:id "http://example.com/v1"}]
+                 :concepts  [{:id       "http://example.com/x"
+                              :inScheme "http://example.com/v1"}]
+                 :templates [{:id       "http://example.com/x"
+                              :inScheme "http://example.com/v1"}]
+                 :patterns  [{:id       "http://example.com/x"
+                              :inScheme "http://example.com/v1"}]})))
+    (is (nil? (id/validate-ids-by-inscheme
+                {:id        "http://example.com"
+                 :versions  [{:id "http://example.com/v1"}
+                             {:id "http://example.com/v2"}]
+                 :concepts  [{:id       "http://example.com/concept"
+                              :inScheme "http://example.com/v1"}
+                             {:id       "http://example.com/concept"
+                              :inScheme "http://example.com/v2"}]
+                 :templates [{:id       "http://example.com/template"
+                              :inScheme "http://example.com/v1"}
+                             {:id       "http://example.com/template"
+                              :inScheme "http://example.com/v2"}]
+                 :patterns  [{:id       "http://example.com/pattern"
+                              :inScheme "http://example.com/v1"}
+                             {:id       "http://example.com/pattern"
+                              :inScheme "http://example.com/v2"}]})))))
+
+(deftest validate-version-change
+  (testing "validate-version-change function"
+    (is (nil? (id/validate-version-change
+               {:id        "http://example.com"
+                :versions  [{:id "http://example.com/v1"}]
+                :concepts  [{:id       "http://example.com/concept"
+                             :inScheme "http://example.com/v1"}]
+                :templates [{:id       "http://example.com/template"
+                             :inScheme "http://example.com/v1"}]
+                :patterns  [{:id       "http://example.com/pattern"
+                             :inScheme "http://example.com/v1"}]})))
+    (is (nil? (id/validate-version-change
+               {:id        "http://example.com"
+                :versions  [{:id "http://example.com/v1"}
+                            {:id "http://example.com/v2"}]
+                :concepts  [{:id         "http://example.com/concept"
+                             :inScheme   "http://example.com/v1"
+                             :deprecated false}
+                            {:id         "http://example.com/concept"
+                             :inScheme   "http://example.com/v2"
+                             :deprecated true}]})))
+    (is (some? (id/validate-version-change
+                {:id        "http://example.com"
+                 :versions  [{:id "http://example.com/v1"}
+                             {:id "http://example.com/v2"}]
+                 :concepts  [{:id       "http://example.com/concept"
+                              :inScheme "http://example.com/v1"
+                              :broader  ["http://example.org/concept-2"]}
+                             {:id       "http://example.com/concept"
+                              :inScheme "http://example.com/v2"
+                              :broader  ["http://example.org/concept-3"]}]})))
+    (is (nil? (id/validate-version-change
+               {:id        "http://example.com"
+                :versions  [{:id "http://example.com/v1"}
+                            {:id "http://example.com/v2"}]
+                :templates [{:id       "http://example.com/template"
+                             :inScheme "http://example.com/v1"
+                             :rules    [{:location  "$.foo"
+                                         :presence  "included"}]}
+                            {:id       "http://example.com/template"
+                             :inScheme "http://example.com/v2"
+                             :rules    [{:location  "$.foo"
+                                         :presence  "included"
+                                         :scopeNote "bar"}]}]})))
+    (is (some? (id/validate-version-change
+                {:id        "http://example.com"
+                 :versions  [{:id "http://example.com/v1"}
+                             {:id "http://example.com/v2"}]
+                 :templates [{:id       "http://example.com/template"
+                              :inScheme "http://example.com/v1"
+                              :rules    [{:location  "$.foo"
+                                          :presence  "included"}]}
+                             {:id       "http://example.com/template"
+                              :inScheme "http://example.com/v2"
+                              :rules    [{:location  "$.baz"
+                                          :presence  "included"
+                                          :scopeNote "bar"}]}]})))))

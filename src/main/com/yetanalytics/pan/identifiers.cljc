@@ -193,8 +193,14 @@
          ::id-not-version-id
          ::inscheme-in-versions))
 
+(s/def ::valid-objects-ids
+  (s/every ::valid-object-ids))
+
 (s/def ::singleton-coll
   (s/every any? :min-count 1 :max-count 1))
+
+(s/def ::coll-of-singleton-coll
+  (s/every ::singleton-coll))
 
 (defn- coll->count-map
   [coll]
@@ -223,7 +229,7 @@
        coll->count-map
        (s/explain-data ::singleton-count-map)))
 
-(defn validate-id-and-inscheme
+(defn validate-object-ids
   "Validate that every Concept, StatementTemplate, and Pattern in
    `profile` has valid IDs and inSchemes (i.e. IDs don't duplicate
    a profile or version ID, and inSchemes exist in the version ID set)."
@@ -232,7 +238,7 @@
     (->> (profile->object-seq profile)
          (map #(select-keys % [:id :inScheme]))
          (map #(assoc % :profileId id :versionIds version-ids))
-         (s/explain-data (s/every ::valid-object-ids)))))
+         (s/explain-data ::valid-objects-ids))))
 
 ;; Global version
 
@@ -277,14 +283,24 @@
        coll->count-map
        (s/explain-data ::singleton-count-map)))
 
+;; TODO: Revisit what Concept/Template/Pattern changes should count as
+;; "breaking"
+
+(defn- dissoc-properties
+  "Dissoc properties that may change between version increments."
+  [object]
+  (cond-> (dissoc object :inScheme :deprecated)
+    (contains? object :rules)
+    (update :rules (partial map #(dissoc % :scopeNote)))))
+
 (defn validate-version-change
   "Validate that every object in `profile` that is shared between
    versions follows versioning requirements, i.e. they don't differ
    in certain properties."
   [profile]
   (->> (profile->object-seq profile)
-       (map #(dissoc % :inScheme :deprecated))
+       (map dissoc-properties)
        (group-by :id)
        vals
        (map distinct)
-       (s/explain-data (s/every ::singleton-coll))))
+       (s/explain-data ::coll-of-singleton-coll)))
