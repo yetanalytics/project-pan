@@ -60,7 +60,10 @@
   respective counts. (Ideally theys should all be one, as IDs MUST be unique
   by definition.)"
   [ids-coll]
-  (reduce (fn [accum id] (update accum id #(if (nil? %) 1 (inc %))))
+  (reduce (fn [m x]
+            (if (contains? m x)
+              (update m x inc)
+              (assoc m x 1)))
           {}
           ids-coll))
 
@@ -167,3 +170,121 @@
         all-objects (concat concepts templates patterns)
         vid-objects (mapv #(assoc % :version-ids version-ids) all-objects)]
     (s/explain-data ::in-schemes vid-objects)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn- not-profile-id? [{:keys [id profileId]}]
+  (not= id profileId))
+
+(defn- not-version-id? [{:keys [id versionIds]}]
+  (not (contains? versionIds id)))
+
+(defn- in-versions? [{:keys [inScheme versionIds]}]
+  (contains? versionIds inScheme))
+
+(s/def ::id-not-profile-id not-profile-id?)
+
+(s/def ::id-not-version-id not-version-id?)
+
+(s/def ::inscheme-in-versions in-versions?)
+
+(s/def ::valid-object-ids
+  (s/and ::id-not-profile-id
+         ::id-not-version-id
+         ::inscheme-in-versions))
+
+(s/def ::singleton-coll
+  (s/every any? :min-count 1 :max-count 1))
+
+(defn- coll->count-map
+  [coll]
+  (reduce (fn [m x] (if (contains? m x) (update m x inc) (assoc m x 1)))
+          {}
+          coll))
+
+(s/def ::singleton-count-map
+  (s/map-of any? #(= 1 %)))
+
+(defn- profile->object-seq
+  "Return a lazy seq of all the Concepts, Templates, and Patterns in
+   a Profile."
+  [{:keys [concepts templates patterns]}]
+  (concat concepts templates patterns))
+
+;; Both versions
+
+(defn validate-unique-versions
+  "Validate that the profile and version IDs are all unique and are
+   not duplicated between each other."
+  [{:keys [id versions] :as _profile}]
+  (->> versions
+       (map #(select-keys % [:id]))
+       (into [{:id id}])
+       coll->count-map
+       (s/explain-data ::singleton-count-map)))
+
+(defn validate-id-and-inscheme
+  "Validate that every Concept, StatementTemplate, and Pattern in
+   `profile` has valid IDs and inSchemes (i.e. IDs don't duplicate
+   a profile or version ID, and inSchemes exist in the version ID set)."
+  [{:keys [id versions] :as profile}]
+  (let [version-ids (set (map :id versions))]
+    (->> (profile->object-seq profile)
+         (map #(select-keys % [:id :inScheme]))
+         (map #(assoc % :profileId id :versionIds version-ids))
+         (s/explain-data (s/every ::valid-object-ids)))))
+
+;; Global version
+
+(defn validate-ids-globally
+  "Validate that every ID in `profile`, regardless of the corresponding
+   inScheme, is distinct. If `extra-profiles` is provided, ensure that
+   IDs in `profile` are not duplicated in there either."
+  ([profile]
+   (->> (profile->object-seq profile)
+        (map #(select-keys % [:id]))
+        coll->count-map
+        (s/explain-data ::singleton-count-map)))
+  ([profile extra-profiles]
+   (let [extra-objs  (mapcat profile->object-seq extra-profiles)
+         count-extra (fn [id] (count (filter (fn [{xid :id}] (= id xid))
+                                             extra-objs)))]
+     (->> (profile->object-seq profile)
+          (map #(select-keys % [:id]))
+          coll->count-map
+          (reduce-kv (fn [m {:keys [id] :as obj} cnt]
+                       (let [extra-count (count-extra id)]
+                         (assoc m obj (+ cnt extra-count))))
+                     {})
+          (s/explain-data ::singleton-count-map)))))
+
+(defn validate-same-inscheme
+  "Validate that every object in `profile` has the same inScheme."
+  [profile]
+  (->> (profile->object-seq profile)
+       (map #(select-keys % [:inScheme]))
+       distinct
+       (s/explain-data ::singleton-coll)))
+
+;; Per-inScheme version
+
+(defn validate-ids-by-inscheme
+  "Validate that every object in `profile` _within each version_ has
+   distinct IDs. IDs may be reused between versions."
+  [profile]
+  (->> (profile->object-seq profile)
+       (map #(select-keys % [:id :inScheme]))
+       coll->count-map
+       (s/explain-data ::singleton-count-map)))
+
+(defn validate-version-change
+  "Validate that every object in `profile` that is shared between
+   versions follows versioning requirements, i.e. they don't differ
+   in certain properties."
+  [profile]
+  (->> (profile->object-seq profile)
+       (map #(dissoc % :inScheme :deprecated))
+       (group-by :id)
+       vals
+       (map distinct)
+       (s/explain-data (s/every ::singleton-coll))))
