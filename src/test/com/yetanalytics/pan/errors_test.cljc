@@ -191,8 +191,8 @@
       fix/err-msg-1 {:syntax-errors (p/validate bad-profile-1b)}
       fix/err-msg-2 {:syntax-errors (p/validate bad-profile-2a)}
       fix/err-msg-3 {:syntax-errors (p/validate bad-profile-2b)}
-      fix/err-msg-4 {:id-errors (id/validate-ids bad-profile-2c)}
-      fix/err-msg-5 {:in-scheme-errors (id/validate-in-schemes bad-profile-2d)}
+      fix/err-msg-4 {:id-errors (id/validate-ids-globally bad-profile-2c)}
+      fix/err-msg-5 {:in-scheme-errors (id/validate-inschemes bad-profile-2d)}
       fix/err-msg-6 {:concept-edge-errors nil
                      :pattern-edge-errors nil
                      :template-edge-errors
@@ -236,8 +236,12 @@
                              (pt/create-graph bad-profile-2h))}))
   (testing "combining error messages"
     (is (= (str fix/err-msg-4 fix/err-msg-5)
-           (-> {:id-errors (id/validate-ids bad-profile-2c)
-                :in-scheme-errors (id/validate-in-schemes bad-profile-2d)}
+           (-> {:id-errors        (id/validate-ids-globally bad-profile-2c)
+                :in-scheme-errors (id/validate-same-inschemes bad-profile-2d)}
+               (e/errors->string {:print-objects? true}))))
+    (is (= (str fix/err-msg-4 fix/err-msg-5)
+           (-> {:id-errors        (id/validate-ids-by-inscheme bad-profile-2c)
+                :in-scheme-errors (id/validate-inschemes bad-profile-2d)}
                (e/errors->string {:print-objects? true}))))
     (is (= (str fix/err-msg-7 fix/err-msg-9 fix/err-msg-8)
            (-> {:concept-edge-errors nil

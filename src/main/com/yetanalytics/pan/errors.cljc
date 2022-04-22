@@ -78,22 +78,18 @@
 
 ;; ID spec messages
 
+(exp/defmsg ::id/id
+  "should be an ID string")
+(exp/defmsg ::id/inScheme
+  "should be an inScheme string")
+(exp/defmsg ::id/versionIds
+  "should be a set of version IDs")
+
 (exp/defmsg ::id/one-count
   "should be a unique identifier value")
-(exp/defmsg ::id/in-scheme
-  "should be a valid version ID")
 
-(exp/defmsg ::id/id-not-profile-id
-  "should not be the same as the overall profile ID")
-(exp/defmsg ::id/id-not-version-id
-  "should not be the same as a version ID")
-(exp/defmsg ::id/inscheme-in-versions
+(exp/defmsg ::id/inscheme-prop
   "should be a valid version ID")
-
-(exp/defmsg ::id/distinct-object
-  "should not have more than one occurence")
-(exp/defmsg ::id/distinct-ids
-  "should have no object have more than one occurence")
 
 (exp/defmsg ::id/singleton-inscheme-map
   "should only have one valid inScheme value")
@@ -396,18 +392,6 @@
        (pr-str id)
        (->> version-ids sort (map pr-str) (cstr/join "\n"))))
 
-(defn- value-str-counted-map
-  [{:keys [print-objects?]} _ _ path {obj-count :count :as value}]
-  (fmt (str "Object:\n"
-            "%s\n"
-            "\n"
-            "which occurs %d times%s in:\n
-             %s")
-       (ppr-str value print-objects?)
-       (pr-str obj-count)
-       (if (= 1 obj-count) "" "s")
-       (pr-str (last path))))
-
 (defn- value-str-sequence
   [{:keys [print-objects?]} _ _ _ value]
   (fmt (str "Collection:\n"
@@ -416,31 +400,38 @@
 
 (defn- value-str-id-map
   [_opts _ _ path value]
-  (if (number? value)
-    ;; ::id/map-of-distinct-objects
+  (cond
+    ;; ::id/one-count
+    (number? value)
     (let [id-count value
           id-str   (-> path last pr-str)
           ver-str  (-> path butlast last pr-str)]
       (fmt (str "Identifier:\n"
                 "%s\n"
                 "\n"
-                "which occurs %d times%s in:\n"
+                "which occurs %d time%s in the version:\n"
                 "%s")
            id-str
-           (if (= 1 value) "" "s")
            id-count
+           (if (= 1 value) "" "s")
            ver-str))
     ;; ::id/singleton-inscheme-map
+    (s/valid? (s/map-of string? any?) value)
     (fmt (str "The collection:\n"
               "[%s]\n")
-         (cstr/join " \n" (keys value)))))
+         (cstr/join " \n" (keys value)))
+    :else
+    (fmt (str "Value:\n"
+              "%s")
+         (pr-str value))))
 
 (defn- value-str-inscheme-map
   [_opts _ _ _ value]
-  (if (and (map? value)
-           (contains? value :inScheme)
-           (contains? value :versionIds))
-    ;; ::id/map-of-inscheme-props
+  (cond
+    ;; ::id/inscheme-prop
+    (and (map? value)
+         (contains? value :inScheme)
+         (contains? value :versionIds))
     (let [{id :id inscheme :inScheme ver-ids :versionIds} value]
       (fmt (str "InScheme IRI:\n"
                 "%s\n"
@@ -453,10 +444,15 @@
            (pr-str inscheme)
            (pr-str id)
            (->> ver-ids sort (map pr-str) (cstr/join "\n"))))
-    ;; ::id/singleton-inscheme-map
+  ;; ::id/singleton-inscheme-map
+    (s/valid? (s/map-of string? any?) value)
     (fmt (str "The collection:\n"
               "[%s]\n")
-         (cstr/join " \n" (keys value)))))
+         (cstr/join " \n" (keys value)))
+    :else
+    (fmt (str "Value:\n"
+              "%s")
+         (pr-str value))))
 
 (defn- value-str-versioning
   [{:keys [print-objects?]} _ _ _ value]
@@ -597,9 +593,9 @@
       :syntax-errors
       (exp/custom-printer (make-opts (partial value-str-obj opts)))
       :id-errors
-      (exp/custom-printer (make-opts (partial value-str-id opts)))
+      (exp/custom-printer (make-opts (partial value-str-id-map opts)))
       :in-scheme-errors
-      (exp/custom-printer (make-opts (partial value-str-version opts)))
+      (exp/custom-printer (make-opts (partial value-str-inscheme-map opts)))
       :concept-edge-errors
       (exp/custom-printer (make-opts (partial value-str-edge opts)))
       :template-edge-errors
@@ -612,9 +608,9 @@
       (exp/custom-printer (make-opts (partial value-str-context-key opts)))
       ;; Old
       :id
-      (exp/custom-printer (make-opts (partial value-str-id opts)))
+      (exp/custom-printer (make-opts (partial value-str-id-map opts)))
       :in-scheme
-      (exp/custom-printer (make-opts (partial value-str-version opts)))
+      (exp/custom-printer (make-opts (partial value-str-inscheme-map opts)))
       :edge
       (exp/custom-printer (make-opts (partial value-str-edge opts)))
       :cycle

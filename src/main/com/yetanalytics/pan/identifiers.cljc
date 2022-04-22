@@ -179,26 +179,22 @@
           {}
           coll))
 
-(s/def ::singleton-inscheme-map
-  (s/map-of string? any? :max-count 1))
-
-;; IDs
-
-(s/def ::distinct-object
-  (s/and #(contains? % :count)
-         #(= 1 (:count %))))
-
-(s/def ::distinct-ids
-  (s/map-of any? ::one-count))
-
-(s/def ::map-of-distinct-ids
-  (s/map-of any? ::distinct-ids))
-
-;; inSchemes
-
 (s/def ::id any?)
 (s/def ::inScheme any?)
 (s/def ::versionIds (s/coll-of any? :kind set?))
+
+(s/def ::singleton-inscheme-map
+  (s/map-of ::inScheme any? :max-count 1))
+
+;; IDs
+
+(s/def ::distinct-ids
+  (s/map-of ::id ::one-count))
+
+(s/def ::map-of-distinct-ids
+  (s/map-of ::inScheme ::distinct-ids))
+
+;; inSchemes
 
 (defn- has-inscheme?
   [{:keys [inScheme versionIds]}]
@@ -212,7 +208,7 @@
   (s/coll-of ::inscheme-prop))
 
 (s/def ::map-of-inscheme-props
-  (s/map-of any? ::inscheme-props))
+  (s/map-of ::id ::inscheme-props))
 
 ;; helpers
 
