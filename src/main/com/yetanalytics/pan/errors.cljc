@@ -90,13 +90,16 @@
 (exp/defmsg ::id/inscheme-in-versions
   "should be a valid version ID")
 
-(exp/defmsg ::id/singleton-map
+(exp/defmsg ::id/distinct-object
   "should not have more than one occurence")
-(exp/defmsg ::id/singleton-maps
-  "should have nothing have more than one occurence")
+(exp/defmsg ::id/distinct-objects
+  "should have no object have more than one occurence")
 
-(exp/defmsg ::id/singleton-coll
-  "should not have more than one element")
+(exp/defmsg ::id/singleton-inscheme-map
+  "should only have one valid inScheme value")
+
+(exp/defmsg ::id/versioned-objects
+  "should not share the same ID if properties are changed")
 
 ;; Graph spec messages
 
@@ -410,6 +413,54 @@
   (fmt (str "Collection:\n"
             "[%s]\n")
        (cstr/join " \n" (map #(ppr-str % print-objects?) value))))
+
+(defn- value-str-id-map
+  [{:keys [print-objects?]} _ _ path value]
+  (if-some [obj-count (:count value)]
+    ;; ::id/map-of-distinct-objects
+    (fmt (str "Object:\n"
+              "%s\n"
+              "\n"
+              "which occurs %d times%s in:\n"
+              "%s")
+         (ppr-str value print-objects?)
+         (pr-str obj-count)
+         (if (= 1 obj-count) "" "s")
+         (pr-str (last path)))
+    ;; ::id/singleton-inscheme-map
+    (fmt (str "The collection:\n"
+              "[%s]\n")
+         (cstr/join " \n" (keys value)))))
+
+(defn- value-str-inscheme-map
+  [{:keys [print-objects?]} _ _ _ value]
+  (if (and (contains? value :inScheme)
+           (contains? value :versionIds))
+    ;; ::id/map-of-inscheme-props
+    (let [{inscheme :inScheme ver-ids :versionIds} value]
+      (fmt (str "Object:\n"
+                "%s\n"
+                "has an inScheme value:\n"
+                "%s\n"
+                "in a Profile with the following version IDs:\n"
+                "%s")
+           (ppr-str value print-objects?)
+           (pr-str inscheme)
+           (pr-str ver-ids)))
+    ;; ::id/singleton-inscheme-map
+    (fmt (str "The collection:\n"
+              "[%s]\n")
+         (cstr/join " \n" (keys value)))))
+
+(defn- value-str-versioning
+  [{:keys [print-objects?]} _ _ _ value]
+  (if print-objects?
+    (fmt (str "Objects:\n"
+              "%s\n")
+         (cstr/join ",\n" (map ppr-str value)))
+    (fmt (str "Objects with ID:\n"
+              "%s\n")
+         (-> value first :id pr-str))))
 
 (defn- value-str-edge
   "Custom value string fn for IRI link error messages."
