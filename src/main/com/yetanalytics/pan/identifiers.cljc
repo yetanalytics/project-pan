@@ -179,13 +179,6 @@
           {}
           coll))
 
-(defn- assoc-counts
-  [map-coll]
-  (let [count-m (coll->count-map map-coll)]
-    (reduce (fn [acc x] (conj acc (assoc x :count (get count-m x))))
-            []
-            map-coll)))
-
 (s/def ::singleton-inscheme-map
   (s/map-of string? any? :max-count 1))
 
@@ -195,21 +188,28 @@
   (s/and #(contains? % :count)
          #(= 1 (:count %))))
 
-(s/def ::distinct-objects
-  (s/coll-of ::distinct-object))
+(s/def ::distinct-ids
+  (s/map-of any? ::one-count))
 
-(s/def ::map-of-distinct-objects
-  (s/map-of any? ::object-vec))
+(s/def ::map-of-distinct-ids
+  (s/map-of any? ::distinct-ids))
 
 ;; inSchemes
 
-(s/def ::inScheme string?)
-(s/def ::versionIds (s/coll-of string? :kind set?))
+(s/def ::id any?)
+(s/def ::inScheme any?)
+(s/def ::versionIds (s/coll-of any? :kind set?))
+
+(defn- has-inscheme?
+  [{:keys [inScheme versionIds]}]
+  (contains? versionIds inScheme))
+
+(s/def ::inscheme-prop
+  (s/and (s/keys :req-un [::id ::inScheme ::versionIds])
+         has-inscheme?))
 
 (s/def ::inscheme-props
-  (s/map-of string? (s/and (s/keys :req-un [::inScheme ::versionIds])
-                           (fn [{:keys [version-ids inscheme]}]
-                             (contains? version-ids inscheme)))))
+  (s/coll-of ::inscheme-prop))
 
 (s/def ::map-of-inscheme-props
   (s/map-of any? ::inscheme-props))
@@ -224,14 +224,16 @@
 
 (defn- profile->inscheme-objects-m
   [profile]
-  (let [head-ids (into [(select-keys profile [:id :type])]
+  (let [head-ids (into [(select-keys profile [:id])]
                        (:versions profile))]
     (->> (profile->object-seq profile)
-         (into head-ids)
          (map #(select-keys % [:id :inScheme]))
          (group-by :inScheme)
-         (reduce-kv (fn [m k v] 
-                      (assoc m k (-> v (concat head-ids) assoc-counts vec)))
+         (reduce-kv (fn [m k v]
+                      (assoc m k (->> v
+                                      (into head-ids)
+                                      (map :id)
+                                      coll->count-map)))
                     {}))))
 
 (defn- profile->inscheme-props-m
@@ -252,7 +254,7 @@
   ([profile]
    (->> profile
         profile->inscheme-objects-m
-        (s/explain-data (s/and ::map-of-distinct-objects
+        (s/explain-data (s/and ::map-of-distinct-ids
                                ::singleton-inscheme-map))))
   ([profile extra-profiles]
    (let [extra-objs    (mapcat profile->object-seq extra-profiles)
@@ -265,7 +267,7 @@
      (->> profile
           profile->inscheme-objects-m
           (map (partial reduce counts-red-fn []))
-          (s/explain-data (s/and ::map-of-distinct-objects
+          (s/explain-data (s/and ::map-of-distinct-ids
                                  ::singleton-inscheme-map))))))
 
 (defn validate-same-inschemes
@@ -283,7 +285,7 @@
   [profile]
   (->> profile
        profile->inscheme-objects-m
-       (s/explain-data ::map-of-distinct-objects)))
+       (s/explain-data ::map-of-distinct-ids)))
 
 (defn validate-inschemes
   [profile]
