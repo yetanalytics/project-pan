@@ -564,6 +564,8 @@
       (exp/custom-printer (make-opts (partial value-str-id opts)))
       :in-scheme-errors
       (exp/custom-printer (make-opts (partial value-str-inscheme opts)))
+      :versioning-errors
+      (exp/custom-printer (make-opts (partial value-str-versioning opts)))
       :concept-edge-errors
       (exp/custom-printer (make-opts (partial value-str-edge opts)))
       :template-edge-errors
@@ -573,20 +575,7 @@
       :pattern-cycle-errors
       (exp/custom-printer (make-opts (partial value-str-scc opts)))
       :context-errors
-      (exp/custom-printer (make-opts (partial value-str-context-key opts)))
-      ;; Old
-      :id
-      (exp/custom-printer (make-opts (partial value-str-id opts)))
-      :in-scheme
-      (exp/custom-printer (make-opts (partial value-str-inscheme opts)))
-      :edge
-      (exp/custom-printer (make-opts (partial value-str-edge opts)))
-      :cycle
-      (exp/custom-printer (make-opts (partial value-str-scc opts)))
-      :context
-      (exp/custom-printer (make-opts (partial value-str-context-key opts)))
-      :else
-      (exp/custom-printer (make-opts (partial value-str-obj opts))))))
+      (exp/custom-printer (make-opts (partial value-str-context-key opts))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Transform error map
@@ -614,7 +603,8 @@
   [k]
   (case k
     :id-errors "ID Errors"
-    :in-scheme-errors "Version Errors"
+    :in-scheme-errors "Version ID Errors"
+    :versioning-errors "Version Change Errors"
     (->> (-> k name (cstr/split #"-"))
          (map cstr/capitalize)
          (cstr/join " "))))
@@ -677,15 +667,17 @@
   "Print errors from profile validation using Expound. Available keys:
   :syntax-errors         Basic syntax validation (always present)
   :id-errors             Duplicate ID errors
-  :in-scheme-errors      inScheme property validation
+  :in-scheme-errors      InScheme property validation errors
+  :versioning-errors     Version change errors
   :concept-errors        Concept relation/link errors
   :template-errors       Template relation/link errors
   :pattern-errors        Pattern relation/link errors
   :pattern-cycle-errors  Cyclical pattern errors
-  :context-errors        Errors in expanding keys via @context maps"
+  :context-errors        Expanding keys via @context map errors"
   [{:keys [syntax-errors
            id-errors
            in-scheme-errors
+           versioning-errors
            concept-edge-errors
            template-edge-errors
            pattern-edge-errors
@@ -693,18 +685,47 @@
            context-errors]}
    opts]
   (when syntax-errors
-    (expound-error syntax-errors "Syntax Errors" nil opts))
+    (expound-error syntax-errors
+                   "Syntax Errors"
+                   :syntax-errors
+                   opts))
   (when id-errors
-    (expound-error id-errors "ID Errors" :id opts))
+    (expound-error id-errors
+                   "ID Errors"
+                   :id-errors
+                   opts))
   (when in-scheme-errors
-    (expound-error in-scheme-errors "Version Errors" :in-scheme opts))
+    (expound-error in-scheme-errors
+                   "Version ID Errors"
+                   :in-scheme-errors
+                   opts))
+  (when versioning-errors
+    (expound-error versioning-errors
+                   "Version Change Errors"
+                   :versioning-errors
+                   opts))
   (when concept-edge-errors
-    (expound-error concept-edge-errors "Concept Edge Errors" :edge opts))
+    (expound-error concept-edge-errors
+                   "Concept Edge Errors"
+                   :concept-edge-errors
+                   opts))
   (when template-edge-errors
-    (expound-error template-edge-errors "Template Edge Errors" :edge opts))
+    (expound-error template-edge-errors
+                   "Template Edge Errors"
+                   :template-edge-errors
+                   opts))
   (when pattern-edge-errors
-    (expound-error pattern-edge-errors "Pattern Edge Errors" :edge opts))
+    (expound-error pattern-edge-errors
+                   "Pattern Edge Errors"
+                   :pattern-edge-errors
+                   opts))
   (when pattern-cycle-errors
-    (expound-error pattern-cycle-errors "Pattern Cycle Errors" :cycle opts))
+    (expound-error pattern-cycle-errors
+                   "Pattern Cycle Errors"
+                   :pattern-cycle-errors
+                   opts))
   (when context-errors
-    (expound-error context-errors "Context Errors" :context opts)))
+    (expound-error context-errors
+                   "Context Errors"
+                   :context-errors
+                   opts)))

@@ -393,7 +393,7 @@ should be a unique identifier value
 -------------------------
 Detected 1 error
 
-**** Version Errors ****
+**** Version ID Errors ****
 
 -- Spec failed --------------------
 

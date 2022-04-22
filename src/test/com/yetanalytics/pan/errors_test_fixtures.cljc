@@ -390,7 +390,7 @@ Detected 2 errors
 
 (def err-msg-5
   "
-**** Version Errors ****
+**** Version ID Errors ****
 
 -- Spec failed --------------------
 
