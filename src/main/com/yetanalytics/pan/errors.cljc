@@ -83,6 +83,21 @@
 (exp/defmsg ::id/in-scheme
   "should be a valid version ID")
 
+(exp/defmsg ::id/id-not-profile-id
+  "should not be the same as the overall profile ID")
+(exp/defmsg ::id/id-not-version-id
+  "should not be the same as a version ID")
+(exp/defmsg ::id/inscheme-in-versions
+  "should be a valid version ID")
+
+(exp/defmsg ::id/singleton-map
+  "should not have more than one occurence")
+(exp/defmsg ::id/singleton-maps
+  "should have nothing have more than one occurence")
+
+(exp/defmsg ::id/singleton-coll
+  "should not have more than one element")
+
 ;; Graph spec messages
 
 (exp/defmsg ::graph/not-self-loop
@@ -377,6 +392,24 @@
        (pr-str inScheme)
        (pr-str id)
        (->> version-ids sort (map pr-str) (cstr/join "\n"))))
+
+(defn- value-str-counted-map
+  [{:keys [print-objects?]} _ _ path {obj-count :count :as value}]
+  (fmt (str "Object:\n"
+            "%s\n"
+            "\n"
+            "which occurs %d times%s in:\n
+             %s")
+       (ppr-str value print-objects?)
+       (pr-str obj-count)
+       (if (= 1 obj-count) "" "s")
+       (pr-str (last path))))
+
+(defn- value-str-sequence
+  [{:keys [print-objects?]} _ _ _ value]
+  (fmt (str "Collection:\n"
+            "[%s]\n")
+       (cstr/join " \n" (map #(ppr-str % print-objects?) value))))
 
 (defn- value-str-edge
   "Custom value string fn for IRI link error messages."

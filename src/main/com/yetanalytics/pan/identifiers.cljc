@@ -200,20 +200,34 @@
 (s/def ::valid-objects-ids
   (s/every ::valid-object-ids))
 
-(s/def ::singleton-coll
-  (s/every any? :min-count 1 :max-count 1))
-
-(s/def ::coll-of-singleton-coll
-  (s/every ::singleton-coll))
-
 (defn- coll->count-map
   [coll]
   (reduce (fn [m x] (if (contains? m x) (update m x inc) (assoc m x 1)))
           {}
           coll))
 
-(s/def ::singleton-count-map
-  (s/map-of any? #(= 1 %)))
+(defn- assoc-counts
+  [map-coll]
+  (let [count-m (coll->count-map map-coll)]
+    (reduce (fn [acc x] (conj acc (assoc x :count (get count-m x))))
+            []
+            map-coll)))
+
+(s/def ::singleton-map
+  (s/and #(contains? % :count)
+         #(= 1 (:count %))))
+
+(s/def ::singleton-maps
+  (s/coll-of ::singleton-map))
+
+(s/def ::id-singleton-maps
+  (s/map-of any? ::singleton-maps))
+
+(s/def ::singleton-coll
+  (s/every any? :min-count 1 :max-count 1))
+
+(s/def ::coll-of-singleton-coll
+  (s/every ::singleton-coll))
 
 (defn- profile->object-seq
   "Return a lazy seq of all the Concepts, Templates, and Patterns in
@@ -254,23 +268,26 @@
   "Validate that every ID in `profile`, regardless of the corresponding
    inScheme, is distinct. If `extra-profiles` is provided, ensure that
    IDs in `profile` are not duplicated in there either."
-  ([profile]
+  ([{:keys [id] :as profile}]
    (->> (profile->object-seq profile)
         (map #(select-keys % [:id]))
-        coll->count-map
-        (s/explain-data ::singleton-count-map)))
-  ([profile extra-profiles]
+        assoc-counts
+        (assoc {} id)
+        (s/explain-data ::id-singleton-maps)))
+  ([{:keys [id] :as profile} extra-profiles]
    (let [extra-objs  (mapcat profile->object-seq extra-profiles)
          count-extra (fn [id] (count (filter (fn [{xid :id}] (= id xid))
                                              extra-objs)))]
      (->> (profile->object-seq profile)
           (map #(select-keys % [:id]))
-          coll->count-map
-          (reduce-kv (fn [m {:keys [id] :as obj} cnt]
-                       (let [extra-count (count-extra id)]
-                         (assoc m obj (+ cnt extra-count))))
-                     {})
-          (s/explain-data ::singleton-count-map)))))
+          assoc-counts
+          (reduce (fn [acc obj]
+                    (let [extra-count (count-extra (:id obj))
+                          updated-obj (update obj :count + extra-count)]
+                      (conj acc updated-obj)))
+                  [])
+          (assoc {} id)
+          (s/explain-data ::id-singleton-maps)))))
 
 (defn validate-same-inscheme
   "Validate that every object in `profile` has the same inScheme."
@@ -288,8 +305,9 @@
   [profile]
   (->> (profile->object-seq profile)
        (map #(select-keys % [:id :inScheme]))
-       coll->count-map
-       (s/explain-data ::singleton-count-map)))
+       assoc-counts
+       (group-by :inScheme)
+       (s/explain-data ::id-singleton-maps)))
 
 ;; TODO: Revisit what Concept/Template/Pattern changes should count as
 ;; "breaking"
