@@ -144,10 +144,10 @@
 (s/def ::one-count one?)
 
 (s/def ::distinct-ids
-  (s/map-of ::id ::one-count))
+  (s/map-of any? ::one-count))
 
 (s/def ::map-of-distinct-ids
-  (s/map-of ::inScheme ::distinct-ids))
+  (s/map-of any? ::distinct-ids))
 
 (defn validate-ids
   "Validate that every ID in `profile` within each inScheme/version
@@ -180,7 +180,7 @@
   (s/coll-of ::inscheme-prop))
 
 (s/def ::map-of-inscheme-props
-  (s/map-of ::id ::inscheme-props))
+  (s/map-of any? ::inscheme-props))
 
 (defn validate-same-inschemes
   [profile]
@@ -231,12 +231,15 @@
 
 (s/def ::versioned-objects versioned-objects?)
 
+(s/def ::coll-of-versioned-objects (s/coll-of ::versioned-objects))
+
 (defn validate-version-change
   "Validate that every object in `profile` that is shared between
    versions follows versioning requirements, i.e. they don't differ
    in certain properties."
   [profile]
-  (->> (profile->object-seq profile)
+  (->> profile
+       profile->object-seq
        (group-by :id)
        vals
-       (s/explain-data (s/every ::versioned-objects))))
+       (s/explain-data ::coll-of-versioned-objects)))

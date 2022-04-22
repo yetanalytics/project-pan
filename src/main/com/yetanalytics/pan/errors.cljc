@@ -389,12 +389,10 @@
          (pr-str value))))
 
 (defn- value-str-inscheme
-  [_opts _ _ _ value]
+  [_opts _ _ path value]
   (cond
     ;; ::id/inscheme-prop
-    (and (map? value)
-         (contains? value :inScheme)
-         (contains? value :versionIds))
+    (not-empty path)
     (let [{id :id inscheme :inScheme ver-ids :versionIds} value]
       (fmt (str "InScheme IRI:\n"
                 "%s\n"
@@ -407,11 +405,11 @@
            (pr-str inscheme)
            (pr-str id)
            (->> ver-ids sort (map pr-str) (cstr/join "\n"))))
-  ;; ::id/singleton-inscheme-map
+    ;; ::id/singleton-inscheme-map
     (s/valid? (s/map-of string? any?) value)
     (fmt (str "Objects that have the following inSchemes:\n"
               "[%s]")
-         (cstr/join "\n " (keys value)))
+         (->> value keys (map pr-str) (cstr/join "\n ")))
     :else
     (fmt (str "Value:\n"
               "%s")
@@ -421,10 +419,10 @@
   [{:keys [print-objects?]} _ _ _ value]
   (if print-objects?
     (fmt (str "Objects:\n"
-              "%s\n")
+              "%s")
          (cstr/join ",\n" (map ppr-str value)))
     (fmt (str "Objects with ID:\n"
-              "%s\n")
+              "%s")
          (-> value first :id pr-str))))
 
 (defn- value-str-edge

@@ -412,6 +412,96 @@ should be a valid version ID
 Detected 1 error
 ")
 
+(def acrossx-multi-inscheme-err-msg
+  "
+**** Version ID Errors ****
+
+-- Spec failed --------------------
+
+Objects that have the following inSchemes:
+[\"https://w3id.org/xapi/acrossx/v1.0\"
+ \"https://w3id.org/xapi/acrossx/v1.0.1\"]
+
+should only have one valid inScheme value
+
+-------------------------
+Detected 1 error
+")
+
+(def video-multi-inscheme-err-msg
+  "
+**** Version ID Errors ****
+
+-- Spec failed --------------------
+
+InScheme IRI:
+nil
+
+associated with the identifier:
+\"https://w3id.org/xapi/video/patterns#generalpattern\"
+
+in a Profile with the following version IDs:
+\"https://w3id.org/xapi/video/v1.0\"
+\"https://w3id.org/xapi/video/v1.0.1\"
+\"https://w3id.org/xapi/video/v1.0.2\"
+\"https://w3id.org/xapi/video/v1.0.3\"
+
+should be a valid version ID
+
+-------------------------
+Detected 1 error
+")
+
+(def video-multi-inscheme-err-msg-2*
+  "
+**** Version Change Errors ****
+
+-- Spec failed --------------------
+
+Objects:
+{:id \"https://w3id.org/xapi/video/extensions/video-playback-size\",
+ :inScheme \"https://w3id.org/xapi/video/v1.0\",
+ :type \"ContextExtension\",
+ :definition
+ {:en
+  \"Used to identify the size in Width x Height of the video as viewed by the user.\"},
+ :prefLabel {:en \"video-playback-size\"},
+ :inlineSchema \"{ \\\"type\\\": \\\"string\\\" }\"},
+{:id \"https://w3id.org/xapi/video/extensions/video-playback-size\",
+ :inScheme \"https://w3id.org/xapi/video/v1.0.1\",
+ :type \"ContextExtension\",
+ :definition
+ {:en
+  \"Used to identify the size in Width x Height of the video as viewed by the user.\"},
+ :prefLabel {:en \"video-playback-size\"},
+ :inlineSchema \"{ \\\"type\\\": \\\"string\\\" }\"},
+{:id \"https://w3id.org/xapi/video/extensions/video-playback-size\",
+ :inScheme \"https://w3id.org/xapi/video/v1.0.2\",
+ :type \"ContextExtension\",
+ :definition
+ {:en
+  \"Used to identify the current video size in Width x Height as viewed by the user.\"},
+ :prefLabel {:en \"video-playback-size\"},
+ :inlineSchema \"{ \\\"type\\\": \\\"string\\\" }\"},
+{:id \"https://w3id.org/xapi/video/extensions/video-playback-size\",
+ :inScheme \"https://w3id.org/xapi/video/v1.0.3\",
+ :type \"ContextExtension\",
+ :definition
+ {:en
+  \"Used to identify the current video size in Width x Height as viewed by the user.\"},
+ :prefLabel {:en \"video-playback-size\"},
+ :inlineSchema \"{ \\\"type\\\": \\\"string\\\" }\"}
+
+should not share the same ID if properties are changed
+
+-------------------------
+Detected 1 error
+")
+
+(def video-multi-inscheme-err-msg-2
+  (str video-multi-inscheme-err-msg
+       video-multi-inscheme-err-msg-2*))
+
 ;; Graph/relation errors
 
 (def catch-graph-err-msg
