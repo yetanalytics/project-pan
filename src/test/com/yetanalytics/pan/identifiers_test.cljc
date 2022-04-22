@@ -121,9 +121,9 @@
     (is (not (s/valid? ::id/distinct-ids {"https://foo.org" 1
                                           "https://bar.org" 2})))))
 
-(deftest validate-ids-globally-test
-  (testing "validate-ids-globally function"
-    (is (nil? (id/validate-ids-globally
+(deftest validate-ids-test
+  (testing "validate-ids function"
+    (is (nil? (id/validate-ids
                {:id        "http://example.com"
                 :versions  [{:id "http://example.com/v1"}]
                 :concepts  [{:id       "http://example.com/concept"
@@ -133,7 +133,7 @@
                 :patterns  [{:id       "http://example.com/pattern"
                              :inScheme "http://example.com/v1"}]})))
     (testing "- profile and version IDs not unique"
-      (let [spec-ed (id/validate-ids-globally
+      (let [spec-ed (id/validate-ids
                      {:id       "http://example.com"
                       :versions [{:id "http://example.com/v1"}
                                  {:id "http://example.com/v1"}
@@ -147,7 +147,7 @@
                  "http://example.com/v3"      1
                  "http://example.com/concept" 1}}
                (::s/value spec-ed))))
-      (let [spec-ed (id/validate-ids-globally
+      (let [spec-ed (id/validate-ids
                      {:id       "http://example.com/v1"
                       :versions [{:id "http://example.com/v1"}
                                  {:id "http://example.com/v2"}
@@ -160,7 +160,7 @@
                  "http://example.com/v3"      1
                  "http://example.com/concept" 1}}
                (::s/value spec-ed))))
-      (let [spec-ed (id/validate-ids-globally
+      (let [spec-ed (id/validate-ids
                      {:id       "http://example.com/v3"
                       :versions [{:id "http://example.com/v3"}
                                  {:id "http://example.com/v3"}
@@ -172,7 +172,7 @@
                  "http://example.com/concept" 1}}
                (::s/value spec-ed)))))
     (testing "- reused profile ID"
-      (let [spec-ed (id/validate-ids-globally
+      (let [spec-ed (id/validate-ids
                      {:id        "http://example.com"
                       :versions  [{:id "http://example.com/v1"}]
                       :concepts  [{:id       "http://example.com"
@@ -188,7 +188,7 @@
                  "http://example.com/template" 1
                  "http://example.com/pattern"  1}}
                (::s/value spec-ed))))
-      (let [spec-ed (id/validate-ids-globally
+      (let [spec-ed (id/validate-ids
                      {:id        "http://example.com"
                       :versions  [{:id "http://example.com/v1"}]
                       :concepts  [{:id       "http://example.com/concept"
@@ -203,7 +203,7 @@
                  "http://example.com/concept" 1
                  "http://example.com/pattern" 1}}
                (::s/value spec-ed))))
-      (let [spec-ed (id/validate-ids-globally
+      (let [spec-ed (id/validate-ids
                      {:id        "http://example.com"
                       :versions  [{:id "http://example.com/v1"}]
                       :concepts  [{:id       "http://example.com/concept"
@@ -219,7 +219,7 @@
                  "http://example.com/template" 1}}
                (::s/value spec-ed)))))
     (testing "- reused version ID"
-      (let [spec-ed (id/validate-ids-globally
+      (let [spec-ed (id/validate-ids
                      {:id        "http://example.com"
                       :versions  [{:id "http://example.com/v1"}]
                       :concepts  [{:id       "http://example.com/v1"
@@ -236,7 +236,7 @@
                  "http://example.com/pattern"  1}}
                (::s/value spec-ed)))))
     (testing "- duplicate object IDs"
-      (let [spec-ed (id/validate-ids-globally
+      (let [spec-ed (id/validate-ids
                      {:id        "http://example.com"
                       :versions  [{:id "http://example.com/v1"}]
                       :concepts  [{:id       "http://example.com/x"
@@ -252,35 +252,64 @@
                  "http://example.com/x"  3}}
                (::s/value spec-ed)))))
     (testing "- more than one inScheme in Profile objects"
-      (let [spec-ed (id/validate-ids-globally
+      (is (nil? (id/validate-ids
+                 {:id        "http://example.com"
+                  :versions  [{:id "http://example.com/v1"}
+                              {:id "http://example.com/v2"}
+                              {:id "http://example.com/v3"}]
+                  :concepts  [{:id       "http://example.com/concept"
+                               :inScheme "http://example.com/v1"}]
+                  :templates [{:id       "http://example.com/template"
+                               :inScheme "http://example.com/v2"}]
+                  :patterns  [{:id       "http://example.com/pattern"
+                               :inScheme "http://example.com/v3"}]})))
+      (is (nil? (id/validate-ids
+                 {:id        "http://example.com"
+                  :versions  [{:id "http://example.com/v1"}
+                              {:id "http://example.com/v2"}
+                              {:id "http://example.com/v3"}]
+                  :concepts  [{:id       "http://example.com/x"
+                               :inScheme "http://example.com/v1"}]
+                  :templates [{:id       "http://example.com/x"
+                               :inScheme "http://example.com/v2"}]
+                  :patterns  [{:id       "http://example.com/x"
+                               :inScheme "http://example.com/v3"}]})))
+      (let [spec-ed (id/validate-ids
                      {:id        "http://example.com"
-                      :versions  [{:id "http://example.com/v1"}
-                                  {:id "http://example.com/v2"}
-                                  {:id "http://example.com/v3"}]
-                      :concepts  [{:id       "http://example.com/concept"
+                      :versions  [{:id "http://example.com/v1"}]
+                      :concepts  [{:id       "http://example.com/x"
                                    :inScheme "http://example.com/v1"}]
-                      :templates [{:id       "http://example.com/template"
-                                   :inScheme "http://example.com/v2"}]
-                      :patterns  [{:id       "http://example.com/pattern"
-                                   :inScheme "http://example.com/v3"}]})]
+                      :templates [{:id       "http://example.com/x"
+                                   :inScheme "http://example.com/v1"}]
+                      :patterns  [{:id       "http://example.com/x"
+                                   :inScheme "http://example.com/v1"}]})]
         (is (some? spec-ed))
-        (is (= 3
-               (count (::s/value spec-ed)))))
-      (let [spec-ed (id/validate-ids-globally
+        (is (= {"http://example.com/v1"
+                {"http://example.com"    1
+                 "http://example.com/v1" 1
+                 "http://example.com/x"  3}}
+               (::s/value spec-ed))))
+      (let [spec-ed (id/validate-ids
                      {:id        "http://example.com"
-                      :versions  [{:id "http://example.com/v1"}
-                                  {:id "http://example.com/v2"}
-                                  {:id "http://example.com/v3"}]
+                      :versions  [{:id "http://example.com/v1"}]
                       :concepts  [{:id       "http://example.com/x"
                                    :inScheme "http://example.com/v1"}]
                       :templates [{:id       "http://example.com/x"
                                    :inScheme "http://example.com/v2"}]
                       :patterns  [{:id       "http://example.com/x"
-                                   :inScheme "http://example.com/v3"}]})]
-        (is (= 3
-               (count (::s/value spec-ed))))))
+                                   :inScheme "http://example.com/v2"}]})]
+        (is (some? spec-ed))
+        (is (= {"http://example.com/v1"
+                {"http://example.com"    1
+                 "http://example.com/v1" 1
+                 "http://example.com/x"  1}
+                "http://example.com/v2"
+                {"http://example.com"    1
+                 "http://example.com/v1" 1
+                 "http://example.com/x"  2}}
+               (::s/value spec-ed)))))
     (testing "- with extra profiles"
-      (is (nil? (id/validate-ids-globally
+      (is (nil? (id/validate-ids
                  {:id       "http://example.com"
                   :versions [{:id "http://example.com/v1"}]
                   :concepts [{:id       "http://example.com/concept"
@@ -289,7 +318,7 @@
                    :versions [{:id "http://example2.com/v1"}]
                    :concepts [{:id       "http://example2.com/concept"
                                :inScheme "http://example2.com/v1"}]}])))
-      (let [spec-ed (id/validate-ids-globally
+      (let [spec-ed (id/validate-ids
                      {:id        "http://example.com"
                       :versions  [{:id "http://example.com/v1"}]
                       :concepts  [{:id       "http://example.com/concept"
@@ -309,7 +338,28 @@
                  "http://example.com/concept"  1
                  ;; concept-2 not included in the map
                  "http://example.com/template" 2}}
-               (::s/value spec-ed)))))))
+               (::s/value spec-ed))))
+      (let [spec-ed (id/validate-ids
+                     {:id        "http://example.com"
+                      :versions  [{:id "http://example.com/v1"}
+                                  {:id "http://example.com/v2"}
+                                  {:id "http://example.com/v3"}]
+                      :concepts  [{:id       "http://example.com/x"
+                                   :inScheme "http://example.com/v1"}]
+                      :templates [{:id       "http://example.com/x"
+                                   :inScheme "http://example.com/v2"}]
+                      :patterns  [{:id       "http://example.com/x"
+                                   :inScheme "http://example.com/v3"}]}
+                     [{:id "http://example2.com"
+                       :versions [{:id "http://example2.com/v1"}]
+                       :concepts [{:id       "http://example.com/x"
+                                   :inScheme "http://example2.com/v1"}]}])]
+        (is (some? spec-ed))
+        (is (->> spec-ed
+                 ::s/value
+                 vals
+                 (map #(get % "http://example.com/x"))
+                 (every? (partial = 2))))))))
 
 (deftest validate-same-inschemes-test
   (testing "validate-same-inscheme function"
@@ -378,69 +428,6 @@
                                    :inScheme "http://example.com/v3"}]})]
         (is (= 3
                (-> spec-ed ::s/value count)))))))
-
-(deftest validate-ids-by-inscheme-test
-  (testing "validate-ids-by-inscheme function"
-    (is (nil? (id/validate-ids-by-inscheme
-               {:id        "http://example.com"
-                :versions  [{:id "http://example.com/v1"}]
-                :concepts  [{:id       "http://example.com/concept"
-                             :inScheme "http://example.com/v1"}]
-                :templates [{:id       "http://example.com/template"
-                             :inScheme "http://example.com/v1"}]
-                :patterns  [{:id       "http://example.com/pattern"
-                             :inScheme "http://example.com/v1"}]})))
-    (is (nil? (id/validate-ids-by-inscheme
-               {:id        "http://example.com"
-                :versions  [{:id "http://example.com/v1"}
-                            {:id "http://example.com/v2"}]
-                :concepts  [{:id       "http://example.com/concept"
-                             :inScheme "http://example.com/v1"}
-                            {:id       "http://example.com/concept"
-                             :inScheme "http://example.com/v2"}]
-                :templates [{:id       "http://example.com/template"
-                             :inScheme "http://example.com/v1"}
-                            {:id       "http://example.com/template"
-                             :inScheme "http://example.com/v2"}]
-                :patterns  [{:id       "http://example.com/pattern"
-                             :inScheme "http://example.com/v1"}
-                            {:id       "http://example.com/pattern"
-                             :inScheme "http://example.com/v2"}]})))
-    (testing "- duplicate IDs"
-      (let [spec-ed (id/validate-ids-by-inscheme
-                     {:id        "http://example.com"
-                      :versions  [{:id "http://example.com/v1"}]
-                      :concepts  [{:id       "http://example.com/x"
-                                   :inScheme "http://example.com/v1"}]
-                      :templates [{:id       "http://example.com/x"
-                                   :inScheme "http://example.com/v1"}]
-                      :patterns  [{:id       "http://example.com/x"
-                                   :inScheme "http://example.com/v1"}]})]
-        (is (some? spec-ed))
-        (is (= {"http://example.com/v1"
-                {"http://example.com"    1
-                 "http://example.com/v1" 1
-                 "http://example.com/x"  3}}
-               (::s/value spec-ed))))
-      (let [spec-ed (id/validate-ids-by-inscheme
-                     {:id        "http://example.com"
-                      :versions  [{:id "http://example.com/v1"}]
-                      :concepts  [{:id       "http://example.com/x"
-                                   :inScheme "http://example.com/v1"}]
-                      :templates [{:id       "http://example.com/x"
-                                   :inScheme "http://example.com/v2"}]
-                      :patterns  [{:id       "http://example.com/x"
-                                   :inScheme "http://example.com/v2"}]})]
-        (is (some? spec-ed))
-        (is (= {"http://example.com/v1"
-                {"http://example.com"    1
-                 "http://example.com/v1" 1
-                 "http://example.com/x"  1}
-                "http://example.com/v2"
-                {"http://example.com"    1
-                 "http://example.com/v1" 1
-                 "http://example.com/x"  2}}
-               (::s/value spec-ed)))))))
 
 (deftest validate-inschemes-test
   (testing "validate-inschemes function"

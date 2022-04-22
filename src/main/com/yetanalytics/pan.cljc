@@ -33,28 +33,20 @@
   [profile]
   {:syntax-errors (profile/validate profile)})
 
-;; (defn- find-id-errors
-;;   ([profile]
-;;    {:id-errors        (id/validate-ids profile)
-;;     :in-scheme-errors (id/validate-in-schemes profile)})
-;;   ([profile extra-profiles]
-;;    {:id-errors        (id/validate-ids profile extra-profiles)
-;;     :in-scheme-errors (id/validate-in-schemes profile)}))
-
 (defn- find-id-errors
   ([profile {:keys [multi-version?]}]
    (if multi-version?
-     {:id-errors         (id/validate-ids-by-inscheme profile)
+     {:id-errors         (id/validate-ids profile)
       :in-scheme-errors  (id/validate-inschemes profile)
       :versioning-errors (id/validate-version-change profile)}
-     {:id-errors        (id/validate-ids-globally profile)
+     {:id-errors        (id/validate-ids profile)
       :in-scheme-errors (id/validate-same-inschemes profile)}))
   ([profile extra-profiles {:keys [multi-version?]}]
    (if multi-version?
-     {:id-errors         (id/validate-ids-by-inscheme profile)
+     {:id-errors         (id/validate-ids profile extra-profiles)
       :in-scheme-errors  (id/validate-inschemes profile)
       :versioning-errors (id/validate-version-change profile)}
-     {:id-errors        (id/validate-ids-globally profile extra-profiles)
+     {:id-errors        (id/validate-ids profile extra-profiles)
       :in-scheme-errors (id/validate-same-inschemes profile)})))
 
 (defn- find-graph-errors*

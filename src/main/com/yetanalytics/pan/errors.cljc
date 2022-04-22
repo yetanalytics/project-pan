@@ -382,12 +382,7 @@
            id-str
            id-count
            (if (= 1 value) "" "s")
-           ver-str))
-    ;; ::id/singleton-inscheme-map
-    (s/valid? (s/map-of string? any?) value)
-    (fmt (str "The collection:\n"
-              "[%s]\n")
-         (cstr/join " \n" (keys value)))
+           ver-str))    
     :else
     (fmt (str "Value:\n"
               "%s")
@@ -414,9 +409,9 @@
            (->> ver-ids sort (map pr-str) (cstr/join "\n"))))
   ;; ::id/singleton-inscheme-map
     (s/valid? (s/map-of string? any?) value)
-    (fmt (str "The collection:\n"
-              "[%s]\n")
-         (cstr/join " \n" (keys value)))
+    (fmt (str "Objects that have the following inSchemes:\n"
+              "[%s]")
+         (cstr/join "\n " (keys value)))
     :else
     (fmt (str "Value:\n"
               "%s")

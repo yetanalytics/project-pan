@@ -81,7 +81,7 @@
        (into [id])
        count-ids))
 
-(defn- profile->inscheme-objects-m
+(defn- profile->inscheme-id-count-m
   "Return a inscheme-id-count map for `profile`."
   [profile]
   (let [head-ids (into [(select-keys profile [:id])]
@@ -95,6 +95,20 @@
                                       (map :id)
                                       count-ids)))
                     {}))))
+
+(defn- apply-extra-counts
+  "Given an inscheme-id-count map, add the appropriate counts from
+   `extra-id-count-ms` to each ID."
+  [inscheme-id-count-m extra-id-count-ms]
+  (let [count-extra (fn [id] (get extra-id-count-ms id 0))]
+    (reduce-kv (fn [m is id-cnt]
+                 (assoc m is (reduce-kv
+                              (fn [m id cnt]
+                                (assoc m id (+ cnt (count-extra id))))
+                              {}
+                              id-cnt)))
+               {}
+               inscheme-id-count-m)))
 
 (defn- profile->inscheme-props-m
   "Return an inscheme->property map for the objects in `profile`."
@@ -135,39 +149,20 @@
 (s/def ::map-of-distinct-ids
   (s/map-of ::inScheme ::distinct-ids))
 
-(defn validate-ids-globally
-  "Validate that every ID in `profile`, regardless of the corresponding
-   inScheme, is distinct. If `extra-profiles` is provided, ensure that
+(defn validate-ids
+  "Validate that every ID in `profile` within each inScheme/version
+   is distinct. If `extra-profiles` is provided, ensure that
    IDs in `profile` are not duplicated in there either."
   ([profile]
-   (->> profile
-        profile->inscheme-objects-m
-        (s/explain-data (s/and ::map-of-distinct-ids
-                               ::singleton-inscheme-map))))
+   (let [inscheme-id-count-m (profile->inscheme-id-count-m profile)]
+     (s/explain-data ::map-of-distinct-ids inscheme-id-count-m)))
   ([profile extra-profiles]
-   (let [extra-counts (->> extra-profiles
-                           (map profile->id-count-m)
-                           (apply merge-with +))
-         count-extra   (fn [id] (get extra-counts id 0))]
-     (->> profile
-          profile->inscheme-objects-m
-          (reduce-kv (fn [m is id-cnt]
-                       (assoc m is (reduce-kv
-                                    (fn [m id cnt]
-                                      (assoc m id (+ cnt (count-extra id))))
-                                    {}
-                                    id-cnt)))
-                     {})
-          (s/explain-data (s/and ::map-of-distinct-ids
-                                 ::singleton-inscheme-map))))))
-
-(defn validate-ids-by-inscheme
-  "Validate that every object in `profile` _within each version_ has
-   distinct IDs. IDs may be reused between versions."
-  [profile]
-  (->> profile
-       profile->inscheme-objects-m
-       (s/explain-data ::map-of-distinct-ids)))
+   (let [extra-counts  (->> extra-profiles
+                            (map profile->id-count-m)
+                            (apply merge-with +))
+         is-id-count-m (-> (profile->inscheme-id-count-m profile)
+                           (apply-extra-counts extra-counts))]
+     (s/explain-data ::map-of-distinct-ids is-id-count-m))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; inScheme property validation
