@@ -92,7 +92,7 @@
 
 (exp/defmsg ::id/distinct-object
   "should not have more than one occurence")
-(exp/defmsg ::id/distinct-objects
+(exp/defmsg ::id/distinct-ids
   "should have no object have more than one occurence")
 
 (exp/defmsg ::id/singleton-inscheme-map
@@ -415,38 +415,44 @@
        (cstr/join " \n" (map #(ppr-str % print-objects?) value))))
 
 (defn- value-str-id-map
-  [{:keys [print-objects?]} _ _ path value]
-  (if-some [obj-count (:count value)]
+  [_opts _ _ path value]
+  (if (number? value)
     ;; ::id/map-of-distinct-objects
-    (fmt (str "Object:\n"
-              "%s\n"
-              "\n"
-              "which occurs %d times%s in:\n"
-              "%s")
-         (ppr-str value print-objects?)
-         (pr-str obj-count)
-         (if (= 1 obj-count) "" "s")
-         (pr-str (last path)))
+    (let [id-count value
+          id-str   (-> path last pr-str)
+          ver-str  (-> path butlast last pr-str)]
+      (fmt (str "Identifier:\n"
+                "%s\n"
+                "\n"
+                "which occurs %d times%s in:\n"
+                "%s")
+           id-str
+           (if (= 1 value) "" "s")
+           id-count
+           ver-str))
     ;; ::id/singleton-inscheme-map
     (fmt (str "The collection:\n"
               "[%s]\n")
          (cstr/join " \n" (keys value)))))
 
 (defn- value-str-inscheme-map
-  [{:keys [print-objects?]} _ _ _ value]
-  (if (and (contains? value :inScheme)
+  [_opts _ _ _ value]
+  (if (and (map? value)
+           (contains? value :inScheme)
            (contains? value :versionIds))
     ;; ::id/map-of-inscheme-props
-    (let [{inscheme :inScheme ver-ids :versionIds} value]
-      (fmt (str "Object:\n"
+    (let [{id :id inscheme :inScheme ver-ids :versionIds} value]
+      (fmt (str "InScheme IRI:\n"
                 "%s\n"
-                "has an inScheme value:\n"
+                "\n"
+                "associated with the identifier:\n"
                 "%s\n"
+                "\n"
                 "in a Profile with the following version IDs:\n"
                 "%s")
-           (ppr-str value print-objects?)
            (pr-str inscheme)
-           (pr-str ver-ids)))
+           (pr-str id)
+           (->> ver-ids sort (map pr-str) (cstr/join "\n"))))
     ;; ::id/singleton-inscheme-map
     (fmt (str "The collection:\n"
               "[%s]\n")
