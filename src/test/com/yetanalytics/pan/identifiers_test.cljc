@@ -654,7 +654,38 @@
                       :patterns  [{:id       "http://example.com/x"
                                    :inScheme "http://example.com/v3"}]})]
         (is (= 3
-               (count (::s/value spec-ed))))))))
+               (count (::s/value spec-ed))))))
+    (testing "- with extra profiles"
+      (is (nil? (id/validate-ids-globally
+                 {:id       "http://example.com"
+                  :versions [{:id "http://example.com/v1"}]
+                  :concepts [{:id       "http://example.com/concept"
+                              :inScheme "http://example.com/v1"}]}
+                 [{:id       "http://example2.com"
+                   :versions [{:id "http://example2.com/v1"}]
+                   :concepts [{:id       "http://example2.com/concept"
+                               :inScheme "http://example2.com/v1"}]}])))
+      (let [spec-ed (id/validate-ids-globally
+                     {:id        "http://example.com"
+                      :versions  [{:id "http://example.com/v1"}]
+                      :concepts  [{:id       "http://example.com/concept"
+                                   :inScheme "http://example.com/v1"}]
+                      :templates [{:id       "http://example.com/template"
+                                   :inScheme "http://example.com/v1"}]}
+                     [{:id        "http://example.com"
+                       :versions  [{:id "http://example.com/v1"}]
+                       :concepts  [{:id       "http://example.com/concept-2"
+                                    :inScheme "http://example.com/v1"}]
+                       :templates [{:id       "http://example.com/template"
+                                    :inScheme "http://example.com/v1"}]}])]
+        (is (some? spec-ed))
+        (is (= {"http://example.com/v1"
+                {"http://example.com"          2
+                 "http://example.com/v1"       2
+                 "http://example.com/concept"  1
+                 ;; concept-2 not included in the map
+                 "http://example.com/template" 2}}
+               (::s/value spec-ed)))))))
 
 (deftest validate-same-inschemes-test
   (testing "validate-same-inscheme function"

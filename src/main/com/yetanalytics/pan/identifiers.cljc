@@ -222,6 +222,13 @@
   [{:keys [concepts templates patterns]}]
   (concat concepts templates patterns))
 
+(defn- profile->id-count-m
+  [{:keys [id versions concepts templates patterns]}]
+  (->> (concat versions concepts templates patterns)
+       (map :id)
+       (into [id])
+       coll->count-map))
+
 (defn- profile->inscheme-objects-m
   [profile]
   (let [head-ids (into [(select-keys profile [:id])]
@@ -257,16 +264,19 @@
         (s/explain-data (s/and ::map-of-distinct-ids
                                ::singleton-inscheme-map))))
   ([profile extra-profiles]
-   (let [extra-objs    (mapcat profile->object-seq extra-profiles)
-         count-extra   (fn [id] (count (filter (fn [{xid :id}] (= id xid))
-                                               extra-objs)))
-         counts-red-fn (fn [acc obj]
-                         (let [extra-count (count-extra (:id obj))
-                               updated-obj (update obj :count + extra-count)]
-                           (conj acc updated-obj)))]
+   (let [extra-counts (->> extra-profiles
+                           (map profile->id-count-m)
+                           (apply merge-with +))
+         count-extra   (fn [id] (get extra-counts id 0))]
      (->> profile
           profile->inscheme-objects-m
-          (map (partial reduce counts-red-fn []))
+          (reduce-kv (fn [m is id-cnt]
+                       (assoc m is (reduce-kv
+                                    (fn [m id cnt]
+                                      (assoc m id (+ cnt (count-extra id))))
+                                    {}
+                                    id-cnt)))
+                     {})
           (s/explain-data (s/and ::map-of-distinct-ids
                                  ::singleton-inscheme-map))))))
 
