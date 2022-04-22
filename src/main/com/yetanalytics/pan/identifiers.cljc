@@ -200,9 +200,7 @@
   [{:keys [inScheme versionIds]}]
   (contains? versionIds inScheme))
 
-(s/def ::inscheme-prop
-  (s/and (s/keys :req-un [::id ::inScheme ::versionIds])
-         has-inscheme?))
+(s/def ::inscheme-prop has-inscheme?)
 
 (s/def ::inscheme-props
   (s/coll-of ::inscheme-prop))

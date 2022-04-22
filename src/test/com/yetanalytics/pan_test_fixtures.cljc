@@ -349,7 +349,8 @@ Detected 3 errors
 Identifier:
 \"https://w3id.org/xapi/catch/patterns#community-engagement-completion\"
 
-which occurs 2 times in the Profile
+which occurs 2 times in the version:
+\"https://w3id.org/xapi/catch/v1\"
 
 should be a unique identifier value
 
@@ -366,7 +367,8 @@ Detected 1 error
 Identifier:
 nil
 
-which occurs 5 times in the Profile
+which occurs 5 times in the version:
+\"https://w3id.org/xapi/cmi5/v1.0\"
 
 should be a unique identifier value
 
@@ -383,7 +385,8 @@ Detected 1 error
 Identifier:
 \"http://activitystrea.ms/schema/\"
 
-which occurs 2 times in the Profile
+which occurs 2 times in the version:
+\"http://activitystrea.ms/schema/1.0.0\"
 
 should be a unique identifier value
 

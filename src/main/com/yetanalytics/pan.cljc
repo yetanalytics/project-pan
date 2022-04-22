@@ -33,13 +33,29 @@
   [profile]
   {:syntax-errors (profile/validate profile)})
 
+;; (defn- find-id-errors
+;;   ([profile]
+;;    {:id-errors        (id/validate-ids profile)
+;;     :in-scheme-errors (id/validate-in-schemes profile)})
+;;   ([profile extra-profiles]
+;;    {:id-errors        (id/validate-ids profile extra-profiles)
+;;     :in-scheme-errors (id/validate-in-schemes profile)}))
+
 (defn- find-id-errors
-  ([profile]
-   {:id-errors        (id/validate-ids profile)
-    :in-scheme-errors (id/validate-in-schemes profile)})
-  ([profile extra-profiles]
-   {:id-errors        (id/validate-ids profile extra-profiles)
-    :in-scheme-errors (id/validate-in-schemes profile)}))
+  ([profile {:keys [multi-inscheme?]}]
+   (if multi-inscheme?
+     {:id-errors         (id/validate-ids-by-inscheme profile)
+      :in-scheme-errors  (id/validate-inschemes profile)
+      :versioning-errors (id/validate-version-change profile)}
+     {:id-errors        (id/validate-ids-globally profile)
+      :in-scheme-errors (id/validate-same-inschemes profile)}))
+  ([profile extra-profiles {:keys [multi-inscheme?]}]
+   (if multi-inscheme?
+     {:id-errors         (id/validate-ids-by-inscheme profile)
+      :in-scheme-errors  (id/validate-inschemes profile)
+      :versioning-errors (id/validate-version-change profile)}
+     {:id-errors        (id/validate-ids-globally profile extra-profiles)
+      :in-scheme-errors (id/validate-same-inschemes profile)})))
 
 (defn- find-graph-errors*
   [?cgraph ?tgraph ?pgraph]
@@ -144,7 +160,7 @@
                    syntax?
                    (merge (find-syntax-errors profile))
                    ids?
-                   (merge (find-id-errors profile extra-profiles))
+                   (merge (find-id-errors profile extra-profiles {}))
                    ?rel-opts
                    (merge (find-graph-errors profile extra-profiles ?rel-opts))
                    contexts?
@@ -153,7 +169,7 @@
                    syntax?
                    (merge (find-syntax-errors profile))
                    ids?
-                   (merge (find-id-errors profile))
+                   (merge (find-id-errors profile {}))
                    ?rel-opts
                    (merge (find-graph-errors profile ?rel-opts))
                    contexts?
