@@ -188,6 +188,10 @@
 
 (s/def ::inscheme-in-versions in-versions?)
 
+(s/def ::valid-version-ids
+  (s/every (s/and ::id-not-profile-id
+                  ::id-not-version-id)))
+
 (s/def ::valid-object-ids
   (s/and ::id-not-profile-id
          ::id-not-version-id
@@ -223,11 +227,15 @@
   "Validate that the profile and version IDs are all unique and are
    not duplicated between each other."
   [{:keys [id versions] :as _profile}]
-  (->> versions
-       (map #(select-keys % [:id]))
-       (into [{:id id}])
-       coll->count-map
-       (s/explain-data ::singleton-count-map)))
+  (let [version-ids (mapv :id versions)]
+    (->> versions
+         (map #(select-keys % [:id]))
+         (map-indexed (fn [i v]
+                        (let [vid-set (->> (assoc version-ids i nil)
+                                           (filter some?)
+                                           set)]
+                          (assoc v :profileId id :versionIds vid-set))))
+         (s/explain-data ::valid-version-ids))))
 
 (defn validate-object-ids
   "Validate that every Concept, StatementTemplate, and Pattern in
