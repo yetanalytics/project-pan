@@ -30,7 +30,9 @@
   (merge snsd-ot8
          {:not-id "Jessica" :another-key "Krystal"}))
 
-;; Util tests
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Util Tests 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (deftest objs->ids-test
   (testing "objs->ids function"
@@ -74,7 +76,6 @@
             nil        1}
            (id/count-ids (mapcat id/objs->ids [snsd-ot8 snsd-ot9]))))))
 
-
 (deftest filter-test
   (testing "filter-by-ids function"
     (is (= [{:id "Taeyeon"}]
@@ -84,50 +85,27 @@
            (id/filter-by-ids-kv #{"Taeyeon" "Taeyang"}
                                 (id/count-ids (id/objs->ids snsd-ot8)))))))
 
-(deftest dedupe-profile-objects-test
-  (testing "dedupe-profile-objects function"
-    (is (= {:id "https://w3id.org/xapi/catch"
-            :concepts [{:id "https://w3id.org/catch/v1/some-verb"}
-                       {:id "https://w3id.org/catch/v2/some-verb"
-                        :broader ["https://w3id.org/catch/a-verb"]}]
-            :templates [{:id "https://w3id.org/catch/v1/some-template"
-                         :verb ["https://w3id.org/catch/a-verb"]}
-                        {:id "https://w3id.org/catch/v2/some-template"
-                         :verb ["https://w3id.org/catch/a-verb"]
-                         :rules [{:location "$.foo"
-                                  :presence "included"}]}]
-            :patterns [{:id "https://w3id.org/catch/v1/some-pattern"
-                        :alternates ["https://w3id.org/catch/a-template"]}
-                       {:id "https://w3id.org/catch/v2/some-pattern"
-                        :alternates ["https://w3id.org/catch/a-template"]}]}
-           (id/dedupe-profile-objects
-            {:id "https://w3id.org/xapi/catch"
-             :concepts [{:id "https://w3id.org/catch/v1/some-verb"
-                         :inScheme "https://w3id.org/catch/v1"
-                         :deprecated false}
-                        {:id "https://w3id.org/catch/v2/some-verb"
-                         :inScheme "https://w3id.org/catch/v2"
-                         :deprecated true
-                         :broader ["https://w3id.org/catch/a-verb"]}]
-             :templates [{:id "https://w3id.org/catch/v1/some-template"
-                          :inScheme "https://w3id.org/catch/v1"
-                          :deprecated false
-                          :verb ["https://w3id.org/catch/a-verb"]}
-                         {:id "https://w3id.org/catch/v2/some-template"
-                          :inScheme "https://w3id.org/catch/v2"
-                          :deprecated true
-                          :verb ["https://w3id.org/catch/a-verb"]
-                          :rules [{:location "$.foo"
-                                   :presence "included"
-                                   :scopeNote ["Scope Note One"]}]}]
-             :patterns [{:id "https://w3id.org/catch/v1/some-pattern"
-                         :inScheme "https://w3id.org/catch/v1"
-                         :deprecated false
-                         :alternates ["https://w3id.org/catch/a-template"]}
-                        {:id "https://w3id.org/catch/v2/some-pattern"
-                         :inScheme "https://w3id.org/catch/v2"
-                         :deprecated true
-                         :alternates ["https://w3id.org/catch/a-template"]}]})))))
+(deftest dissoc-properties-test
+  (testing "dissoc-properties function"
+    (is (= {:id "https://w3id.org/catch/v2/some-verb"
+            :broader ["https://w3id.org/catch/a-verb"]}
+           (id/dissoc-properties
+            {:id "https://w3id.org/catch/v2/some-verb"
+             :inScheme "https://w3id.org/catch/v2"
+             :deprecated true
+             :broader ["https://w3id.org/catch/a-verb"]})))
+    (is (= {:id "https://w3id.org/catch/v2/some-template"
+            :verb ["https://w3id.org/catch/a-verb"]
+            :rules [{:location "$.foo"
+                     :presence "included"}]}
+           (id/dissoc-properties
+            {:id "https://w3id.org/catch/v2/some-template"
+             :inScheme "https://w3id.org/catch/v2"
+             :deprecated true
+             :verb ["https://w3id.org/catch/a-verb"]
+             :rules [{:location "$.foo"
+                      :presence "included"
+                      :scopeNote ["Scope Note One"]}]})))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Spec Tests 
@@ -142,360 +120,6 @@
                                      "what the pineapple" 1}))
     (is (not (s/valid? ::id/distinct-ids {"https://foo.org" 1
                                           "https://bar.org" 2})))))
-
-;; ID tests
-(deftest validate-ids-test
-  (testing "id ID MUST be distinct from version IDs"
-    (is (nil? (id/validate-ids
-               {:id "https://w3id.org/xapi/catch"
-                :versions [{:id "https://w3id.org/xapi/catch/v2"}
-                           {:id "https://w3id.org/xapi/catch/v1"}]})))
-    (is (some? (id/validate-ids
-                {:id "https://w3id.org/xapi/catch"
-                 :versions [{:id "https://w3id.org/xapi/catch"}
-                            {:id "https://w3id.org/xapi/catch/v1"}]}))))
-  (testing "Every Profile version ID MUST be distinct"
-    (is (some? (id/validate-ids
-                {:id "https://w3id.org/xapi/catch"
-                 :versions [{:id "https://w3id.org/xapi/catch/v1"}
-                            {:id "https://w3id.org/xapi/catch/v1"}]}))))
-  (testing "Concept IDs MUST be distinct"
-    (is (nil? (id/validate-ids
-               {:id "https://w3id.org/xapi/catch"
-                :concepts [{:id "https://w3id.org/xapi/catch/verb#1"
-                            :type "Verb"}
-                           {:id "https://w3id.org/xapi/catch/verb#2"
-                            :type "Verb"}]})))
-    (is (some? (id/validate-ids
-                {:id "https://w3id.org/xapi/catch"
-                 :concepts [{:id "https://w3id.org/xapi/catch/verb#duplicate"
-                             :type "Verb"}
-                            {:id "https://w3id.org/xapi/catch/verb#duplicate"
-                             :type "Verb"
-                             :broader ["https://w3id.org/xapi/catch/verb#1"]}]})))
-    (testing "- except when only inScheme or deprecated change"
-      (is (nil? (id/validate-ids
-                 {:id "https://w3id.org/xapi/catch"
-                  :concepts [{:id "https://w3id.org/xapi/catch/verb#duplicate"
-                              :type "Verb"}
-                             {:id "https://w3id.org/xapi/catch/verb#duplicate"
-                              :type "Verb"}]})))
-      (is (nil? (id/validate-ids
-                 {:id "https://w3id.org/xapi/catch"
-                  :concepts [{:id "https://w3id.org/xapi/catch/verb#duplicate"
-                              :type "Verb"
-                              :inScheme "https://w3id.org/xapi/catch/v1"
-                              :deprecated false}
-                             {:id "https://w3id.org/xapi/catch/verb#duplicate"
-                              :type "Verb"
-                              :inScheme "https://w3id.org/xapi/catch/v2"
-                              :deprecated true}]})))))
-  (testing "Statement Template IDs MUST be distinct"
-    (is (nil? (id/validate-ids
-               {:id "https://w3id.org/xapi/catch"
-                :templates [{:id "https://w3id.org/xapi/catch/template#1"
-                             :type "StatementTemplate"}
-                            {:id "https://w3id.org/xapi/catch/template#2"
-                             :type "StatementTemplate"}]})))
-    (is (some? (id/validate-ids
-                {:id "https://w3id.org/xapi/catch"
-                 :templates [{:id "https://w3id.org/xapi/catch/template#dup"
-                              :type "StatementTemplate"}
-                             {:id "https://w3id.org/xapi/catch/template#dup"
-                              :type "StatementTemplate"
-                              :verb ["https://w3id.org/xapi/catch/verb#1"]}]})))
-    (testing "- except when inScheme, deprecated, or scopeNotes change"
-      (is (nil? (id/validate-ids
-                 {:id "https://w3id.org/xapi/catch"
-                  :templates [{:id "https://w3id.org/xapi/catch/template#dup"
-                               :type "StatementTemplate"}
-                              {:id "https://w3id.org/xapi/catch/template#dup"
-                               :type "StatementTemplate"}]})))
-      (is (nil? (id/validate-ids
-                 {:id "https://w3id.org/xapi/catch"
-                  :templates [{:id "https://w3id.org/xapi/catch/template#dup"
-                               :type "StatementTemplate"
-                               :inScheme "https://w3id.org/xapi/catch/v1"
-                               :deprecated false}
-                              {:id "https://w3id.org/xapi/catch/template#dup"
-                               :type "StatementTemplate"
-                               :inScheme "https://w3id.org/xapi/catch/v2"
-                               :deprecated true}]})))
-      (is (nil? (id/validate-ids
-                 {:id "https://w3id.org/xapi/catch"
-                  :templates [{:id "https://w3id.org/xapi/catch/template#dup"
-                               :type "StatementTemplate"
-                               :rules [{:location "$.foo"
-                                        :presence "included"
-                                        :scopeNote ["Scope Note One"]}]}
-                              {:id "https://w3id.org/xapi/catch/template#dup"
-                               :type "StatementTemplate"
-                               :rules [{:location "$.foo"
-                                        :presence "included"
-                                        :scopeNote ["Scope Note Two"]}]}]})))))
-  (testing "Pattern IDs MUST be distinct"
-    (is (nil? (id/validate-ids
-               {:id "https://w3id.org/xapi/catch"
-                :patterns [{:id "https://w3id.org/xapi/catch/pattern#1"
-                            :type "Pattern"}
-                           {:id "https://w3id.org/xapi/catch/pattern#2"
-                            :type "Pattern"}]})))
-    (is (some? (id/validate-ids
-                {:id "https://w3id.org/xapi/catch"
-                 :patterns [{:id "https://w3id.org/xapi/catch/pattern#dup"
-                             :type "Pattern"}
-                            {:id "https://w3id.org/xapi/catch/pattern#dup"
-                             :type "Pattern"
-                             :sequence ["https://w3id.org/xapi/catch/pattern#1"]}]})))
-    (testing "- except when inScheme and deprecated change"
-      (is (nil? (id/validate-ids
-                 {:id "https://w3id.org/xapi/catch"
-                  :patterns [{:id "https://w3id.org/xapi/catch/pattern#dup"
-                              :type "Pattern"}
-                             {:id "https://w3id.org/xapi/catch/pattern#dup"
-                              :type "Pattern"}]})))
-      (is (nil? (id/validate-ids
-                 {:id "https://w3id.org/xapi/catch"
-                  :patterns [{:id "https://w3id.org/xapi/catch/pattern#dup"
-                              :type "Pattern"
-                              :inScheme "https://w3id.org/xapi/catch/v1"
-                              :deprecated false}
-                             {:id "https://w3id.org/xapi/catch/pattern#dup"
-                              :type "Pattern"
-                              :inScheme "https://w3id.org/xapi/catch/v2"
-                              :deprecated true}]})))))
-  (testing "All IDs MUST be distinct"
-    (is (nil? (id/validate-ids
-               {:id "https://w3id.org/xapi/catch"
-                :versions [{:id "https://w3id.org/catch/v1"}
-                           {:id "https://w3id.org/catch/v2"}]
-                :concepts [{:id "https://w3id.org/catch/some-verb"
-                            :inScheme "https://w3id.org/catch/v1"}]
-                :templates [{:id "https://w3id.org/catch/some-template"
-                             :inScheme "https://w3id.org/catch/v1"}]
-                :patterns [{:id "https://w3id.org/catch/some-pattern"
-                            :inScheme "https://w3id.org/catch/v2"}]})))
-    (is (nil? (id/validate-ids
-               {:id "https://w3id.org/xapi/catch"
-                :versions [{:id "https://w3id.org/catch/v1"}
-                           {:id "https://w3id.org/catch/v2"}
-                           {:id "https://w3id.org/catch/v3"}]
-                :concepts [{:id "https://w3id.org/catch/some-verb"
-                            :inScheme "https://w3id.org/catch/v1"}
-                           {:id "https://w3id.org/catch/some-verb"
-                            :inScheme "https://w3id.org/catch/v2"}
-                           {:id "https://w3id.org/catch/some-verb"
-                            :inScheme "https://w3id.org/catch/v3"}]
-                :templates [{:id "https://w3id.org/catch/some-template"
-                             :inScheme "https://w3id.org/catch/v1"}
-                            {:id "https://w3id.org/catch/some-template"
-                             :inScheme "https://w3id.org/catch/v2"}
-                            {:id "https://w3id.org/catch/some-template"
-                             :inScheme "https://w3id.org/catch/v3"}]
-                :patterns [{:id "https://w3id.org/catch/some-pattern"
-                            :inScheme "https://w3id.org/catch/v1"}
-                           {:id "https://w3id.org/catch/some-pattern"
-                            :inScheme "https://w3id.org/catch/v2"}
-                           {:id "https://w3id.org/catch/some-pattern"
-                            :inScheme "https://w3id.org/catch/v3"}]})))
-    ;; Properties are the same
-    (is (nil? (id/validate-ids
-               {:id "https://w3id.org/xapi/catch"
-                :versions [{:id "https://w3id.org/catch/v1"}
-                           {:id "https://w3id.org/catch/v2"}]
-                :concepts [{:id "https://w3id.org/catch/some-verb"
-                            :inScheme "https://w3id.org/catch/v1"
-                            :broader ["http://example.org/verb-a"]}
-                           {:id "https://w3id.org/catch/some-verb"
-                            :inScheme "https://w3id.org/catch/v2"
-                            :broader ["http://example.org/verb-a"]}]
-                :templates [{:id "https://w3id.org/catch/some-template"
-                             :inScheme "https://w3id.org/catch/v1"
-                             :verb ["http://example.org/verb-a"]}
-                            {:id "https://w3id.org/catch/some-template"
-                             :inScheme "https://w3id.org/catch/v2"
-                             :verb ["http://example.org/verb-a"]}]
-                :patterns [{:id "https://w3id.org/catch/some-pattern"
-                            :inScheme "https://w3id.org/catch/v1"}
-                           {:id "https://w3id.org/catch/some-pattern"
-                            :inScheme "https://w3id.org/catch/v2"}]})))
-    ;; Properties are different
-    (is (some? (id/validate-ids
-                {:id "https://w3id.org/xapi/catch"
-                 :versions [{:id "https://w3id.org/catch/v1"}
-                            {:id "https://w3id.org/catch/v2"}]
-                 :concepts [{:id "https://w3id.org/catch/some-verb"
-                             :inScheme "https://w3id.org/catch/v1"
-                             :broader ["http://example.org/verb-a"]}
-                            {:id "https://w3id.org/catch/some-verb"
-                             :inScheme "https://w3id.org/catch/v2"
-                             :broader ["http://example.org/verb-b"]}]
-                 :templates [{:id "https://w3id.org/catch/some-template"
-                              :inScheme "https://w3id.org/catch/v1"
-                              :verb ["http://example.org/verb-a"]}
-                             {:id "https://w3id.org/catch/some-template"
-                              :inScheme "https://w3id.org/catch/v2"
-                              :verb ["http://example.org/verb-b"]}]
-                 :patterns [{:id "https://w3id.org/catch/some-pattern"
-                             :inScheme "https://w3id.org/catch/v1"}
-                            {:id "https://w3id.org/catch/some-pattern"
-                             :inScheme "https://w3id.org/catch/v2"}]}))))
-  (testing "All IDs MUST be distinct across different profiles"
-    (is (nil? (id/validate-ids
-               {:id "https://w3id.org/xapi/catch"
-                :concepts [{:id "https://w3id.org/catch/some-verb"
-                            :inScheme "https://w3id.org/catch/v1"}]
-                :templates [{:id "https://w3id.org/catch/some-template"
-                             :inScheme "https://w3id.org/catch/v1"}]
-                :patterns [{:id "https://w3id.org/catch/some-pattern"
-                            :inScheme "https://w3id.org/catch/v2"}]}
-               [{:concepts [{:id "https://w3id.org/catch/some-verb-x"
-                             :inScheme "https://w3id.org/catch/v3"}]}
-                {:templates [{:id "https://w3id.org/catch/some-template-x"
-                              :inScheme "https://w3id.org/catch/v4"}]}
-                {:patterns [{:id "https://w3id.org/catch/some-pattern-x"
-                             :inScheme "https://w3id.org/catch/v5"}]}])))
-    ;; inSchemes and other props are NOT ignored when comparing
-    ;; across profiles
-    (is (some? (id/validate-ids
-                {:id "https://w3id.org/xapi/catch"
-                 :versions [{:id "https://w3id.org/catch/v1"}
-                            {:id "https://w3id.org/catch/v2"}]
-                 :concepts [{:id "https://w3id.org/catch/some-verb"
-                             :inScheme "https://w3id.org/catch/v1"}]
-                 :templates [{:id "https://w3id.org/catch/some-template"
-                              :inScheme "https://w3id.org/catch/v1"}]
-                 :patterns [{:id "https://w3id.org/catch/some-pattern"
-                             :inScheme "https://w3id.org/catch/v2"}]}
-                [{:id "https://w3id.org/xapi/catch"
-                  :versions [{:id "https://w3id.org/catch/v1"}
-                             {:id "https://w3id.org/catch/v2"}]
-                  :concepts [{:id "https://w3id.org/catch/some-verb"
-                              :inScheme "https://w3id.org/catch/v1"}]
-                  :templates [{:id "https://w3id.org/catch/some-template"
-                               :inScheme "https://w3id.org/catch/v1"}]
-                  :patterns [{:id "https://w3id.org/catch/some-pattern"
-                              :inScheme "https://w3id.org/catch/v2"}]}])))))
-
-(deftest in-scheme-test
-  (testing "object inScheme MUST be a valid Profile version"
-    (is (nil? (id/validate-in-schemes
-               {:versions [{:id "https://w3id.org/catch/v1"}
-                           {:id "https://w3id.org/catch/v2"}]
-                :concepts [{:id "https://w3id.org/catch/some-verb"
-                            :inScheme "https://w3id.org/catch/v1"}]
-                :templates [{:id "https://w3id.org/catch/some-template"
-                             :inScheme "https://w3id.org/catch/v1"}]
-                :patterns [{:id "https://w3id.org/catch/some-pattern"
-                            :inScheme "https://w3id.org/catch/v2"}]})))
-    (is (some? (id/validate-in-schemes
-                {:versions [{:id "https://w3id.org/catch/v1"}
-                            {:id "https://w3id.org/catch/v2"}]
-                 :concepts [{:id "https://w3id.org/catch/some-verb"
-                             :inScheme "https://w3id.org/catch/v3"}]
-                 :templates []
-                 :patterns []})))
-    (is (some? (id/validate-in-schemes
-                {:versions [{:id "https://w3id.org/catch/v1"}
-                            {:id "https://w3id.org/catch/v2"}]
-                 :templates [{:id "https://w3id.org/catch/some-template"
-                              :inScheme "https://w3id.org/catch/v3"}]
-                 :concepts []
-                 :patterns []})))
-    (is (some? (id/validate-in-schemes
-                {:versions [{:id "https://w3id.org/catch/v1"}
-                            {:id "https://w3id.org/catch/v2"}]
-                 :patterns [{:id "https://w3id.org/catch/some-pattern"
-                             :inScheme "https://w3id.org/catch/v3"}]
-                 :concepts []
-                 :templates []})))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-#_(deftest test-unique-versions
-  (testing "validate-unique-versions function"
-    (is (nil? (id/validate-unique-versions
-               {:id       "http://example.com"
-                :versions [{:id "http://example.com/v1"}
-                           {:id "http://example.com/v2"}
-                           {:id "http://example.com/v3"}]})))
-    (is (some? (id/validate-unique-versions
-                {:id       "http://example.com"
-                 :versions [{:id "http://example.com/v1"}
-                            {:id "http://example.com/v1"}
-                            {:id "http://example.com/v3"}]})))
-    (is (some? (id/validate-unique-versions
-                {:id       "http://example.com/v1"
-                 :versions [{:id "http://example.com/v1"}
-                            {:id "http://example.com/v2"}
-                            {:id "http://example.com/v3"}]})))
-    (is (some? (id/validate-unique-versions
-                {:id       "http://example.com/v3"
-                 :versions [{:id "http://example.com/v3"}
-                            {:id "http://example.com/v3"}
-                            {:id "http://example.com/v3"}]})))
-    
-    ))
-
-#_(deftest test-valid-object-ids
-  (testing "validate-object-ids function"
-    (is (nil? (id/validate-object-ids
-               {:id        "http://example.com"
-                :versions  [{:id "http://example.com/v1"}]
-                :concepts  [{:id       "http://example.com/concept"
-                             :inScheme "http://example.com/v1"}]
-                :templates [{:id       "http://example.com/template"
-                             :inScheme "http://example.com/v1"}]
-                :patterns  [{:id       "http://example.com/pattern"
-                             :inScheme "http://example.com/v1"}]})))
-    (testing "- reused profile ID"
-      (is (some? (id/validate-object-ids
-                  {:id        "http://example.com"
-                   :versions  [{:id "http://example.com/v1"}]
-                   :concepts  [{:id       "http://example.com"
-                                :inScheme "http://example.com/v1"}]
-                   :templates [{:id       "http://example.com/template"
-                                :inScheme "http://example.com/v1"}]
-                   :patterns  [{:id       "http://example.com/pattern"
-                                :inScheme "http://example.com/v1"}]})))
-      (is (some? (id/validate-object-ids
-                  {:id        "http://example.com"
-                   :versions  [{:id "http://example.com/v1"}]
-                   :concepts  [{:id       "http://example.com/concept"
-                                :inScheme "http://example.com/v1"}]
-                   :templates [{:id       "http://example.com"
-                                :inScheme "http://example.com/v1"}]
-                   :patterns  [{:id       "http://example.com/pattern"
-                                :inScheme "http://example.com/v1"}]})))
-      (is (some? (id/validate-object-ids
-                  {:id        "http://example.com"
-                   :versions  [{:id "http://example.com/v1"}]
-                   :concepts  [{:id       "http://example.com/concept"
-                                :inScheme "http://example.com/v1"}]
-                   :templates [{:id       "http://example.com/template"
-                                :inScheme "http://example.com/v1"}]
-                   :patterns  [{:id       "http://example.com"
-                                :inScheme "http://example.com/v1"}]}))))
-    (testing "- reused version ID"
-      (is (some? (id/validate-object-ids
-                  {:id        "http://example.com"
-                   :versions  [{:id "http://example.com/v1"}]
-                   :concepts  [{:id       "http://example.com/v1"
-                                :inScheme "http://example.com/v1"}]
-                   :templates [{:id       "http://example.com/template"
-                                :inScheme "http://example.com/v1"}]
-                   :patterns  [{:id       "http://example.com/pattern"
-                                :inScheme "http://example.com/v1"}]}))))
-    (testing "- inScheme not in version IDs"
-      (is (some? (id/validate-object-ids
-                  {:id        "http://example.com"
-                   :versions  [{:id "http://example.com/v1"}]
-                   :concepts  [{:id       "http://example.com/concept"
-                                :inScheme "http://example.com/v4"}]
-                   :templates [{:id       "http://example.com/template"
-                                :inScheme "http://example.com/v1"}]
-                   :patterns  [{:id       "http://example.com/pattern"
-                                :inScheme "http://example.com/v1"}]}))))))
 
 (deftest validate-ids-globally-test
   (testing "validate-ids-globally function"

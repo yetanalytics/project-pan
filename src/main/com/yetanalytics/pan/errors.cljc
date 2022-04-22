@@ -367,38 +367,6 @@
            (ppr-str obj print-objects?)))))
 
 (defn- value-str-id
-  "Custom value string fn for duplicate ID errors"
-  [_opts _ _ path value]
-  (fmt (str "Identifier:\n"
-            "%s\n"
-            "\n"
-            "which occurs %d time%s in the Profile")
-       (-> path last pr-str)
-       value
-       (if (= 1 value) "" "s")))
-
-(defn- value-str-version
-  "Custom value string fn for inScheme error messages."
-  [_opts _ _ _ {:keys [id inScheme version-ids] :as _value}]
-  (fmt (str "InScheme IRI:\n"
-            "%s\n"
-            "\n"
-            "associated with the identifier:\n"
-            "%s\n"
-            "\n"
-            "in a Profile with the following version IDs:\n"
-            "%s")
-       (pr-str inScheme)
-       (pr-str id)
-       (->> version-ids sort (map pr-str) (cstr/join "\n"))))
-
-(defn- value-str-sequence
-  [{:keys [print-objects?]} _ _ _ value]
-  (fmt (str "Collection:\n"
-            "[%s]\n")
-       (cstr/join " \n" (map #(ppr-str % print-objects?) value))))
-
-(defn- value-str-id-map
   [_opts _ _ path value]
   (cond
     ;; ::id/one-count
@@ -425,7 +393,7 @@
               "%s")
          (pr-str value))))
 
-(defn- value-str-inscheme-map
+(defn- value-str-inscheme
   [_opts _ _ _ value]
   (cond
     ;; ::id/inscheme-prop
@@ -593,9 +561,9 @@
       :syntax-errors
       (exp/custom-printer (make-opts (partial value-str-obj opts)))
       :id-errors
-      (exp/custom-printer (make-opts (partial value-str-id-map opts)))
+      (exp/custom-printer (make-opts (partial value-str-id opts)))
       :in-scheme-errors
-      (exp/custom-printer (make-opts (partial value-str-inscheme-map opts)))
+      (exp/custom-printer (make-opts (partial value-str-inscheme opts)))
       :concept-edge-errors
       (exp/custom-printer (make-opts (partial value-str-edge opts)))
       :template-edge-errors
@@ -608,9 +576,9 @@
       (exp/custom-printer (make-opts (partial value-str-context-key opts)))
       ;; Old
       :id
-      (exp/custom-printer (make-opts (partial value-str-id-map opts)))
+      (exp/custom-printer (make-opts (partial value-str-id opts)))
       :in-scheme
-      (exp/custom-printer (make-opts (partial value-str-inscheme-map opts)))
+      (exp/custom-printer (make-opts (partial value-str-inscheme opts)))
       :edge
       (exp/custom-printer (make-opts (partial value-str-edge opts)))
       :cycle
