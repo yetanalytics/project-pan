@@ -87,8 +87,7 @@
 
 (deftest dissoc-properties-test
   (testing "dissoc-properties function"
-    (is (= {:id "https://w3id.org/catch/v2/some-verb"
-            :broader ["https://w3id.org/catch/a-verb"]}
+    (is (= {:id "https://w3id.org/catch/v2/some-verb"}
            (id/dissoc-properties
             {:id "https://w3id.org/catch/v2/some-verb"
              :inScheme "https://w3id.org/catch/v2"
@@ -495,32 +494,21 @@
                            {:id         "http://example.com/concept"
                             :inScheme   "http://example.com/v2"
                             :deprecated true}]})))
-    (let [spec-ed (id/validate-version-change
-                   {:id        "http://example.com"
-                    :versions [{:id "http://example.com/v1"}
-                               {:id "http://example.com/v2"}]
-                    :concepts [{:id       "http://example.com/concept"
-                                :inScheme "http://example.com/v1"
-                                :broader  ["http://example.org/concept-2"]}
-                               {:id       "http://example.com/concept"
-                                :inScheme "http://example.com/v2"
-                                :broader  ["http://example.org/concept-3"]}]
-                    :patterns [{:id       "http://example.com/pattern"
-                                :inScheme "http://example.com/v1"}
-                               {:id       "http://example.com/pattern"
-                                :inScheme "http://example.com/v2"}]})]
-      (is (some? spec-ed))
-      (is (= #{[{:id "http://example.com/concept",
-                 :inScheme "http://example.com/v1",
-                 :broader ["http://example.org/concept-2"]}
-                {:id "http://example.com/concept",
-                 :inScheme "http://example.com/v2",
-                 :broader ["http://example.org/concept-3"]}]
-               [{:id       "http://example.com/pattern"
-                 :inScheme "http://example.com/v1"}
-                {:id       "http://example.com/pattern"
-                 :inScheme "http://example.com/v2"}]}
-             (set (::s/value spec-ed)))))
+    (testing "- concept-specific changes are ignored"
+      (is (nil? (id/validate-version-change
+                 {:id        "http://example.com"
+                  :versions [{:id "http://example.com/v1"}
+                             {:id "http://example.com/v2"}]
+                  :concepts [{:id       "http://example.com/concept"
+                              :inScheme "http://example.com/v1"
+                              :broader  ["http://example.org/concept-2"]}
+                             {:id       "http://example.com/concept"
+                              :inScheme "http://example.com/v2"
+                              :broader  ["http://example.org/concept-3"]}]
+                  :patterns [{:id       "http://example.com/pattern"
+                              :inScheme "http://example.com/v1"}
+                             {:id       "http://example.com/pattern"
+                              :inScheme "http://example.com/v2"}]}))))
     (testing "- template-specific properties"
       (is (nil? (id/validate-version-change
                  {:id        "http://example.com"
