@@ -271,18 +271,18 @@ Detected 1 error
 -- Spec failed --------------------
 
 Object:
-{:id \"https://w3id.org/xapi/scorm#generalrestrictions\",
- :type \"StatementTemplate\",
- :prefLabel {:en \"general restrictions on statements\"},
+{:id \"https://w3id.org/xapi/scorm#generalpattern\",
+ :type \"Pattern\",
+ :prefLabel {:en \"general pattern\"},
  :definition
  {:en
-  \"This is the general template that defines restrictions for all statements conforming to the SCORM profile.\"},
- :rules
- [{:location \"context.contextActivities.grouping[*].definition.type\",
-   :any [\"http://adlnet.gov/expapi/activities/attempt\"]}
-  {:location \"context.contextActivities.grouping[*].definition.type\",
-   :any [\"http://adlnet.gov/expapi/activities/course\"]}
-  {:location \"timestamp\", :presence \"included\"}]}
+  \"This pattern describes the overall sequence of statements sent over the course of an attempt\"},
+ :primary true,
+ :sequence
+ [\"https://w3id.org/xapi/scorm#initialization\"
+  \"https://w3id.org/xapi/scorm#middlestatements\"
+  \"https://w3id.org/xapi/scorm#optionallycontinue\"
+  \"https://w3id.org/xapi/scorm#termination\"]}
 
 should contain key: :inScheme
 

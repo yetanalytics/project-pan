@@ -277,7 +277,6 @@
            (expound-to-str (p/validate-profile acrossx-multi-version-raw
                                                :syntax? false
                                                :ids? true))))
-    ;; TODO: Deal with the optionality of inSchemes on Patterns
     (is (= fix/video-multi-inscheme-err-msg
            (expound-to-str (p/validate-profile video-multi-version-raw
                                                :syntax? false
