@@ -207,17 +207,34 @@
 ;; - A Profile Author MUST change a Pattern's id between versions if any of
 ;;   alternates, optional, oneOrMore, sequence, or zeroOrMore change.
 ;;
-;; Also covers changes to Concept properties. TODO: Revist whether to keept this.
-;;
-;; TODO: Cover the following requiement:
-;; - If a Pattern used within another Pattern changes, the change will "bubble
-;;   up" as each id gets changed.
+;; TODO: Somehow validate the following Concept requirement:
+;; - A Profile MUST NOT define a Concept that is defined in another Profile
+;;   UNLESS it supersedes all versions of the other Profile containing the
+;;   Concept and indicates that in with wasRevisionOf.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn dissoc-properties
   "Dissoc properties that may change between version increments."
   [object]
-  (cond-> (dissoc object :inScheme :deprecated)
+  (cond-> (select-keys object [:id
+                               :type
+                               ;; StatementTemplate
+                               :verb
+                               :objectActivityType
+                               :contextCategoryActivityType
+                               :contextGroupingActivityType
+                               :contextParentActivityType
+                               :contextOtherActivityType
+                               :attachmentUsageType
+                               :objectStatementRefTemplate
+                               :contextStatementRefTemplate
+                               :rules
+                               ;; Patterns
+                               :alternates
+                               :sequence
+                               :optional
+                               :oneOrMore
+                               :zeroOrMore])
     (contains? object :rules)
     (update :rules (partial map #(dissoc % :scopeNote)))))
 
