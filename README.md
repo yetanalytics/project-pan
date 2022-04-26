@@ -23,7 +23,7 @@ Similarly, to validate a collection of Profiles, call `validate-profile-coll` on
 Arguments may be supplied for different levels of validation strictness, which are listed as follows:
 - `:syntax?` - Basic validation; check only the types of properties and simple syntax of all Profile objects. Default `true`.
 - `:ids?` - Validate the correctness of all object and versioning IDs (the `id` and `inScheme` properties). Validate that all IDs are distinct and that all `inScheme` values correspond to valid Profile version IDs. If multiple Profiles are involved, all IDs are checked that they are distinct among _all_ Profiles (not just the Profile it is a part of).\*
-- `:multi-version?` - A flag for the `:ids?` keyword arg; if `false` then ID validation will check that all objects have the same `inScheme` value. If `true`, then in addition to the usual ID checking, validation that object IDs change when object properties (other than `inScheme`, `prefLabel`, and `scopeNote`) change is active. Default `false`.
+- `:multi-version?` - A flag for the `:ids?` keyword arg; if `false` then ID validation will check that all objects have the same `inScheme` value. If `true`, then in addition to the usual ID checking, validation that Template and Pattern IDs change when their properties (other than `inScheme`, `prefLabel`, and `scopeNote`) change is active. Default `false`.
 - `:relations?` - Validate that all relations between Profile objects are valid. These relations are given by IRIs and include the following:
     - the broader, narrower, related, broadMatch, narrowMatch, relatedMatch and exactMatch properties for Verbs, Activity Types and Attachment Usage Types.
     - the `recommendedActivityTypes` property for Activity Extensions
