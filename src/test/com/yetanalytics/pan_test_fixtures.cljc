@@ -459,38 +459,109 @@ Detected 1 error
 -- Spec failed --------------------
 
 Objects:
-{:id \"https://w3id.org/xapi/video/extensions/video-playback-size\",
+{:id \"https://w3id.org/xapi/video/templates#paused\",
  :inScheme \"https://w3id.org/xapi/video/v1.0\",
- :type \"ContextExtension\",
+ :prefLabel {:en \"Paused\"},
+ :type \"StatementTemplate\",
  :definition
  {:en
-  \"Used to identify the size in Width x Height of the video as viewed by the user.\"},
- :prefLabel {:en \"video-playback-size\"},
- :inlineSchema \"{ \\\"type\\\": \\\"string\\\" }\"},
-{:id \"https://w3id.org/xapi/video/extensions/video-playback-size\",
+  \"The statement template and rules associated with a video being paused.\"},
+ :verb \"https://w3id.org/xapi/video/verbs/paused\",
+ :objectActivityType \"https://w3id.org/xapi/video/activity-type/video\",
+ :rules
+ [{:location
+   \"$.result.extensions['https://w3id.org/xapi/video/extensions/time']\",
+   :presence \"included\"}
+  {:location
+   \"$.result.extensions['https://w3id.org/xapi/video/extensions/played-segments']\",
+   :presence \"recommended\"}
+  {:location
+   \"$.result.extensions['https://w3id.org/xapi/video/extensions/progress']\",
+   :presence \"recommended\"}]},
+{:id \"https://w3id.org/xapi/video/templates#paused\",
  :inScheme \"https://w3id.org/xapi/video/v1.0.1\",
- :type \"ContextExtension\",
+ :prefLabel {:en \"Paused\"},
+ :type \"StatementTemplate\",
  :definition
  {:en
-  \"Used to identify the size in Width x Height of the video as viewed by the user.\"},
- :prefLabel {:en \"video-playback-size\"},
- :inlineSchema \"{ \\\"type\\\": \\\"string\\\" }\"},
-{:id \"https://w3id.org/xapi/video/extensions/video-playback-size\",
+  \"The statement template and rules associated with a video being paused.\"},
+ :verb \"https://w3id.org/xapi/video/verbs/paused\",
+ :objectActivityType \"https://w3id.org/xapi/video/activity-type/video\",
+ :rules
+ [{:location \"$.id\", :presence \"included\"}
+  {:location \"$.timestamp\", :presence \"included\"}
+  {:location
+   \"$.result.extensions['https://w3id.org/xapi/video/extensions/time']\",
+   :presence \"included\"}
+  {:location
+   \"$.result.extensions['https://w3id.org/xapi/video/extensions/played-segments']\",
+   :presence \"recommended\"}
+  {:location
+   \"$.result.extensions['https://w3id.org/xapi/video/extensions/progress']\",
+   :presence \"recommended\"}
+  {:location
+   \"$.context.extensions['https://w3id.org/xapi/video/extensions/session-id']\",
+   :presence \"recommended\"}]},
+{:id \"https://w3id.org/xapi/video/templates#paused\",
  :inScheme \"https://w3id.org/xapi/video/v1.0.2\",
- :type \"ContextExtension\",
+ :prefLabel {:en \"Paused\"},
  :definition
  {:en
-  \"Used to identify the current video size in Width x Height as viewed by the user.\"},
- :prefLabel {:en \"video-playback-size\"},
- :inlineSchema \"{ \\\"type\\\": \\\"string\\\" }\"},
-{:id \"https://w3id.org/xapi/video/extensions/video-playback-size\",
+  \"The statement template and rules associated with a video being paused.\"},
+ :type \"StatementTemplate\",
+ :verb \"https://w3id.org/xapi/video/verbs/paused\",
+ :objectActivityType \"https://w3id.org/xapi/video/activity-type/video\",
+ :rules
+ [{:location \"$.id\", :presence \"included\"}
+  {:location \"$.timestamp\", :presence \"included\"}
+  {:location
+   \"$.context.extensions['https://w3id.org/xapi/video/extensions/length']\",
+   :presence \"included\"}
+  {:location
+   \"$.result.extensions['https://w3id.org/xapi/video/extensions/time']\",
+   :presence \"included\"}
+  {:location
+   \"$.context.extensions['https://w3id.org/xapi/video/extensions/completion-threshold']\",
+   :presence \"recommended\"}
+  {:location
+   \"$.result.extensions['https://w3id.org/xapi/video/extensions/played-segments']\",
+   :presence \"recommended\"}
+  {:location
+   \"$.result.extensions['https://w3id.org/xapi/video/extensions/progress']\",
+   :presence \"recommended\"}
+  {:location
+   \"$.context.extensions['https://w3id.org/xapi/video/extensions/session-id']\",
+   :presence \"recommended\"}]},
+{:id \"https://w3id.org/xapi/video/templates#paused\",
  :inScheme \"https://w3id.org/xapi/video/v1.0.3\",
- :type \"ContextExtension\",
+ :prefLabel {:en \"Paused\"},
  :definition
  {:en
-  \"Used to identify the current video size in Width x Height as viewed by the user.\"},
- :prefLabel {:en \"video-playback-size\"},
- :inlineSchema \"{ \\\"type\\\": \\\"string\\\" }\"}
+  \"The statement template and rules associated with a video being paused.\"},
+ :type \"StatementTemplate\",
+ :verb \"https://w3id.org/xapi/video/verbs/paused\",
+ :objectActivityType \"https://w3id.org/xapi/video/activity-type/video\",
+ :rules
+ [{:location \"$.id\", :presence \"included\"}
+  {:location \"$.timestamp\", :presence \"included\"}
+  {:location
+   \"$.context.extensions['https://w3id.org/xapi/video/extensions/length']\",
+   :presence \"included\"}
+  {:location
+   \"$.result.extensions['https://w3id.org/xapi/video/extensions/time']\",
+   :presence \"included\"}
+  {:location
+   \"$.result.extensions['https://w3id.org/xapi/video/extensions/progress']\",
+   :presence \"included\"}
+  {:location
+   \"$.result.extensions['https://w3id.org/xapi/video/extensions/played-segments']\",
+   :presence \"included\"}
+  {:location
+   \"$.context.extensions['https://w3id.org/xapi/video/extensions/completion-threshold']\",
+   :presence \"recommended\"}
+  {:location
+   \"$.context.extensions['https://w3id.org/xapi/video/extensions/session-id']\",
+   :presence \"recommended\"}]}
 
 should not share the same ID if properties are changed
 
