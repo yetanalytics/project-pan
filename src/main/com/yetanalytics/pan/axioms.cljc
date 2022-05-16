@@ -1,6 +1,7 @@
 (ns com.yetanalytics.pan.axioms
   (:require [clojure.spec.alpha     :as s]
-            [clojure.string         :as string]
+            [clojure.spec.gen.alpha :as sgen]
+            [clojure.string         :as cstr]
             [xapi-schema.spec       :as xs]
             [xapi-schema.spec.regex :as xsr]
             [com.yetanalytics.pan.json-schema :as jsn-schema]
@@ -19,7 +20,8 @@
 (defn- non-empty-str? [s]
   (and (string? s) (not-empty s)))
 
-(s/def ::string non-empty-str?)
+(s/def ::string
+  (s/and string? not-empty))
 
 ;; Timestamps
 ;; Example: "2010-01-14T12:13:14Z"
@@ -28,21 +30,20 @@
 ;; Language Maps
 ;; Example: {"en" "Hello World"} or {:en "Hello World"}
 (s/def ::language-tag
-  (fn language-tag? [t]
-    (or (and (keyword? t)
-             (re-matches xsr/LanguageTagRegEx (name t)))
-        (and (non-empty-str? t)
-             (re-matches xsr/LanguageTagRegEx t)))))
-
-(defn- language-tag?
-  [t]
-  (or (and (keyword? t)
-           (re-matches xsr/LanguageTagRegEx (name t)))
-      (and (non-empty-str? t)
-           (re-matches xsr/LanguageTagRegEx t))))
+  (s/with-gen
+    (s/or :keyword
+          (s/and keyword? (s/conformer name) ::xs/language-tag)
+          :string
+          ::xs/language-tag)
+    #(->> (sgen/one-of [(sgen/vector (sgen/char-alpha) 2 2)
+                        (sgen/cat (sgen/vector (sgen/char-alpha) 2 2)
+                                  (sgen/return [\-])
+                                  (sgen/vector (sgen/char-alpha) 2 2))])
+          (sgen/fmap (partial reduce str))
+          (sgen/fmap keyword))))
 
 (s/def ::language-map
-  (s/map-of language-tag? string? :min-count 1))
+  (s/map-of ::language-tag string? :min-count 1))
 
 ;; RFC 2046 media types, as defined by the IANA.
 ;; Example: "application/json"
@@ -52,13 +53,31 @@
 ;; Currently only the five discrete top-level media type values are supported:
 ;; application, audio, image, text and video.
 (def media-types (read-edn-resource "media_types.edn"))
+(def app-types (get media-types "application"))
+(def aud-types (get media-types "audio"))
+(def img-types (get media-types "image"))
+(def txt-types (get media-types "text"))
+(def vid-types (get media-types "video"))
 
 (defn- media-type? [s]
   (let [regexp  #?(:clj #"\/" :cljs #"/")
-        substrs (string/split s regexp 2)]
+        substrs (cstr/split s regexp 2)]
     (contains? (get media-types (first substrs)) (second substrs))))
 
-(s/def ::media-type (s/and ::string media-type?))
+(s/def ::media-type
+  (s/with-gen (s/and ::string media-type?)
+    (sgen/generate
+     (sgen/one-of
+      [(sgen/fmap (partial str "application/")
+                  (sgen/elements app-types))
+       (sgen/fmap (partial str "audio/")
+                  (sgen/elements aud-types))
+       (sgen/fmap (partial str "image/")
+                  (sgen/elements img-types))
+       (sgen/fmap (partial str "text/")
+                  (sgen/elements txt-types))
+       (sgen/fmap (partial str "video/")
+                  (sgen/elements vid-types))]))))
 
 ;; JSONPath strings
 ;; Example: "$.store.book"
@@ -77,10 +96,14 @@
   (every? some?
           (map (partial re-matches JSONPathRegEx)
                (filterv some? ; Filter out nils from JS regexes
-                        (string/split paths JSONPathSplitRegEx)))))
+                        (cstr/split paths JSONPathSplitRegEx)))))
 
 (s/def ::json-path
-  (s/and string? json-path?))
+  (s/with-gen (s/and string? json-path?)
+    (sgen/generate
+     (->> (sgen/vector (sgen/string-alphanumeric) 1 5)
+          (sgen/fmap (partial cstr/join "."))
+          (sgen/fmap (partial str "$."))))))
 
 ;; JSON Schema
 ;; Example: "{\"type\":\"array\", \"uniqueItems\":true}"
@@ -100,6 +123,7 @@
   "Returns false if `s` is not parseable as JSON or not a valid
    JSON schema, true otherwise."
   [s]
+  ;; TODO: Add generator
   (if-some [jsn (str->jsn s)]
     (s/valid? ::jsn-schema/schema jsn)
     false))
@@ -118,12 +142,13 @@
 (defn- uri-str? [s]
   (and (non-empty-str? s) (re-matches xsr/AbsoluteURIRegEx s)))
 
-(s/def ::iri iri-str?)
-(s/def ::irl iri-str?)
-(s/def ::uri uri-str?)
-(s/def ::url uri-str?)
+(s/def ::iri (s/with-gen iri-str? #(s/gen ::xs/iri)))
+(s/def ::irl (s/with-gen iri-str? #(s/gen ::xs/iri)))
+(s/def ::uri (s/with-gen uri-str? #(s/gen ::xs/iri)))
+(s/def ::url (s/with-gen uri-str? #(s/gen ::xs/iri)))
 
 ;; Array of identifiers
 ;; Example: ["https://foo.org" "https://bar.org"]
+
 (s/def ::array-of-iri (s/coll-of ::iri :type vector? :min-count 1))
 (s/def ::array-of-uri (s/coll-of ::uri :type vector? :min-count 1))
