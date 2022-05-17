@@ -100,10 +100,10 @@
 
 (s/def ::json-path
   (s/with-gen (s/and string? json-path?)
-    (sgen/generate
-     (->> (sgen/vector (sgen/string-alphanumeric) 1 5)
+    #(->> (sgen/vector (sgen/string-alphanumeric) 1 5)
+          (sgen/fmap (partial filter not-empty))
           (sgen/fmap (partial cstr/join "."))
-          (sgen/fmap (partial str "$."))))))
+          (sgen/fmap (partial str "$.")))))
 
 ;; JSON Schema
 ;; Example: "{\"type\":\"array\", \"uniqueItems\":true}"
