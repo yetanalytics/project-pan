@@ -113,18 +113,25 @@
 ;; e.g. draft-04, draft-06, draft-2019-09, and draft-2020-12
 
 (defn- str->jsn
-  "Parses JSON string to EDN, returns nil on failure."
+  "Parses JSON string to EDN, returns `nil` on failure."
   [s]
   #?(:clj (try (json/read-str s :key-fn keyword)
                (catch Exception _ nil))
      :cljs (try (js->clj (.parse js/JSON s) :keywordize-keys true)
                 (catch js/Error _ nil))))
 
+(defn- jsn->str
+  "Parses EDN to JSON string, returning `nil` on failure."
+  [x]
+  #?(:clj (try (json/write-str x)
+               (catch Exception _ nil))
+     :cljs (try (.stringify js/JSON (clj->js x))
+                (catch js/Error _ nil))))
+
 (defn- json-schema?
   "Returns false if `s` is not parseable as JSON or not a valid
    JSON schema, true otherwise."
   [s]
-  ;; TODO: Add generator
   (if-some [jsn (str->jsn s)]
     (s/valid? ::jsn-schema/schema jsn)
     false))
@@ -132,7 +139,8 @@
 ;; This could also be done with s/conformer, but doing so will mess
 ;; with expound.
 (s/def ::json-schema
-  (s/and string? json-schema?))
+  (s/with-gen (s/and string? json-schema?)
+    #(sgen/fmap jsn->str (s/gen ::jsn-schema/schema))))
 
 ;; IRIs/IRLs/URIs/URLs
 ;; Example: "https://yetanalytics.io"
