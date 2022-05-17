@@ -1,6 +1,7 @@
 (ns com.yetanalytics.pan.objects.pattern-test
   (:require [clojure.test :refer [deftest is testing]]
-            [clojure.spec.alpha :as s]
+            [clojure.spec.alpha     :as s]
+            [clojure.spec.gen.alpha :as sgen]
             [com.yetanalytics.pan.graph :as graph]
             [com.yetanalytics.pan.objects.pattern :as pattern]
             [com.yetanalytics.test-utils :refer [should-satisfy
@@ -200,6 +201,12 @@
                         :inScheme "https://w3id.org/xapi/catch/v1"
                         :optional "https://w3id.org/xapi/catch/templates#one"
                         :zeroOrMore "https://w3id.org/xapi/catch/templates#two"})))))
+
+(deftest generative-tests
+  (testing "Generated Patterns are always valid"
+    (dotimes [_ 30]
+      (s/valid? ::pattern/pattern
+                (sgen/generate (s/gen ::pattern/pattern))))))
 
 ;; Graph tests
 
