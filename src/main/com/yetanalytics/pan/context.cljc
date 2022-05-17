@@ -2,8 +2,7 @@
   (:require [clojure.spec.alpha          :as s]
             [clojure.spec.gen.alpha      :as sgen]
             [clojure.string              :as cstr]
-            [com.yetanalytics.pan.axioms :as ax]
-            #?(:cljs [clojure.test.check.generators]))
+            [com.yetanalytics.pan.axioms :as ax])
   #?(:clj (:require [com.yetanalytics.pan.utils.resources
                      :refer [read-json-resource]])
      :cljs (:require-macros [com.yetanalytics.pan.utils.resources

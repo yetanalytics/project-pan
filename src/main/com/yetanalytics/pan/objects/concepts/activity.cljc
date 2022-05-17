@@ -5,8 +5,7 @@
             [xapi-schema.spec]
             [com.yetanalytics.pan.axioms  :as ax]
             [com.yetanalytics.pan.context :as ctx]
-            [com.yetanalytics.pan.graph   :as graph]
-            #?(:cljs [clojure.spec.test.alpha])))
+            [com.yetanalytics.pan.graph   :as graph]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Activity
