@@ -67,8 +67,7 @@
 
 (s/def ::media-type
   (s/with-gen (s/and ::string media-type?)
-    (sgen/generate
-     (sgen/one-of
+    #(sgen/one-of
       [(sgen/fmap (partial str "application/")
                   (sgen/elements app-types))
        (sgen/fmap (partial str "audio/")
@@ -78,7 +77,7 @@
        (sgen/fmap (partial str "text/")
                   (sgen/elements txt-types))
        (sgen/fmap (partial str "video/")
-                  (sgen/elements vid-types))]))))
+                  (sgen/elements vid-types))])))
 
 ;; JSONPath strings
 ;; Example: "$.store.book"
