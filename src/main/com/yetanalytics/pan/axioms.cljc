@@ -5,7 +5,8 @@
             [xapi-schema.spec       :as xs]
             [xapi-schema.spec.regex :as xsr]
             [com.yetanalytics.pan.json-schema :as jsn-schema]
-            #?(:clj [clojure.data.json :as json]))
+            #?(:clj [clojure.data.json :as json]
+               :cljs [clojure.test.check.generators]))
   #?(:clj (:require
            [com.yetanalytics.pan.utils.resources :refer [read-edn-resource]])
      :cljs (:require-macros
