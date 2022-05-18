@@ -2,6 +2,8 @@
 All notable changes to this project will be documented in this file. This change log follows the conventions of [keepachangelog.com](http://keepachangelog.com/).
 
 ## 0.5.0 - TBD
+- Add the `validate-object` function to the top-level API to validate individual Concepts, Templates, and Patterns.
+- Add value generation capabilities for Profile syntax specs, including `::concept`, `::template`, `::pattern`, and `::profile`.
 - TODO: Add API function to individually validate Concepts, StatementTemplates, and Patterns.
 - TODO: Change get `get-external-iris` to return _all_ IRIS, and in a more useful format.
 - TODO: Relax ID validation constraints to allow different versions of the same Profile to reuse IDs (with the exception of changed StatementTemplates and Patterns).
