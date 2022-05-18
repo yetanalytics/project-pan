@@ -1,5 +1,6 @@
 (ns com.yetanalytics.pan.objects.profile
   (:require [clojure.spec.alpha          :as s]
+            [clojure.spec.gen.alpha      :as sgen]
             [com.yetanalytics.pan.axioms :as ax]
             [com.yetanalytics.pan.objects.profiles.version :as versions]
             [com.yetanalytics.pan.objects.profiles.author  :as author]
@@ -22,9 +23,13 @@
 (def context-url "https://w3id.org/xapi/profiles/context")
 (s/def ::has-context-url (partial some #(= context-url %)))
 (s/def ::_context
-  (s/or :context-iri ::ax/uri
-        :context-array (s/and ::ax/array-of-uri
-                              ::has-context-url)))
+  (s/or :context-iri
+        ::ax/uri
+        :context-array
+        (s/with-gen (s/and ::ax/array-of-uri
+                           ::has-context-url)
+          #(->> (s/gen ::ax/array-of-uri)
+                (sgen/fmap (fn [v] (conj v context-url)))))))
 
 (s/def ::profile
   (s/keys :req-un [::id ::_context ::type ::conformsTo ::prefLabel

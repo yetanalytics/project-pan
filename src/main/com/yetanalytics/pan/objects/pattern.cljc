@@ -70,12 +70,14 @@
          ::pattern-clause
          ::is-primary-false))
 
-(defmulti pattern? #(:primary %))
+(defmulti pattern? :primary)
 (defmethod pattern? true [_] ::primary-pattern)
 (defmethod pattern? :default [_] ::non-primary-pattern)
 
 ;; Spec for a generic pattern.
-(s/def ::pattern (s/multi-spec pattern? #(:primary %)))
+;; The retag fn is so that both primary and non-primary patterns can be
+;; generated.
+(s/def ::pattern (s/multi-spec pattern? (fn [gen-v _] gen-v)))
 
 ;; Spec for a vector of patterns.
 (s/def ::patterns

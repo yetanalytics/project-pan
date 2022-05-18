@@ -256,7 +256,7 @@ should contain keys: :definition, :inScheme, :prefLabel
 | key         | spec                                       |
 |=============+============================================|
 | :definition | (map-of                                    |
-|             |  com.yetanalytics.pan.axioms/language-tag? |
+|             |  :com.yetanalytics.pan.axioms/language-tag |
 |             |  string?                                   |
 |             |  :min-count                                |
 |             |  1)                                        |
@@ -264,7 +264,7 @@ should contain keys: :definition, :inScheme, :prefLabel
 | :inScheme   | com.yetanalytics.pan.axioms/iri-str?       |
 |-------------+--------------------------------------------|
 | :prefLabel  | (map-of                                    |
-|             |  com.yetanalytics.pan.axioms/language-tag? |
+|             |  :com.yetanalytics.pan.axioms/language-tag |
 |             |  string?                                   |
 |             |  :min-count                                |
 |             |  1)                                        |
@@ -313,7 +313,7 @@ should contain keys: :definition, :inScheme, :prefLabel
 | key         | spec                                       |
 |=============+============================================|
 | :definition | (map-of                                    |
-|             |  com.yetanalytics.pan.axioms/language-tag? |
+|             |  :com.yetanalytics.pan.axioms/language-tag |
 |             |  string?                                   |
 |             |  :min-count                                |
 |             |  1)                                        |
@@ -321,7 +321,7 @@ should contain keys: :definition, :inScheme, :prefLabel
 | :inScheme   | com.yetanalytics.pan.axioms/iri-str?       |
 |-------------+--------------------------------------------|
 | :prefLabel  | (map-of                                    |
-|             |  com.yetanalytics.pan.axioms/language-tag? |
+|             |  :com.yetanalytics.pan.axioms/language-tag |
 |             |  string?                                   |
 |             |  :min-count                                |
 |             |  1)                                        |

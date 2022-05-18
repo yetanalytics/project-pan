@@ -201,7 +201,12 @@
                         :optional "https://w3id.org/xapi/catch/templates#one"
                         :zeroOrMore "https://w3id.org/xapi/catch/templates#two"})))))
 
-;; Graph tests
+(deftest generative-tests
+  (testing "Generated Patterns are always valid"
+    (is (every? (partial not= ::s/invalid)
+                (s/exercise ::pattern/pattern 20)))))
+
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Graph tests ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (deftest node-with-attrs
   (testing "Creating node with attributes"
