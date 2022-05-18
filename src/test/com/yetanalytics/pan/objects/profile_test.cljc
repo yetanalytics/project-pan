@@ -1,7 +1,6 @@
 (ns com.yetanalytics.pan.objects.profile-test
   (:require [clojure.test :refer [deftest is testing]]
-            [clojure.spec.alpha     :as s]
-            [clojure.spec.gen.alpha :as sgen]
+            [clojure.spec.alpha :as s]
             [com.yetanalytics.pan.objects.profile :as profile]
             [com.yetanalytics.test-utils :refer [should-satisfy+]]))
 
@@ -70,6 +69,5 @@
 
 (deftest generative-tests
   (testing "Generated Profiles are always valid"
-    (dotimes [_ 5]
-      (s/valid? ::profile/profile
-                (sgen/generate (s/gen ::profile/profile))))))
+    (is (every? (partial not= ::s/invalid)
+                (s/exercise ::profile/profile 5)))))

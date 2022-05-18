@@ -1,7 +1,6 @@
 (ns com.yetanalytics.pan.objects.concept-test
   (:require [clojure.test :refer [deftest is testing]]
-            [clojure.spec.alpha     :as s]
-            [clojure.spec.gen.alpha :as sgen]
+            [clojure.spec.alpha :as s]
             [loom.attr]
             [com.yetanalytics.pan.graph :as graph]
             [com.yetanalytics.pan.objects.concept :as concept]
@@ -11,9 +10,8 @@
 
 (deftest generative-tests
   (testing "Generated Concepts are always valid"
-    (dotimes [_ 60]
-      (s/valid? ::concept/concept
-                (sgen/generate (s/gen ::concept/concept))))))
+    (is (every? (partial not= ::s/invalid)
+                (s/exercise ::concept/concept 60)))))
 
 (def at-1->at-2-fix
   {:src          "https://foo.org/at1"

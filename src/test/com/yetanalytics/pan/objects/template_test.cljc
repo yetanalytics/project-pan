@@ -1,7 +1,6 @@
 (ns com.yetanalytics.pan.objects.template-test
   (:require [clojure.test :refer [deftest is testing]]
-            [clojure.spec.alpha     :as s]
-            [clojure.spec.gen.alpha :as sgen]
+            [clojure.spec.alpha :as s]
             [com.yetanalytics.pan.graph :as graph]
             [com.yetanalytics.pan.objects.template :as template]
             [com.yetanalytics.test-utils :refer [should-satisfy
@@ -169,11 +168,10 @@
 
 (deftest generative-tests
   (testing "Generated Statement Templates are always valid"
-    (dotimes [_ 30]
-      (s/valid? ::template/template
-                (sgen/generate (s/gen ::template/template))))))
+    (is (every? (partial not= ::s/invalid)
+                (s/exercise ::template/template 20)))))
 
-;; Strict validation tests
+;; ;;;;;;;;;;;;;;;;;;;; Strict validation tests ;;;;;;;;;;;;;;;;;;;;
 
 (def template-ex
   {:id "https://foo.org/template"

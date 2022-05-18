@@ -1,7 +1,6 @@
 (ns com.yetanalytics.pan.objects.pattern-test
   (:require [clojure.test :refer [deftest is testing]]
-            [clojure.spec.alpha     :as s]
-            [clojure.spec.gen.alpha :as sgen]
+            [clojure.spec.alpha :as s]
             [com.yetanalytics.pan.graph :as graph]
             [com.yetanalytics.pan.objects.pattern :as pattern]
             [com.yetanalytics.test-utils :refer [should-satisfy
@@ -204,11 +203,10 @@
 
 (deftest generative-tests
   (testing "Generated Patterns are always valid"
-    (dotimes [_ 30]
-      (s/valid? ::pattern/pattern
-                (sgen/generate (s/gen ::pattern/pattern))))))
+    (is (every? (partial not= ::s/invalid)
+                (s/exercise ::pattern/pattern 20)))))
 
-;; Graph tests
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Graph tests ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (deftest node-with-attrs
   (testing "Creating node with attributes"
