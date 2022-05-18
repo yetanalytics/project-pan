@@ -140,7 +140,7 @@ should contain key: :definition
 | key         | spec                                       |
 |=============+============================================|
 | :definition | (map-of                                    |
-|             |  com.yetanalytics.pan.axioms/language-tag? |
+|             |  :com.yetanalytics.pan.axioms/language-tag |
 |             |  string?                                   |
 |             |  :min-count                                |
 |             |  1)                                        |
