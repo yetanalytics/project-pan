@@ -171,9 +171,11 @@
          pvisit (->> visit-objs (map :id) set)]
     (if-some [{pat-tmp-id :id :as pat-tmp} (peek pqueue)]
       (if (contains? pvisit pat-tmp-id)
-        [pnodes pedges]
-        (let [new-pnode  (graph/node-with-attrs pat-tmp)
-              ;; Don't get outgoing edges of templates
+        ;; Already visited this node; skip adding it
+        (recur pnodes pedges (pop pqueue) pvisit)
+        ;; Visitng new node
+        (let [;; Add the node and, if it's a Pattern, its outgoing edges
+              new-pnode  (graph/node-with-attrs pat-tmp)
               new-pedges (when (= "Pattern" (:type pat-tmp))
                            (graph/edges-with-attrs pat-tmp))
               next-pats  (pattern-children pat-map pat-tmp-id)]
@@ -192,12 +194,12 @@
         pedges     (->> patterns
                         (mapv graph/edges-with-attrs)
                         graph/collect-edges)]
-    (if (and ?ext-pats ?ext-pats)
+    (if (or ?ext-tmps ?ext-pats)
       (let [pat-coll  (concat patterns templates ?ext-pats ?ext-tmps)
             pat-map   (zipmap (map :id pat-coll) pat-coll)
             init-exts (->> (concat ?ext-pats ?ext-tmps)
                            (ids/filter-by-ids out-ids))
-            inits     (concat patterns templates)
+            inits     (concat patterns templates*)
             [pn pe]   (append-bfs pat-map pnodes pedges init-exts inits)]
         (graph/create-graph* pn pe))
       (graph/create-graph* pnodes pedges))))
