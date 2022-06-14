@@ -367,7 +367,8 @@ Detected 3 errors
 Identifier:
 \"https://w3id.org/xapi/catch/v1\"
 
-which occurs 2 times in the Profile
+which occurs 2 times in the version:
+\"https://w3id.org/xapi/catch/v1\"
 
 should be a unique identifier value
 
@@ -376,7 +377,8 @@ should be a unique identifier value
 Identifier:
 \"https://foo.org/template\"
 
-which occurs 2 times in the Profile
+which occurs 2 times in the version:
+\"https://w3id.org/xapi/catch/v1\"
 
 should be a unique identifier value
 
@@ -388,7 +390,7 @@ Detected 2 errors
 
 (def err-msg-5
   "
-**** Version Errors ****
+**** Version ID Errors ****
 
 -- Spec failed --------------------
 

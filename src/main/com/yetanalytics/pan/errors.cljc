@@ -78,10 +78,24 @@
 
 ;; ID spec messages
 
+(exp/defmsg ::id/id
+  "should be an ID string")
+(exp/defmsg ::id/inScheme
+  "should be an inScheme string")
+(exp/defmsg ::id/versionIds
+  "should be a set of version IDs")
+
 (exp/defmsg ::id/one-count
   "should be a unique identifier value")
-(exp/defmsg ::id/in-scheme
+
+(exp/defmsg ::id/inscheme-prop
   "should be a valid version ID")
+
+(exp/defmsg ::id/singleton-inscheme-map
+  "should only have one valid inScheme value")
+
+(exp/defmsg ::id/versioned-objects
+  "should not share the same ID if properties are changed")
 
 ;; Graph spec messages
 
@@ -353,30 +367,63 @@
            (ppr-str obj print-objects?)))))
 
 (defn- value-str-id
-  "Custom value string fn for duplicate ID errors"
   [_opts _ _ path value]
-  (fmt (str "Identifier:\n"
-            "%s\n"
-            "\n"
-            "which occurs %d time%s in the Profile")
-       (-> path last pr-str)
-       value
-       (if (= 1 value) "" "s")))
+  (cond
+    ;; ::id/one-count
+    (number? value)
+    (let [id-count value
+          id-str   (-> path last pr-str)
+          ver-str  (-> path butlast last pr-str)]
+      (fmt (str "Identifier:\n"
+                "%s\n"
+                "\n"
+                "which occurs %d time%s in the version:\n"
+                "%s")
+           id-str
+           id-count
+           (if (= 1 value) "" "s")
+           ver-str))    
+    :else
+    (fmt (str "Value:\n"
+              "%s")
+         (pr-str value))))
 
-(defn- value-str-version
-  "Custom value string fn for inScheme error messages."
-  [_opts _ _ _ {:keys [id inScheme version-ids] :as _value}]
-  (fmt (str "InScheme IRI:\n"
-            "%s\n"
-            "\n"
-            "associated with the identifier:\n"
-            "%s\n"
-            "\n"
-            "in a Profile with the following version IDs:\n"
-            "%s")
-       (pr-str inScheme)
-       (pr-str id)
-       (->> version-ids sort (map pr-str) (cstr/join "\n"))))
+(defn- value-str-inscheme
+  [_opts _ _ path value]
+  (cond
+    ;; ::id/inscheme-prop
+    (not-empty path)
+    (let [{id :id inscheme :inScheme ver-ids :versionIds} value]
+      (fmt (str "InScheme IRI:\n"
+                "%s\n"
+                "\n"
+                "associated with the identifier:\n"
+                "%s\n"
+                "\n"
+                "in a Profile with the following version IDs:\n"
+                "%s")
+           (pr-str inscheme)
+           (pr-str id)
+           (->> ver-ids sort (map pr-str) (cstr/join "\n"))))
+    ;; ::id/singleton-inscheme-map
+    (s/valid? (s/map-of string? any?) value)
+    (fmt (str "Objects that have the following inSchemes:\n"
+              "[%s]")
+         (->> value keys (map pr-str) (cstr/join "\n ")))
+    :else
+    (fmt (str "Value:\n"
+              "%s")
+         (pr-str value))))
+
+(defn- value-str-versioning
+  [{:keys [print-objects?]} _ _ _ value]
+  (if print-objects?
+    (fmt (str "Objects:\n"
+              "%s")
+         (cstr/join ",\n" (map ppr-str value)))
+    (fmt (str "Objects with ID:\n"
+              "%s")
+         (-> value first :id pr-str))))
 
 (defn- value-str-edge
   "Custom value string fn for IRI link error messages."
@@ -509,7 +556,9 @@
       :id-errors
       (exp/custom-printer (make-opts (partial value-str-id opts)))
       :in-scheme-errors
-      (exp/custom-printer (make-opts (partial value-str-version opts)))
+      (exp/custom-printer (make-opts (partial value-str-inscheme opts)))
+      :versioning-errors
+      (exp/custom-printer (make-opts (partial value-str-versioning opts)))
       :concept-edge-errors
       (exp/custom-printer (make-opts (partial value-str-edge opts)))
       :template-edge-errors
@@ -519,20 +568,7 @@
       :pattern-cycle-errors
       (exp/custom-printer (make-opts (partial value-str-scc opts)))
       :context-errors
-      (exp/custom-printer (make-opts (partial value-str-context-key opts)))
-      ;; Old
-      :id
-      (exp/custom-printer (make-opts (partial value-str-id opts)))
-      :in-scheme
-      (exp/custom-printer (make-opts (partial value-str-version opts)))
-      :edge
-      (exp/custom-printer (make-opts (partial value-str-edge opts)))
-      :cycle
-      (exp/custom-printer (make-opts (partial value-str-scc opts)))
-      :context
-      (exp/custom-printer (make-opts (partial value-str-context-key opts)))
-      :else
-      (exp/custom-printer (make-opts (partial value-str-obj opts))))))
+      (exp/custom-printer (make-opts (partial value-str-context-key opts))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Transform error map
@@ -560,7 +596,8 @@
   [k]
   (case k
     :id-errors "ID Errors"
-    :in-scheme-errors "Version Errors"
+    :in-scheme-errors "Version ID Errors"
+    :versioning-errors "Version Change Errors"
     (->> (-> k name (cstr/split #"-"))
          (map cstr/capitalize)
          (cstr/join " "))))
@@ -623,15 +660,17 @@
   "Print errors from profile validation using Expound. Available keys:
   :syntax-errors         Basic syntax validation (always present)
   :id-errors             Duplicate ID errors
-  :in-scheme-errors      inScheme property validation
+  :in-scheme-errors      InScheme property validation errors
+  :versioning-errors     Version change errors
   :concept-errors        Concept relation/link errors
   :template-errors       Template relation/link errors
   :pattern-errors        Pattern relation/link errors
   :pattern-cycle-errors  Cyclical pattern errors
-  :context-errors        Errors in expanding keys via @context maps"
+  :context-errors        Expanding keys via @context map errors"
   [{:keys [syntax-errors
            id-errors
            in-scheme-errors
+           versioning-errors
            concept-edge-errors
            template-edge-errors
            pattern-edge-errors
@@ -639,18 +678,47 @@
            context-errors]}
    opts]
   (when syntax-errors
-    (expound-error syntax-errors "Syntax Errors" nil opts))
+    (expound-error syntax-errors
+                   "Syntax Errors"
+                   :syntax-errors
+                   opts))
   (when id-errors
-    (expound-error id-errors "ID Errors" :id opts))
+    (expound-error id-errors
+                   "ID Errors"
+                   :id-errors
+                   opts))
   (when in-scheme-errors
-    (expound-error in-scheme-errors "Version Errors" :in-scheme opts))
+    (expound-error in-scheme-errors
+                   "Version ID Errors"
+                   :in-scheme-errors
+                   opts))
+  (when versioning-errors
+    (expound-error versioning-errors
+                   "Version Change Errors"
+                   :versioning-errors
+                   opts))
   (when concept-edge-errors
-    (expound-error concept-edge-errors "Concept Edge Errors" :edge opts))
+    (expound-error concept-edge-errors
+                   "Concept Edge Errors"
+                   :concept-edge-errors
+                   opts))
   (when template-edge-errors
-    (expound-error template-edge-errors "Template Edge Errors" :edge opts))
+    (expound-error template-edge-errors
+                   "Template Edge Errors"
+                   :template-edge-errors
+                   opts))
   (when pattern-edge-errors
-    (expound-error pattern-edge-errors "Pattern Edge Errors" :edge opts))
+    (expound-error pattern-edge-errors
+                   "Pattern Edge Errors"
+                   :pattern-edge-errors
+                   opts))
   (when pattern-cycle-errors
-    (expound-error pattern-cycle-errors "Pattern Cycle Errors" :cycle opts))
+    (expound-error pattern-cycle-errors
+                   "Pattern Cycle Errors"
+                   :pattern-cycle-errors
+                   opts))
   (when context-errors
-    (expound-error context-errors "Context Errors" :context opts)))
+    (expound-error context-errors
+                   "Context Errors"
+                   :context-errors
+                   opts)))

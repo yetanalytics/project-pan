@@ -47,10 +47,14 @@
         sqn? (not (or alt? opt? oom? zom?))
         zom? (not (or alt? opt? oom? sqn?))))))
 
+;; NOTE: The inScheme property is listed as Optional in the spec, but that
+;; is actually an error.
+;; See: https://github.com/adlnet/xapi-profiles/issues/245
+
 ;; Spec for a primary pattern ('primary' is set to true).
 (s/def ::primary-pattern-keys
-  (s/keys :req-un [::id ::type ::prefLabel ::definition ::primary]
-          :opt-un [::inScheme ::deprecated ::alternates ::optional
+  (s/keys :req-un [::id ::type ::inScheme ::prefLabel ::definition ::primary]
+          :opt-un [::deprecated ::alternates ::optional
                    ::oneOrMore ::sequence ::zeroOrMore]))
 
 (s/def ::primary-pattern
@@ -60,8 +64,8 @@
 
 ;; Spec for a non-primary pattern ('primary' is set to false).
 (s/def ::non-primary-pattern-keys
-  (s/keys :req-un [::id ::type]
-          :opt-un [::primary ::inScheme ::prefLabel ::definition
+  (s/keys :req-un [::id ::type ::inScheme]
+          :opt-un [::primary ::prefLabel ::definition
                    ::deprecated ::alternates ::optional ::oneOrMore
                    ::sequence ::zeroOrMore]))
 

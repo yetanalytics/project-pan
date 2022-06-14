@@ -33,6 +33,11 @@
 (def scorm-profile-raw
   (read-json-resource "sample_profiles/scorm.json"))
 
+(def acrossx-multi-version-raw
+  (read-json-resource "sample_profiles/acrossx-multi-version.json"))
+(def video-multi-version-raw
+  (read-json-resource "sample_profiles/video-multi-version.json"))
+
 (def will-profile-fix
   (read-json-resource "sample_profiles/catch-fixed.json"))
 (def cmi-profile-fix
@@ -223,6 +228,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn- distinct-problems
+  "Return an keyword-error map where all errors are made distinct on the
+   basis of the `:pred` key in `::s/problems`."
   [err-map]
   (reduce-kv
    (fn [err-map err-keyword err-data]
@@ -265,6 +272,33 @@
            (expound-to-str (p/validate-profile activity-stream-profile-raw
                                                :syntax? false
                                                :ids? true)))))
+  (testing "versioning error messages"
+    (is (= fix/acrossx-multi-inscheme-err-msg
+           (expound-to-str (p/validate-profile acrossx-multi-version-raw
+                                               :syntax? false
+                                               :ids? true))))
+    (is (= fix/video-multi-inscheme-err-msg
+           (expound-to-str (p/validate-profile video-multi-version-raw
+                                               :syntax? false
+                                               :ids? true))))
+    (is (empty? (expound-to-str (p/validate-profile acrossx-multi-version-raw
+                                                    :syntax? false
+                                                    :ids? true
+                                                    :multi-version? true))))
+    (is (= fix/video-multi-inscheme-err-msg-2
+           (expound-to-str (p/validate-profile video-multi-version-raw
+                                               :syntax? false
+                                               :ids? true
+                                               :multi-version? true))))
+    ;; The above fixture is misleading since duplicate pred problems
+    ;; are deduped
+    (is (< 1 (-> (p/validate-profile video-multi-version-raw
+                                     :syntax? false
+                                     :ids? true
+                                     :multi-version? true)
+                 :versioning-errors
+                 ::s/problems
+                 count))))
   (testing "edge error messages"
     (is (= fix/catch-graph-err-msg
            (expound-to-str (p/validate-profile will-profile-raw

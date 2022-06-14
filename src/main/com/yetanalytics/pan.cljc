@@ -34,12 +34,20 @@
   {:syntax-errors (profile/validate profile)})
 
 (defn- find-id-errors
-  ([profile]
-   {:id-errors        (id/validate-ids profile)
-    :in-scheme-errors (id/validate-in-schemes profile)})
-  ([profile extra-profiles]
-   {:id-errors        (id/validate-ids profile extra-profiles)
-    :in-scheme-errors (id/validate-in-schemes profile)}))
+  ([profile {:keys [multi-version?]}]
+   (if multi-version?
+     {:id-errors         (id/validate-ids profile)
+      :in-scheme-errors  (id/validate-inschemes profile)
+      :versioning-errors (id/validate-version-change profile)}
+     {:id-errors        (id/validate-ids profile)
+      :in-scheme-errors (id/validate-same-inschemes profile)}))
+  ([profile extra-profiles {:keys [multi-version?]}]
+   (if multi-version?
+     {:id-errors         (id/validate-ids profile extra-profiles)
+      :in-scheme-errors  (id/validate-inschemes profile)
+      :versioning-errors (id/validate-version-change profile)}
+     {:id-errors        (id/validate-ids profile extra-profiles)
+      :in-scheme-errors (id/validate-same-inschemes profile)})))
 
 (defn- find-graph-errors*
   [?cgraph ?tgraph ?pgraph]
@@ -76,6 +84,8 @@
    following keyword arguments:
    - `:syntax?`        Basic syntax validation only. Default `true`.
    - `:ids?`           Validate object and versioning IDs. Default `false`.
+   - `:multi-version?` Whether to support multiple inSchemes in the same
+                       Profile. Default `false`.
    - `:relations?`     Validate IRI-given relations between Concepts,
                        Statement Templates and Patterns. Default
                        `false`.
@@ -114,6 +124,7 @@
                        edge validation error messages."
   [profile & {:keys [syntax?
                      ids?
+                     multi-version?
                      relations?
                      concept-rels?
                      template-rels?
@@ -125,6 +136,7 @@
                      error-msg-opts]
               :or {syntax?        true
                    ids?           false
+                   multi-version? false
                    relations?     false
                    concept-rels?  false
                    template-rels? false
@@ -134,7 +146,8 @@
                    extra-contexts {}
                    result         :spec-error-data
                    error-msg-opts {:print-objects? true}}}]
-  (let [?rel-opts (not-empty
+  (let [?id-opts  (when ids? {:multi-version? multi-version?})
+        ?rel-opts (not-empty
                    (cond-> {}
                      (or relations? concept-rels?)  (assoc :concepts? true)
                      (or relations? template-rels?) (assoc :templates? true)
@@ -143,8 +156,8 @@
                  (cond-> {}
                    syntax?
                    (merge (find-syntax-errors profile))
-                   ids?
-                   (merge (find-id-errors profile extra-profiles))
+                   ?id-opts
+                   (merge (find-id-errors profile extra-profiles ?id-opts))
                    ?rel-opts
                    (merge (find-graph-errors profile extra-profiles ?rel-opts))
                    contexts?
@@ -152,8 +165,8 @@
                  (cond-> {}
                    syntax?
                    (merge (find-syntax-errors profile))
-                   ids?
-                   (merge (find-id-errors profile))
+                   ?id-opts
+                   (merge (find-id-errors profile ?id-opts))
                    ?rel-opts
                    (merge (find-graph-errors profile ?rel-opts))
                    contexts?
@@ -186,6 +199,7 @@
    result (except for `:print`) are now all vectors."
   [profile-coll & {:keys [syntax?
                           ids?
+                          multi-version?
                           relations?
                           concept-rels?
                           template-rels?
@@ -197,6 +211,7 @@
                           error-msg-opts]
                    :or {syntax?        true
                         ids?           false
+                        multi-version? false
                         relations?     false
                         concept-rels?  false
                         template-rels? false
@@ -216,6 +231,7 @@
                                profile
                                :syntax?        syntax?
                                :ids?           ids?
+                               :multi-version? multi-version?
                                :relations?     relations?
                                :concept-rels?  concept-rels?
                                :template-rels? template-rels?

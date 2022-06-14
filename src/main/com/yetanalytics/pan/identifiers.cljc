@@ -60,19 +60,76 @@
   respective counts. (Ideally theys should all be one, as IDs MUST be unique
   by definition.)"
   [ids-coll]
-  (reduce (fn [accum id] (update accum id #(if (nil? %) 1 (inc %))))
+  (reduce (fn [m x]
+            (if (contains? m x)
+              (update m x inc)
+              (assoc m x 1)))
           {}
           ids-coll))
 
-(defn profile->id-seq*
-  "Given `profile`, return a lazy seq of ID from all of its
-   sub-objects."
-  [{:keys [id versions concepts templates patterns] :as _profile}]
-  (concat [id] (mapcat objs->ids [versions concepts templates patterns])))
+(defn- profile->object-seq
+  "Return a lazy seq of all the Concepts, Templates, and Patterns in
+   a Profile."
+  [{:keys [concepts templates patterns]}]
+  (concat concepts templates patterns))
 
-(def profile->id-seq
-  "Memoized version of `profile->id-seq*`."
-  (memoize profile->id-seq*))
+(defn- profile->id-count-m
+  "Return a count map for all IDs in the Profile."
+  [{:keys [id versions concepts templates patterns]}]
+  (->> (concat versions concepts templates patterns)
+       (map :id)
+       (into [id])
+       count-ids))
+
+(defn- profile->inscheme-id-count-m
+  "Return a inscheme-id-count map for `profile`."
+  [profile]
+  (let [head-ids (into [(select-keys profile [:id])]
+                       (:versions profile))]
+    (->> (profile->object-seq profile)
+         (map #(select-keys % [:id :inScheme]))
+         (group-by :inScheme)
+         (reduce-kv (fn [m k v]
+                      (assoc m k (->> v
+                                      (into head-ids)
+                                      (map :id)
+                                      count-ids)))
+                    {}))))
+
+(defn- apply-extra-counts
+  "Given an inscheme-id-count map, add the appropriate counts from
+   `extra-id-count-ms` to each ID."
+  [inscheme-id-count-m extra-id-count-ms]
+  (let [count-extra (fn [id] (get extra-id-count-ms id 0))]
+    (reduce-kv (fn [m is id-cnt]
+                 (assoc m is (reduce-kv
+                              (fn [m id cnt]
+                                (assoc m id (+ cnt (count-extra id))))
+                              {}
+                              id-cnt)))
+               {}
+               inscheme-id-count-m)))
+
+(defn- profile->inscheme-props-m
+  "Return an inscheme->property map for the objects in `profile`."
+  [profile]
+  (let [ver-id-set (->> profile :versions (map :id) set)]
+    (->> profile
+         profile->object-seq
+         (map #(select-keys % [:id :inScheme]))
+         (map #(assoc % :versionIds ver-id-set))
+         (group-by :inScheme))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Common specs
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(s/def ::id any?)
+(s/def ::inScheme any?)
+(s/def ::versionIds (s/coll-of any? :kind set?))
+
+(s/def ::singleton-inscheme-map
+  (s/map-of ::inScheme any? :max-count 1))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; ID distinctness validation
@@ -82,33 +139,30 @@
 ;; from the overall profile ID.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; Validate that a single ID count is 1
-(s/def ::one-count (fn one? [n] (= 1 n)))
+(defn- one? [n] (= 1 n))
 
-;; Validate that all ID counts are 1
-;; Ideally IDs should be identifiers (IRIs, IRLs, etc.), but we do not check
-;; for that here.
+(s/def ::one-count one?)
+
 (s/def ::distinct-ids
   (s/map-of any? ::one-count))
 
+(s/def ::map-of-distinct-ids
+  (s/map-of any? ::distinct-ids))
+
 (defn validate-ids
-  "Takes a Profile and validates that all ID values in it are distinct
-   (including across the extra Profiles). Returns nil on success, or
-   spec error data on failure."
+  "Validate that every ID in `profile` within each inScheme/version
+   is distinct. If `extra-profiles` is provided, ensure that
+   IDs in `profile` are not duplicated in there either."
   ([profile]
-   (let [profile-ids (profile->id-seq profile)
-         counts      (count-ids profile-ids)]
-     (s/explain-data ::distinct-ids counts)))
+   (let [inscheme-id-count-m (profile->inscheme-id-count-m profile)]
+     (s/explain-data ::map-of-distinct-ids inscheme-id-count-m)))
   ([profile extra-profiles]
-   (let [profile-ids (profile->id-seq profile)
-         prof-id-set (set profile-ids)
-         extra-ids   (mapcat profile->id-seq extra-profiles)
-         ;; We count IDs in all the Profiles, but only validate the
-         ;; counts in the main Profile.
-         counts      (->> (concat profile-ids extra-ids)
-                          count-ids
-                          (filter-by-ids-kv prof-id-set))]
-     (s/explain-data ::distinct-ids counts))))
+   (let [extra-counts  (->> extra-profiles
+                            (map profile->id-count-m)
+                            (apply merge-with +))
+         is-id-count-m (-> (profile->inscheme-id-count-m profile)
+                           (apply-extra-counts extra-counts))]
+     (s/explain-data ::map-of-distinct-ids is-id-count-m))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; inScheme property validation
@@ -116,19 +170,93 @@
 ;; All inScheme values MUST be a valid Profile version ID
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; Validate that the inScheme is an element of the set of version IDs
-(s/def ::in-scheme
-  (fn has-in-scheme? [{:keys [version-ids inScheme]}]
-    (contains? version-ids inScheme)))
+(defn- has-inscheme?
+  [{:keys [inScheme versionIds]}]
+  (contains? versionIds inScheme))
 
-;; Validate an array of objects with inSchemes
-(s/def ::in-schemes (s/coll-of ::in-scheme))
+(s/def ::inscheme-prop has-inscheme?)
 
-(defn validate-in-schemes
+(s/def ::inscheme-props
+  (s/coll-of ::inscheme-prop))
+
+(s/def ::map-of-inscheme-props
+  (s/map-of any? ::inscheme-props))
+
+(defn validate-same-inschemes
+  [profile]
+  (->> profile
+       profile->inscheme-props-m
+       (s/explain-data (s/and ::map-of-inscheme-props
+                              ::singleton-inscheme-map))))
+
+(defn validate-inschemes
   "Takes a Profile and validates all object inSchemes, which MUST be valid
    version IDs. Returns nil on success, or spec error data on failure."
-  [{:keys [versions concepts templates patterns]}]
-  (let [version-ids (set (objs->ids versions))
-        all-objects (concat concepts templates patterns)
-        vid-objects (mapv #(assoc % :version-ids version-ids) all-objects)]
-    (s/explain-data ::in-schemes vid-objects)))
+  [profile]
+  (->> profile
+       profile->inscheme-props-m
+       (s/explain-data ::map-of-inscheme-props)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Changes across versions
+;;
+;; Covers the following spec requirements:
+;; - A Profile Author MUST change a Statement Template's id between versions if
+;;   any of the Determining Properties, StatementRef properties, or rules
+;;   change. Changes of scopeNote are not considered changes in rules.
+;; - A Profile Author MUST change a Pattern's id between versions if any of
+;;   alternates, optional, oneOrMore, sequence, or zeroOrMore change.
+;;
+;; TODO: Somehow validate the following Concept requirement:
+;; - A Profile MUST NOT define a Concept that is defined in another Profile
+;;   UNLESS it supersedes all versions of the other Profile containing the
+;;   Concept and indicates that in with wasRevisionOf.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn dissoc-properties
+  "Dissoc properties that may change between version increments."
+  [object]
+  (cond-> (select-keys object [:id
+                               :type
+                               ;; StatementTemplate
+                               :verb
+                               :objectActivityType
+                               :contextCategoryActivityType
+                               :contextGroupingActivityType
+                               :contextParentActivityType
+                               :contextOtherActivityType
+                               :attachmentUsageType
+                               :objectStatementRefTemplate
+                               :contextStatementRefTemplate
+                               :rules
+                               ;; Patterns
+                               :alternates
+                               :sequence
+                               :optional
+                               :oneOrMore
+                               :zeroOrMore])
+    (contains? object :rules)
+    (update :rules (partial map #(dissoc % :scopeNote)))))
+
+(defn- versioned-objects?
+  [objects]
+  (->> objects
+       (map dissoc-properties)
+       distinct
+       count
+       (= 1)))
+
+(s/def ::versioned-objects versioned-objects?)
+
+(s/def ::coll-of-versioned-objects (s/coll-of ::versioned-objects))
+
+(defn validate-version-change
+  "Validate that every object in `profile` that is shared between
+   versions follows versioning requirements, i.e. they don't differ
+   in certain properties."
+  [profile]
+  (->> profile
+       profile->object-seq
+       (group-by :id)
+       vals
+       (s/explain-data ::coll-of-versioned-objects)))
