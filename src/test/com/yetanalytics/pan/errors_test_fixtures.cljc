@@ -62,6 +62,40 @@ should be: \"Profile\"
 Detected 2 errors
 ")
 
+(def err-msg-1-no-obj
+  "
+**** Syntax Errors ****
+
+-- Spec failed --------------------
+
+Value:
+\"not an id\"
+
+of property:
+:id
+
+in object:
+\"not an id\"
+
+should be a valid IRI
+
+-- Spec failed --------------------
+
+Value:
+\"FooBar\"
+
+of property:
+:type
+
+in object:
+\"not an id\"
+
+should be: \"Profile\"
+
+-------------------------
+Detected 2 errors
+")
+
 (def err-msg-1a
   "-- Spec failed --------------------
 
@@ -172,6 +206,40 @@ should be a valid JSON schema
 Detected 2 errors
 ")
 
+(def err-msg-2-no-obj
+  "
+**** Syntax Errors ****
+
+-- Spec failed --------------------
+
+Value:
+\"not an iri\"
+
+of property:
+:recommendedVerbs
+
+in object:
+\"https://foo.org/bad-concept\"
+
+should be a valid IRI
+
+-- Spec failed --------------------
+
+Value:
+\"{\\\"type\\\": \\\"notAType\\\"}\"
+
+of property:
+:inlineSchema
+
+in object:
+\"https://foo.org/bad-concept\"
+
+should be a valid JSON schema
+
+-------------------------
+Detected 2 errors
+")
+
 ;; Statement Template error
 
 (def err-msg-3
@@ -188,7 +256,7 @@ should contain keys: :definition, :inScheme, :prefLabel
 | key         | spec                                       |
 |=============+============================================|
 | :definition | (map-of                                    |
-|             |  com.yetanalytics.pan.axioms/language-tag? |
+|             |  :com.yetanalytics.pan.axioms/language-tag |
 |             |  string?                                   |
 |             |  :min-count                                |
 |             |  1)                                        |
@@ -196,7 +264,7 @@ should contain keys: :definition, :inScheme, :prefLabel
 | :inScheme   | com.yetanalytics.pan.axioms/iri-str?       |
 |-------------+--------------------------------------------|
 | :prefLabel  | (map-of                                    |
-|             |  com.yetanalytics.pan.axioms/language-tag? |
+|             |  :com.yetanalytics.pan.axioms/language-tag |
 |             |  string?                                   |
 |             |  :min-count                                |
 |             |  1)                                        |
@@ -231,6 +299,63 @@ should be: \"StatementTemplate\"
 Detected 3 errors
 ")
 
+(def err-msg-3-no-obj
+  "
+**** Syntax Errors ****
+
+-- Spec failed --------------------
+
+Object:
+\"this-template-is-invalid\"
+
+should contain keys: :definition, :inScheme, :prefLabel
+
+| key         | spec                                       |
+|=============+============================================|
+| :definition | (map-of                                    |
+|             |  :com.yetanalytics.pan.axioms/language-tag |
+|             |  string?                                   |
+|             |  :min-count                                |
+|             |  1)                                        |
+|-------------+--------------------------------------------|
+| :inScheme   | com.yetanalytics.pan.axioms/iri-str?       |
+|-------------+--------------------------------------------|
+| :prefLabel  | (map-of                                    |
+|             |  :com.yetanalytics.pan.axioms/language-tag |
+|             |  string?                                   |
+|             |  :min-count                                |
+|             |  1)                                        |
+
+-- Spec failed --------------------
+
+Value:
+\"this-template-is-invalid\"
+
+of property:
+:id
+
+in object:
+\"this-template-is-invalid\"
+
+should be a valid URI
+
+-- Spec failed --------------------
+
+Value:
+\"FooBar\"
+
+of property:
+:type
+
+in object:
+\"this-template-is-invalid\"
+
+should be: \"StatementTemplate\"
+
+-------------------------
+Detected 3 errors
+")
+
 ;; ID Error
 
 (def err-msg-4
@@ -242,7 +367,8 @@ Detected 3 errors
 Identifier:
 \"https://w3id.org/xapi/catch/v1\"
 
-which occurs 2 times in the Profile
+which occurs 2 times in the version:
+\"https://w3id.org/xapi/catch/v1\"
 
 should be a unique identifier value
 
@@ -251,7 +377,8 @@ should be a unique identifier value
 Identifier:
 \"https://foo.org/template\"
 
-which occurs 2 times in the Profile
+which occurs 2 times in the version:
+\"https://w3id.org/xapi/catch/v1\"
 
 should be a unique identifier value
 
@@ -263,7 +390,7 @@ Detected 2 errors
 
 (def err-msg-5
   "
-**** Version Errors ****
+**** Version ID Errors ****
 
 -- Spec failed --------------------
 
@@ -345,6 +472,40 @@ should not link to non-existent Concept or Template
 Detected 2 errors
 ")
 
+(def err-msg-6-no-obj
+  "
+**** Template Edge Errors ****
+
+-- Spec failed --------------------
+
+Statement Template:
+\"https://foo.org/template\"
+
+that links to object:
+\"https://foo.org/dead-verb\"
+
+via the property:
+:verb
+
+should not link to non-existent Concept or Template
+
+-- Spec failed --------------------
+
+Statement Template:
+\"https://foo.org/template\"
+
+that links to object:
+\"https://foo.org/dead-aut1\"
+
+via the property:
+:attachmentUsageType
+
+should not link to non-existent Concept or Template
+
+-------------------------
+Detected 2 errors
+")
+
 ;; Template edge errors - invalid destinations
 
 (def err-msg-7
@@ -393,6 +554,40 @@ should not refer to itself
 Detected 2 errors
 ")
 
+(def err-msg-7-no-obj
+  "
+**** Template Edge Errors ****
+
+-- Spec failed --------------------
+
+Statement Template:
+\"https://foo.org/template\"
+
+that links to object:
+\"https://foo.org/template2\"
+
+via the property:
+:verb
+
+should link to type: \"Verb\"
+
+-- Spec failed --------------------
+
+Statement Template:
+\"https://foo.org/template\"
+
+that links to object:
+\"https://foo.org/template\"
+
+via the property:
+:attachmentUsageType
+
+should not refer to itself
+
+-------------------------
+Detected 2 errors
+")
+
 ;; Cyclic pattern error
 
 (def err-msg-8
@@ -430,6 +625,29 @@ that links to object:
  :type \"Pattern\",
  :oneOrMore ...,
  ...}
+
+via the property:
+:oneOrMore
+
+and is used 1 time to link out to 1 object
+
+should not refer to itself
+
+-------------------------
+Detected 1 error
+")
+
+(def err-msg-9-no-obj
+  "
+**** Pattern Edge Errors ****
+
+-- Spec failed --------------------
+
+Pattern:
+\"https://foo.org/pattern-three\"
+
+that links to object:
+\"https://foo.org/pattern-three\"
 
 via the property:
 :oneOrMore

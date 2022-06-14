@@ -18,6 +18,20 @@
 ;; Concept Specs
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(defn valid-concept-type?
+  [{:keys [type]}]
+  (#{"Verb"
+     "Activity"
+     "ActivityType"
+     "AttachmentUsageType"
+     "ActivityExtension"
+     "ContextExtension"
+     "ResultExtension"
+     "ActivityProfileResource"
+     "AgentProfileResource"
+     "StateResource"}
+   type))
+
 (defmulti concept? :type)
 
 (defmethod concept? "Verb" [_] ::v/verb)
@@ -30,9 +44,14 @@
 (defmethod concept? "ActivityProfileResource" [_] ::acr/document-resource)
 (defmethod concept? "AgentProfileResource" [_] ::agr/document-resource)
 (defmethod concept? "StateResource" [_] ::sr/document-resource)
-(defmethod concept? :default [_] (constantly false))
 
-(s/def ::concept (s/multi-spec concept? :type))
+;; This weird arrangement is so that spec gen can be easily
+;; performed while preserving the correct error message
+(s/def ::concept
+  (s/with-gen (s/and valid-concept-type?
+                     (s/multi-spec concept? :type))
+    #(s/gen (s/and (s/multi-spec concept? :type)
+                   valid-concept-type?))))
 
 (s/def ::concepts (s/coll-of ::concept :type vector? :min-count 1))
 

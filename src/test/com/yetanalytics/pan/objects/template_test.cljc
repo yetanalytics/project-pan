@@ -166,7 +166,12 @@
                                      for a template"}}]))
     (is (not (s/valid? ::template/templates [])))))
 
-;; Strict validation tests
+(deftest generative-tests
+  (testing "Generated Statement Templates are always valid"
+    (is (every? (partial not= ::s/invalid)
+                (s/exercise ::template/template 20)))))
+
+;; ;;;;;;;;;;;;;;;;;;;; Strict validation tests ;;;;;;;;;;;;;;;;;;;;
 
 (def template-ex
   {:id "https://foo.org/template"
@@ -323,3 +328,23 @@
            (set (template/get-edges tgraph))))
     (should-satisfy ::template/template-edges (template/get-edges tgraph))
     (is (nil? (template/validate-template-edges tgraph)))))
+
+(def ex-profile-2
+  {:templates
+   [{:id                          "https://bar.org/template1"
+     :type                        "StatementTemplate"
+     :inScheme                    "https://bar.org/v1"
+     :verb                        "https://foo.org/verb"
+     :objectActivityType          "https://foo.org/activity-type"
+     :contextCategoryActivityType ["https://foo.org/activity-type"]
+     :contextGroupingActivityType ["https://foo.org/activity-type"]
+     :contextParentActivityType   ["https://foo.org/activity-type"]
+     :contextOtherActivityType    ["https://foo.org/activity-type"]
+     :attachmentUsageType         ["https://foo.org/attachmentUsageType"]}]})
+
+(def tgraph-2 (template/create-graph ex-profile-2 [ex-profile]))
+
+(deftest graph-test-2
+  (testing "graph properties over two profiles"
+    (should-satisfy ::template/template-edges
+                    (template/get-edges tgraph-2))))

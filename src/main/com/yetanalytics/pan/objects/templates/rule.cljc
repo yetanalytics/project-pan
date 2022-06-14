@@ -6,7 +6,10 @@
 ;; Rules 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(s/def ::value-array (s/coll-of any? :type vector? :min-count 1))
+(s/def ::value-array (s/coll-of some?
+                                :type vector?
+                                :min-count 1
+                                :gen-max 2))
 
 (s/def ::location ::ax/json-path)
 (s/def ::selector ::ax/json-path)

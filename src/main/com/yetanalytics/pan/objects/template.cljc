@@ -95,6 +95,7 @@
 (def template-iri-keys
   [:verb
    :objectActivityType
+   :contextCategoryActivityType
    :contextGroupingActivityType
    :contextParentActivityType
    :contextOtherActivityType

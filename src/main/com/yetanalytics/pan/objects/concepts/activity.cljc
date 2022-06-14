@@ -1,6 +1,7 @@
 (ns com.yetanalytics.pan.objects.concepts.activity
   (:require [clojure.spec.alpha :as s]
-            [clojure.walk :refer [stringify-keys]]
+            [clojure.spec.gen.alpha :as sgen]
+            [clojure.walk :refer [stringify-keys keywordize-keys]]
             [xapi-schema.spec]
             [com.yetanalytics.pan.axioms  :as ax]
             [com.yetanalytics.pan.context :as ctx]
@@ -19,9 +20,13 @@
 (def context-url "https://w3id.org/xapi/profiles/activity-context")
 (s/def ::has-context-url (partial some #(= % context-url)))
 (s/def ::_context
-  (s/or :context-uri ::ax/uri
-        :context-array (s/and ::ax/array-of-uri
-                              ::has-context-url)))
+  (s/or :context-uri
+        ::ax/uri
+        :context-array
+        (s/with-gen (s/and ::ax/array-of-uri
+                           ::has-context-url)
+          #(->> (s/gen ::ax/array-of-uri)
+                (sgen/fmap (fn [v] (conj v context-url)))))))
 
 ;; Important to stringify lang maps to work with xapi-schema.
 ;; Top-level keys don't have to be stringified, however.
@@ -36,19 +41,26 @@
 (s/def ::extension
   (s/or :object (s/keys :req-un [::ctx/_context])
         :array  (s/coll-of (s/or :object (s/keys :req-un [::ctx/_context])
-                                 :non-object (comp not map?))
+                                 :non-object (s/and any? (comp not map?)))
                            :kind vector?)
-        :scalar (comp not coll?)))
+        :scalar (s/and any? (comp not coll?))))
 
 (s/def ::extensions
   (s/map-of ::ax/iri ::extension))
 
+(def activity-def-keys-spec
+  (s/keys :req-un [::_context]
+          :opt-un [::extensions]))
+
 (s/def ::activityDefinition
-  (s/and (s/nonconforming (s/keys :req-un [::_context]
-                                  :opt-un [::extensions]))
-         (s/conformer #(dissoc % :_context))
-         (s/conformer stringify-submaps)
-         :activity/definition))
+  (s/with-gen
+    (s/and (s/nonconforming activity-def-keys-spec)
+           (s/conformer #(dissoc % :_context))
+           (s/conformer stringify-submaps)
+           :activity/definition)
+   #(->> (sgen/tuple (s/gen :activity/definition)
+                     (s/gen activity-def-keys-spec))
+         (sgen/fmap (fn [[adef x]] (merge x (keywordize-keys adef)))))))
 
 (s/def ::activity
   (s/keys :req-un [::id ::type ::inScheme ::activityDefinition]
