@@ -42,6 +42,8 @@
   (read-json-resource "sample_profiles/catch-fixed.json"))
 (def cmi-profile-fix
   (read-json-resource "sample_profiles/cmi5-fixed.json"))
+(def adl-profile
+  (read-json-resource "sample_profiles/adl.json"))
 
 (def tccc-profile-raw
   (read-json-resource "sample_profiles/cuf_hc_video_and_asm_student_survey_profile.json"))
@@ -98,8 +100,43 @@
     "Scorm" scorm-profile-raw [false false false true] ; may be outdated
     ;; Fixed profiles (note that we can't completely fix cmi5 yet)
     "CATCH (fixed)" will-profile-fix [true true true true]
-    "cmi5 (fixed)" cmi-profile-fix [true true false true]
-    "TCCC" tccc-profile-raw [true true true true]))
+    "cmi5 (fixed)" cmi-profile-fix [true true false true])
+  (testing "the TCCC , without printing"
+    (are [x] (nil? x)
+      (p/validate-profile tccc-profile-raw
+                          :extra-profiles [activity-stream-profile-raw
+                                           tincan-profile-raw
+                                           video-profile-raw
+                                           scorm-profile-raw
+                                           cmi-profile-fix
+                                           adl-profile])
+      (p/validate-profile tccc-profile-raw
+                          :extra-profiles [activity-stream-profile-raw
+                                           tincan-profile-raw
+                                           video-profile-raw
+                                           scorm-profile-raw
+                                           cmi-profile-fix
+                                           adl-profile]
+                          :syntax? false
+                          :ids? true)
+      (p/validate-profile tccc-profile-raw
+                          :extra-profiles [activity-stream-profile-raw
+                                           tincan-profile-raw
+                                           video-profile-raw
+                                           scorm-profile-raw
+                                           cmi-profile-fix
+                                           adl-profile]
+                          :syntax? false
+                          :relations? true)
+      (p/validate-profile tccc-profile-raw
+                          :extra-profiles [activity-stream-profile-raw
+                                           tincan-profile-raw
+                                           video-profile-raw
+                                           scorm-profile-raw
+                                           cmi-profile-fix
+                                           adl-profile]
+                          :syntax? false
+                          :context? true))))
 
 (deftest catch-err-data-test
   (testing "the CATCH profile error data"
