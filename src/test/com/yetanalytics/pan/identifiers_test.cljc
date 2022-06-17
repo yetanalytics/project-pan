@@ -30,7 +30,9 @@
   (merge snsd-ot8
          {:not-id "Jessica" :another-key "Krystal"}))
 
-;; Util tests
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Util Tests 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (deftest objs->ids-test
   (testing "objs->ids function"
@@ -74,7 +76,6 @@
             nil        1}
            (id/count-ids (mapcat id/objs->ids [snsd-ot8 snsd-ot9]))))))
 
-
 (deftest filter-test
   (testing "filter-by-ids function"
     (is (= [{:id "Taeyeon"}]
@@ -83,6 +84,27 @@
     (is (= {"Taeyeon" 1}
            (id/filter-by-ids-kv #{"Taeyeon" "Taeyang"}
                                 (id/count-ids (id/objs->ids snsd-ot8)))))))
+
+(deftest dissoc-properties-test
+  (testing "dissoc-properties function"
+    (is (= {:id "https://w3id.org/catch/v2/some-verb"}
+           (id/dissoc-properties
+            {:id "https://w3id.org/catch/v2/some-verb"
+             :inScheme "https://w3id.org/catch/v2"
+             :deprecated true
+             :broader ["https://w3id.org/catch/a-verb"]})))
+    (is (= {:id "https://w3id.org/catch/v2/some-template"
+            :verb ["https://w3id.org/catch/a-verb"]
+            :rules [{:location "$.foo"
+                     :presence "included"}]}
+           (id/dissoc-properties
+            {:id "https://w3id.org/catch/v2/some-template"
+             :inScheme "https://w3id.org/catch/v2"
+             :deprecated true
+             :verb ["https://w3id.org/catch/a-verb"]
+             :rules [{:location "$.foo"
+                      :presence "included"
+                      :scopeNote ["Scope Note One"]}]})))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Spec Tests 
@@ -98,133 +120,439 @@
     (is (not (s/valid? ::id/distinct-ids {"https://foo.org" 1
                                           "https://bar.org" 2})))))
 
-;; ID tests
 (deftest validate-ids-test
-  (testing "id ID MUST be distinct from version IDs"
+  (testing "validate-ids function"
     (is (nil? (id/validate-ids
-               {:id "https://w3id.org/xapi/catch"
-                :versions [{:id "https://w3id.org/xapi/catch/v2"}
-                           {:id "https://w3id.org/xapi/catch/v1"}]})))
-    (is (some? (id/validate-ids
-                {:id "https://w3id.org/xapi/catch"
-                 :versions [{:id "https://w3id.org/xapi/catch"}
-                            {:id "https://w3id.org/xapi/catch/v1"}]}))))
-  (testing "Every Profile version ID MUST be distinct"
-    (is (some? (id/validate-ids
-                {:id "https://w3id.org/xapi/catch"
-                 :versions [{:id "https://w3id.org/xapi/catch/v1"}
-                            {:id "https://w3id.org/xapi/catch/v1"}]}))))
-  (testing "Concept IDs MUST be distinct"
-    (is (nil? (id/validate-ids
-               {:id "https://w3id.org/xapi/catch"
-                :concepts [{:id "https://w3id.org/xapi/catch/verb#1"
-                            :type "Verb"}
-                           {:id "https://w3id.org/xapi/catch/verb#2"
-                            :type "Verb"}]})))
-    (is (some? (id/validate-ids
-                {:id "https://w3id.org/xapi/catch"
-                 :concepts [{:id "https://w3id.org/xapi/catch/verb#duplicate"
-                             :type "Verb"}
-                            {:id "https://w3id.org/xapi/catch/verb#duplicate"
-                             :type "Verb"}]}))))
-  (testing "Statement Template IDs MUST be distinct"
-    (is (nil? (id/validate-ids
-               {:id "https://w3id.org/xapi/catch"
-                :templates [{:id "https://w3id.org/xapi/catch/template#1"
-                             :type "StatementTemplate"}
-                            {:id "https://w3id.org/xapi/catch/template#2"
-                             :type "StatementTemplate"}]})))
-    (is (some? (id/validate-ids
-                {:id "https://w3id.org/xapi/catch"
-                 :templates [{:id "https://w3id.org/xapi/catch/template#dup"
-                              :type "StatementTemplate"}
-                             {:id "https://w3id.org/xapi/catch/template#dup"
-                              :type "StatementTemplate"}]}))))
-  (testing "Pattern IDs MUST be distinct"
-    (is (nil? (id/validate-ids
-               {:id "https://w3id.org/xapi/catch"
-                :patterns [{:id "https://w3id.org/xapi/catch/pattern#1"
-                            :type "Pattern"}
-                           {:id "https://w3id.org/xapi/catch/pattern#2"
-                            :type "Pattern"}]})))
-    (is (some? (id/validate-ids
-                {:id "https://w3id.org/xapi/catch"
-                 :patterns [{:id "https://w3id.org/xapi/catch/pattern#dup"
-                             :type "Pattern"}
-                            {:id "https://w3id.org/xapi/catch/pattern#dup"
-                             :type "Pattern"}]}))))
-  (testing "All IDs MUST be distinct"
-    (is (nil? (id/validate-ids
-               {:id "https://w3id.org/xapi/catch"
-                :versions [{:id "https://w3id.org/catch/v1"}
-                           {:id "https://w3id.org/catch/v2"}]
-                :concepts [{:id "https://w3id.org/catch/some-verb"
-                            :inScheme "https://w3id.org/catch/v1"}]
-                :templates [{:id "https://w3id.org/catch/some-template"
-                             :inScheme "https://w3id.org/catch/v1"}]
-                :patterns [{:id "https://w3id.org/catch/some-pattern"
-                            :inScheme "https://w3id.org/catch/v2"}]}))))
-  (testing "All IDs MUST be distinct across different profiles"
-    (is (nil? (id/validate-ids
-               {:id "https://w3id.org/xapi/catch"
-                :concepts [{:id "https://w3id.org/catch/some-verb"
-                            :inScheme "https://w3id.org/catch/v1"}]
-                :templates [{:id "https://w3id.org/catch/some-template"
-                             :inScheme "https://w3id.org/catch/v1"}]
-                :patterns [{:id "https://w3id.org/catch/some-pattern"
-                            :inScheme "https://w3id.org/catch/v2"}]}
-               [{:concepts [{:id "https://w3id.org/catch/some-verb-x"
-                             :inScheme "https://w3id.org/catch/v3"}]}
-                {:templates [{:id "https://w3id.org/catch/some-template-x"
-                              :inScheme "https://w3id.org/catch/v4"}]}
-                {:patterns [{:id "https://w3id.org/catch/some-pattern-x"
-                             :inScheme "https://w3id.org/catch/v5"}]}])))
-    (is (some? (id/validate-ids
-                {:id "https://w3id.org/xapi/catch"
-                 :versions [{:id "https://w3id.org/catch/v1"}
-                            {:id "https://w3id.org/catch/v2"}]
-                 :concepts [{:id "https://w3id.org/catch/some-verb"
-                             :inScheme "https://w3id.org/catch/v1"}]
-                 :templates [{:id "https://w3id.org/catch/some-template"
-                              :inScheme "https://w3id.org/catch/v1"}]
-                 :patterns [{:id "https://w3id.org/catch/some-pattern"
-                             :inScheme "https://w3id.org/catch/v2"}]}
-                [{:id "https://w3id.org/xapi/catch"
-                  :versions [{:id "https://w3id.org/catch/v1"}
-                             {:id "https://w3id.org/catch/v2"}]
-                  :concepts [{:id "https://w3id.org/catch/some-verb"
-                              :inScheme "https://w3id.org/catch/v1"}]
-                  :templates [{:id "https://w3id.org/catch/some-template"
-                               :inScheme "https://w3id.org/catch/v1"}]
-                  :patterns [{:id "https://w3id.org/catch/some-pattern"
-                              :inScheme "https://w3id.org/catch/v2"}]}])))))
+               {:id        "http://example.com"
+                :versions  [{:id "http://example.com/v1"}]
+                :concepts  [{:id       "http://example.com/concept"
+                             :inScheme "http://example.com/v1"}]
+                :templates [{:id       "http://example.com/template"
+                             :inScheme "http://example.com/v1"}]
+                :patterns  [{:id       "http://example.com/pattern"
+                             :inScheme "http://example.com/v1"}]})))
+    (testing "- profile and version IDs not unique"
+      (let [spec-ed (id/validate-ids
+                     {:id       "http://example.com"
+                      :versions [{:id "http://example.com/v1"}
+                                 {:id "http://example.com/v1"}
+                                 {:id "http://example.com/v3"}]
+                      :concepts [{:id       "http://example.com/concept"
+                                  :inScheme "http://example.com/v1"}]})]
+        (is (some? spec-ed))
+        (is (= {"http://example.com/v1"
+                {"http://example.com"         1
+                 "http://example.com/v1"      2
+                 "http://example.com/v3"      1
+                 "http://example.com/concept" 1}}
+               (::s/value spec-ed))))
+      (let [spec-ed (id/validate-ids
+                     {:id       "http://example.com/v1"
+                      :versions [{:id "http://example.com/v1"}
+                                 {:id "http://example.com/v2"}
+                                 {:id "http://example.com/v3"}]
+                      :concepts [{:id       "http://example.com/concept"
+                                  :inScheme "http://example.com/v1"}]})]
+        (is (= {"http://example.com/v1"
+                {"http://example.com/v1"      2
+                 "http://example.com/v2"      1
+                 "http://example.com/v3"      1
+                 "http://example.com/concept" 1}}
+               (::s/value spec-ed))))
+      (let [spec-ed (id/validate-ids
+                     {:id       "http://example.com/v3"
+                      :versions [{:id "http://example.com/v3"}
+                                 {:id "http://example.com/v3"}
+                                 {:id "http://example.com/v3"}]
+                      :concepts [{:id       "http://example.com/concept"
+                                  :inScheme "http://example.com/v1"}]})]
+        (is (= {"http://example.com/v1"
+                {"http://example.com/v3"      4
+                 "http://example.com/concept" 1}}
+               (::s/value spec-ed)))))
+    (testing "- reused profile ID"
+      (let [spec-ed (id/validate-ids
+                     {:id        "http://example.com"
+                      :versions  [{:id "http://example.com/v1"}]
+                      :concepts  [{:id       "http://example.com"
+                                   :inScheme "http://example.com/v1"}]
+                      :templates [{:id       "http://example.com/template"
+                                   :inScheme "http://example.com/v1"}]
+                      :patterns  [{:id       "http://example.com/pattern"
+                                   :inScheme "http://example.com/v1"}]})]
+        (is (some? spec-ed))
+        (is (= {"http://example.com/v1"
+                {"http://example.com"          2
+                 "http://example.com/v1"       1
+                 "http://example.com/template" 1
+                 "http://example.com/pattern"  1}}
+               (::s/value spec-ed))))
+      (let [spec-ed (id/validate-ids
+                     {:id        "http://example.com"
+                      :versions  [{:id "http://example.com/v1"}]
+                      :concepts  [{:id       "http://example.com/concept"
+                                   :inScheme "http://example.com/v1"}]
+                      :templates [{:id       "http://example.com"
+                                   :inScheme "http://example.com/v1"}]
+                      :patterns  [{:id       "http://example.com/pattern"
+                                   :inScheme "http://example.com/v1"}]})]
+        (is (= {"http://example.com/v1"
+                {"http://example.com"         2
+                 "http://example.com/v1"      1
+                 "http://example.com/concept" 1
+                 "http://example.com/pattern" 1}}
+               (::s/value spec-ed))))
+      (let [spec-ed (id/validate-ids
+                     {:id        "http://example.com"
+                      :versions  [{:id "http://example.com/v1"}]
+                      :concepts  [{:id       "http://example.com/concept"
+                                   :inScheme "http://example.com/v1"}]
+                      :templates [{:id       "http://example.com/template"
+                                   :inScheme "http://example.com/v1"}]
+                      :patterns  [{:id       "http://example.com"
+                                   :inScheme "http://example.com/v1"}]})]
+        (is (= {"http://example.com/v1"
+                {"http://example.com"          2
+                 "http://example.com/v1"       1
+                 "http://example.com/concept"  1
+                 "http://example.com/template" 1}}
+               (::s/value spec-ed)))))
+    (testing "- reused version ID"
+      (let [spec-ed (id/validate-ids
+                     {:id        "http://example.com"
+                      :versions  [{:id "http://example.com/v1"}]
+                      :concepts  [{:id       "http://example.com/v1"
+                                   :inScheme "http://example.com/v1"}]
+                      :templates [{:id       "http://example.com/template"
+                                   :inScheme "http://example.com/v1"}]
+                      :patterns  [{:id       "http://example.com/pattern"
+                                   :inScheme "http://example.com/v1"}]})]
+        (is (some? spec-ed))
+        (is (= {"http://example.com/v1"
+                {"http://example.com"          1
+                 "http://example.com/v1"       2
+                 "http://example.com/template" 1
+                 "http://example.com/pattern"  1}}
+               (::s/value spec-ed)))))
+    (testing "- duplicate object IDs"
+      (let [spec-ed (id/validate-ids
+                     {:id        "http://example.com"
+                      :versions  [{:id "http://example.com/v1"}]
+                      :concepts  [{:id       "http://example.com/x"
+                                   :inScheme "http://example.com/v1"}]
+                      :templates [{:id       "http://example.com/x"
+                                   :inScheme "http://example.com/v1"}]
+                      :patterns  [{:id       "http://example.com/x"
+                                   :inScheme "http://example.com/v1"}]})]
+        (is (some? spec-ed))
+        (is (= {"http://example.com/v1"
+                {"http://example.com"    1
+                 "http://example.com/v1" 1
+                 "http://example.com/x"  3}}
+               (::s/value spec-ed)))))
+    (testing "- more than one inScheme in Profile objects"
+      (is (nil? (id/validate-ids
+                 {:id        "http://example.com"
+                  :versions  [{:id "http://example.com/v1"}
+                              {:id "http://example.com/v2"}
+                              {:id "http://example.com/v3"}]
+                  :concepts  [{:id       "http://example.com/concept"
+                               :inScheme "http://example.com/v1"}]
+                  :templates [{:id       "http://example.com/template"
+                               :inScheme "http://example.com/v2"}]
+                  :patterns  [{:id       "http://example.com/pattern"
+                               :inScheme "http://example.com/v3"}]})))
+      (is (nil? (id/validate-ids
+                 {:id        "http://example.com"
+                  :versions  [{:id "http://example.com/v1"}
+                              {:id "http://example.com/v2"}
+                              {:id "http://example.com/v3"}]
+                  :concepts  [{:id       "http://example.com/x"
+                               :inScheme "http://example.com/v1"}]
+                  :templates [{:id       "http://example.com/x"
+                               :inScheme "http://example.com/v2"}]
+                  :patterns  [{:id       "http://example.com/x"
+                               :inScheme "http://example.com/v3"}]})))
+      (let [spec-ed (id/validate-ids
+                     {:id        "http://example.com"
+                      :versions  [{:id "http://example.com/v1"}]
+                      :concepts  [{:id       "http://example.com/x"
+                                   :inScheme "http://example.com/v1"}]
+                      :templates [{:id       "http://example.com/x"
+                                   :inScheme "http://example.com/v1"}]
+                      :patterns  [{:id       "http://example.com/x"
+                                   :inScheme "http://example.com/v1"}]})]
+        (is (some? spec-ed))
+        (is (= {"http://example.com/v1"
+                {"http://example.com"    1
+                 "http://example.com/v1" 1
+                 "http://example.com/x"  3}}
+               (::s/value spec-ed))))
+      (let [spec-ed (id/validate-ids
+                     {:id        "http://example.com"
+                      :versions  [{:id "http://example.com/v1"}]
+                      :concepts  [{:id       "http://example.com/x"
+                                   :inScheme "http://example.com/v1"}]
+                      :templates [{:id       "http://example.com/x"
+                                   :inScheme "http://example.com/v2"}]
+                      :patterns  [{:id       "http://example.com/x"
+                                   :inScheme "http://example.com/v2"}]})]
+        (is (some? spec-ed))
+        (is (= {"http://example.com/v1"
+                {"http://example.com"    1
+                 "http://example.com/v1" 1
+                 "http://example.com/x"  1}
+                "http://example.com/v2"
+                {"http://example.com"    1
+                 "http://example.com/v1" 1
+                 "http://example.com/x"  2}}
+               (::s/value spec-ed)))))
+    (testing "- with extra profiles"
+      (is (nil? (id/validate-ids
+                 {:id       "http://example.com"
+                  :versions [{:id "http://example.com/v1"}]
+                  :concepts [{:id       "http://example.com/concept"
+                              :inScheme "http://example.com/v1"}]}
+                 [{:id       "http://example2.com"
+                   :versions [{:id "http://example2.com/v1"}]
+                   :concepts [{:id       "http://example2.com/concept"
+                               :inScheme "http://example2.com/v1"}]}])))
+      (let [spec-ed (id/validate-ids
+                     {:id        "http://example.com"
+                      :versions  [{:id "http://example.com/v1"}]
+                      :concepts  [{:id       "http://example.com/concept"
+                                   :inScheme "http://example.com/v1"}]
+                      :templates [{:id       "http://example.com/template"
+                                   :inScheme "http://example.com/v1"}]}
+                     [{:id        "http://example.com"
+                       :versions  [{:id "http://example.com/v1"}]
+                       :concepts  [{:id       "http://example.com/concept-2"
+                                    :inScheme "http://example.com/v1"}]
+                       :templates [{:id       "http://example.com/template"
+                                    :inScheme "http://example.com/v1"}]}])]
+        (is (some? spec-ed))
+        (is (= {"http://example.com/v1"
+                {"http://example.com"          2
+                 "http://example.com/v1"       2
+                 "http://example.com/concept"  1
+                 ;; concept-2 not included in the map
+                 "http://example.com/template" 2}}
+               (::s/value spec-ed))))
+      (let [spec-ed (id/validate-ids
+                     {:id        "http://example.com"
+                      :versions  [{:id "http://example.com/v1"}
+                                  {:id "http://example.com/v2"}
+                                  {:id "http://example.com/v3"}]
+                      :concepts  [{:id       "http://example.com/x"
+                                   :inScheme "http://example.com/v1"}]
+                      :templates [{:id       "http://example.com/x"
+                                   :inScheme "http://example.com/v2"}]
+                      :patterns  [{:id       "http://example.com/x"
+                                   :inScheme "http://example.com/v3"}]}
+                     [{:id "http://example2.com"
+                       :versions [{:id "http://example2.com/v1"}]
+                       :concepts [{:id       "http://example.com/x"
+                                   :inScheme "http://example2.com/v1"}]}])]
+        (is (some? spec-ed))
+        (is (->> spec-ed
+                 ::s/value
+                 vals
+                 (map #(get % "http://example.com/x"))
+                 (every? (partial = 2))))))))
 
-(deftest in-scheme-test
-  (testing "object inScheme MUST be a valid Profile version"
-    (is (nil? (id/validate-in-schemes
-               {:versions [{:id "https://w3id.org/catch/v1"}
-                           {:id "https://w3id.org/catch/v2"}]
-                :concepts [{:id "https://w3id.org/catch/some-verb"
-                            :inScheme "https://w3id.org/catch/v1"}]
-                :templates [{:id "https://w3id.org/catch/some-template"
-                             :inScheme "https://w3id.org/catch/v1"}]
-                :patterns [{:id "https://w3id.org/catch/some-pattern"
-                            :inScheme "https://w3id.org/catch/v2"}]})))
-    (is (some? (id/validate-in-schemes
-                {:versions [{:id "https://w3id.org/catch/v1"}
-                            {:id "https://w3id.org/catch/v2"}]
-                 :concepts [{:id "https://w3id.org/catch/some-verb"
-                             :inScheme "https://w3id.org/catch/v3"}]
-                 :templates [] :patterns []})))
-    (is (some? (id/validate-in-schemes
-                {:versions [{:id "https://w3id.org/catch/v1"}
-                            {:id "https://w3id.org/catch/v2"}]
-                 :templates [{:id "https://w3id.org/catch/some-template"
-                              :inScheme "https://w3id.org/catch/v3"}]
-                 :concepts [] :patterns []})))
-    (is (some? (id/validate-in-schemes
-                {:versions [{:id "https://w3id.org/catch/v1"}
-                            {:id "https://w3id.org/catch/v2"}]
-                 :patterns [{:id "https://w3id.org/catch/some-pattern"
-                             :inScheme "https://w3id.org/catch/v3"}]
-                 :concepts [] :templates []})))))
+(deftest validate-same-inschemes-test
+  (testing "validate-same-inscheme function"
+    (is (nil? (id/validate-same-inschemes
+               {:id        "http://example.com"
+                :versions  [{:id "http://example.com/v1"}]
+                :concepts  [{:id       "http://example.com/concept"
+                             :inScheme "http://example.com/v1"}]
+                :templates [{:id       "http://example.com/template"
+                             :inScheme "http://example.com/v1"}]
+                :patterns  [{:id       "http://example.com/pattern"
+                             :inScheme "http://example.com/v1"}]})))
+    (testing "- inScheme not in version IDs"
+      (let [spec-ed (id/validate-same-inschemes
+                     {:id        "http://example.com"
+                      :versions  [{:id "http://example.com/v1"}]
+                      :concepts  [{:id       "http://example.com/concept"
+                                   :inScheme "http://example.com/v4"}]
+                      :templates [{:id       "http://example.com/template"
+                                   :inScheme "http://example.com/v1"}]
+                      :patterns  [{:id       "http://example.com/pattern"
+                                   :inScheme "http://example.com/v1"}]})]
+        (is (some? spec-ed))
+        (is (->> spec-ed
+                 ::s/problems
+                 (every? #(= `id/has-inscheme? (:pred %)))))
+        (is (= #{{:id         "http://example.com/template"
+                  :inScheme   "http://example.com/v1"
+                  :versionIds #{"http://example.com/v1"}}
+                 {:id         "http://example.com/pattern"
+                  :inScheme   "http://example.com/v1"
+                  :versionIds #{"http://example.com/v1"}}}
+               (-> spec-ed ::s/value (get "http://example.com/v1") set)))
+        (is (= #{{:id         "http://example.com/concept"
+                  :inScheme   "http://example.com/v4"
+                  :versionIds #{"http://example.com/v1"}}}
+               (-> spec-ed ::s/value (get "http://example.com/v4") set)))))
+    (testing "- not same inScheme"
+      (let [spec-ed (id/validate-same-inschemes
+                     {:id        "http://example.com"
+                      :versions  [{:id "http://example.com/v1"}
+                                  {:id "http://example.com/v2"}
+                                  {:id "http://example.com/v3"}]
+                      :concepts  [{:id       "http://example.com/concept"
+                                   :inScheme "http://example.com/v1"}]
+                      :templates [{:id       "http://example.com/template-1"
+                                   :inScheme "http://example.com/v2"}
+                                  {:id       "http://example.com/pattern-2"
+                                   :inScheme "http://example.com/v2"}]})]
+        (is (some? spec-ed))
+        (is (->> spec-ed
+                 ::s/problems
+                 (every? #(not= `id/has-inscheme? (:pred %)))))
+        (is (= 2
+               (-> spec-ed ::s/value count))))
+      (let [spec-ed (id/validate-same-inschemes
+                     {:id        "http://example.com"
+                      :versions  [{:id "http://example.com/v1"}
+                                  {:id "http://example.com/v2"}
+                                  {:id "http://example.com/v3"}]
+                      :concepts  [{:id       "http://example.com/concept"
+                                   :inScheme "http://example.com/v1"}]
+                      :templates [{:id       "http://example.com/template"
+                                   :inScheme "http://example.com/v2"}]
+                      :patterns  [{:id       "http://example.com/pattern"
+                                   :inScheme "http://example.com/v3"}]})]
+        (is (= 3
+               (-> spec-ed ::s/value count)))))))
+
+(deftest validate-inschemes-test
+  (testing "validate-inschemes function"
+    (is (nil? (id/validate-inschemes
+               {:id        "http://example.com"
+                :versions  [{:id "http://example.com/v1"}]
+                :concepts  [{:id       "http://example.com/concept"
+                             :inScheme "http://example.com/v1"}]
+                :templates [{:id       "http://example.com/template"
+                             :inScheme "http://example.com/v1"}]
+                :patterns  [{:id       "http://example.com/pattern"
+                             :inScheme "http://example.com/v1"}]})))
+    (is (nil? (id/validate-inschemes
+               {:id        "http://example.com"
+                :versions  [{:id "http://example.com/v1"}
+                            {:id "http://example.com/v2"}
+                            {:id "http://example.com/v3"}]
+                :concepts  [{:id       "http://example.com/concept"
+                             :inScheme "http://example.com/v1"}]
+                :templates [{:id       "http://example.com/template"
+                             :inScheme "http://example.com/v2"}]
+                :patterns  [{:id       "http://example.com/pattern"
+                             :inScheme "http://example.com/v3"}]})))
+    (testing "- inScheme not in version IDs"
+      (let [spec-ed (id/validate-same-inschemes
+                     {:id        "http://example.com"
+                      :versions  [{:id "http://example.com/v1"}]
+                      :concepts  [{:id       "http://example.com/concept"
+                                   :inScheme "http://example.com/v4"}]
+                      :templates [{:id       "http://example.com/template"
+                                   :inScheme "http://example.com/v1"}]
+                      :patterns  [{:id       "http://example.com/pattern"
+                                   :inScheme "http://example.com/v1"}]})]
+        (is (some? spec-ed))
+        (is (= #{{:id         "http://example.com/template"
+                  :inScheme   "http://example.com/v1"
+                  :versionIds #{"http://example.com/v1"}}
+                 {:id         "http://example.com/pattern"
+                  :inScheme   "http://example.com/v1"
+                  :versionIds #{"http://example.com/v1"}}}
+               (-> spec-ed ::s/value (get "http://example.com/v1") set)))
+        (is (= #{{:id         "http://example.com/concept"
+                  :inScheme   "http://example.com/v4"
+                  :versionIds #{"http://example.com/v1"}}}
+               (-> spec-ed ::s/value (get "http://example.com/v4") set)))))))
+
+(deftest validate-version-change
+  (testing "validate-version-change function"
+    (is (nil? (id/validate-version-change
+               {:id        "http://example.com"
+                :versions  [{:id "http://example.com/v1"}]
+                :concepts  [{:id       "http://example.com/concept"
+                             :inScheme "http://example.com/v1"}]
+                :templates [{:id       "http://example.com/template"
+                             :inScheme "http://example.com/v1"}]
+                :patterns  [{:id       "http://example.com/pattern"
+                             :inScheme "http://example.com/v1"}]})))
+    (is (nil? (id/validate-version-change
+               {:id        "http://example.com"
+                :versions [{:id "http://example.com/v1"}
+                           {:id "http://example.com/v2"}]
+                :concepts [{:id         "http://example.com/concept"
+                            :inScheme   "http://example.com/v1"
+                            :deprecated false}
+                           {:id         "http://example.com/concept"
+                            :inScheme   "http://example.com/v2"
+                            :deprecated true}]})))
+    (testing "- concept-specific changes are ignored"
+      (is (nil? (id/validate-version-change
+                 {:id        "http://example.com"
+                  :versions [{:id "http://example.com/v1"}
+                             {:id "http://example.com/v2"}]
+                  :concepts [{:id       "http://example.com/concept"
+                              :inScheme "http://example.com/v1"
+                              :broader  ["http://example.org/concept-2"]}
+                             {:id       "http://example.com/concept"
+                              :inScheme "http://example.com/v2"
+                              :broader  ["http://example.org/concept-3"]}]
+                  :patterns [{:id       "http://example.com/pattern"
+                              :inScheme "http://example.com/v1"}
+                             {:id       "http://example.com/pattern"
+                              :inScheme "http://example.com/v2"}]}))))
+    (testing "- template-specific properties"
+      (is (nil? (id/validate-version-change
+                 {:id        "http://example.com"
+                  :versions  [{:id "http://example.com/v1"}
+                              {:id "http://example.com/v2"}]
+                  :templates [{:id       "http://example.com/template"
+                               :inScheme "http://example.com/v1"
+                               :rules    [{:location  "$.foo"
+                                           :presence  "included"}]}
+                              {:id       "http://example.com/template"
+                               :inScheme "http://example.com/v2"
+                               :rules    [{:location  "$.foo"
+                                           :presence  "included"
+                                           :scopeNote "bar"}]}
+                              {:id       "http://example.com/template-other"
+                               :inScheme "http://example.com/v2"
+                               :verb     "http://example.org/verb"}]})))
+      (let [spec-ed (id/validate-version-change
+                     {:id        "http://example.com"
+                      :versions  [{:id "http://example.com/v1"}
+                                  {:id "http://example.com/v2"}]
+                      :templates [{:id       "http://example.com/template"
+                                   :inScheme "http://example.com/v1"
+                                   :rules    [{:location  "$.foo"
+                                               :presence  "included"}]}
+                                  {:id       "http://example.com/template"
+                                   :inScheme "http://example.com/v2"
+                                   :rules    [{:location  "$.baz"
+                                               :presence  "included"
+                                               :scopeNote "bar"}]}
+                                  {:id       "http://example.com/template-other"
+                                   :inScheme "http://example.com/v2"
+                                   :verb     "http://example.org/verb"}]})]
+        (is (some? spec-ed))
+        (is (= #{[{:id       "http://example.com/template"
+                   :inScheme "http://example.com/v1"
+                   :rules    [{:location  "$.foo"
+                               :presence  "included"}]}
+                  {:id       "http://example.com/template"
+                   :inScheme "http://example.com/v2"
+                   :rules    [{:location  "$.baz"
+                               :presence  "included"
+                               :scopeNote "bar"}]}]
+                 [{:id       "http://example.com/template-other"
+                   :inScheme "http://example.com/v2"
+                   :verb     "http://example.org/verb"}]}
+               (set (::s/value spec-ed))))))))

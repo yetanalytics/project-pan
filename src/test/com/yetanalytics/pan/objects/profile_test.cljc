@@ -66,3 +66,8 @@
                    :conformsTo "https://w3id.org/xapi/profiles#1.0"
                    :prefLabel {"en"
                                "Catch"}}))))
+
+(deftest generative-tests
+  (testing "Generated Profiles are always valid"
+    (is (every? (partial not= ::s/invalid)
+                (s/exercise ::profile/profile 5)))))

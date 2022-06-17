@@ -47,10 +47,14 @@
         sqn? (not (or alt? opt? oom? zom?))
         zom? (not (or alt? opt? oom? sqn?))))))
 
+;; NOTE: The inScheme property is listed as Optional in the spec, but that
+;; is actually an error.
+;; See: https://github.com/adlnet/xapi-profiles/issues/245
+
 ;; Spec for a primary pattern ('primary' is set to true).
 (s/def ::primary-pattern-keys
-  (s/keys :req-un [::id ::type ::prefLabel ::definition ::primary]
-          :opt-un [::inScheme ::deprecated ::alternates ::optional
+  (s/keys :req-un [::id ::type ::inScheme ::prefLabel ::definition ::primary]
+          :opt-un [::deprecated ::alternates ::optional
                    ::oneOrMore ::sequence ::zeroOrMore]))
 
 (s/def ::primary-pattern
@@ -60,8 +64,8 @@
 
 ;; Spec for a non-primary pattern ('primary' is set to false).
 (s/def ::non-primary-pattern-keys
-  (s/keys :req-un [::id ::type]
-          :opt-un [::primary ::inScheme ::prefLabel ::definition
+  (s/keys :req-un [::id ::type ::inScheme]
+          :opt-un [::primary ::prefLabel ::definition
                    ::deprecated ::alternates ::optional ::oneOrMore
                    ::sequence ::zeroOrMore]))
 
@@ -70,12 +74,14 @@
          ::pattern-clause
          ::is-primary-false))
 
-(defmulti pattern? #(:primary %))
+(defmulti pattern? :primary)
 (defmethod pattern? true [_] ::primary-pattern)
 (defmethod pattern? :default [_] ::non-primary-pattern)
 
 ;; Spec for a generic pattern.
-(s/def ::pattern (s/multi-spec pattern? #(:primary %)))
+;; The retag fn is so that both primary and non-primary patterns can be
+;; generated.
+(s/def ::pattern (s/multi-spec pattern? (fn [gen-v _] gen-v)))
 
 ;; Spec for a vector of patterns.
 (s/def ::patterns
@@ -169,9 +175,11 @@
          pvisit (->> visit-objs (map :id) set)]
     (if-some [{pat-tmp-id :id :as pat-tmp} (peek pqueue)]
       (if (contains? pvisit pat-tmp-id)
-        [pnodes pedges]
-        (let [new-pnode  (graph/node-with-attrs pat-tmp)
-              ;; Don't get outgoing edges of templates
+        ;; Already visited this node; skip adding it
+        (recur pnodes pedges (pop pqueue) pvisit)
+        ;; Visitng new node
+        (let [;; Add the node and, if it's a Pattern, its outgoing edges
+              new-pnode  (graph/node-with-attrs pat-tmp)
               new-pedges (when (= "Pattern" (:type pat-tmp))
                            (graph/edges-with-attrs pat-tmp))
               next-pats  (pattern-children pat-map pat-tmp-id)]
@@ -190,12 +198,12 @@
         pedges     (->> patterns
                         (mapv graph/edges-with-attrs)
                         graph/collect-edges)]
-    (if (and ?ext-pats ?ext-pats)
+    (if (or ?ext-tmps ?ext-pats)
       (let [pat-coll  (concat patterns templates ?ext-pats ?ext-tmps)
             pat-map   (zipmap (map :id pat-coll) pat-coll)
             init-exts (->> (concat ?ext-pats ?ext-tmps)
                            (ids/filter-by-ids out-ids))
-            inits     (concat patterns templates)
+            inits     (concat patterns templates*)
             [pn pe]   (append-bfs pat-map pnodes pedges init-exts inits)]
         (graph/create-graph* pn pe))
       (graph/create-graph* pnodes pedges))))

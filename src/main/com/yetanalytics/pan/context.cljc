@@ -1,5 +1,6 @@
 (ns com.yetanalytics.pan.context
   (:require [clojure.spec.alpha          :as s]
+            [clojure.spec.gen.alpha      :as sgen]
             [clojure.string              :as cstr]
             [com.yetanalytics.pan.axioms :as ax])
   #?(:clj (:require [com.yetanalytics.pan.utils.resources
@@ -36,7 +37,11 @@
 ;; Context Spec
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(s/def :context.term-def/_id (s/and string? (partial re-matches #".*:.*")))
+(s/def :context.term-def/_id
+  (s/with-gen (s/and string? (partial re-matches #".*:.*"))
+    #(sgen/fmap (fn [[pre post]] (str pre ":" post))
+                (sgen/tuple (sgen/string-ascii) (sgen/string-ascii)))))
+
 (s/def :context.term-def/_container #{"@list" "@set" "@language"})
 
 ;; Unimplemented context keyword specs, but kept here for reference

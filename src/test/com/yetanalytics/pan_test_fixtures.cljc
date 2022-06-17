@@ -140,7 +140,7 @@ should contain key: :definition
 | key         | spec                                       |
 |=============+============================================|
 | :definition | (map-of                                    |
-|             |  com.yetanalytics.pan.axioms/language-tag? |
+|             |  :com.yetanalytics.pan.axioms/language-tag |
 |             |  string?                                   |
 |             |  :min-count                                |
 |             |  1)                                        |
@@ -271,18 +271,18 @@ Detected 1 error
 -- Spec failed --------------------
 
 Object:
-{:id \"https://w3id.org/xapi/scorm#generalrestrictions\",
- :type \"StatementTemplate\",
- :prefLabel {:en \"general restrictions on statements\"},
+{:id \"https://w3id.org/xapi/scorm#generalpattern\",
+ :type \"Pattern\",
+ :prefLabel {:en \"general pattern\"},
  :definition
  {:en
-  \"This is the general template that defines restrictions for all statements conforming to the SCORM profile.\"},
- :rules
- [{:location \"context.contextActivities.grouping[*].definition.type\",
-   :any [\"http://adlnet.gov/expapi/activities/attempt\"]}
-  {:location \"context.contextActivities.grouping[*].definition.type\",
-   :any [\"http://adlnet.gov/expapi/activities/course\"]}
-  {:location \"timestamp\", :presence \"included\"}]}
+  \"This pattern describes the overall sequence of statements sent over the course of an attempt\"},
+ :primary true,
+ :sequence
+ [\"https://w3id.org/xapi/scorm#initialization\"
+  \"https://w3id.org/xapi/scorm#middlestatements\"
+  \"https://w3id.org/xapi/scorm#optionallycontinue\"
+  \"https://w3id.org/xapi/scorm#termination\"]}
 
 should contain key: :inScheme
 
@@ -349,7 +349,8 @@ Detected 3 errors
 Identifier:
 \"https://w3id.org/xapi/catch/patterns#community-engagement-completion\"
 
-which occurs 2 times in the Profile
+which occurs 2 times in the version:
+\"https://w3id.org/xapi/catch/v1\"
 
 should be a unique identifier value
 
@@ -366,7 +367,8 @@ Detected 1 error
 Identifier:
 nil
 
-which occurs 5 times in the Profile
+which occurs 5 times in the version:
+\"https://w3id.org/xapi/cmi5/v1.0\"
 
 should be a unique identifier value
 
@@ -383,14 +385,15 @@ Detected 1 error
 Identifier:
 \"http://activitystrea.ms/schema/\"
 
-which occurs 2 times in the Profile
+which occurs 2 times in the version:
+\"http://activitystrea.ms/schema/1.0.0\"
 
 should be a unique identifier value
 
 -------------------------
 Detected 1 error
 
-**** Version Errors ****
+**** Version ID Errors ****
 
 -- Spec failed --------------------
 
@@ -408,6 +411,167 @@ should be a valid version ID
 -------------------------
 Detected 1 error
 ")
+
+(def acrossx-multi-inscheme-err-msg
+  "
+**** Version ID Errors ****
+
+-- Spec failed --------------------
+
+Objects that have the following inSchemes:
+[\"https://w3id.org/xapi/acrossx/v1.0\"
+ \"https://w3id.org/xapi/acrossx/v1.0.1\"]
+
+should only have one valid inScheme value
+
+-------------------------
+Detected 1 error
+")
+
+(def video-multi-inscheme-err-msg
+  "
+**** Version ID Errors ****
+
+-- Spec failed --------------------
+
+InScheme IRI:
+nil
+
+associated with the identifier:
+\"https://w3id.org/xapi/video/patterns#generalpattern\"
+
+in a Profile with the following version IDs:
+\"https://w3id.org/xapi/video/v1.0\"
+\"https://w3id.org/xapi/video/v1.0.1\"
+\"https://w3id.org/xapi/video/v1.0.2\"
+\"https://w3id.org/xapi/video/v1.0.3\"
+
+should be a valid version ID
+
+-------------------------
+Detected 1 error
+")
+
+(def video-multi-inscheme-err-msg-2*
+  "
+**** Version Change Errors ****
+
+-- Spec failed --------------------
+
+Objects:
+{:id \"https://w3id.org/xapi/video/templates#paused\",
+ :inScheme \"https://w3id.org/xapi/video/v1.0\",
+ :prefLabel {:en \"Paused\"},
+ :type \"StatementTemplate\",
+ :definition
+ {:en
+  \"The statement template and rules associated with a video being paused.\"},
+ :verb \"https://w3id.org/xapi/video/verbs/paused\",
+ :objectActivityType \"https://w3id.org/xapi/video/activity-type/video\",
+ :rules
+ [{:location
+   \"$.result.extensions['https://w3id.org/xapi/video/extensions/time']\",
+   :presence \"included\"}
+  {:location
+   \"$.result.extensions['https://w3id.org/xapi/video/extensions/played-segments']\",
+   :presence \"recommended\"}
+  {:location
+   \"$.result.extensions['https://w3id.org/xapi/video/extensions/progress']\",
+   :presence \"recommended\"}]},
+{:id \"https://w3id.org/xapi/video/templates#paused\",
+ :inScheme \"https://w3id.org/xapi/video/v1.0.1\",
+ :prefLabel {:en \"Paused\"},
+ :type \"StatementTemplate\",
+ :definition
+ {:en
+  \"The statement template and rules associated with a video being paused.\"},
+ :verb \"https://w3id.org/xapi/video/verbs/paused\",
+ :objectActivityType \"https://w3id.org/xapi/video/activity-type/video\",
+ :rules
+ [{:location \"$.id\", :presence \"included\"}
+  {:location \"$.timestamp\", :presence \"included\"}
+  {:location
+   \"$.result.extensions['https://w3id.org/xapi/video/extensions/time']\",
+   :presence \"included\"}
+  {:location
+   \"$.result.extensions['https://w3id.org/xapi/video/extensions/played-segments']\",
+   :presence \"recommended\"}
+  {:location
+   \"$.result.extensions['https://w3id.org/xapi/video/extensions/progress']\",
+   :presence \"recommended\"}
+  {:location
+   \"$.context.extensions['https://w3id.org/xapi/video/extensions/session-id']\",
+   :presence \"recommended\"}]},
+{:id \"https://w3id.org/xapi/video/templates#paused\",
+ :inScheme \"https://w3id.org/xapi/video/v1.0.2\",
+ :prefLabel {:en \"Paused\"},
+ :definition
+ {:en
+  \"The statement template and rules associated with a video being paused.\"},
+ :type \"StatementTemplate\",
+ :verb \"https://w3id.org/xapi/video/verbs/paused\",
+ :objectActivityType \"https://w3id.org/xapi/video/activity-type/video\",
+ :rules
+ [{:location \"$.id\", :presence \"included\"}
+  {:location \"$.timestamp\", :presence \"included\"}
+  {:location
+   \"$.context.extensions['https://w3id.org/xapi/video/extensions/length']\",
+   :presence \"included\"}
+  {:location
+   \"$.result.extensions['https://w3id.org/xapi/video/extensions/time']\",
+   :presence \"included\"}
+  {:location
+   \"$.context.extensions['https://w3id.org/xapi/video/extensions/completion-threshold']\",
+   :presence \"recommended\"}
+  {:location
+   \"$.result.extensions['https://w3id.org/xapi/video/extensions/played-segments']\",
+   :presence \"recommended\"}
+  {:location
+   \"$.result.extensions['https://w3id.org/xapi/video/extensions/progress']\",
+   :presence \"recommended\"}
+  {:location
+   \"$.context.extensions['https://w3id.org/xapi/video/extensions/session-id']\",
+   :presence \"recommended\"}]},
+{:id \"https://w3id.org/xapi/video/templates#paused\",
+ :inScheme \"https://w3id.org/xapi/video/v1.0.3\",
+ :prefLabel {:en \"Paused\"},
+ :definition
+ {:en
+  \"The statement template and rules associated with a video being paused.\"},
+ :type \"StatementTemplate\",
+ :verb \"https://w3id.org/xapi/video/verbs/paused\",
+ :objectActivityType \"https://w3id.org/xapi/video/activity-type/video\",
+ :rules
+ [{:location \"$.id\", :presence \"included\"}
+  {:location \"$.timestamp\", :presence \"included\"}
+  {:location
+   \"$.context.extensions['https://w3id.org/xapi/video/extensions/length']\",
+   :presence \"included\"}
+  {:location
+   \"$.result.extensions['https://w3id.org/xapi/video/extensions/time']\",
+   :presence \"included\"}
+  {:location
+   \"$.result.extensions['https://w3id.org/xapi/video/extensions/progress']\",
+   :presence \"included\"}
+  {:location
+   \"$.result.extensions['https://w3id.org/xapi/video/extensions/played-segments']\",
+   :presence \"included\"}
+  {:location
+   \"$.context.extensions['https://w3id.org/xapi/video/extensions/completion-threshold']\",
+   :presence \"recommended\"}
+  {:location
+   \"$.context.extensions['https://w3id.org/xapi/video/extensions/session-id']\",
+   :presence \"recommended\"}]}
+
+should not share the same ID if properties are changed
+
+-------------------------
+Detected 1 error
+")
+
+(def video-multi-inscheme-err-msg-2
+  (str video-multi-inscheme-err-msg
+       video-multi-inscheme-err-msg-2*))
 
 ;; Graph/relation errors
 
@@ -568,3 +732,101 @@ Detected 3 errors
        #?(:clj #"http\:\/\/adlnet\.gov\/expapi\/verbs\/completed"
           :cljs #"http\://adlnet\.gov/expapi/verbs/completed")
        "http://adlnet.gov/expapi/verbs/shared")))
+
+;; Object validation fixtures
+
+(def verb-concept-error
+  "
+**** Syntax Errors ****
+
+-- Spec failed --------------------
+
+Object:
+{:id \"https://w3id.org/xapi/adl/verbs/satisfied\",
+ :type \"FooBar\",
+ :inScheme \"https://w3id.org/xapi/cmi5/v1.0\",
+ :prefLabel {:en \"satisfied\"},
+ :definition
+ {:en
+  \"Indicates that the authority or activity provider determined the actor has fulfilled the criteria of the object or activity.\"}}
+
+should have a valid Concept type
+
+-------------------------
+Detected 1 error
+")
+
+(def verb-template-error
+  "
+**** Syntax Errors ****
+
+-- Spec failed --------------------
+
+Value:
+\"Verb\"
+
+of property:
+:type
+
+in object:
+{:id \"https://w3id.org/xapi/adl/verbs/satisfied\",
+ :type \"Verb\",
+ :inScheme \"https://w3id.org/xapi/cmi5/v1.0\",
+ :prefLabel {:en \"satisfied\"},
+ :definition
+ {:en
+  \"Indicates that the authority or activity provider determined the actor has fulfilled the criteria of the object or activity.\"}}
+
+should be: \"StatementTemplate\"
+
+-------------------------
+Detected 1 error
+")
+
+(def verb-pattern-error
+  "
+**** Syntax Errors ****
+
+-- Spec failed --------------------
+
+Value:
+\"Verb\"
+
+of property:
+:type
+
+in object:
+{:id \"https://w3id.org/xapi/adl/verbs/satisfied\",
+ :type \"Verb\",
+ :inScheme \"https://w3id.org/xapi/cmi5/v1.0\",
+ :prefLabel {:en \"satisfied\"},
+ :definition
+ {:en
+  \"Indicates that the authority or activity provider determined the actor has fulfilled the criteria of the object or activity.\"}}
+
+should be: \"Pattern\"
+
+-------------------------
+Detected 1 error
+")
+
+(def verb-pattern-error-no-obj
+  "
+**** Syntax Errors ****
+
+-- Spec failed --------------------
+
+Value:
+\"Verb\"
+
+of property:
+:type
+
+in object:
+\"https://w3id.org/xapi/adl/verbs/satisfied\"
+
+should be: \"Pattern\"
+
+-------------------------
+Detected 1 error
+")

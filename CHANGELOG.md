@@ -1,6 +1,14 @@
 # Change Log
 All notable changes to this project will be documented in this file. This change log follows the conventions of [keepachangelog.com](http://keepachangelog.com/).
 
+## 0.5.0 - 2022-06-14
+- Relax ID validation constraints to allow different versions of the same Profile to reuse IDs in certain cases.
+- Add a `:multi-version?` flag to validation functions to toggle whether multiple versions can exist in a single Profile object or not.
+- Add the `validate-object` function to the top-level API to validate individual Concepts, Templates, and Patterns.
+- Add value generation capabilities for Profile syntax specs, including `::concept`, `::template`, `::pattern`, and `::profile`.
+- Fix bugs when validating Pattern relations across multiple Profiles. (See [#39](https://github.com/yetanalytics/project-pan/pull/39) for details.)
+- Fix bugs where external `contextCategoryActivityType` IRIs were not properly validated. (See [#40](https://github.com/yetanalytics/project-pan/pull/40) for details.)
+
 ## 0.4.3 - 2022-03-04
 - Fix bug where outgoing edges of profile-external StatementTemplates were incorrectly included in the Pattern graph.
 

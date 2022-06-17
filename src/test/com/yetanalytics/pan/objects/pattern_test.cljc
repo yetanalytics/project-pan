@@ -201,7 +201,12 @@
                         :optional "https://w3id.org/xapi/catch/templates#one"
                         :zeroOrMore "https://w3id.org/xapi/catch/templates#two"})))))
 
-;; Graph tests
+(deftest generative-tests
+  (testing "Generated Patterns are always valid"
+    (is (every? (partial not= ::s/invalid)
+                (s/exercise ::pattern/pattern 20)))))
+
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Graph tests ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (deftest node-with-attrs
   (testing "Creating node with attributes"
@@ -371,35 +376,36 @@
                :type       "Pattern"
                :inScheme   "https://foo.org/v1"
                :primary    true
-               :alternates ["https://foo.org/pattern2"
+               :alternates ["https://bar.org/pattern1"
                             "https://foo.org/template1"]}
-              {:id       "https://foo.org/pattern3"
+              {:id       "https://foo.org/pattern2"
                :type     "Pattern"
                :inScheme "https://foo.org/v1"
-               :optional "https://foo.org/template3"}]
+               :optional "https://foo.org/template1"}]
    :templates [{:id       "https://foo.org/template1"
                 :type     "StatementTemplate"
                 :inScheme "https://foo.org/v1"}
-               {:id       "https://foo.org/template3"
+               {:id       "https://foo.org/template2"
                 :type     "StatementTemplate"
                 :inScheme "https://foo.org/v1"}]})
 
 (def ex-profile-2a
-  {:patterns [{:id       "https://foo.org/pattern2"
+  {:patterns [{:id       "https://bar.org/pattern1"
                :type     "Pattern"
                :inScheme "https://foo.org/v1"
                :primary  true
-               :sequence ["https://foo.org/template2"
-                          "https://foo.org/pattern3"
-                          "https://foo.org/pattern1"]}]})
+               :sequence ["https://baz.org/template1"
+                          "https://foo.org/pattern1"
+                          "https://foo.org/pattern2"
+                          "https://foo.org/template2"]}]})
 
 (def ex-profile-2b
-  {:templates [{:id       "https://foo.org/template2"
+  {:templates [{:id       "https://baz.org/template1"
                 :type     "StatementTemplate"
-                :inScheme "https://foo.org/v1"}]})
+                :inScheme "https://baz.org/v1"}]})
 
 (def pgraph-2 (pattern/create-graph ex-profile-2
-                                      [ex-profile-2a ex-profile-2b]))
+                                    [ex-profile-2a ex-profile-2b]))
 
 (deftest graph-test
   (testing "Pattern graph should satisfy various properties"
@@ -447,7 +453,7 @@
     (is (nil? (pattern/validate-pattern-tree pgraph))))
   (testing "Cyclic graphs can satisfy some properties and fail others"
     (is (= 6 (count (graph/nodes pgraph-2))))
-    (is (= 6 (count (graph/edges pgraph-2))))
+    (is (= 7 (count (graph/edges pgraph-2))))
     (is (nil? (pattern/validate-pattern-edges pgraph-2)))
     (is (some? (pattern/validate-pattern-tree pgraph-2)))))
 
