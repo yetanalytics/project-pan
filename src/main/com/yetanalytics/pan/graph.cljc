@@ -34,40 +34,63 @@
 
 ;; Thin wrappers for Loom functions
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Loom replacements
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (defn new-digraph
-  "Init a new directed graph."
+  "Init a new, empty directed graph."
   []
+  #_{:nodeset #{}
+   :adj     {}
+   :in      {}}
   (loom.graph/digraph))
 
 (defn nodes
   "Given a graph, return its nodes."
   [g]
-  (loom.graph/nodes g))
+  (:nodeset g))
 
 (defn edges
   "Given a graph, return its edges."
   [g]
-  (loom.graph/edges g))
+  (for [src (nodes g)
+        dst (get-in g [:adj src])]
+    [src dst]))
+
+(defn- add-node-attr
+  [g node k v]
+  (assoc-in g [:attrs node k] v))
 
 (defn add-nodes
   "Add a list or vector of nodes to a graph, where each node has the form
    [node attr-map]."
   [g nodes]
   (reduce (fn [g [node attrs]]
-            (reduce-kv (fn [g k v] (loom.attr/add-attr g node k v))
-                       (loom.graph/add-nodes g node)
-                       attrs))
+            (let [g* (update g :nodeset conj node)]
+              (reduce-kv (fn [g k v] (add-node-attr g node k v))
+                         g*
+                         attrs)))
           g
           nodes))
+
+(defn- add-edge-attr
+  [g src dst k v]
+  (assoc-in g [:attrs src ::edge-attrs dst k] v))
 
 (defn add-edges
   "Add a list or vector of directed edges to a graph, where each node has the
    form [src dest attr-map]."
   [g edges]
-  (reduce (fn [g [src dest attrs]]
-            (reduce-kv (fn [g k v] (loom.attr/add-attr g src dest k v))
-                       (loom.graph/add-edges g [src dest])
-                       attrs))
+  (reduce (fn [g [src dst attrs]]
+            (let [g* (-> g
+                         (update-in [:nodeset] conj src dst)
+                         (update-in [:adj src] (fnil conj #{}) dst)
+                         (update-in [:in dst] (fnil conj #{}) src))]
+              (reduce-kv (fn [g k v]
+                           (add-edge-attr g src dst k v))
+                         g*
+                         attrs)))
           g
           edges))
 
@@ -93,31 +116,40 @@
 (defn src
   "Return the source node of a directed edge."
   [edge]
-  (loom.graph/src edge))
+  (if (vector? edge)
+    (get edge 0)
+    (get edge :src)))
 
 (defn dest
   "Return the destination node of a directed edge."
   [edge]
-  (loom.graph/dest edge))
+  (if (vector? edge)
+    (get edge 1)
+    (get edge :dest)))
 
 (defn attr
   "Return the attribute of a particular node or edge in a graph."
   [g node-or-edge attr]
-  (loom.attr/attr g node-or-edge attr))
+  (if (contains? (:nodeset g) node-or-edge)
+    (get-in g [:attrs node-or-edge attr])
+    (get-in g [:attrs (src node-or-edge) ::edge-attrs (dest node-or-edge) attr])))
 
 (defn in-degree
   "Return the in-degree of a node in a digraph."
   [g node]
-  (loom.graph/in-degree g node))
+  (count (get-in g [:in node])))
 
 (defn out-degree
   "Return the out-degree of a node in a digraph."
   [g node]
-  (loom.graph/out-degree g node))
+  (count (get-in g [:adj node])))
+
+;; Kosaraju's Algorithm for Strongly Connected Components ;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Need to manually rewrite transpose and scc function due to Issue #131 in Loom
 
-(defn- transpose [{in :in adj :adj :as g}] (assoc g :adj in :in adj))
+(defn- transpose [{:keys [in adj] :as g}]
+  (assoc g :adj in :in adj))
 
 (defn- scc* ;; Copy-paste of code from loom.alg namespace
   [g]
