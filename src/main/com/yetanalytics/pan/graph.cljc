@@ -8,6 +8,12 @@
 ;; Graph functions
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(s/def ::type any?)
+
+(s/fdef node-with-attrs
+  :args (s/cat :node (s/keys :opt-un [::type]))
+  :ret (s/tuple any? map?))
+
 ;; Return a node and its attributes, in the form of [node attribute-map].
 ;; Only special implementation is in the pattern namespace
 (defmulti node-with-attrs #(:type %))
@@ -17,7 +23,11 @@
   (let [node-name (:id node)
         node-attrs {:type (:type node)
                     :inScheme (:inScheme node)}]
-    (vector node-name node-attrs)))
+    [node-name node-attrs]))
+
+(s/fdef edge-with-attrs
+  :args (s/cat :edges (s/keys :opt-un [::type]))
+  :ret (s/tuple any? any? map?))
 
 ;; Return a vector of all outgoing edges, in the form [src dest attribute-map].
 ;; Special implementations are found for all concepts + patterns and templates.
@@ -32,8 +42,6 @@
   [attr-edges]
   (reduce concat attr-edges))
 
-;; Thin wrappers for Loom functions
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Loom replacements
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -46,10 +54,18 @@
    :in      {}}
   (loom.graph/digraph))
 
+;; (s/fdef nodes
+;;   :args (s/cat :g map?)
+;;   :ret (s/every any? :kind set?))
+
 (defn nodes
   "Given a graph, return its nodes."
   [g]
   (:nodeset g))
+
+;; (s/fdef nodes
+;;   :args (s/cat :g map?)
+;;   :ret (s/every (s/tuple any? any?)))
 
 (defn edges
   "Given a graph, return its edges."
