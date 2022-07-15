@@ -42,17 +42,16 @@
   [attr-edges]
   (reduce concat attr-edges))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Loom replacements
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn new-digraph
   "Init a new, empty directed graph."
   []
-  #_{:nodeset #{}
+  {:nodeset #{}
    :adj     {}
-   :in      {}}
-  (loom.graph/digraph))
+   :in      {}})
 
 ;; (s/fdef nodes
 ;;   :args (s/cat :g map?)
@@ -160,17 +159,60 @@
   [g node]
   (count (get-in g [:adj node])))
 
-;; Kosaraju's Algorithm for Strongly Connected Components ;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Loom Replacement for Kosaraju's Algorithm
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; ;; https://github.com/aysylu/loom/blob/master/src/loom/alg.cljc#L20
+(defn- traverse-all
+  [nodes traverse-fn]
+  (-> (reduce (fn [[seen traverse] n]
+                (if (seen n)
+                  [seen traverse]
+                  (let [ctrav (first (traverse-fn n seen))]
+                    [(into seen ctrav)
+                     (reduce conj! traverse ctrav)])))
+              [#{} (transient [])]
+              nodes)
+      second
+      persistent!))
+
+;; ;; https://github.com/aysylu/loom/blob/master/src/loom/alg_generic.cljc#L112
+(defn- post-traverse*
+  ([successors start]
+   (post-traverse* successors start #{}))
+  ([successors start seen]
+   (loop [seen   seen
+          result []
+          stack  [start]]
+     (if (empty? stack)
+       [result seen]
+       (let [v    (peek stack)
+             seen (conj seen v)
+             nbrs (remove seen (successors v))]
+         (if (empty? nbrs)
+           (recur seen (conj result v) (pop stack))
+           (recur seen result (conj stack (first nbrs)))))))))
+
+(defn- successor-fn
+  [g]
+  (fn [node] (get-in g [:adj node])))
+
+(defn- post-traverse
+  ([g]
+   (traverse-all (nodes g) (partial post-traverse* (successor-fn g))))
+  ([g start seen]
+   (post-traverse* (successor-fn g) start seen)))
 
 ;; Need to manually rewrite transpose and scc function due to Issue #131 in Loom
-
 (defn- transpose [{:keys [in adj] :as g}]
   (assoc g :adj in :in adj))
 
 (defn- scc* ;; Copy-paste of code from loom.alg namespace
   [g]
   (let [gt (transpose g)]
-    (loop [stack (reverse (loom.alg/post-traverse g))
+    (loop [stack (reverse #_(loom.alg/post-traverse g)
+                          (post-traverse g))
            seen  #{}
            cc    (transient [])]
       (if (empty? stack)
@@ -178,7 +220,8 @@
         (if (seen (first stack))
           (recur (rest stack) seen cc)
           (let [[c seen]
-                (loom.alg/post-traverse gt (first stack)
+                (post-traverse gt (first stack) seen)
+                #_(loom.alg/post-traverse gt (first stack)
                                         :seen seen
                                         :return-seen true)]
             (recur (rest stack)
