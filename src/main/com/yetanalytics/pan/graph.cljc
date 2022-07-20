@@ -1,5 +1,6 @@
 (ns com.yetanalytics.pan.graph
   (:require [clojure.spec.alpha :as s]
+            [clojure.set        :as cset]
             [loom.graph]
             [loom.attr]
             [loom.alg]))
@@ -160,79 +161,86 @@
   (count (get-in g [:adj node])))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Loom Replacement for Kosaraju's Algorithm
+;; Kosaraju's Algorithm for Strongly Connected Components
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; ;; https://github.com/aysylu/loom/blob/master/src/loom/alg.cljc#L20
-(defn- traverse-all
-  [nodes traverse-fn]
-  (-> (reduce (fn [[seen traverse] n]
-                (if (seen n)
-                  [seen traverse]
-                  (let [ctrav (first (traverse-fn n seen))]
-                    [(into seen ctrav)
-                     (reduce conj! traverse ctrav)])))
-              [#{} (transient [])]
-              nodes)
-      second
-      persistent!))
+;; We compute SCCs since each SCC is a cycle, which is important to avoid when
+;; constructing xAPI Profile Patterns.
 
-;; ;; https://github.com/aysylu/loom/blob/master/src/loom/alg_generic.cljc#L112
-(defn- post-traverse*
-  ([successors start]
-   (post-traverse* successors start #{}))
-  ([successors start seen]
-   (loop [seen   seen
-          result []
-          stack  [start]]
-     (if (empty? stack)
-       [result seen]
-       (let [v    (peek stack)
-             seen (conj seen v)
-             nbrs (remove seen (successors v))]
-         (if (empty? nbrs)
-           (recur seen (conj result v) (pop stack))
-           (recur seen result (conj stack (first nbrs)))))))))
+;; Kosaraju's Algorithm has three basic steps:
+;; 1. Perform DFS to return a list of nodes in "finishing order," i.e. the
+;; order in which we finish visiting a node after all its adjacent outgoing
+;; nodes have been visited
+;; 2. Compute the transpose of the graph.
+;; 3. Perform DFS on the transpose in the order of the previously computed list.
+;; Each start node on the list is the "root" of a new strongly connected
+;; component.
 
-(defn- successor-fn
-  [g]
-  (fn [node] (get-in g [:adj node])))
+;; Ideally we should have generic DFS/BFS functions here but implementing
+;; them is a bit tricky.
+(defn- scc-dfs*
+  "Starting at the `start` node in `graph`, with `visited` a set of seen
+   nodes from previous DFS iterations, perform a DFS. Return a pair of
+   `result` and `visited`, where `result` is a vector of nodes in their
+   \"finishing order\" (i.e. when all their outgoing nodes have been visited)
+   and the new `visited` including all nodes seen in this DFS."
+  [graph start visited]
+  (loop [stack   [start]
+         visited visited
+         result  []]
+    (if-some [n (peek stack)]
+      (let [visited*     (conj visited n)
+            all-outs     (get-in graph [:adj n])
+            unvisit-outs (cset/difference all-outs visited*)]
+        (if (empty? unvisit-outs)
+          (recur (pop stack) visited* (conj result n))
+          (recur (apply conj stack unvisit-outs) visited* result)))
+      [result visited])))
 
-(defn- post-traverse
-  ([g]
-   (traverse-all (nodes g) (partial post-traverse* (successor-fn g))))
-  ([g start seen]
-   (post-traverse* (successor-fn g) start seen)))
+(defn- scc-forward-dfs
+  "Perform DFS on `graph`, returning a vector of nodes in their \"finishing
+   order\" (i.e. when all their outgoing nodes have been visited)."
+  [graph]
+  (loop [nodeset (nodes graph)
+         visited #{}
+         result  []]
+    (if-some [n (first nodeset)]
+      (let [[new-result visited*] (scc-dfs* graph n visited)
+            nodeset* (cset/difference nodeset visited*)
+            result*  (vec (concat result new-result))]
+        (recur nodeset* visited* result*))
+      result)))
 
-;; Need to manually rewrite transpose and scc function due to Issue #131 in Loom
-(defn- transpose [{:keys [in adj] :as g}]
-  (assoc g :adj in :in adj))
+(defn- scc-transpose-dfs
+  "Perform DFS on `graph-trans`, where `node-vec` is the vector of nodes
+   in \"finishing order\". Returns a vector of vector of nodes, where each
+   inner vector is a strongly connected component."
+  [graph-trans node-vec]
+  (loop [nodes   node-vec
+         visited #{}
+         sccs    []]
+    (if-some [n (peek nodes)]
+      (let [[next-scc visited*] (scc-dfs* graph-trans n visited)
+            nodes* (filterv #(not (contains? visited* %)) (pop nodes))
+            sccs*  (conj sccs next-scc)]
+        (recur nodes* visited* sccs*))
+      sccs)))
 
-(defn- scc* ;; Copy-paste of code from loom.alg namespace
-  [g]
-  (let [gt (transpose g)]
-    (loop [stack (reverse #_(loom.alg/post-traverse g)
-                          (post-traverse g))
-           seen  #{}
-           cc    (transient [])]
-      (if (empty? stack)
-        (persistent! cc)
-        (if (seen (first stack))
-          (recur (rest stack) seen cc)
-          (let [[c seen]
-                (post-traverse gt (first stack) seen)
-                #_(loom.alg/post-traverse gt (first stack)
-                                        :seen seen
-                                        :return-seen true)]
-            (recur (rest stack)
-                   seen
-                   (conj! cc c))))))))
+;; Normally Kosaraju's algorithm isn't fast due to the need to transpose the
+;; graph. But here the transpose computation is O(1) since we implicitly record
+;; the transpose via the `:in` field during graph construction.
+(defn- transpose
+  "Compute the transpose of `graph`."
+  [{:keys [in adj] :as graph}]
+  (assoc graph :adj in :in adj))
 
 (defn scc
-  "Return the strongly-connected components of a digraph as a vector of
+  "Return the strongly connected components of `graph` as a vector of
    vectors. Uses Kosaraju's algorithm."
-  [g]
-  (scc* g))
+  [graph]
+  (let [gtrans  (transpose graph)
+        nodevec (scc-forward-dfs graph)]
+    (scc-transpose-dfs gtrans nodevec)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Graph specs 
