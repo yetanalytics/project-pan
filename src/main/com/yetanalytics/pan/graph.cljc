@@ -1,9 +1,6 @@
 (ns com.yetanalytics.pan.graph
   (:require [clojure.spec.alpha :as s]
-            [clojure.set        :as cset]
-            [loom.graph]
-            [loom.attr]
-            [loom.alg]))
+            [clojure.set        :as cset]))
 
 (s/def ::src any?)
 (s/def ::dest any?)

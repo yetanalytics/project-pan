@@ -1,7 +1,6 @@
 (ns com.yetanalytics.pan.objects.concept-test
   (:require [clojure.test :refer [deftest is testing use-fixtures]]
             [clojure.spec.alpha :as s]
-            [loom.attr]
             [com.yetanalytics.pan.graph :as graph]
             [com.yetanalytics.pan.objects.concept :as concept]
             [com.yetanalytics.test-utils :refer [should-satisfy+
