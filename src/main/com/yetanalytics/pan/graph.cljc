@@ -194,7 +194,7 @@
             unvisit-outs (cset/difference all-outs visited*)]
         (if (empty? unvisit-outs)
           (recur (pop stack) visited* (conj result n))
-          (recur (apply conj stack unvisit-outs) visited* result)))
+          (recur (vec (concat stack unvisit-outs)) visited* result)))
       [result visited])))
 
 (defn- scc-forward-dfs
@@ -218,13 +218,13 @@
   [graph-trans node-vec]
   (loop [nodes   node-vec
          visited #{}
-         sccs    []]
+         sccs    (transient [])]
     (if-some [n (peek nodes)]
       (let [[next-scc visited*] (scc-dfs* graph-trans n visited)
             nodes* (filterv #(not (contains? visited* %)) (pop nodes))
-            sccs*  (conj sccs next-scc)]
+            sccs*  (conj! sccs next-scc)]
         (recur nodes* visited* sccs*))
-      sccs)))
+      (persistent! sccs))))
 
 ;; Normally Kosaraju's algorithm isn't fast due to the need to transpose the
 ;; graph. But here the transpose computation is O(1) since we implicitly record
