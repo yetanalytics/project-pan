@@ -76,7 +76,7 @@
 
 (defn- add-node-attr
   [g node k v]
-  (assoc-in g [:attrs node k] v))
+  (assoc-in g [:node-attrs node k] v))
 
 (defn add-nodes
   "Add a list or vector of nodes to a graph, where each node has the form
@@ -92,7 +92,7 @@
 
 (defn- add-edge-attr
   [g src dst k v]
-  (assoc-in g [:attrs src ::edge-attrs dst k] v))
+  (assoc-in g [:edge-attrs src dst k] v))
 
 (defn add-edges
   "Add a list or vector of directed edges to a graph, where each node has the
@@ -147,8 +147,8 @@
   "Return the attribute of a particular node or edge in a graph."
   [g node-or-edge attr]
   (if (contains? (:nodeset g) node-or-edge)
-    (get-in g [:attrs node-or-edge attr])
-    (get-in g [:attrs (src node-or-edge) ::edge-attrs (dest node-or-edge) attr])))
+    (get-in g [:node-attrs node-or-edge attr])
+    (get-in g [:edge-attrs (src node-or-edge) (dest node-or-edge) attr])))
 
 (defn in-degree
   "Return the in-degree of a node in a digraph."
