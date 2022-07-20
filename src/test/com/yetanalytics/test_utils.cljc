@@ -1,6 +1,23 @@
 (ns com.yetanalytics.test-utils
   (:require [clojure.test :refer [is] :include-macros true]
-            [clojure.spec.alpha :as s :include-macros true]))
+            [clojure.spec.alpha :as s :include-macros true]
+            #?(:clj [orchestra.spec.test :as stest]
+               :cljs [orchestra-cljs.spec.test :as stest])))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Instrumentation
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn instrumentation-fixture
+  "`:once` fixture to instrument selected namespaces."
+  [f]
+  (stest/instrument)
+  (f)
+  (stest/unstrument))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Spec Utils
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; This is a copy-paste of the xapi-schema.support.spec namespace defined in
 ;; the xapi-schema project. Distribution from the original project is

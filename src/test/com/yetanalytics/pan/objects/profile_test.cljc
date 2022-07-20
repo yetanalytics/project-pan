@@ -1,8 +1,11 @@
 (ns com.yetanalytics.pan.objects.profile-test
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [clojure.test :refer [deftest is testing use-fixtures]]
             [clojure.spec.alpha :as s]
             [com.yetanalytics.pan.objects.profile :as profile]
-            [com.yetanalytics.test-utils :refer [should-satisfy+]]))
+            [com.yetanalytics.test-utils :refer [instrumentation-fixture
+                                                 should-satisfy+]]))
+
+(use-fixtures :once instrumentation-fixture)
 
 (deftest id-test
   (testing "profile ID"

@@ -5,15 +5,30 @@
             [loom.attr]
             [loom.alg]))
 
+(s/def ::src any?)
+(s/def ::dest any?)
+
+(def node-spec
+  (s/cat :node any? :attrs (s/? map?)))
+(def edge-spec
+  (s/cat :src any? :dest any? :attrs (s/? map?)))
+(def edge-or-map-spec
+  (s/or :vector edge-spec
+        :map (s/keys :req-un [::src ::dest])))
+
+(s/def ::type any?)
+(def node-obj-spec (s/keys :opt-un [::type]))
+(def edge-obj-spec (s/keys :opt-un [::type]))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Graph functions
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(s/def ::type any?)
-
-(s/fdef node-with-attrs
-  :args (s/cat :node (s/keys :opt-un [::type]))
-  :ret (s/tuple any? map?))
+;; For some mysterious reason these specs result in cljs test failures
+#?(:clj
+   (s/fdef node-with-attrs
+     :args (s/cat :node node-obj-spec)
+     :ret (s/tuple any? map?)))
 
 ;; Return a node and its attributes, in the form of [node attribute-map].
 ;; Only special implementation is in the pattern namespace
@@ -26,9 +41,10 @@
                     :inScheme (:inScheme node)}]
     [node-name node-attrs]))
 
-(s/fdef edge-with-attrs
-  :args (s/cat :edges (s/keys :opt-un [::type]))
-  :ret (s/tuple any? any? map?))
+#?(:clj
+   (s/fdef edge-with-attrs
+     :args (s/cat :edges edge-obj-spec)
+     :ret (s/tuple any? any? map?)))
 
 ;; Return a vector of all outgoing edges, in the form [src dest attribute-map].
 ;; Special implementations are found for all concepts + patterns and templates.
@@ -47,6 +63,24 @@
 ;; Loom replacements
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; Specs
+
+(s/def ::nodeset set?)
+(s/def ::adj (s/map-of any? set?))
+(s/def ::in (s/map-of any? set?))
+(s/def ::node-attrs (s/map-of any? map?))
+(s/def ::edge-attrs (s/map-of any? (s/map-of any? map?)))
+
+(def graph-spec
+  (s/keys :req-un [::nodeset ::adj ::in]
+          :opt-un [::node-attrs ::edge-attrs]))
+
+;; Graph creation
+
+(s/fdef new-digraph
+  :args (s/cat)
+  :ret graph-spec)
+
 (defn new-digraph
   "Init a new, empty directed graph."
   []
@@ -54,50 +88,66 @@
    :adj     {}
    :in      {}})
 
-;; (s/fdef nodes
-;;   :args (s/cat :g map?)
-;;   :ret (s/every any? :kind set?))
+;; Node and edge get
+
+(s/fdef nodes
+  :args (s/cat :graph graph-spec)
+  :ret set?)
 
 (defn nodes
-  "Given a graph, return its nodes."
-  [g]
-  (:nodeset g))
+  "Given `graph`, return a set of its nodes."
+  [graph]
+  (:nodeset graph))
 
-;; (s/fdef nodes
-;;   :args (s/cat :g map?)
-;;   :ret (s/every (s/tuple any? any?)))
+(s/fdef edges
+  :args (s/cat :graph graph-spec)
+  :ret (s/coll-of edge-spec))
 
 (defn edges
-  "Given a graph, return its edges."
-  [g]
-  (for [src (nodes g)
-        dst (get-in g [:adj src])]
+  "Given `graph`, return a lazy seq of its edges."
+  [graph]
+  ;; Could be O(1) but changing this resulted in edge order not matching test
+  ;; fixtures.
+  (for [src (nodes graph)
+        dst (get-in graph [:adj src])]
     [src dst]))
+
+;; Node and edge add
+
+(s/fdef add-nodes
+  :args (s/cat :graph graph-spec
+               :nodes (s/every node-spec))
+  :ret graph-spec)
 
 (defn- add-node-attr
   [g node k v]
   (assoc-in g [:node-attrs node k] v))
 
 (defn add-nodes
-  "Add a list or vector of nodes to a graph, where each node has the form
+  "Add a list or vector of nodes to `graph`, where each node has the form
    [node attr-map]."
-  [g nodes]
+  [graph nodes]
   (reduce (fn [g [node attrs]]
             (let [g* (update g :nodeset conj node)]
               (reduce-kv (fn [g k v] (add-node-attr g node k v))
                          g*
                          attrs)))
-          g
+          graph
           nodes))
+
+(s/fdef add-edges
+  :args (s/cat :graph graph-spec
+               :edges (s/every edge-spec))
+  :ret graph-spec)
 
 (defn- add-edge-attr
   [g src dst k v]
   (assoc-in g [:edge-attrs src dst k] v))
 
 (defn add-edges
-  "Add a list or vector of directed edges to a graph, where each node has the
+  "Add a list or vector of directed edges to `graph`, where each node has the
    form [src dest attr-map]."
-  [g edges]
+  [graph edges]
   (reduce (fn [g [src dst attrs]]
             (let [g* (-> g
                          (update-in [:nodeset] conj src dst)
@@ -107,8 +157,15 @@
                            (add-edge-attr g src dst k v))
                          g*
                          attrs)))
-          g
+          graph
           edges))
+
+;; Graph creation
+
+(s/fdef create-graph*
+  :args (s/cat :nodes (s/every node-spec)
+               :edges (s/every edge-spec))
+  :ret graph-spec)
 
 (defn create-graph*
   "Create a graph with `nodes` and `edges`."
@@ -116,6 +173,12 @@
   (-> (new-digraph)
       (add-nodes nodes)
       (add-edges edges)))
+
+;; Args need to be nilable since they may be gotten directly from profile maps
+(s/fdef create-graph
+  :args (s/cat :node-objs (s/nilable (s/coll-of node-obj-spec))
+               :edge-objs (s/nilable (s/coll-of edge-obj-spec)))
+  :ret graph-spec)
 
 (defn create-graph
   "Create a graph with `node-objs` and `edge-objs`, which should be
@@ -129,12 +192,22 @@
                     collect-edges)]
     (create-graph* cnodes cedges)))
 
+;; Edge src or dest
+
+(s/fdef src
+  :args (s/cat :edge edge-or-map-spec)
+  :ret any?)
+
 (defn src
   "Return the source node of a directed edge."
   [edge]
   (if (vector? edge)
     (get edge 0)
     (get edge :src)))
+
+(s/fdef dest
+  :args (s/cat :edge edge-or-map-spec)
+  :ret any?)
 
 (defn dest
   "Return the destination node of a directed edge."
@@ -143,20 +216,36 @@
     (get edge 1)
     (get edge :dest)))
 
+;; Node/edge properties
+
+(s/fdef attr
+  :args (s/cat :graph graph-spec
+               :node-or-edge (s/or :node any? :edge edge-or-map-spec)
+               :attr any?)
+  :ret any?)
+
 (defn attr
-  "Return the attribute of a particular node or edge in a graph."
+  "Return the attribute of a particular node or edge in `graph`."
   [g node-or-edge attr]
   (if (contains? (:nodeset g) node-or-edge)
     (get-in g [:node-attrs node-or-edge attr])
     (get-in g [:edge-attrs (src node-or-edge) (dest node-or-edge) attr])))
 
+(s/fdef in-degree
+  :args (s/cat :graph graph-spec :node any?)
+  :ret int?)
+
 (defn in-degree
-  "Return the in-degree of a node in a digraph."
+  "Return the in-degree of `node` in `graph`."
   [g node]
   (count (get-in g [:in node])))
 
+(s/fdef out-degree
+  :args (s/cat :graph graph-spec :node any?)
+  :ret int?)
+
 (defn out-degree
-  "Return the out-degree of a node in a digraph."
+  "Return the out-degree of `node` in `graph`."
   [g node]
   (count (get-in g [:adj node])))
 
@@ -233,6 +322,10 @@
   "Compute the transpose of `graph`."
   [{:keys [in adj] :as graph}]
   (assoc graph :adj in :in adj))
+
+(s/fdef scc
+  :args (s/cat :graph graph-spec)
+  :ret (s/coll-of (s/coll-of any?)))
 
 (defn scc
   "Return the strongly connected components of `graph` as a vector of

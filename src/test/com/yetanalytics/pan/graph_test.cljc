@@ -1,6 +1,9 @@
 (ns com.yetanalytics.pan.graph-test
-  (:require [clojure.test :refer [deftest is testing]]
-            [com.yetanalytics.pan.graph :as graph]))
+  (:require [clojure.test :refer [deftest is testing use-fixtures]]
+            [com.yetanalytics.pan.graph :as graph]
+            [com.yetanalytics.test-utils :refer [instrumentation-fixture]]))
+
+(use-fixtures :once instrumentation-fixture)
 
 (def ex-graph
   (-> (graph/new-digraph)
@@ -10,8 +13,7 @@
 
 (deftest graph-test
   (testing "graph creation and operations"
-    (is (= "foo" (graph/src ["foo" "bar"])))
-    (is (= "bar" (graph/dest ["foo" "bar"])))
+    (is (some? (graph/new-digraph)))
     (is (= #{"foo" "bar"} (set (graph/nodes ex-graph))))
     (is (= ["foo" "bar"] (first (graph/edges ex-graph))))
     (is (= 0 (graph/attr ex-graph "foo" :num)))
@@ -23,7 +25,12 @@
     (is (= 0 (graph/out-degree ex-graph "bar")))
     (is (= [["foo"] ["bar"]] (graph/scc ex-graph)))
     (is (= [["bar" "foo"]]
-           (graph/scc (graph/add-edges ex-graph [["bar" "foo"]]))))))
+           (graph/scc (graph/add-edges ex-graph [["bar" "foo"]])))))
+  (testing "src and dest functions on lone edges"
+    (is (= "foo" (graph/src ["foo" "bar"])))
+    (is (= "foo" (graph/src {:src "foo" :dest "bar"})))
+    (is (= "bar" (graph/dest ["foo" "bar"])))
+    (is (= "bar" (graph/dest {:src "foo" :dest "bar"})))))
 
 ;; 2 strongly connected components:
 ;; SCC 1 is :a -> :b -> :c

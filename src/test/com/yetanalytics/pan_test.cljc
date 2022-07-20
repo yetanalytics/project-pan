@@ -1,5 +1,6 @@
 (ns com.yetanalytics.pan-test
-  (:require [clojure.test :refer [deftest testing is are]]
+  (:require [clojure.test :refer [deftest testing is are use-fixtures]]
+            [com.yetanalytics.test-utils :refer [instrumentation-fixture]]
             [clojure.spec.alpha                   :as s]
             [com.yetanalytics.pan                 :as p]
             [com.yetanalytics.pan.objects.profile :as profile]
@@ -11,6 +12,8 @@
      :cljs (:require-macros [com.yetanalytics.pan.utils.resources
                              :refer [read-resource
                                      read-json-resource]])))
+
+(use-fixtures :once instrumentation-fixture)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Profiles to test
@@ -108,8 +111,8 @@
                :syntax-errors
                ::s/spec)))
     (is (nil? (p/validate-profile will-profile-raw
-                                :syntax? false
-                                :contexts? true)))))
+                                  :syntax? false
+                                  :contexts? true)))))
 
 (deftest cmi5-err-data-test
   (testing "the cmi5 profile error data"
