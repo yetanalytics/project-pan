@@ -1,11 +1,14 @@
 (ns com.yetanalytics.pan.objects.pattern-test
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [clojure.test :refer [deftest is testing use-fixtures]]
             [clojure.spec.alpha :as s]
             [com.yetanalytics.pan.graph :as graph]
             [com.yetanalytics.pan.objects.pattern :as pattern]
-            [com.yetanalytics.test-utils :refer [should-satisfy
+            [com.yetanalytics.test-utils :refer [instrumentation-fixture
+                                                 should-satisfy
                                                  should-satisfy+
                                                  should-not-satisfy]]))
+
+(use-fixtures :once instrumentation-fixture)
 
 (deftest id-test
   (testing "id property"

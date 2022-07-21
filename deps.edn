@@ -4,8 +4,6 @@
                                        :exclusions  [org.clojure/data.json]}
          org.clojure/core.match       {:mvn/version "0.3.0"}
          org.clojure/data.json        {:mvn/version "1.0.0"} ; clj only
-         aysylu/loom                  {:mvn/version "1.0.2"
-                                       :exclusions  [org.clojure/clojurescript]}
          expound/expound              {:mvn/version "0.8.9"}
          com.yetanalytics/xapi-schema {:mvn/version "1.2.0"
                                        :exclusions  [org.clojure/clojure
@@ -14,7 +12,8 @@
  :aliases
  {:test
   {:extra-paths ["dev-resources" "src/test"]
-   :extra-deps  {org.clojure/test.check {:mvn/version "1.1.0"}}}
+   :extra-deps  {org.clojure/test.check {:mvn/version "1.1.0"}
+                 orchestra/orchestra    {:mvn/version "2021.01.01-1"}}}
   :dev
   {:extra-paths ["dev-resources"]
    :extra-deps  {cider/piggieback {:mvn/version "0.5.2"}}}

@@ -1,6 +1,10 @@
 # Change Log
 All notable changes to this project will be documented in this file. This change log follows the conventions of [keepachangelog.com](http://keepachangelog.com/).
 
+## 0.5.1 - 2022-07-21
+- Remove Loom dependency.
+- Add instrumentation to graph util functions.
+
 ## 0.5.0 - 2022-06-14
 - Relax ID validation constraints to allow different versions of the same Profile to reuse IDs in certain cases.
 - Add a `:multi-version?` flag to validation functions to toggle whether multiple versions can exist in a single Profile object or not.
