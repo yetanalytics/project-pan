@@ -1,5 +1,5 @@
 (ns com.yetanalytics.pan.utils.json
-  (:require [clojure.string :as string]
+  (:require [clojure.string :as cstr]
             #?(:clj [clojure.data.json :as json]
                :cljs [clojure.walk :as w])))
 
@@ -8,27 +8,39 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn- rm-spaces
-  "Remove chars that are illegal in keywords, ie. spaces and the @ symbol."
-  [s] (string/replace s #"\s" ""))
+  "Remove spaces, which are illegal in keywords."
+  [s]
+  (cstr/replace s #"\s" ""))
 
 (defn- replace-at
   "Replace any @ symbols with the replacement arg (as @ cannot be used in
   keywords)."
-  [s replacement] (string/replace s #"@" replacement))
+  [s replacement]
+  (cstr/replace s #"@" replacement))
+
+(defn- has-colon?
+  "Return true if `s` has a colon (as that signifies it's likely an IRI)."
+  [s]
+  (cstr/includes? s ":"))
+
+(defn- keyword-fn
+  [at-replacement k]
+  (if (has-colon? k)
+    k
+    (-> k (replace-at at-replacement) rm-spaces keyword)))
 
 #?(:clj
    (defn- convert-json-java
-     ([json-str at-replacement]
-      (letfn [(key-fn [k] (-> k (replace-at at-replacement) rm-spaces keyword))]
-        (json/read-str json-str :key-fn key-fn)))))
+     [json-str at-replacement]
+     (let [key-fn (partial keyword-fn at-replacement)]
+       (json/read-str json-str :key-fn key-fn))))
 
 #?(:cljs
    (defn- convert-json-js
      [json-str at-replacement]
-     (letfn [(key-fn [k] (-> k (replace-at at-replacement) rm-spaces keyword))
-             (kv-fn [acc k v] (assoc acc (key-fn k) v))
-             (map-fn [x] (if (map? x) (reduce-kv kv-fn {} x) x))
-             (tree-fn [m] (w/postwalk map-fn m))]
+     (let [kv-fn   (fn [acc k v] (assoc acc (keyword-fn at-replacement k) v))
+           map-fn  (fn [x] (if (map? x) (reduce-kv kv-fn {} x) x))
+           tree-fn (fn [m] (w/postwalk map-fn m))]
        (->> json-str (.parse js/JSON) js->clj tree-fn))))
 
 (defn convert-json
