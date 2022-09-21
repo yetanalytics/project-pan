@@ -16,6 +16,7 @@
             [com.yetanalytics.pan.objects.concepts.extensions.context  :as ce]
             [com.yetanalytics.pan.objects.concepts.extensions.result   :as re]
             [com.yetanalytics.pan.objects.concepts.activity            :as act]
+            [com.yetanalytics.pan.objects.concepts.activity.definition :as adef]
             [com.yetanalytics.pan.objects.template                     :as t]
             [com.yetanalytics.pan.objects.templates.rule               :as r]
             [com.yetanalytics.pan.objects.pattern                      :as p]))
@@ -57,9 +58,9 @@
   "should not use recommended activity type on a Result Extension")
 (exp/defmsg ::act/activityDefinition
   "should be a valid activity definition")
-(exp/defmsg ::act/extensions
+(exp/defmsg ::adef/extensions
   "should be valid Activity extensions")
-(exp/defmsg ::act/extension
+(exp/defmsg ::adef/extension
   "should be a valid Activity extension")
 
 (exp/defmsg ::t/type-or-reference
