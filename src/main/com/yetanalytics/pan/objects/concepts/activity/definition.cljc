@@ -6,6 +6,9 @@
             [com.yetanalytics.pan.context :as ctx]
             [com.yetanalytics.pan.objects.concepts.activity.definition.interaction-type :as itype]))
 
+;; Based off of the activityDefinition specs in xapi-schema:
+;; https://github.com/yetanalytics/xapi-schema/blob/master/src/xapi_schema/spec.cljc
+
 ;; @context
 
 (def context-url "https://w3id.org/xapi/profiles/activity-context")
@@ -34,8 +37,12 @@
   #{"true-false" "choice" "fill-in" "long-fill-in" "matching" "performance"
     "sequencing" "likert" "numeric" "other"})
 
+;; Technically there are additional requirements for each response string,
+;; depending on interactionType (e.g. for "true-false" the string has to
+;; either be "true" or "false") but since xapi-schema doesn't model these
+;; (quite complex) requirements we don't do it here either.
 (s/def ::correctResponsesPattern
-  (s/coll-of ::ax/string :kind vector?))
+  (s/coll-of ::ax/string :kind vector? :min-count 1))
 
 (s/def ::choices itype/interaction-component-coll-spec)
 (s/def ::scale itype/interaction-component-coll-spec)
