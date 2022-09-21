@@ -2,14 +2,17 @@
   (:require #?(:clj [clojure.core :refer [format]]
                :cljs [goog.string :as gstring]
                [goog.string.format :as format])
+            ;; Basic requires
             [clojure.spec.alpha :as s]
             [clojure.pprint     :as pprint]
             [clojure.string     :as cstr]
             [expound.alpha      :as exp]
+            ;; Generic specs
             [com.yetanalytics.pan.axioms      :as ax]
             [com.yetanalytics.pan.context     :as ctx]
             [com.yetanalytics.pan.identifiers :as id]
-            [com.yetanalytics.pan.graph :as graph]
+            [com.yetanalytics.pan.graph       :as graph]
+            ;; Object specs
             [com.yetanalytics.pan.objects.concept                      :as c]
             [com.yetanalytics.pan.objects.concepts.util                :as cu]
             [com.yetanalytics.pan.objects.concepts.extensions.activity :as ae]
@@ -56,12 +59,25 @@
   "should not use recommended activity type on a Context Extension")
 (exp/defmsg ::re/no-recommended-activity-types
   "should not use recommended activity type on a Result Extension")
+
 (exp/defmsg ::act/activityDefinition
   "should be a valid activity definition")
-(exp/defmsg ::adef/extensions
-  "should be valid Activity extensions")
+(exp/defmsg ::adef/correctResponsesPattern
+  "should be an array of strings")
+(exp/defmsg ::adef/choices
+  "should be an array of choies interaction components")
+(exp/defmsg ::adef/scale
+  "should be an array of scale interaction components")
+(exp/defmsg ::adef/source
+  "should be an array of source interaction components")
+(exp/defmsg ::adef/target
+  "should be an array of target interaction components")
+(exp/defmsg ::adef/steps
+  "should be an array of steps interaction components")
 (exp/defmsg ::adef/extension
   "should be a valid Activity extension")
+(exp/defmsg ::adef/extensions
+  "should be valid Activity extensions")
 
 (exp/defmsg ::t/type-or-reference
   "should not contain both objectActivityType and objectStatementRefTemplate")

@@ -35,7 +35,7 @@
     "sequencing" "likert" "numeric" "other"})
 
 (s/def ::correctResponsesPattern
-  (s/coll-of string? :kind vector?))
+  (s/coll-of ::ax/string :kind vector?))
 
 (s/def ::choices itype/interaction-component-coll-spec)
 (s/def ::scale itype/interaction-component-coll-spec)
