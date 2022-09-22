@@ -52,8 +52,27 @@
 
 ;; Extensions
 
-;; MUST include a JSON-LD @context in all top-level objects of extensions,
-;; or in every top-level object if array-valued.
+;; From the spec: MUST include a JSON-LD @context in all top-level objects of
+;; extensions, or in every top-level object if array-valued.
+
+;; In other words, this is what extension vals should look like IN PROFILES:
+;; {
+;;   "http://extension.com/": {
+;;     "@context": {"foo": {"@id": "http://extension.com/foo"}},
+;;     "foo": 123
+;;   }
+;; }
+;; The @context map is so that the key "foo" can expand into an IRI; otherwise
+;; the extension (and thus the Profile) cannot be considered valid JSON-LD.
+;;
+;; This is what the same extension would look like in a Statement:
+;; {
+;;   "http://extension.com/": {
+;;     "foo": 123
+;;   }
+;; }
+;; Note the lack of @context map here.
+
 (s/def ::extension
   (s/or :object (s/keys :req-un [::ctx/_context])
         :array  (s/coll-of (s/or :object (s/keys :req-un [::ctx/_context])
