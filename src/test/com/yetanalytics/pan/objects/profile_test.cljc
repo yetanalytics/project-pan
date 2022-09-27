@@ -3,7 +3,8 @@
             [clojure.spec.alpha :as s]
             [com.yetanalytics.pan.objects.profile :as profile]
             [com.yetanalytics.test-utils :refer [instrumentation-fixture
-                                                 should-satisfy+]]))
+                                                 should-satisfy+]]
+            #?(:cljs [clojure.test.check.generators])))
 
 (use-fixtures :once instrumentation-fixture)
 
