@@ -2,8 +2,7 @@
   (:require [clojure.spec.alpha     :as s]
             [clojure.spec.gen.alpha :as sgen]
             [xapi-schema.spec       :as xs]
-            [xapi-schema.spec.regex :as xsr]
-            #?(:cljs [clojure.test.check.generators])))
+            [xapi-schema.spec.regex :as xsr]))
 
 ;; Based on the draft 7 meta-schema.
 ;; Most draft 6 schemas should be compatible as well, but future versions are

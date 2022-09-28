@@ -6,7 +6,8 @@
             [com.yetanalytics.test-utils :refer [instrumentation-fixture
                                                  should-satisfy
                                                  should-satisfy+
-                                                 should-not-satisfy]]))
+                                                 should-not-satisfy]]
+            #?(:cljs [clojure.test.check.generators])))
 
 (use-fixtures :once instrumentation-fixture)
 

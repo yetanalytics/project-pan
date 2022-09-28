@@ -4,7 +4,8 @@
             [com.yetanalytics.pan.graph :as graph]
             [com.yetanalytics.pan.objects.concept :as concept]
             [com.yetanalytics.test-utils :refer [should-satisfy+
-                                                 instrumentation-fixture]]))
+                                                 instrumentation-fixture]]
+            #?(:cljs [clojure.test.check.generators])))
 
 (use-fixtures :once instrumentation-fixture)
 

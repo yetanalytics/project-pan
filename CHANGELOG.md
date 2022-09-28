@@ -1,6 +1,13 @@
 # Change Log
 All notable changes to this project will be documented in this file. This change log follows the conventions of [keepachangelog.com](http://keepachangelog.com/).
 
+## 0.5.2 - 2022-09-28
+- Decouple Pan's `::activityDefinition` spec from that of the xapi-schema lib.
+- Change the JSON parse function to not keywordize keys containing `:`.
+  - This change mainly affects IRIs, such as Activity extension keys.
+- Move all `clojure.test.check.generators` requires to test namespaces.
+  - Downstream cljs applications no longer have to include the `test.check` lib.
+
 ## 0.5.1 - 2022-07-21
 - Remove Loom dependency.
 - Add instrumentation to graph util functions.

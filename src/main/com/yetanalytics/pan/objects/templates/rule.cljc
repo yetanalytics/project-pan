@@ -6,6 +6,15 @@
 ;; Rules 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; The `some?` can be any JSON-able object. Note that if contains kv-pairs,
+;; then the keys must be expandable into IRIs (see below).
+
+;; The following MUST is validated during context validation:
+;;   A Profile Author MUST include the keys of any non-primitive objects in
+;;   `any`, `all`, and `none` in additional `@context` beyond the ones provided
+;;   by this specification.
+;; See the activity.definition spec for reasons why this must be the case.
+
 (s/def ::value-array (s/coll-of some?
                                 :type vector?
                                 :min-count 1
@@ -36,8 +45,3 @@
 
 (s/def ::rule
   (s/and ::rule-keys ::rule-keywords))
-
-;; The following MUST is validated during context validation:
-;; A Profile Author MUST include the keys of any non-primitive objects in `any`,
-;; `all`, and `none` in additional `@context` beyond the ones provided by
-;; this specification.
