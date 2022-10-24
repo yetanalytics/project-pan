@@ -9,7 +9,7 @@ A Clojure library for validating xAPI Profiles, according to the [xAPI Profile s
 Add the following to the `:deps` map in your `deps.edn` file:
 
 ```clojure
-com.yetanalytics/project-pan {:mvn/version "0.5.2"
+com.yetanalytics/project-pan {:mvn/version "0.5.3"
                               :exclusions [org.clojure/clojure
                                            org.clojure/clojurescript]}
 ```
