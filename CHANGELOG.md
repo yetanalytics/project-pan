@@ -1,6 +1,9 @@
 # Change Log
 All notable changes to this project will be documented in this file. This change log follows the conventions of [keepachangelog.com](http://keepachangelog.com/).
 
+## 0.5.3 - 2022-10-24
+- Update GitHub CD and CI to remove deprecation warnings.
+
 ## 0.5.2 - 2022-09-28
 - Decouple Pan's `::activityDefinition` spec from that of the xapi-schema lib.
 - Change the JSON parse function to not keywordize keys containing `:`.
