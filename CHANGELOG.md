@@ -1,6 +1,9 @@
 # Change Log
 All notable changes to this project will be documented in this file. This change log follows the conventions of [keepachangelog.com](http://keepachangelog.com/).
 
+## 0.5.4 - 2023-05-02
+- Fix bug in Pattern cycle detection where non-cyclic paths were incorrectly flagged as cycles.
+
 ## 0.5.3 - 2022-10-24
 - Update GitHub CD and CI to remove deprecation warnings.
 

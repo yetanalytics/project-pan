@@ -275,12 +275,24 @@
          visited visited
          result  []]
     (if-some [n (peek stack)]
-      (let [visited*     (conj visited n)
-            all-outs     (get-in graph [:adj n])
-            unvisit-outs (cset/difference all-outs visited*)]
-        (if (empty? unvisit-outs)
-          (recur (pop stack) visited* (conj result n))
-          (recur (apply conj stack unvisit-outs) visited* result)))
+      (if (contains? visited n)
+        ;; Note 1: Leaf nodes are visited twice, first to visit it, then
+        ;; to pop it off the stack and push it on the result list.
+        ;; Note 2: The stack may contain duplicate nodes if there are two
+        ;; paths that are in-adjacent to that node. Thus we must ensure that
+        ;; any node only shows up once in the result list.
+        (let [stack*  (pop stack)
+              result* (cond-> result
+                        (not (some #{n} result))
+                        (conj n))]
+          (recur stack* visited result*))
+        ;; Visit any unvisited nodes; exclude visited nodes from the stack
+        ;; as a micro-optimization.
+        (let [visited* (conj visited n)
+              all-outs (get-in graph [:adj n])
+              unv-outs (cset/difference all-outs visited*)
+              stack*   (into stack unv-outs)]
+          (recur stack* visited* result)))
       [result visited])))
 
 (defn- scc-forward-dfs
@@ -357,3 +369,4 @@
 
 (s/def ::singleton-sccs
   (s/coll-of ::singleton-scc :kind vector?))
+ 

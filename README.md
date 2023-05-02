@@ -9,7 +9,7 @@ A Clojure library for validating xAPI Profiles, according to the [xAPI Profile s
 Add the following to the `:deps` map in your `deps.edn` file:
 
 ```clojure
-com.yetanalytics/project-pan {:mvn/version "0.5.3"
+com.yetanalytics/project-pan {:mvn/version "0.5.4"
                               :exclusions [org.clojure/clojure
                                            org.clojure/clojurescript]}
 ```
@@ -73,6 +73,6 @@ Besides validating whole Profiles, you can also use library methods and specs to
 
 ## License
 
-Copyright © 2019-2022 Yet Analytics, Inc.
+Copyright © 2019-2023 Yet Analytics, Inc.
 
 Project Pan is licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE) for the full license text
