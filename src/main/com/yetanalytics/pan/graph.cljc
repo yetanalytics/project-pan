@@ -275,12 +275,17 @@
          visited visited
          result  []]
     (if-some [n (peek stack)]
-      (let [visited*     (conj visited n)
-            all-outs     (get-in graph [:adj n])
-            unvisit-outs (cset/difference all-outs visited*)]
-        (if (empty? unvisit-outs)
-          (recur (pop stack) visited* (conj result n))
-          (recur (apply conj stack unvisit-outs) visited* result)))
+      (if (contains? visited n)
+        (let [stack*  (pop stack)
+              result* (cond-> result
+                        (not (some #{n} result)) ; only record first visit
+                        (conj n))]
+          (recur stack* visited result*))
+        (let [visited* (conj visited n)
+              all-outs (get-in graph [:adj n])
+              unv-outs (cset/difference all-outs visited*)
+              stack*   (apply conj stack unv-outs)]
+          (recur stack* visited* result)))
       [result visited])))
 
 (defn- scc-forward-dfs
@@ -357,3 +362,4 @@
 
 (s/def ::singleton-sccs
   (s/coll-of ::singleton-scc :kind vector?))
+ 
