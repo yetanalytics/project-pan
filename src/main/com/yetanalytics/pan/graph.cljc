@@ -276,15 +276,22 @@
          result  []]
     (if-some [n (peek stack)]
       (if (contains? visited n)
+        ;; Note 1: Leaf nodes are visited twice, first to visit it, then
+        ;; to pop it off the stack and push it on the result list.
+        ;; Note 2: The stack may contain duplicate nodes if there are two
+        ;; paths that are in-adjacent to that node. Thus we must ensure that
+        ;; any node only shows up once in the result list.
         (let [stack*  (pop stack)
               result* (cond-> result
-                        (not (some #{n} result)) ; only record first visit
+                        (not (some #{n} result))
                         (conj n))]
           (recur stack* visited result*))
+        ;; Visit any unvisited nodes; exclude visited nodes from the stack
+        ;; as a micro-optimization.
         (let [visited* (conj visited n)
               all-outs (get-in graph [:adj n])
               unv-outs (cset/difference all-outs visited*)
-              stack*   (apply conj stack unv-outs)]
+              stack*   (into stack unv-outs)]
           (recur stack* visited* result)))
       [result visited])))
 
