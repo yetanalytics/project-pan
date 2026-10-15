@@ -4,6 +4,12 @@ clean:
 	rm -rf target
 	rm -rf cljs-test-runner-out
 
+.PHONY: pom.xml
+
+# Generate the base library's Maven manifest for GitHub dependency submission.
+pom.xml:
+	clojure -X:deps mvn-pom :user nil
+
 test-clj:
 	clojure -A:test:runner-clj
 
