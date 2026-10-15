@@ -14,6 +14,23 @@ com.yetanalytics/project-pan {:mvn/version "0.5.4"
                                            org.clojure/clojurescript]}
 ```
 
+## Dependency vulnerability tracking
+
+The `Deps` GitHub Actions workflow generates a Maven POM from `deps.edn` and
+submits the resolved Maven dependency tree to GitHub on pushes to `main`.
+It can also be run manually from the Actions tab. With dependency graph and
+Dependabot alerts enabled, GitHub can report known vulnerabilities in these
+dependencies.
+
+Run `make pom.xml` to generate the same POM locally. The generated file is ignored
+by Git; `deps.edn` remains the dependency source.
+
+This submission covers the base library dependencies and their Maven transitives.
+It excludes dependencies added by the `:dev`, `:test`, `:runner-clj`, and
+`:runner-cljs` aliases, including the JVM test runner's Git dependency. These
+aliases need separate dependency submission handling before development and test
+coverage is complete.
+
 ## Usage
 
 To use the library to validate a whole Profile, call `validate-profile` in the `pan` namespace. This method takes in an entire Profile as an EDN data structure and prints either a success message on success (obviously) or an error message on failure.
